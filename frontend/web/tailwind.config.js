@@ -1,0 +1,73 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        surface: {
+          DEFAULT: '#090e18',
+          dim: '#090e18',
+          bright: '#242c3c',
+          'container-lowest': '#000000',
+          'container-low': '#0e131e',
+          container: '#141a26',
+          'container-high': '#19202d',
+          'container-highest': '#1f2634',
+          variant: '#1f2634',
+          tint: '#81ecff',
+        },
+        primary: {
+          DEFAULT: '#81ecff',
+          dim: '#00d4ec',
+          fixed: '#00e3fd',
+          'fixed-dim': '#00d4ec',
+          container: '#00e3fd',
+        },
+        'on-primary': { DEFAULT: '#005762', container: '#004d57', fixed: '#003840', 'fixed-variant': '#005762' },
+        secondary: {
+          DEFAULT: '#00ffa3',
+          dim: '#00ef99',
+          fixed: '#00ffa3',
+          'fixed-dim': '#00ef99',
+          container: '#006d43',
+        },
+        'on-secondary': { DEFAULT: '#005c38', container: '#e2ffe9', fixed: '#00472a', 'fixed-variant': '#00673f' },
+        tertiary: {
+          DEFAULT: '#ffaaf4',
+          dim: '#e98adf',
+          fixed: '#f897ee',
+          'fixed-dim': '#e98adf',
+          container: '#f897ee',
+        },
+        'on-tertiary': { DEFAULT: '#6d1b6c', container: '#620e61', fixed: '#400040', 'fixed-variant': '#6d1a6b' },
+        error: {
+          DEFAULT: '#ff716c',
+          dim: '#d7383b',
+          container: '#9f0519',
+        },
+        'on-error': { DEFAULT: '#490006', container: '#ffa8a3' },
+        'on-surface': { DEFAULT: '#e4e8f7', variant: '#a6abb9' },
+        'on-background': '#e4e8f7',
+        outline: { DEFAULT: '#717582', variant: '#434854' },
+        'inverse-surface': '#f9f9ff',
+        'inverse-on-surface': '#505561',
+        'inverse-primary': '#006976',
+      },
+      fontFamily: {
+        headline: ['Manrope', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+        label: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        DEFAULT: '0.125rem',
+        sm: '0.125rem',
+        md: '0.25rem',
+        lg: '0.5rem',
+        xl: '0.75rem',
+        '2xl': '1rem',
+      },
+    },
+  },
+  plugins: [],
+}

@@ -1,0 +1,46 @@
+# Локальные дампы БД (могут содержать ПДн)
+/backups/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/web/dist/
+.npm
+
+# Env / секреты
+.env
+.env.*
+!.env.example
+
+# БД и артефакты dev
+*.db
+*.sqlite3
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Логи / coverage
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker / локальные volume-данные (если монтируются в репо)
+postgres_data/

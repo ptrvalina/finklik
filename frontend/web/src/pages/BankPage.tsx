@@ -1,0 +1,466 @@
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { bankApi, onecApi } from '../api/client'
+import AppModal from '../components/ui/AppModal'
+
+function fmt(n: any) {
+  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
+  return (
+    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+      {name}
+    </span>
+  )
+}
+
+type BankAccount = { id: string; bank_name: string; bank_bic: string; account_number: string; currency: string; is_primary: boolean; is_active: boolean; color: string }
+type BankInfo = { name: string; bic: string; color: string }
+type Tab = 'overview' | 'accounts' | 'payments' | '1c'
+
+export default function BankPage() {
+  const qc = useQueryClient()
+  const [tab, setTab] = useState<Tab>('overview')
+  const [showAddAccount, setShowAddAccount] = useState(false)
+  const [showPayment, setShowPayment] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [accountForm, setAccountForm] = useState({ bank_name: '', bank_bic: '', account_number: '', is_primary: false })
+  const [paymentForm, setPaymentForm] = useState({ amount: '', recipient_name: '', description: '' })
+  const [unpLookup, setUnpLookup] = useState('')
+  const [lookupResult, setLookupResult] = useState<any>(null)
+
+  const { data: balanceData } = useQuery({ queryKey: ['bank-balance'], queryFn: () => bankApi.getBalance().then(r => r.data), refetchInterval: 15000 })
+  const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
+  const { data: accountsData } = useQuery({ queryKey: ['bank-accounts'], queryFn: () => bankApi.listAccounts().then(r => r.data) })
+  const { data: banksData } = useQuery({ queryKey: ['available-banks'], queryFn: () => bankApi.listBanks().then(r => r.data) })
+  const { data: onecStatus } = useQuery({ queryKey: ['onec-health'], queryFn: () => onecApi.health().then(r => r.data), refetchInterval: 30000 })
+
+  const addAccountMutation = useMutation({
+    mutationFn: () => bankApi.createAccount(accountForm),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bank-accounts'] }); setShowAddAccount(false); setAccountForm({ bank_name: '', bank_bic: '', account_number: '', is_primary: false }); flash('success', 'Счёт добавлен') },
+    onError: () => flash('error', 'Ошибка добавления'),
+  })
+  const setPrimaryMutation = useMutation({ mutationFn: (id: string) => bankApi.updateAccount(id, { is_primary: true }), onSuccess: () => qc.invalidateQueries({ queryKey: ['bank-accounts'] }) })
+  const deleteAccountMutation = useMutation({ mutationFn: (id: string) => bankApi.deleteAccount(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['bank-accounts'] }); flash('success', 'Счёт удалён') } })
+  const paymentMutation = useMutation({
+    mutationFn: () => bankApi.createPayment({ amount: parseFloat(paymentForm.amount), recipient_name: paymentForm.recipient_name, description: paymentForm.description }),
+    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['bank-balance'] }); qc.invalidateQueries({ queryKey: ['bank-statements'] }); setShowPayment(false); setPaymentForm({ amount: '', recipient_name: '', description: '' }); flash('success', `Платёж: ${res.data.payment_id?.slice(0, 8)}…`) },
+    onError: () => flash('error', 'Ошибка платежа'),
+  })
+  const lookupMutation = useMutation({ mutationFn: () => onecApi.lookupCounterparty(unpLookup), onSuccess: (res) => setLookupResult(res.data) })
+
+  function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }
+  function selectBank(bank: BankInfo) { setAccountForm((f) => ({ ...f, bank_name: bank.name, bank_bic: bank.bic })) }
+
+  const accounts: BankAccount[] = accountsData?.accounts ?? []
+  const banks: BankInfo[] = banksData?.banks ?? []
+  const statements = statementsData?.transactions ?? []
+
+  const tabItems: { key: Tab; label: string; icon: string }[] = [
+    { key: 'overview', icon: 'monitoring', label: 'Обзор' },
+    { key: 'accounts', icon: 'account_balance', label: 'Счета' },
+    { key: 'payments', icon: 'payments', label: 'Платежи' },
+    { key: '1c', icon: 'integration_instructions', label: '1С' },
+  ]
+
+  return (
+    <div className="max-w-7xl space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Банк</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Мульти-банк, платежи и интеграция с 1С
+            {onecStatus?.connected && <span className="ml-2 text-xs text-secondary">● 1С ({onecStatus.mode})</span>}
+          </p>
+        </div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
+          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
+            <Icon name="send" className="text-lg" /> Новый платёж
+          </button>
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
+            <Icon name="add" className="text-lg" /> Добавить счёт
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
+          message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
+        }`}>
+          <Icon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" />
+          {message.text}
+        </div>
+      )}
+
+      <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+          {tabItems.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`tap-highlight-none flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:py-1.5 ${
+                tab === t.key ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <Icon name={t.icon} className="text-base" /> {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Overview */}
+      {tab === 'overview' && (
+        <div className="space-y-5 sm:space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+            {/* Main balance */}
+            <div className="metric-blade md:col-span-2">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <span className="label !mb-0">Общий баланс</span>
+                  <h3 className="text-4xl font-headline font-extrabold mt-2 text-on-surface">
+                    {fmt(balanceData?.balance)} <span className="text-xl text-primary/70">BYN</span>
+                  </h3>
+                </div>
+                <div className="bg-secondary/10 px-3 py-1 rounded-full flex items-center gap-1">
+                  <Icon name="trending_up" className="text-secondary text-sm" />
+                  <span className="text-secondary text-xs font-bold">+12.4%</span>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1 h-1 bg-surface-variant rounded-full overflow-hidden">
+                  <div className="w-3/4 h-full bg-primary shadow-[0_0_8px_rgba(129,236,255,0.5)]" />
+                </div>
+                <span className="text-[10px] text-on-surface-variant uppercase font-bold whitespace-nowrap">{balanceData?.account_number || '—'}</span>
+              </div>
+            </div>
+
+            {/* Linked accounts count */}
+            <div className="metric-blade">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary/40" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-surface-bright flex items-center justify-center">
+                  <Icon name="account_balance_wallet" className="text-secondary" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-on-surface">Привязано счетов</p>
+                  <p className="text-[10px] text-on-surface-variant">{accounts.filter(a => a.is_active).length} активных</p>
+                </div>
+              </div>
+              <p className="text-2xl font-headline font-bold text-on-surface">{accounts.length}</p>
+            </div>
+          </div>
+
+          {/* Statements */}
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+            <div className="flex flex-col gap-1 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
+              <h3 className="font-headline text-base font-bold text-white sm:text-lg">Последние операции</h3>
+              <span className="text-xs text-zinc-500">{statementsData?.total || 0} всего</span>
+            </div>
+            {statementsLoading ? (
+              <div className="p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
+            ) : statements.length === 0 ? (
+              <div className="p-12 text-center">
+                <Icon name="receipt_long" className="text-4xl text-on-surface-variant/20" />
+                <p className="text-on-surface-variant text-sm mt-3">Операций пока нет</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-outline-variant/5">
+                {statements.map((tx: any, i: number) => (
+                  <div
+                    key={tx.id || i}
+                    className="flex cursor-pointer items-center justify-between gap-3 p-4 px-4 transition-colors hover:bg-surface-container-high sm:px-8"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center ${tx.type === 'credit' ? 'text-secondary' : 'text-error'} group-hover:scale-110 transition-transform`}>
+                        <Icon name={tx.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} filled />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-on-surface">{tx.description}</p>
+                        <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">{tx.counterparty} · {tx.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-extrabold font-headline ${tx.type === 'credit' ? 'text-secondary' : 'text-on-surface'}`}>
+                        {tx.type === 'credit' ? '+' : '−'}{fmt(tx.amount)} BYN
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Accounts */}
+      {tab === 'accounts' && (
+        <div className="space-y-4">
+          {accounts.length === 0 ? (
+            <div className="rounded-2xl bg-surface-container-low p-10 text-center sm:p-16">
+              <Icon name="account_balance" className="text-5xl text-on-surface-variant/20" />
+              <p className="text-on-surface-variant text-sm mt-4">У вас ещё нет привязанных счетов</p>
+              <button type="button" className="btn-primary mt-4" onClick={() => setShowAddAccount(true)}>
+                <Icon name="add" /> Добавить первый счёт
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {accounts.map(acc => (
+                <div
+                  key={acc.id}
+                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 ring-1 ring-white/[0.04] sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
+                  style={{ borderLeftColor: acc.color }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-on-surface">{acc.bank_name}</h3>
+                        {acc.is_primary && <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 font-bold">Основной</span>}
+                      </div>
+                      <p className="text-xs text-on-surface-variant mt-1 font-mono">{acc.account_number}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">BIC: {acc.bank_bic} · {acc.currency}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {!acc.is_primary && (
+                        <button type="button" onClick={() => setPrimaryMutation.mutate(acc.id)} className="btn-ghost !text-xs !px-2">
+                          <Icon name="star" className="text-sm" />
+                        </button>
+                      )}
+                      <button type="button" onClick={() => deleteAccountMutation.mutate(acc.id)} className="btn-ghost !text-xs !px-2 text-error hover:text-error">
+                        <Icon name="delete" className="text-sm" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Payments */}
+      {tab === 'payments' && (
+        <div className="w-full max-w-lg rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-8">
+          <h2 className="mb-6 font-headline text-lg font-bold text-white">Новый платёж</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="label">Получатель</label>
+              <input
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.recipient_name}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, recipient_name: e.target.value }))}
+                placeholder="ООО Ромашка"
+              />
+            </div>
+            <div>
+              <label className="label">Сумма (BYN)</label>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.amount}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="label">Назначение</label>
+              <input
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.description}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Оплата по договору..."
+              />
+            </div>
+            <button
+              type="button"
+              className="btn-primary min-h-12 w-full"
+              disabled={!paymentForm.amount || !paymentForm.recipient_name || !paymentForm.description || paymentMutation.isPending}
+              onClick={() => paymentMutation.mutate()}
+            >
+              <Icon name="send" /> {paymentMutation.isPending ? 'Отправляем...' : 'Отправить платёж'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 1C */}
+      {tab === '1c' && (
+        <div className="space-y-6">
+          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className={`w-4 h-4 rounded-full ${onecStatus?.connected ? 'bg-secondary' : 'bg-error'}`} />
+              <div>
+                <h3 className="text-sm font-bold text-on-surface">Бэкенд 1С — {onecStatus?.connected ? 'Подключён' : 'Нет связи'}</h3>
+                {onecStatus?.connected ? (
+                  <p className="text-xs text-on-surface-variant">{onecStatus.platform} · «{onecStatus.infobase}» · {onecStatus.mode === 'mock' ? 'Заглушка' : 'Production'}</p>
+                ) : (
+                  <p className="text-xs text-error">Сервис 1С недоступен</p>
+                )}
+              </div>
+            </div>
+            {onecStatus?.mode === 'mock' && (
+              <div className="bg-tertiary/10 border border-tertiary/20 text-on-surface text-xs px-4 py-3 rounded-xl">
+                Используется заглушка 1С. После лицензии замените <code className="bg-tertiary/10 px-1 rounded">ONEC_MOCK_URL</code>.
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+            <h3 className="text-sm font-bold text-on-surface mb-4">Проверка контрагента по УНП</h3>
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+              <input
+                className="input min-h-11 flex-1 rounded-xl"
+                placeholder="123456789"
+                maxLength={9}
+                value={unpLookup}
+                onChange={(e) => setUnpLookup(e.target.value.replace(/\D/g, ''))}
+              />
+              <button
+                type="button"
+                className="btn-primary min-h-11 w-full sm:w-auto"
+                disabled={unpLookup.length !== 9 || lookupMutation.isPending}
+                onClick={() => lookupMutation.mutate()}
+              >
+                <Icon name="search" /> {lookupMutation.isPending ? '...' : 'Найти'}
+              </button>
+            </div>
+            {lookupResult && (
+              <div className={`mt-4 p-4 rounded-xl text-sm ${lookupResult.found ? 'bg-secondary/10 border border-secondary/20' : 'bg-surface-container-high'}`}>
+                {lookupResult.found ? (
+                  <div className="space-y-1">
+                    <p className="font-bold text-secondary">{lookupResult.name}</p>
+                    <p className="text-xs text-on-surface-variant">УНП: {lookupResult.unp}</p>
+                    <p className="text-xs text-on-surface-variant">НДС: {lookupResult.vat_registered ? 'Плательщик' : 'Не плательщик'}</p>
+                  </div>
+                ) : (
+                  <p className="text-on-surface-variant">{lookupResult.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAddAccount && (
+        <AppModal
+          title="Добавить счёт"
+          wide
+          onClose={() => setShowAddAccount(false)}
+          footer={
+            <div className="flex gap-3">
+              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowAddAccount(false)}>
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="btn-primary min-h-12 flex-1"
+                disabled={!accountForm.bank_bic || !accountForm.account_number || addAccountMutation.isPending}
+                onClick={() => addAccountMutation.mutate()}
+              >
+                {addAccountMutation.isPending ? 'Сохраняем...' : 'Добавить'}
+              </button>
+            </div>
+          }
+        >
+          <p className="label mb-3">Выберите банк</p>
+          <div className="mb-5 grid grid-cols-2 gap-2">
+            {banks.map((bank) => (
+              <button
+                key={bank.bic}
+                type="button"
+                onClick={() => selectBank(bank)}
+                className={`rounded-lg border p-3 text-left text-sm transition-all ${
+                  accountForm.bank_bic === bank.bic
+                    ? 'border-primary bg-primary/10'
+                    : 'border-outline-variant/20 hover:border-outline'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 flex-shrink-0 rounded-full" style={{ background: bank.color }} />
+                  <span className="text-xs font-medium text-on-surface">{bank.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="label">Номер счёта (IBAN)</label>
+              <input
+                className="input min-h-11 rounded-xl font-mono"
+                placeholder="BY20XXXX..."
+                value={accountForm.account_number}
+                onChange={(e) => setAccountForm((f) => ({ ...f, account_number: e.target.value }))}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-zinc-500">
+              <input
+                type="checkbox"
+                checked={accountForm.is_primary}
+                onChange={(e) => setAccountForm((f) => ({ ...f, is_primary: e.target.checked }))}
+                className="rounded"
+              />{' '}
+              Основной
+            </label>
+          </div>
+        </AppModal>
+      )}
+
+      {showPayment && (
+        <AppModal
+          title="Новый платёж"
+          onClose={() => setShowPayment(false)}
+          footer={
+            <div className="flex gap-3">
+              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowPayment(false)}>
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="btn-primary min-h-12 flex-1"
+                disabled={!paymentForm.amount || !paymentForm.recipient_name || paymentMutation.isPending}
+                onClick={() => paymentMutation.mutate()}
+              >
+                {paymentMutation.isPending ? 'Отправляем...' : 'Отправить'}
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="label">Получатель</label>
+              <input
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.recipient_name}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, recipient_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="label">Сумма (BYN)</label>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.amount}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="label">Назначение</label>
+              <input
+                className="input min-h-11 rounded-xl"
+                value={paymentForm.description}
+                onChange={(e) => setPaymentForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+          </div>
+        </AppModal>
+      )}
+    </div>
+  )
+}

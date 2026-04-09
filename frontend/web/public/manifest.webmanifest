@@ -1,0 +1,18 @@
+{
+  "name": "ФинКлик",
+  "short_name": "ФинКлик",
+  "description": "Бухгалтерия и финансы для ИП и компаний на УСН в Беларуси",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a10",
+  "theme_color": "#070a10",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

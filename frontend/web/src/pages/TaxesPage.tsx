@@ -1,0 +1,122 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { taxApi } from '../api/client'
+
+function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+
+function Icon({ name, className = '' }: { name: string; className?: string }) {
+  return <span className={`material-symbols-outlined ${className}`}>{name}</span>
+}
+
+function quarterDates() {
+  const now = new Date()
+  const q = Math.floor(now.getMonth() / 3), sm = q * 3
+  return { start: new Date(now.getFullYear(), sm, 1).toISOString().slice(0, 10), end: new Date(now.getFullYear(), sm + 3, 0).toISOString().slice(0, 10) }
+}
+
+export default function TaxesPage() {
+  const defaults = quarterDates()
+  const [periodStart, setPeriodStart] = useState(defaults.start)
+  const [periodEnd, setPeriodEnd] = useState(defaults.end)
+  const [withVat, setWithVat] = useState(false)
+  const [year, setYear] = useState(new Date().getFullYear())
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['tax-calc', periodStart, periodEnd, withVat],
+    queryFn: () => taxApi.calculate({ period_start: periodStart, period_end: periodEnd, with_vat: withVat }).then(r => r.data),
+  })
+
+  const { data: calendarData, isError: calendarError } = useQuery({
+    queryKey: ['tax-calendar', year],
+    queryFn: () => taxApi.calendar(year).then(r => r.data),
+  })
+
+  return (
+    <div className="max-w-7xl space-y-8">
+      <div>
+        <h1 className="text-3xl font-extrabold font-headline text-on-surface tracking-tight">Налоги</h1>
+        <p className="text-on-surface-variant mt-1">Расчёт налогов и календарь дедлайнов</p>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-surface-container-low p-5 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div><label className="label">Период с</label><input type="date" className="input" value={periodStart} onChange={e => setPeriodStart(e.target.value)} /></div>
+        <div><label className="label">Период по</label><input type="date" className="input" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} /></div>
+        <label className="flex items-center gap-2 text-sm text-on-surface-variant pb-2">
+          <input type="checkbox" checked={withVat} onChange={e => setWithVat(e.target.checked)} className="rounded" /> Плательщик НДС
+        </label>
+        <button className="btn-primary" onClick={() => refetch()}>
+          <Icon name="calculate" className="text-lg" /> Пересчитать
+        </button>
+      </div>
+
+      {(isError || calendarError) && (
+        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+          <Icon name="error" className="text-lg" /> Не удалось загрузить данные
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tax summary */}
+        <div className="bg-surface-container-low rounded-xl p-6">
+          <h2 className="text-lg font-bold font-headline text-on-surface mb-6 flex items-center gap-2">
+            <Icon name="receipt" className="text-primary" /> Итоги периода
+          </h2>
+          {isLoading || !data ? (
+            <div className="text-on-surface-variant text-sm">Считаем...</div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { label: 'Доходы', value: `${fmt(data.income)} BYN`, color: 'text-secondary' },
+                { label: 'Расходы', value: `${fmt(data.expense)} BYN`, color: 'text-error' },
+                { label: 'УСН к уплате', value: `${fmt(data.usn_to_pay)} BYN`, bold: true },
+                { label: 'НДС к уплате', value: `${fmt(data.vat_to_pay)} BYN` },
+                { label: 'ФСЗН (наниматель)', value: `${fmt(data.fsszn_employer_amount)} BYN` },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between border-b border-outline-variant/10 pb-3 last:border-0">
+                  <span className="text-sm text-on-surface-variant">{row.label}</span>
+                  <span className={`text-sm ${row.bold ? 'font-bold' : ''} ${row.color || 'text-on-surface'}`}>{row.value}</span>
+                </div>
+              ))}
+              <div className="border-t-2 border-outline-variant/20 pt-3 flex items-center justify-between">
+                <span className="text-sm font-bold text-on-surface">Итого к уплате</span>
+                <span className="text-lg font-extrabold font-headline text-primary">{fmt(data.total_to_pay)} BYN</span>
+              </div>
+              {data.deadline && (
+                <div className="mt-4 bg-error/10 border border-error/20 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <Icon name="event" className="text-error" />
+                  <div>
+                    <p className="text-xs font-bold text-error">Крайний срок</p>
+                    <p className="text-sm font-bold text-on-surface">{data.deadline}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Calendar */}
+        <div className="bg-surface-container-low rounded-xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold font-headline text-on-surface flex items-center gap-2">
+              <Icon name="calendar_today" className="text-primary" /> Налоговый календарь
+            </h2>
+            <input type="number" className="input w-24" value={year} onChange={e => setYear(Number(e.target.value))} />
+          </div>
+          <div className="space-y-3 max-h-96 overflow-auto">
+            {(calendarData?.events || []).map((event: any, idx: number) => (
+              <div key={`${event.title}-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-surface-container-high/50 hover:bg-surface-container-high transition-colors">
+                <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-on-surface">{event.title}</p>
+                  <p className="text-[10px] text-on-surface-variant">{event.date}</p>
+                </div>
+              </div>
+            ))}
+            {!calendarData?.events?.length && <p className="text-sm text-on-surface-variant">Событий нет</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

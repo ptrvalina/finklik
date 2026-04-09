@@ -1,0 +1,53 @@
+from pydantic import BaseModel, EmailStr, Field, field_validator
+import re
+
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=100)
+    full_name: str = Field(min_length=2, max_length=255)
+    org_name: str = Field(min_length=2, max_length=255)
+    org_unp: str = Field(min_length=9, max_length=9)
+
+    @field_validator("org_unp")
+    @classmethod
+    def validate_unp(cls, v: str) -> str:
+        if not re.fullmatch(r"\d{9}", v):
+            raise ValueError("УНП должен состоять ровно из 9 цифр")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Пароль должен содержать хотя бы одну заглавную букву")
+        if not re.search(r"\d", v):
+            raise ValueError("Пароль должен содержать хотя бы одну цифру")
+        return v
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    role: str
+    organization_id: str | None
+    org_name: str | None
+
+    model_config = {"from_attributes": True}

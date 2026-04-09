@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ФинКлик</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: system-ui; background: #1a1a2e; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; }
+        button { background: #1a1a2e; color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; margin: 5px 0; cursor: pointer; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .metric { font-size: 24px; font-weight: bold; color: #1a1a2e; }
+        .grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="text-align:center">
+            <h1>🏦 ФинКлик</h1>
+            <p>Бухгалтерия без бухгалтера</p>
+        </div>
+        
+        <div class="card" id="loginBlock">
+            <h3>Вход</h3>
+            <input type="email" id="email" placeholder="Email" value="test@example.com">
+            <input type="password" id="password" placeholder="Пароль" value="123456">
+            <button onclick="login()">🔐 Войти</button>
+            <div id="errorMsg" style="color:red; margin-top:10px"></div>
+        </div>
+        
+        <div id="dashboardBlock" style="display:none">
+            <div class="grid">
+                <div class="card"><h3>💰 Доходы</h3><div class="metric" id="revenue">-</div></div>
+                <div class="card"><h3>📉 Расходы</h3><div class="metric" id="expenses">-</div></div>
+                <div class="card"><h3>📈 Прибыль</h3><div class="metric" id="profit">-</div></div>
+                <div class="card"><h3>💳 Баланс</h3><div class="metric" id="balance">-</div></div>
+            </div>
+            <div class="card">
+                <h3>📊 Налоги</h3>
+                <div id="taxes"></div>
+            </div>
+            <div class="card">
+                <h3>💰 Добавить операцию</h3>
+                <input type="number" id="amount" placeholder="Сумма">
+                <select id="type">
+                    <option value="income">💰 Доход</option>
+                    <option value="expense">📉 Расход</option>
+                </select>
+                <input type="text" id="category" placeholder="Категория">
+                <button onclick="addTransaction()">➕ Добавить</button>
+            </div>
+            <button onclick="logout()" style="background:#dc2626">🚪 Выйти</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                const res = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                if (!res.ok) throw new Error('Ошибка входа');
+                document.getElementById('loginBlock').style.display = 'none';
+                document.getElementById('dashboardBlock').style.display = 'block';
+                loadDashboard();
+            } catch(e) {
+                document.getElementById('errorMsg').innerText = e.message;
+            }
+        }
+        
+        async function loadDashboard() {
+            const res = await fetch('/api/v1/dashboard');
+            const data = await res.json();
+            document.getElementById('revenue').innerHTML = (data.total_revenue || 0).toLocaleString() + ' ₽';
+            document.getElementById('expenses').innerHTML = (data.total_expenses || 0).toLocaleString() + ' ₽';
+            document.getElementById('profit').innerHTML = (data.profit || 0).toLocaleString() + ' ₽';
+            document.getElementById('balance').innerHTML = (data.bank_balance || 0).toLocaleString() + ' ₽';
+            
+            const taxes = data.taxes;
+            if(taxes) {
+                document.getElementById('taxes').innerHTML = `
+                    <p>📊 УСН 3%: ${taxes.usn?.toLocaleString()} ₽</p>
+                    <p>📊 НДС 20%: ${taxes.vat?.toLocaleString()} ₽</p>
+                    <p>📊 ФСЗН 34%: ${taxes.fszn?.toLocaleString()} ₽</p>
+                    <p><strong>💰 Итого: ${taxes.total?.toLocaleString()} ₽</strong></p>
+                `;
+            }
+        }
+        
+        async function addTransaction() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.getElementById('type').value;
+            const category = document.getElementById('category').value;
+            if(!amount) { alert('Введите сумму'); return; }
+            await fetch('/api/v1/transactions', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({amount, type, category, description: ''})
+            });
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            loadDashboard();
+        }
+        
+        function logout() {
+            document.getElementById('loginBlock').style.display = 'block';
+            document.getElementById('dashboardBlock').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
