@@ -5,7 +5,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     APP_NAME: str = "ФинКлик API"
-    APP_VERSION: str = "0.2.0"
+    APP_VERSION: str = "0.2.1"
     DEBUG: bool = False
     DATABASE_URL: str = "sqlite+aiosqlite:///./finklik.db"
     # Redis опционален: без валидного сервера кэш тихо отключается (см. redis_cache.py).

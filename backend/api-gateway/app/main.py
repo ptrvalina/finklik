@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import structlog
 
@@ -28,6 +32,13 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 log = structlog.get_logger()
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_STATIC_SWAGGER = _REPO_ROOT / "static" / "swagger-ui"
+_STATIC_REDOC = _REPO_ROOT / "static" / "redoc"
+USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
+    _STATIC_REDOC / "redoc.standalone.js"
+).is_file()
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -43,6 +54,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     lifespan=lifespan,
+    docs_url=None if USE_LOCAL_DOCS else "/docs",
+    redoc_url=None if USE_LOCAL_DOCS else "/redoc",
 )
 
 # Метрики Prometheus (до прочих middleware — корректный учёт latency)
@@ -60,6 +73,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if USE_LOCAL_DOCS:
+    app.mount(
+        "/static/swagger-ui",
+        StaticFiles(directory=str(_STATIC_SWAGGER)),
+        name="swagger_ui_static",
+    )
+    app.mount(
+        "/static/redoc",
+        StaticFiles(directory=str(_STATIC_REDOC)),
+        name="redoc_static",
+    )
+
+    @app.get("/docs", include_in_schema=False)
+    async def swagger_ui_html():
+        return get_swagger_ui_html(
+            openapi_url="/openapi.json",
+            title=f"{settings.APP_NAME} - Swagger UI",
+            swagger_js_url="/static/swagger-ui/swagger-ui-bundle.js",
+            swagger_css_url="/static/swagger-ui/swagger-ui.css",
+            swagger_favicon_url="/static/swagger-ui/favicon-32x32.png",
+        )
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_html():
+        return get_redoc_html(
+            openapi_url="/openapi.json",
+            title=f"{settings.APP_NAME} - ReDoc",
+            redoc_js_url="/static/redoc/redoc.standalone.js",
+        )
 
 # Роутеры
 app.include_router(auth_router, prefix="/api/v1")
@@ -88,6 +131,7 @@ async def root():
     return {
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
+        "docs_assets": "static" if USE_LOCAL_DOCS else "cdn",
         "health": "/health",
         "docs": "/docs",
         "api": "/api/v1",

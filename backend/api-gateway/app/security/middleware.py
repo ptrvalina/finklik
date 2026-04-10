@@ -9,6 +9,7 @@
 import os
 import time
 import json
+from pathlib import Path
 import base64
 import hashlib
 import hmac
@@ -207,6 +208,31 @@ def get_encryptor(secret_key: str = "dev_encryption_key") -> DataEncryptor:
 
 # ── Security Headers Middleware ───────────────────────────────────────────────
 
+# Строгий CSP для API. Если Swagger/ReDoc с CDN (локальных static нет) — для /docs и /redoc CSP не ставим.
+# В Docker ассеты качаются в static/ и грузятся с того же origin — CSP остаётся для всех путей.
+_CSP_DEFAULT = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self' ws://localhost:* wss://*;"
+)
+
+
+def _local_docs_assets_present() -> bool:
+    root = Path(__file__).resolve().parent.parent.parent
+    return (root / "static" / "swagger-ui" / "swagger-ui-bundle.js").is_file()
+
+
+def _is_docs_csp_path(path: str) -> bool:
+    """`/docs` и `/docs/` (и то же для redoc)."""
+    base = path.rstrip("/") or "/"
+    if base in ("/docs", "/redoc"):
+        return True
+    return path.startswith("/docs/") or path.startswith("/redoc/")
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if request.scope.get("type") == "websocket":
@@ -217,14 +243,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data: blob:; "
-            "connect-src 'self' ws://localhost:* wss://*;"
-        )
+        if _local_docs_assets_present() or not _is_docs_csp_path(request.url.path):
+            response.headers["Content-Security-Policy"] = _CSP_DEFAULT
         return response
 
 
@@ -237,7 +257,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         "/api/v1/health",
         "/metrics",
         "/docs",
+        "/docs/",
         "/redoc",
+        "/redoc/",
         "/openapi.json",
     }
 
@@ -247,7 +269,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Pytest: сотни запросов без токена (регистрация/логин) попадают в один anon-ключ → 429.
         if os.environ.get("DISABLE_RATE_LIMIT", "").lower() in ("1", "true", "yes"):
             return await call_next(request)
-        if request.url.path not in self.SKIP_PATHS:
+        path = request.url.path
+        if path.startswith("/static/"):
+            return await call_next(request)
+        if path not in self.SKIP_PATHS and not _is_docs_csp_path(path):
             try:
                 check_rate_limit(request)
             except HTTPException as e:
