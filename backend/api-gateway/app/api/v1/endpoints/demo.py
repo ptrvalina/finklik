@@ -72,9 +72,9 @@ async def seed_demo_data(
             organization_id=org_id,
             name=cp_data["name"],
             unp=cp_data["unp"],
-            contact_person=cp_data["contact_person"],
             phone=cp_data["phone"],
             email=cp_data["email"],
+            notes=cp_data.get("contact_person"),
         )
         db.add(cp)
         await db.flush()
