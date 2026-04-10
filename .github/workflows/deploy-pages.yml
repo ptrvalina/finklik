@@ -2,8 +2,7 @@
 # Настройки репозитория: Settings → Pages → Build and deployment → Source: GitHub Actions.
 # URL: https://<owner>.github.io/<repo>/
 #
-# Опционально: Settings → Secrets and variables → Actions → Variables
-#   VITE_API_URL — публичный URL API (иначе в сборке останется localhost и с браузера гостя запросы не дойдут).
+# VITE_API_URL: задайте в Settings → Actions → Variables, если API не https://finklik-api.onrender.com
 
 name: Deploy GitHub Pages
 
@@ -37,8 +36,10 @@ jobs:
         working-directory: frontend/web
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
+          API_URL="${{ vars.VITE_API_URL }}"
+          if [ -z "$API_URL" ]; then API_URL="https://finklik-api.onrender.com"; fi
+          export VITE_API_URL="$API_URL"
           npm ci
           npm run build
           cp dist/index.html dist/404.html
