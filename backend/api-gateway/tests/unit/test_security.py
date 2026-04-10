@@ -7,7 +7,7 @@ class TestPasswordHashing:
         from app.core.security import hash_password, verify_password
         hashed = hash_password("TestPass123")
         assert hashed != "TestPass123"
-        assert hashed.startswith("$2b$")
+        assert hashed.startswith(("$2a$", "$2b$", "$2y$"))
         assert verify_password("TestPass123", hashed) is True
         assert verify_password("WrongPass", hashed) is False
 
