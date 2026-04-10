@@ -14,6 +14,9 @@ jobs:
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+      DISABLE_RATE_LIMIT: "1"
     defaults:
       run:
         working-directory: backend/api-gateway
@@ -34,18 +37,26 @@ jobs:
           # С pytest.ini (asyncio_default_test_loop_scope) нужен pytest-asyncio >= 1.3
           pip install "pytest>=8,<9" "pytest-asyncio>=1.3.0" httpx aiosqlite
 
-      # Два шага: в UI Actions сразу видно, unit или integration упали (лог API без прав не скачать).
       - name: Backend unit tests
         run: python -m pytest tests/unit/ -v --tb=short
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
-          DISABLE_RATE_LIMIT: "1"
 
-      - name: Backend integration tests
-        run: python -m pytest tests/integration/ -v --tb=short
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
-          DISABLE_RATE_LIMIT: "1"
+      # По одному файлу: в API/UI видно имя шага с падением (без скачивания полного лога).
+      - name: Integration tests/test_auth.py
+        run: python -m pytest tests/integration/test_auth.py -v --tb=short
+      - name: Integration tests/test_bank_and_onec.py
+        run: python -m pytest tests/integration/test_bank_and_onec.py -v --tb=short
+      - name: Integration tests/test_demo.py
+        run: python -m pytest tests/integration/test_demo.py -v --tb=short
+      - name: Integration tests/test_import_csv.py
+        run: python -m pytest tests/integration/test_import_csv.py -v --tb=short
+      - name: Integration tests/test_metrics.py
+        run: python -m pytest tests/integration/test_metrics.py -v --tb=short
+      - name: Integration tests/test_reports.py
+        run: python -m pytest tests/integration/test_reports.py -v --tb=short
+      - name: Integration tests/test_scanner.py
+        run: python -m pytest tests/integration/test_scanner.py -v --tb=short
+      - name: Integration tests/test_transactions.py
+        run: python -m pytest tests/integration/test_transactions.py -v --tb=short
 
   backend-lint:
     name: Backend Lint
