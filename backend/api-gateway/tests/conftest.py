@@ -1,7 +1,6 @@
 """Shared test fixtures for FinKlik backend tests."""
 import os
 import sys
-import asyncio
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
@@ -16,7 +15,7 @@ os.environ.setdefault("JWT_REFRESH_SECRET_KEY", "test_refresh_key_12345678901234
 from app.core.database import Base
 from app.main import app
 from app.core.database import get_db
-import app.models  # noqa: register all models
+from app import models as _models  # noqa: F401 — side effect: register models in metadata
 
 
 test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
@@ -34,13 +33,6 @@ async def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
