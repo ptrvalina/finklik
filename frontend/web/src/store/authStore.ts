@@ -39,7 +39,12 @@ export const useAuthStore = create<AuthStore>()(
           const { data: user } = await authApi.me()
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
-          set({ error: e.response?.data?.detail || 'Ошибка входа', isLoading: false })
+          const detail = e.response?.data?.detail
+          const fallback =
+            e.code === 'ERR_NETWORK' || !e.response
+              ? 'Сервер API недоступен (часто это localhost с GitHub Pages — задайте VITE_API_URL и пересоберите фронт).'
+              : 'Ошибка входа'
+          set({ error: detail || fallback, isLoading: false })
           throw e
         }
       },

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { resolveAppPath } from '../appBase'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 type RetryableRequestConfig = {
@@ -55,7 +56,7 @@ api.interceptors.response.use(
           return api(original)
         } catch {
           localStorage.clear()
-          window.location.href = '/login'
+          window.location.href = resolveAppPath('/login')
         }
       }
     }

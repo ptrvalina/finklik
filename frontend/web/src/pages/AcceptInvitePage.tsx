@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { teamApi } from '../api/client'
+import { resolveAppPath } from '../appBase'
 import { useAuthStore } from '../store/authStore'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -30,7 +31,7 @@ export default function AcceptInvitePage() {
       localStorage.setItem('refresh_token', data.refresh_token)
       setSuccess(true)
       setTimeout(() => {
-        window.location.href = '/'
+        window.location.href = resolveAppPath('/')
       }, 1500)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка принятия приглашения')
