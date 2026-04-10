@@ -82,6 +82,18 @@ app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 
+@app.get("/", tags=["system"])
+async def root():
+    """Корень — подсказка для проверки деплоя (Render/Vercel открывают именно /)."""
+    return {
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "health": "/health",
+        "docs": "/docs",
+        "api": "/api/v1",
+    }
+
+
 @app.get("/health", tags=["system"])
 async def health():
     return {"status": "ok", "service": settings.APP_NAME, "version": settings.APP_VERSION}

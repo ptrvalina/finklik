@@ -232,6 +232,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {
+        "/",
         "/health",
         "/api/v1/health",
         "/metrics",
