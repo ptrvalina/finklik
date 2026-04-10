@@ -1,9 +1,0 @@
-# Деплой: в Railway укажите Root Directory = backend/api-gateway
-# Добавьте плагин PostgreSQL; DATABASE_URL подставится сам (нормализуется в config.py под asyncpg).
-
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-
-[deploy]
-healthcheckPath = "/health"

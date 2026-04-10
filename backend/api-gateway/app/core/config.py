@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def database_url_use_asyncpg(cls, v: object) -> object:
-        """Railway/Render отдают postgresql://… — для SQLAlchemy async нужен драйвер asyncpg."""
+        """Облачные Postgres-URL (postgres:// / postgresql://) → asyncpg для SQLAlchemy async."""
         if not isinstance(v, str):
             return v
         if v.startswith("postgres://"):
