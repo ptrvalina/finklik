@@ -34,8 +34,15 @@ jobs:
           # С pytest.ini (asyncio_default_test_loop_scope) нужен pytest-asyncio >= 1.3
           pip install "pytest>=8,<9" "pytest-asyncio>=1.3.0" httpx aiosqlite
 
-      - name: Run backend tests (unit + integration)
-        run: python -m pytest tests/unit/ tests/integration/ -v --tb=short
+      # Два шага: в UI Actions сразу видно, unit или integration упали (лог API без прав не скачать).
+      - name: Backend unit tests
+        run: python -m pytest tests/unit/ -v --tb=short
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          DISABLE_RATE_LIMIT: "1"
+
+      - name: Backend integration tests
+        run: python -m pytest tests/integration/ -v --tb=short
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           DISABLE_RATE_LIMIT: "1"
