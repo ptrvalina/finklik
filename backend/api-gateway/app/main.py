@@ -5,7 +5,7 @@ import structlog
 
 from app.core.config import settings
 from app.core.database import engine, Base
-import app.models  # noqa: F401 — регистрирует все модели
+from app import models as _models  # noqa: F401 — side effect: регистрация моделей в metadata
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.transactions import router as tx_router
 from app.api.v1.endpoints.employees import router as emp_router
@@ -30,7 +30,7 @@ log = structlog.get_logger()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(application: FastAPI):
     log.info("startup", service="api-gateway", version=settings.APP_VERSION)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
