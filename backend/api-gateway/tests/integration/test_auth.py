@@ -15,7 +15,7 @@ async def test_health(client: AsyncClient):
 async def test_register_new_user(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     resp = await client.post("/api/v1/auth/register", json={
-        "email": f"new_{suffix}@test.by",
+        "email": f"new_{suffix}@example.com",
         "password": "SecurePass1",
         "full_name": "Новый Пользователь",
         "org_name": f"Тест-Орг {suffix}",
@@ -31,7 +31,7 @@ async def test_register_new_user(client: AsyncClient):
 async def test_register_duplicate_email(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     payload = {
-        "email": f"dup_{suffix}@test.by",
+        "email": f"dup_{suffix}@example.com",
         "password": "SecurePass1",
         "full_name": "Дубль",
         "org_name": f"ДублОрг {suffix}",
@@ -50,7 +50,7 @@ async def test_register_duplicate_email(client: AsyncClient):
 async def test_login(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     await client.post("/api/v1/auth/register", json={
-        "email": f"login_{suffix}@test.by",
+        "email": f"login_{suffix}@example.com",
         "password": "LoginPass1",
         "full_name": "Логин Тест",
         "org_name": f"ЛогинОрг {suffix}",
@@ -58,7 +58,7 @@ async def test_login(client: AsyncClient):
     })
 
     resp = await client.post("/api/v1/auth/login", json={
-        "email": f"login_{suffix}@test.by",
+        "email": f"login_{suffix}@example.com",
         "password": "LoginPass1",
     })
     assert resp.status_code == 200
@@ -69,7 +69,7 @@ async def test_login(client: AsyncClient):
 async def test_login_wrong_password(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     await client.post("/api/v1/auth/register", json={
-        "email": f"wrongpw_{suffix}@test.by",
+        "email": f"wrongpw_{suffix}@example.com",
         "password": "Correct1",
         "full_name": "Тест",
         "org_name": f"Орг {suffix}",
@@ -77,7 +77,7 @@ async def test_login_wrong_password(client: AsyncClient):
     })
 
     resp = await client.post("/api/v1/auth/login", json={
-        "email": f"wrongpw_{suffix}@test.by",
+        "email": f"wrongpw_{suffix}@example.com",
         "password": "WrongPass1",
     })
     assert resp.status_code == 401
