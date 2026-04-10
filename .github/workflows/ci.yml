@@ -37,11 +37,13 @@ jobs:
         run: python -m pytest tests/unit/ -v --tb=short
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          DISABLE_RATE_LIMIT: "1"
 
       - name: Run integration tests
         run: python -m pytest tests/integration/ -v --tb=short
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          DISABLE_RATE_LIMIT: "1"
 
   backend-lint:
     name: Backend Lint

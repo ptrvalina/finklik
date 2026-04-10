@@ -6,6 +6,7 @@
 - AES-256 шифрование персональных данных
 - CSP / Security заголовки
 """
+import os
 import time
 import json
 import base64
@@ -241,6 +242,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if request.scope.get("type") == "websocket":
+            return await call_next(request)
+        # Pytest: сотни запросов без токена (регистрация/логин) попадают в один anon-ключ → 429.
+        if os.environ.get("DISABLE_RATE_LIMIT", "").lower() in ("1", "true", "yes"):
             return await call_next(request)
         if request.url.path not in self.SKIP_PATHS:
             try:

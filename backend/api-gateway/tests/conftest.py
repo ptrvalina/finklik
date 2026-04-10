@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_12345678901234567890")
 os.environ.setdefault("JWT_REFRESH_SECRET_KEY", "test_refresh_key_12345678901234567890")
+os.environ.setdefault("DISABLE_RATE_LIMIT", "1")
 
 from app.core.database import Base
 from app.main import app
