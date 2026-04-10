@@ -50,13 +50,26 @@ class TTNData:
 
 # ── Регулярки для ТТН-1 ──────────────────────────────────────────────────────
 
-# «№?» после полного названия нельзя: иначе захватывается «НАКЛАДНАЯ» вместо номера (ТТН-1234).
+# Дефис в «ТОВАРНО-ТРАНСПОРТНАЯ» в OCR может быть ASCII или Unicode (– — −).
+_HY = r"[\-\u2010\u2011\u2012\u2013\u2014\u2212]"
+# Сначала «№ ТТН-…» — самый устойчивый якорь; затем полная шапка; короткие формы — в конце.
+# У короткой формы без «№» легко поймать ложное вхождение «ттн» в тексте — «№» делаем предпочтительным.
 RE_TTN_NUMBER = re.compile(
-    r'(?:'
-    r'товарно-транспортная\s+накладная\s*№\s*([А-ЯA-Z0-9\-\/]{3,20})'
-    r'|'
-    r'(?:тн-?2|ттн)\s*№?\s*([А-ЯA-Z0-9\-\/]{3,20})'
-    r')',
+    r"(?:"
+    r"[№#]\s*(ТТН[-\sA-ZА-ЯЁё0-9\/\.]{2,24})"
+    r"|"
+    r"товарно" + _HY + r"\s*транспортная\s+накладная\s*[№#]\s*([А-ЯA-Z0-9\-\/]{3,24})"
+    r"|"
+    r"(?:тн-?2|ттн)\s*[№#]\s*([А-ЯA-Z0-9\-\/]{3,24})"
+    r"|"
+    r"(?:тн-?2|ттн)\s*([А-ЯA-Z0-9\-\/]{3,24})"
+    r")",
+    re.IGNORECASE,
+)
+
+# Если основная регулярка дала мусор (старые OCR / странный порядок полей).
+RE_TTN_FALLBACK = re.compile(
+    r"[№#]\s*(ТТН[-\sA-ZА-ЯЁё0-9\/\.]{2,24})",
     re.IGNORECASE,
 )
 
@@ -137,6 +150,13 @@ def validate_unp(unp: str) -> bool:
     return check == int(unp[8])
 
 
+def _is_plausible_doc_number(s: str) -> bool:
+    if not s or s.casefold() == "накладная":
+        return False
+    cf = s.casefold()
+    return "ттн" in cf or any(c.isdigit() for c in s)
+
+
 def validate_table_totals(items: list[TTNTableRow], declared_total: float) -> tuple[bool, float]:
     """Проверяем что сумма по позициям сходится с итогом."""
     calc_total = sum(item.amount for item in items)
@@ -156,7 +176,17 @@ def extract_ttn_data(ocr_text: str) -> TTNData:
     # ── Номер ТТН ─────────────────────────────────────────────────────
     m = RE_TTN_NUMBER.search(text)
     if m:
-        result.doc_number = (m.group(1) or m.group(2) or "").strip()
+        result.doc_number = (
+            (m.group(1) or m.group(2) or m.group(3) or m.group(4) or "").strip()
+        )
+        result.doc_number = re.sub(r"\s+", "", result.doc_number)
+
+    if not _is_plausible_doc_number(result.doc_number):
+        m2 = RE_TTN_FALLBACK.search(text)
+        if m2:
+            result.doc_number = re.sub(r"\s+", "", m2.group(1).strip())
+
+    if _is_plausible_doc_number(result.doc_number):
         fields_found += 1
 
     # ── УНП (берём первые два вхождения) ──────────────────────────────
