@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -7,6 +8,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.2.0"
     DEBUG: bool = False
     DATABASE_URL: str = "sqlite+aiosqlite:///./finklik.db"
+    # Redis опционален: без валидного сервера кэш тихо отключается (см. redis_cache.py).
+    REDIS_URL: str = "redis://127.0.0.1:6379/0"
     JWT_SECRET_KEY: str = "dev_secret_key_finklik_2024_min32chars"
     JWT_REFRESH_SECRET_KEY: str = "dev_refresh_key_finklik_2024_min32"
     JWT_ALGORITHM: str = "HS256"
@@ -33,6 +36,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = "gpt-4o-mini"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def database_url_use_asyncpg(cls, v: object) -> object:
+        """Railway/Render отдают postgresql://… — для SQLAlchemy async нужен драйвер asyncpg."""
+        if not isinstance(v, str):
+            return v
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://") :]
+        if v.startswith("postgresql://") and not v.startswith("postgresql+"):
+            return "postgresql+asyncpg://" + v[len("postgresql://") :]
+        return v
 
     class Config:
         env_file = ".env"

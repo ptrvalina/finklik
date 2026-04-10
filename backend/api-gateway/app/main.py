@@ -54,7 +54,8 @@ app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"https://.*\.trycloudflare\.com",
+    # Vercel (*.vercel.app), GitHub Pages (*.github.io), Cloudflare quick tunnels
+    allow_origin_regex=r"https://.*\.(trycloudflare\.com|vercel\.app|github\.io)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
