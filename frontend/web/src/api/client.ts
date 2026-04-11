@@ -195,6 +195,12 @@ export const assistantApi = {
     api.post<{ reply: string; mode: 'demo' | 'llm' }>('/assistant/chat', { messages }),
 }
 
+export const billingApi = {
+  plans: () => api.get('/billing/plans'),
+  subscription: () => api.get('/billing/subscription'),
+  changePlan: (planCode: string) => api.post('/billing/change-plan', null, { params: { plan_code: planCode } }),
+}
+
 export const documentsApi = {
   transactionsCsv: (date_from: string, date_to: string) =>
     api.get('/export/transactions.csv', { params: { date_from, date_to }, responseType: 'blob' }),

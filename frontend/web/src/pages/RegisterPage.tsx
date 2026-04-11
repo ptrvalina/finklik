@@ -8,7 +8,10 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 
 export default function RegisterPage() {
   const { register, isLoading, error, clearError } = useAuthStore()
-  const [form, setForm] = useState({ email: '', password: '', full_name: '', org_name: '', org_unp: '' })
+  const [form, setForm] = useState({
+    email: '', password: '', full_name: '', org_name: '', org_unp: '',
+    legal_form: 'ip', tax_regime: 'usn_no_vat',
+  })
 
   function set(field: string) {
     return (e: React.ChangeEvent<HTMLInputElement>) => { clearError(); setForm((f) => ({ ...f, [field]: e.target.value })) }
@@ -57,8 +60,39 @@ export default function RegisterPage() {
               <p className="label">Организация / ИП</p>
               <div className="space-y-3">
                 <div>
+                  <label className="label">Форма</label>
+                  <div className="flex gap-2">
+                    {([['ip', 'ИП'], ['ooo', 'ООО']] as const).map(([val, label]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-bold transition-all ${
+                          form.legal_form === val
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-outline-variant/20 text-on-surface-variant hover:border-outline-variant/40'
+                        }`}
+                        onClick={() => setForm(f => ({ ...f, legal_form: val }))}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Режим налогообложения</label>
+                  <select
+                    className="input"
+                    value={form.tax_regime}
+                    onChange={e => setForm(f => ({ ...f, tax_regime: e.target.value }))}
+                  >
+                    <option value="usn_no_vat">УСН без НДС</option>
+                    <option value="usn_vat">УСН с НДС</option>
+                    <option value="osn_vat">Общая с НДС</option>
+                  </select>
+                </div>
+                <div>
                   <label className="label">Название</label>
-                  <input className="input" placeholder='ООО "Ромашка"' value={form.org_name} onChange={set('org_name')} required />
+                  <input className="input" placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО "Ромашка"'} value={form.org_name} onChange={set('org_name')} required />
                 </div>
                 <div>
                   <label className="label">УНП (9 цифр)</label>

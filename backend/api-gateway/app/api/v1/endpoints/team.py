@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.deps import get_current_user
 from app.core.security import hash_password
 from app.models.user import User, Organization, Invitation
+from app.services.email_service import send_invite_email
 
 router = APIRouter(prefix="/team", tags=["team"])
 
@@ -154,13 +156,17 @@ async def invite_user(
     db.add(invitation)
     await db.flush()
 
+    invite_url = f"{settings.FRONTEND_URL}/accept-invite?code={invite_code}"
+    email_sent = await send_invite_email(body.email, org.name, invite_code, invite_url)
+
     return {
         "id": invitation.id,
         "email": body.email,
         "role": body.role,
         "invite_code": invite_code,
         "expires_at": invitation.expires_at.isoformat(),
-        "message": f"Приглашение создано. Код: {invite_code}",
+        "email_sent": email_sent,
+        "message": f"Приглашение создано. {'Email отправлен.' if email_sent else f'Код: {invite_code}'}",
     }
 
 

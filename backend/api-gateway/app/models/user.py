@@ -11,7 +11,8 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     unp: Mapped[str] = mapped_column(String(9), unique=True, nullable=False)
-    tax_regime: Mapped[str] = mapped_column(String(10), default="usn_3")
+    legal_form: Mapped[str] = mapped_column(String(10), default="ip")  # ip / ooo
+    tax_regime: Mapped[str] = mapped_column(String(20), default="usn_no_vat")  # usn_no_vat / usn_vat / osn_vat
     max_users: Mapped[int] = mapped_column(default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

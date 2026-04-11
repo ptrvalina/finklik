@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models.user import User
+from app.models.user import User, Organization
 from app.models.transaction import Transaction
 from app.models.employee import CalendarEvent, SalaryRecord
 from app.schemas.employee import (
@@ -113,9 +113,16 @@ async def calculate_taxes(
 async def get_tax_calendar(
     year: int = Query(...),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    events = generate_tax_calendar(year)
-    return {"year": year, "events": events, "total": len(events)}
+    org = None
+    if current_user.organization_id:
+        result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+        org = result.scalar_one_or_none()
+    tax_regime = org.tax_regime if org else "usn_no_vat"
+    legal_form = org.legal_form if org else "ip"
+    events = generate_tax_calendar(year, tax_regime=tax_regime, legal_form=legal_form)
+    return {"year": year, "tax_regime": tax_regime, "legal_form": legal_form, "events": events, "total": len(events)}
 
 
 # ── Календарные эндпоинты ─────────────────────────────────────────────────────

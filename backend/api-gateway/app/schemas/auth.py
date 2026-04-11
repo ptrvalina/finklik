@@ -8,6 +8,8 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     org_name: str = Field(min_length=2, max_length=255)
     org_unp: str = Field(min_length=9, max_length=9)
+    legal_form: str = Field(default="ip", pattern=r"^(ip|ooo)$")
+    tax_regime: str = Field(default="usn_no_vat", pattern=r"^(usn_no_vat|usn_vat|osn_vat)$")
 
     @field_validator("org_unp")
     @classmethod
@@ -49,5 +51,7 @@ class UserResponse(BaseModel):
     role: str
     organization_id: str | None
     org_name: str | None
+    legal_form: str | None = None
+    tax_regime: str | None = None
 
     model_config = {"from_attributes": True}

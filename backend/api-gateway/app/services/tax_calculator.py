@@ -224,50 +224,76 @@ def calculate_salary(
     }
 
 
-def generate_tax_calendar(year: int, month_start: int = 1) -> list[dict]:
+def generate_tax_calendar(
+    year: int,
+    month_start: int = 1,
+    tax_regime: str = "usn_no_vat",
+    legal_form: str = "ip",
+) -> list[dict]:
     """
-    Генерирует список налоговых дат на год вперёд.
-    Используется для автоматических событий в календаре.
+    Генерирует список налоговых дат на год вперёд,
+    учитывая режим налогообложения и форму организации.
     """
+    has_vat = tax_regime in ("usn_vat", "osn_vat")
+    has_usn = tax_regime.startswith("usn")
+    is_ooo = legal_form == "ooo"
+
     events = []
     for month in range(month_start, month_start + 12):
         m = ((month - 1) % 12) + 1
         y = year + (month - 1) // 12
 
-        # НДС — 20-е каждого месяца
-        events.append({
-            "title": "Сдача декларации по НДС",
-            "event_date": date(y, m, 20).isoformat(),
-            "event_type": "tax",
-            "color": "#DC2626",
-            "is_auto": True,
-        })
-
-        # Зарплата — 15-е каждого месяца (если настроена)
-        events.append({
-            "title": "Выплата зарплаты",
-            "event_date": date(y, m, 15).isoformat(),
-            "event_type": "salary",
-            "color": "#059669",
-            "is_auto": True,
-        })
-
-        # Квартальные платежи
-        if m in (4, 7, 10, 1):
-            # УСН — 25-е
+        if has_vat:
             events.append({
-                "title": "Уплата УСН за квартал",
-                "event_date": date(y, m, 25).isoformat(),
-                "event_type": "deadline",
-                "color": "#D97706",
+                "title": "Сдача декларации по НДС",
+                "event_date": date(y, m, 20).isoformat(),
+                "event_type": "tax",
+                "color": "#DC2626",
                 "is_auto": True,
             })
-            # ФСЗН — 15-е
+
+        if is_ooo:
             events.append({
-                "title": "Уплата ФСЗН за квартал",
+                "title": "Выплата зарплаты",
                 "event_date": date(y, m, 15).isoformat(),
+                "event_type": "salary",
+                "color": "#059669",
+                "is_auto": True,
+            })
+
+        if m in (4, 7, 10, 1):
+            if has_usn:
+                events.append({
+                    "title": "Уплата УСН за квартал",
+                    "event_date": date(y, m, 25).isoformat(),
+                    "event_type": "deadline",
+                    "color": "#D97706",
+                    "is_auto": True,
+                })
+
+            if is_ooo:
+                events.append({
+                    "title": "Уплата ФСЗН за квартал",
+                    "event_date": date(y, m, 15).isoformat(),
+                    "event_type": "report",
+                    "color": "#7C3AED",
+                    "is_auto": True,
+                })
+
+            events.append({
+                "title": "Взносы ИП в ФСЗН" if not is_ooo else "Отчёт по ФСЗН",
+                "event_date": date(y, m, min(15, 28)).isoformat(),
                 "event_type": "report",
                 "color": "#7C3AED",
+                "is_auto": True,
+            })
+
+        if not has_usn and m in (4, 7, 10, 1):
+            events.append({
+                "title": "Авансовый платёж налога на прибыль",
+                "event_date": date(y, m, 22).isoformat(),
+                "event_type": "deadline",
+                "color": "#D97706",
                 "is_auto": True,
             })
 

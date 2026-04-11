@@ -5,7 +5,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     APP_NAME: str = "ФинКлик API"
-    APP_VERSION: str = "0.2.1"
+    APP_VERSION: str = "0.3.0"
     DEBUG: bool = False
     DATABASE_URL: str = "sqlite+aiosqlite:///./finklik.db"
     # Redis опционален: без валидного сервера кэш тихо отключается (см. redis_cache.py).
@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     # Rate limiting
     RATE_LIMIT_PER_MINUTE: int = 120
     RATE_LIMIT_BURST: int = 30
+
+    # Email (Resend / Mailgun / SendGrid). Пустой ключ = email не отправляется, код возвращается в API.
+    EMAIL_API_KEY: str = ""
+    EMAIL_API_URL: str = "https://api.resend.com/emails"
+    EMAIL_FROM: str = "ФинКлик <noreply@finklik.by>"
+    FRONTEND_URL: str = "https://ptrvalina.github.io/finklik"
 
     # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо-ответы в /assistant/chat
     OPENAI_API_KEY: str = ""

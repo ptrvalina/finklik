@@ -9,6 +9,8 @@ interface User {
   role: string
   org_name: string | null
   organization_id: string | null
+  legal_form: string | null
+  tax_regime: string | null
 }
 
 interface AuthStore {

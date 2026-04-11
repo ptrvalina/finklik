@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, submissionsApi } from '../api/client'
+import { teamApi, regulatoryApi, submissionsApi, billingApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
 
@@ -8,7 +8,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
 }
 
-type Tab = 'team' | 'regulatory' | 'submissions'
+type Tab = 'profile' | 'billing' | 'team' | 'regulatory' | 'submissions'
 
 const AUTHORITY_COLORS: Record<string, string> = {
   fsszn: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -32,20 +32,30 @@ const STATUS_STYLES: Record<string, string> = {
   rejected: 'bg-error/10 text-error border-error/20',
 }
 
+const LEGAL_FORM_LABELS: Record<string, string> = { ip: 'ИП', ooo: 'ООО' }
+const TAX_REGIME_LABELS: Record<string, string> = {
+  usn_no_vat: 'УСН без НДС',
+  usn_vat: 'УСН с НДС',
+  osn_vat: 'Общая с НДС',
+  usn_3: 'УСН (3%)',
+}
+
 export default function SettingsPage() {
-  const [tab, setTab] = useState<Tab>('team')
+  const [tab, setTab] = useState<Tab>('profile')
   const user = useAuthStore(s => s.user)
 
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
         <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Настройки</h1>
-        <p className="mt-1 text-sm text-zinc-500">Команда, обновления законодательства и подача отчётов</p>
+        <p className="mt-1 text-sm text-zinc-500">Профиль, команда, обновления законодательства и подача отчётов</p>
       </div>
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
         <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
           {([
+            { key: 'profile' as Tab, label: 'Профиль', icon: 'business' },
+            { key: 'billing' as Tab, label: 'Тариф', icon: 'payments' },
             { key: 'team' as Tab, label: 'Команда', icon: 'group' },
             { key: 'regulatory' as Tab, label: 'Законодательство', icon: 'gavel' },
             { key: 'submissions' as Tab, label: 'Подача отчётов', icon: 'send' },
@@ -64,9 +74,181 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {tab === 'profile' && <ProfileSection />}
+      {tab === 'billing' && <BillingSection />}
       {tab === 'team' && <TeamSection isOwner={user?.role === 'owner'} />}
       {tab === 'regulatory' && <RegulatorySection />}
       {tab === 'submissions' && <SubmissionsSection />}
+    </div>
+  )
+}
+
+function ProfileSection() {
+  const user = useAuthStore(s => s.user)
+
+  const rows = [
+    { icon: 'person', label: 'Владелец', value: user?.full_name },
+    { icon: 'mail', label: 'Email', value: user?.email },
+    { icon: 'business', label: 'Организация', value: user?.org_name },
+    { icon: 'badge', label: 'Форма', value: LEGAL_FORM_LABELS[user?.legal_form || ''] || user?.legal_form || '—' },
+    { icon: 'receipt_long', label: 'Режим', value: TAX_REGIME_LABELS[user?.tax_regime || ''] || user?.tax_regime || '—' },
+    { icon: 'shield_person', label: 'Роль', value: user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : 'Наблюдатель' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+        <h3 className="text-sm font-bold text-on-surface mb-4">Профиль организации</h3>
+        <div className="space-y-3">
+          {rows.map(r => (
+            <div key={r.label} className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-highest">
+                <Icon name={r.icon} className="text-lg text-on-surface-variant" />
+              </div>
+              <div>
+                <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">{r.label}</p>
+                <p className="text-sm font-bold text-on-surface">{r.value || '—'}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BillingSection() {
+  const qc = useQueryClient()
+  const user = useAuthStore(s => s.user)
+  const isOwner = user?.role === 'owner'
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const { data: subData, isLoading: subLoading } = useQuery({
+    queryKey: ['billing-subscription'],
+    queryFn: () => billingApi.subscription().then(r => r.data),
+  })
+  const { data: plansData } = useQuery({
+    queryKey: ['billing-plans'],
+    queryFn: () => billingApi.plans().then(r => r.data),
+  })
+
+  const changePlanMutation = useMutation({
+    mutationFn: (code: string) => billingApi.changePlan(code),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['billing-subscription'] })
+      setMessage({ type: 'success', text: res.data.message })
+    },
+    onError: (e: any) => setMessage({ type: 'error', text: e.response?.data?.detail || 'Ошибка' }),
+  })
+
+  const plans = plansData?.plans ?? []
+  const currentPlan = subData?.plan
+  const usage = subData?.usage
+  const sub = subData?.subscription
+
+  return (
+    <div className="space-y-4">
+      {message && (
+        <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
+          message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
+        }`}>
+          <Icon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" /> {message.text}
+        </div>
+      )}
+
+      {subLoading ? (
+        <div className="bg-surface-container-low rounded-xl p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
+      ) : (
+        <>
+          <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-on-surface">Текущий тариф</h3>
+              <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
+                sub?.status === 'trial' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                : sub?.status === 'active' ? 'bg-secondary/10 text-secondary border border-secondary/20'
+                : 'bg-error/10 text-error border border-error/20'
+              }`}>
+                {sub?.status === 'trial' ? 'Пробный период' : sub?.status === 'active' ? 'Активен' : sub?.status || '—'}
+              </span>
+            </div>
+            <p className="text-2xl font-extrabold text-primary">{currentPlan?.name || 'Бесплатный'}</p>
+            <p className="text-xs text-on-surface-variant mt-1">
+              {currentPlan?.price_byn ? `${(currentPlan.price_byn / 100).toFixed(2)} BYN/мес` : 'Бесплатно'}
+            </p>
+            {sub?.trial_ends_at && (
+              <p className="text-xs text-amber-400 mt-2">
+                <Icon name="schedule" className="text-xs align-middle mr-1" />
+                Пробный период до {new Date(sub.trial_ends_at).toLocaleDateString('ru-BY')}
+              </p>
+            )}
+          </div>
+
+          {usage && currentPlan && (
+            <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+              <h3 className="text-sm font-bold text-on-surface mb-3">Использование</h3>
+              <div className="space-y-2">
+                {([
+                  { label: 'Операции', used: usage.transactions, max: currentPlan.max_transactions },
+                  { label: 'Сотрудники', used: usage.employees, max: currentPlan.max_employees },
+                  { label: 'Контрагенты', used: usage.counterparties, max: currentPlan.max_counterparties },
+                ] as const).map(u => {
+                  const pct = Math.min((u.used / u.max) * 100, 100)
+                  return (
+                    <div key={u.label}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-on-surface-variant">{u.label}</span>
+                        <span className="font-bold text-on-surface">{u.used} / {u.max}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-surface-container-highest">
+                        <div className={`h-full rounded-full transition-all ${pct >= 90 ? 'bg-error' : pct >= 70 ? 'bg-amber-400' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {plans.map((p: any) => {
+              const isCurrent = currentPlan?.code === p.code
+              return (
+                <div key={p.code} className={`rounded-xl p-5 border transition-all ${
+                  isCurrent ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20' : 'bg-surface-container-low border-outline-variant/10 hover:border-outline-variant/30'
+                }`}>
+                  <h4 className="text-sm font-bold text-on-surface">{p.name}</h4>
+                  <p className="text-xl font-extrabold text-primary mt-1">
+                    {p.price_byn ? `${(p.price_byn / 100).toFixed(0)} BYN` : 'Бесплатно'}
+                    {p.price_byn > 0 && <span className="text-xs font-normal text-on-surface-variant">/мес</span>}
+                  </p>
+                  <ul className="mt-3 space-y-1 text-xs text-on-surface-variant">
+                    <li>{p.max_transactions} операций</li>
+                    <li>{p.max_employees} сотрудников</li>
+                    <li>{p.max_counterparties} контрагентов</li>
+                    <li>{p.max_users} пользователей</li>
+                    {p.has_reports && <li className="text-secondary">Отчётность</li>}
+                    {p.has_bank_integration && <li className="text-secondary">Банк</li>}
+                    {p.has_ai_assistant && <li className="text-secondary">ИИ-ассистент</li>}
+                  </ul>
+                  {isOwner && !isCurrent && (
+                    <button
+                      type="button"
+                      className="btn-primary mt-3 w-full !text-xs"
+                      disabled={changePlanMutation.isPending}
+                      onClick={() => changePlanMutation.mutate(p.code)}
+                    >
+                      Выбрать
+                    </button>
+                  )}
+                  {isCurrent && (
+                    <p className="mt-3 text-center text-xs font-bold text-primary">Текущий</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

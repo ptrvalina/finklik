@@ -24,7 +24,12 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if existing_org.scalar_one_or_none():
         raise HTTPException(status_code=409, detail=f"Организация с УНП {body.org_unp} уже зарегистрирована")
 
-    org = Organization(name=body.org_name, unp=body.org_unp)
+    org = Organization(
+        name=body.org_name,
+        unp=body.org_unp,
+        legal_form=body.legal_form,
+        tax_regime=body.tax_regime,
+    )
     db.add(org)
     await db.flush()
 
@@ -112,4 +117,6 @@ async def get_me(current_user: User = Depends(get_current_user), db: AsyncSessio
         role=current_user.role,
         organization_id=str(current_user.organization_id) if current_user.organization_id else None,
         org_name=org_name,
+        legal_form=org.legal_form if org else None,
+        tax_regime=org.tax_regime if org else None,
     )

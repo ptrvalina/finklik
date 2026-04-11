@@ -1,14 +1,15 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import structlog
 
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine, Base, get_db
 from app import models as _models  # noqa: F401 — side effect: регистрация моделей в metadata
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.transactions import router as tx_router
@@ -26,10 +27,26 @@ from app.api.v1.endpoints.team import router as team_router
 from app.api.v1.endpoints.regulatory import router as regulatory_router
 from app.api.v1.endpoints.report_submission import router as submission_router
 from app.api.v1.endpoints.assistant import router as assistant_router
+from app.api.v1.endpoints.billing import router as billing_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.add_logger_name,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.JSONRenderer() if not settings.DEBUG else structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(0),
+    context_class=dict,
+    logger_factory=structlog.PrintLoggerFactory(),
+    cache_logger_on_first_use=True,
+)
 log = structlog.get_logger()
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -122,6 +139,7 @@ app.include_router(team_router, prefix="/api/v1")
 app.include_router(regulatory_router, prefix="/api/v1")
 app.include_router(submission_router, prefix="/api/v1")
 app.include_router(assistant_router, prefix="/api/v1")
+app.include_router(billing_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 
@@ -139,8 +157,24 @@ async def root():
 
 
 @app.get("/health", tags=["system"])
-async def health():
-    return {"status": "ok", "service": settings.APP_NAME, "version": settings.APP_VERSION}
+async def health(db: AsyncSession = Depends(get_db)):
+    checks: dict = {"service": settings.APP_NAME, "version": settings.APP_VERSION}
+    try:
+        from sqlalchemy import text
+        await db.execute(text("SELECT 1"))
+        checks["db"] = "ok"
+    except Exception as exc:
+        checks["db"] = f"error: {exc}"
+
+    try:
+        from app.cache.redis_cache import cache as _cache
+        client = await _cache.get_client()
+        checks["redis"] = "ok" if client else "unavailable"
+    except Exception:
+        checks["redis"] = "unavailable"
+
+    overall = "ok" if checks.get("db") == "ok" else "degraded"
+    return {"status": overall, **checks}
 
 
 @app.get("/api/v1/health", tags=["system"])
