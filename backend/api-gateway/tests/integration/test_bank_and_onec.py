@@ -119,6 +119,20 @@ async def test_onec_config_upsert(client: AsyncClient, auth_headers: dict):
 
 
 @pytest.mark.asyncio
+async def test_onec_config_rejects_private_endpoint(client: AsyncClient, auth_headers: dict):
+    resp = await client.put(
+        "/api/v1/onec/config",
+        json={
+            "endpoint": "https://127.0.0.1",
+            "token": "super_secure_token_123",
+            "protocol": "odata",
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_onec_sync_counterparties_mock(client: AsyncClient, auth_headers: dict):
     resp = await client.post("/api/v1/onec/counterparty/sync", headers=auth_headers)
     assert resp.status_code == 200

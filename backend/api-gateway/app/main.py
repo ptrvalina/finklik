@@ -29,6 +29,7 @@ from app.api.v1.endpoints.regulatory import router as regulatory_router
 from app.api.v1.endpoints.report_submission import router as submission_router
 from app.api.v1.endpoints.assistant import router as assistant_router
 from app.api.v1.endpoints.billing import router as billing_router
+from app.api.v1.endpoints.primary_documents import router as primary_documents_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
@@ -169,6 +170,7 @@ app.include_router(regulatory_router, prefix="/api/v1")
 app.include_router(submission_router, prefix="/api/v1")
 app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
+app.include_router(primary_documents_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

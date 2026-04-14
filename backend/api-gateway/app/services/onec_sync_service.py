@@ -94,12 +94,16 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
     processed = 0
     async with AsyncSessionLocal() as session:
         while processed < batch_size:
-            job_result = await session.execute(
+            stmt = (
                 select(OneCSyncJob)
                 .where(OneCSyncJob.status.in_(["pending", "retry"]))
                 .order_by(OneCSyncJob.created_at)
                 .limit(1)
             )
+            # Prevent duplicate picking when multiple API instances run pollers.
+            if not settings.DATABASE_URL.startswith("sqlite"):
+                stmt = stmt.with_for_update(skip_locked=True)
+            job_result = await session.execute(stmt)
             job = job_result.scalar_one_or_none()
             if not job:
                 break
