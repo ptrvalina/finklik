@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { dashboardApi } from '../api/client'
+import { dashboardApi, onecApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 
 function fmt(n: any) {
@@ -73,6 +73,12 @@ export default function TransactionsPage() {
         .then((r) => r.data),
   })
 
+  const { data: syncJobsData } = useQuery({
+    queryKey: ['onec-sync-jobs'],
+    queryFn: () => onecApi.listSyncJobs().then((r) => r.data),
+    refetchInterval: 5000,
+  })
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['transactions'] })
     qc.invalidateQueries({ queryKey: ['dashboard'] })
@@ -107,6 +113,22 @@ export default function TransactionsPage() {
     onSuccess: invalidate,
   })
 
+  const syncMutation = useMutation({
+    mutationFn: (transactionId: string) => onecApi.syncTransaction({ transaction_id: transactionId, max_attempts: 3 }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['onec-sync-jobs'] })
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
+
+  const retrySyncMutation = useMutation({
+    mutationFn: (jobId: string) => onecApi.retrySyncJob(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['onec-sync-jobs'] })
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
+
   function openCreate() { setEditingTx(null); setForm({ ...emptyForm }); setShowModal(true) }
 
   function openEdit(tx: any) {
@@ -120,9 +142,45 @@ export default function TransactionsPage() {
   function handleSave() { editingTx ? editMutation.mutate() : addMutation.mutate() }
 
   const transactions = data?.items ?? []
+  const syncJobs = syncJobsData?.jobs ?? []
+  const syncJobByTx = new Map<string, any>()
+  for (const job of syncJobs) {
+    if (!job?.transaction_id) continue
+    const prev = syncJobByTx.get(job.transaction_id)
+    if (!prev) {
+      syncJobByTx.set(job.transaction_id, job)
+      continue
+    }
+    const prevTs = Date.parse(prev.created_at || '') || 0
+    const curTs = Date.parse(job.created_at || '') || 0
+    if (curTs > prevTs) syncJobByTx.set(job.transaction_id, job)
+  }
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
   const isSaving = addMutation.isPending || editMutation.isPending
+
+  function getSyncBadge(tx: any) {
+    const job = syncJobByTx.get(tx.id)
+    if (job?.status === 'running') return 'Синк: в работе'
+    if (job?.status === 'retry') return 'Синк: повтор'
+    if (job?.status === 'failed') return 'Синк: ошибка'
+    if (job?.status === 'success' || tx.status === 'synced') return 'Синк: 1С'
+    if (job?.status === 'pending') return 'Синк: в очереди'
+    if (tx.status === 'confirmed') return 'Подтв.'
+    return 'Черновик'
+  }
+
+  function getSyncBadgeClass(tx: any) {
+    const job = syncJobByTx.get(tx.id)
+    if (job?.status === 'failed') return 'bg-error/10 text-error border border-error/20'
+    if (job?.status === 'running' || job?.status === 'retry' || job?.status === 'pending') {
+      return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+    }
+    if (job?.status === 'success' || tx.status === 'synced') {
+      return 'bg-secondary/10 text-secondary border border-secondary/20'
+    }
+    return 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
+  }
 
   return (
     <div className="max-w-7xl space-y-4 sm:space-y-6">
@@ -219,10 +277,8 @@ export default function TransactionsPage() {
                         <p className="font-headline text-sm font-semibold text-white">{tx.description || meta.label}</p>
                         <p className="mt-0.5 text-xs text-zinc-500">{tx.transaction_date}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span
-                            className={`text-[9px] font-bold uppercase ${meta.badge} rounded-md px-2 py-0.5`}
-                          >
-                            {tx.status === 'synced' ? '1С' : tx.status === 'confirmed' ? 'Подтв.' : 'Черновик'}
+                          <span className={`text-[9px] font-bold uppercase rounded-md px-2 py-0.5 ${getSyncBadgeClass(tx)}`}>
+                            {getSyncBadge(tx)}
                           </span>
                           {tx.category && (
                             <span className="text-[10px] text-zinc-500">{tx.category}</span>
@@ -259,6 +315,27 @@ export default function TransactionsPage() {
                           >
                             <Icon name="delete" className="text-lg" />
                           </button>
+                          {syncJobByTx.get(tx.id)?.status === 'failed' ? (
+                            <button
+                              type="button"
+                              className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-300"
+                              disabled={retrySyncMutation.isPending}
+                              onClick={() => retrySyncMutation.mutate(syncJobByTx.get(tx.id).id)}
+                              aria-label="Повторить синк"
+                            >
+                              <Icon name="refresh" className="text-lg" />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10 text-secondary"
+                              disabled={syncMutation.isPending}
+                              onClick={() => syncMutation.mutate(tx.id)}
+                              aria-label="Синхронизировать с 1С"
+                            >
+                              <Icon name="sync" className="text-lg" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -303,12 +380,33 @@ export default function TransactionsPage() {
                           {fmt(tx.amount)} BYN
                         </td>
                         <td className="px-4 py-3 text-center sm:px-6 sm:py-4">
-                          <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${meta.badge}`}>
-                            {tx.status === 'synced' ? '1С' : tx.status === 'confirmed' ? 'Подтв.' : 'Черновик'}
+                          <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${getSyncBadgeClass(tx)}`}>
+                            {getSyncBadge(tx)}
                           </span>
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4">
                           <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                            {syncJobByTx.get(tx.id)?.status === 'failed' ? (
+                              <button
+                                type="button"
+                                className="btn-ghost !px-2 !py-1 !text-xs text-amber-400 hover:text-amber-300"
+                                disabled={retrySyncMutation.isPending}
+                                onClick={() => retrySyncMutation.mutate(syncJobByTx.get(tx.id).id)}
+                                title="Повторить синк в 1С"
+                              >
+                                <Icon name="refresh" className="text-sm" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-ghost !px-2 !py-1 !text-xs text-secondary hover:text-secondary"
+                                disabled={syncMutation.isPending}
+                                onClick={() => syncMutation.mutate(tx.id)}
+                                title="Синхронизировать в 1С"
+                              >
+                                <Icon name="sync" className="text-sm" />
+                              </button>
+                            )}
                             <button type="button" className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => openEdit(tx)}>
                               <Icon name="edit" className="text-sm" />
                             </button>

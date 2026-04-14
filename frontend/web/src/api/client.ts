@@ -126,6 +126,8 @@ export const onecApi = {
   searchCounterparty: (q: string) => api.get('/onec/counterparty/search', { params: { q } }),
   getAccounts: () => api.get('/onec/accounts'),
   syncTransaction: (data: any) => api.post('/onec/sync-transaction', data),
+  listSyncJobs: (status?: string) => api.get('/onec/sync-jobs', { params: { status } }),
+  retrySyncJob: (jobId: string) => api.post(`/onec/sync-jobs/${jobId}/retry`),
 }
 
 export const scannerApi = {
