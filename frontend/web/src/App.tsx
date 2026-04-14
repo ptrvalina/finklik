@@ -13,6 +13,7 @@ import DocumentsPage from './pages/DocumentsPage'
 import BankPage from './pages/BankPage'
 import CounterpartiesPage from './pages/CounterpartiesPage'
 import ScannerPage from './pages/ScannerPage'
+import OnecSyncPage from './pages/OnecSyncPage'
 import SettingsPage from './pages/SettingsPage'
 import AssistantPage from './pages/AssistantPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="documents" element={<DocumentsPage />} />
           <Route path="bank" element={<BankPage />} />
           <Route path="counterparties" element={<CounterpartiesPage />} />
+          <Route path="onec-sync" element={<OnecSyncPage />} />
           <Route path="scanner" element={<ScannerPage />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<SettingsPage />} />
