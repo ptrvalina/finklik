@@ -1,5 +1,7 @@
 """Спринт 7: реестр контуров 1С, мониторинг, массовое обновление подключений."""
 
+import hmac
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
@@ -19,7 +21,10 @@ router = APIRouter(prefix="/onec", tags=["1c-integration"])
 def _require_provision_admin(
     x_finklik_admin: str | None = Header(None, alias="X-Finklik-Admin-Token"),
 ):
-    if not settings.PROVISION_ADMIN_TOKEN or x_finklik_admin != settings.PROVISION_ADMIN_TOKEN:
+    expected = settings.PROVISION_ADMIN_TOKEN
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not hmac.compare_digest((x_finklik_admin or "").encode(), expected.encode()):
         raise HTTPException(status_code=404, detail="Not found")
 
 
@@ -118,7 +123,10 @@ async def provision_webhook(
     db: AsyncSession = Depends(get_db),
 ):
     """Колбэк внешнего оркестратора после создания ИБ / tenant (секрет в PROVISION_WEBHOOK_SECRET)."""
-    if not settings.PROVISION_WEBHOOK_SECRET or x_secret != settings.PROVISION_WEBHOOK_SECRET:
+    expected = settings.PROVISION_WEBHOOK_SECRET
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not hmac.compare_digest((x_secret or "").encode(), expected.encode()):
         raise HTTPException(status_code=404, detail="Not found")
 
     org_r = await db.execute(select(Organization).where(Organization.id == body.organization_id))
