@@ -1,4 +1,5 @@
 from pathlib import Path
+import asyncio
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,7 +45,8 @@ structlog.configure(
     ],
     wrapper_class=structlog.make_filtering_bound_logger(0),
     context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
+    # stdlib processors (e.g. add_logger_name) require stdlib logger objects.
+    logger_factory=structlog.stdlib.LoggerFactory(),
     cache_logger_on_first_use=True,
 )
 log = structlog.get_logger()
@@ -60,8 +62,24 @@ USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     log.info("startup", service="api-gateway", version=settings.APP_VERSION)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            log.info("db_startup_ready", attempt=attempt)
+            break
+        except Exception as exc:
+            if attempt == max_attempts:
+                log.error(
+                    "db_startup_unavailable",
+                    attempts=max_attempts,
+                    error=str(exc),
+                )
+                # Не валим процесс: сервис должен подниматься и отдавать health=degraded.
+                break
+            log.warning("db_startup_retry", attempt=attempt, error=str(exc))
+            await asyncio.sleep(2)
     yield
     await engine.dispose()
     log.info("shutdown")
