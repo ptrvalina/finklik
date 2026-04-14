@@ -1,6 +1,9 @@
+from datetime import date
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from pydantic import BaseModel, Field
 import httpx
 
@@ -9,6 +12,7 @@ from app.core.deps import get_current_user
 from app.core.config import settings
 from app.models.user import User
 from app.models.bank_account import BankAccount
+from app.schemas.bank_import import StatementImportPayload
 
 router = APIRouter(prefix="/bank", tags=["bank"])
 
@@ -252,6 +256,164 @@ async def create_payment(
         "recipient": body.recipient_name,
         "description": body.description,
     }
+
+
+@router.post("/statement/import")
+async def import_bank_statement(
+    body: StatementImportPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Импорт строк выписки в транзакции (категория bank_import). Дубликаты по дате+сумме+описанию пропускаются."""
+    from app.models.transaction import Transaction
+    from app.cache.redis_cache import cache
+    import uuid as uuid_mod
+
+    org_id = current_user.organization_id
+    if not org_id:
+        raise HTTPException(400, "Нет организации")
+
+    created = 0
+    skipped = 0
+    for line in body.lines:
+        tx_type = "income" if line.direction == "credit" else "expense"
+        amt = Decimal(str(round(line.amount, 2)))
+        desc = line.description.strip()
+        dup = await db.execute(
+            select(Transaction.id).where(
+                Transaction.organization_id == org_id,
+                Transaction.category == "bank_import",
+                Transaction.transaction_date == line.transaction_date,
+                Transaction.amount == amt,
+                Transaction.description == desc,
+            ).limit(1)
+        )
+        if dup.scalar_one_or_none():
+            skipped += 1
+            continue
+        db.add(
+            Transaction(
+                id=str(uuid_mod.uuid4()),
+                organization_id=org_id,
+                type=tx_type,
+                amount=amt,
+                description=desc,
+                transaction_date=line.transaction_date,
+                status="confirmed",
+                category="bank_import",
+            )
+        )
+        created += 1
+    await db.flush()
+    await cache.invalidate_org(str(org_id))
+    return {"created": created, "skipped_duplicates": skipped, "total_lines": len(body.lines)}
+
+
+@router.get("/reconciliation")
+async def bank_reconciliation(
+    date_from: date = Query(..., description="Начало периода"),
+    date_to: date = Query(..., description="Конец периода"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Сверка: обороты по учёту и по импорту выписки за период."""
+    from app.models.transaction import Transaction
+
+    org_id = current_user.organization_id
+    if not org_id:
+        raise HTTPException(400, "Нет организации")
+    if date_to < date_from:
+        raise HTTPException(400, "date_to раньше date_from")
+
+    def _sum_expr(tx_type: str, *, bank_import_only: bool):
+        q = [
+            Transaction.organization_id == org_id,
+            Transaction.transaction_date >= date_from,
+            Transaction.transaction_date <= date_to,
+            Transaction.type == tx_type,
+        ]
+        if bank_import_only:
+            q.append(Transaction.category == "bank_import")
+        return select(func.coalesce(func.sum(Transaction.amount), 0)).where(and_(*q))
+
+    book_income = Decimal(str((await db.execute(_sum_expr("income", bank_import_only=False))).scalar()))
+    book_expense = Decimal(str((await db.execute(_sum_expr("expense", bank_import_only=False))).scalar()))
+    bank_income = Decimal(str((await db.execute(_sum_expr("income", bank_import_only=True))).scalar()))
+    bank_expense = Decimal(str((await db.execute(_sum_expr("expense", bank_import_only=True))).scalar()))
+
+    cnt_book = (
+        await db.execute(
+            select(func.count())
+            .select_from(Transaction)
+            .where(
+                Transaction.organization_id == org_id,
+                Transaction.transaction_date >= date_from,
+                Transaction.transaction_date <= date_to,
+            )
+        )
+    ).scalar() or 0
+    cnt_bank = (
+        await db.execute(
+            select(func.count())
+            .select_from(Transaction)
+            .where(
+                Transaction.organization_id == org_id,
+                Transaction.transaction_date >= date_from,
+                Transaction.transaction_date <= date_to,
+                Transaction.category == "bank_import",
+            )
+        )
+    ).scalar() or 0
+
+    net_book = book_income - book_expense
+    net_bank_import = bank_income - bank_expense
+
+    return {
+        "period": {"date_from": str(date_from), "date_to": str(date_to)},
+        "book": {
+            "total_income": float(book_income),
+            "total_expense": float(book_expense),
+            "net": float(net_book),
+            "transactions_count": int(cnt_book),
+        },
+        "bank_import": {
+            "total_income": float(bank_income),
+            "total_expense": float(bank_expense),
+            "net": float(net_bank_import),
+            "lines_count": int(cnt_bank),
+        },
+        "delta_net_book_minus_bank_import": float(net_book - net_bank_import),
+    }
+
+
+@router.get("/external-statement")
+async def fetch_external_statement_preview(
+    current_user: User = Depends(get_current_user),
+):
+    """Если задан MOCK_BANK_URL — пробуем получить демо-выписку для ручного импорта."""
+    if not settings.MOCK_BANK_URL:
+        return {
+            "available": False,
+            "error": "MOCK_BANK_URL не задан",
+            "lines": [],
+            "hint": "Задайте переменную окружения MOCK_BANK_URL или импортируйте JSON вручную",
+        }
+    url = settings.MOCK_BANK_URL.rstrip("/") + "/statement"
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            r = await client.get(url)
+            r.raise_for_status()
+            data = r.json()
+    except Exception as exc:
+        return {
+            "available": False,
+            "error": str(exc),
+            "hint": "Укажите MOCK_BANK_URL или используйте ручной JSON-импорт на фронте",
+        }
+    lines = data.get("lines") if isinstance(data, dict) else data
+    if not isinstance(lines, list):
+        lines = []
+    return {"available": True, "lines": lines, "source": url}
 
 
 def _account_to_dict(a: BankAccount) -> dict:

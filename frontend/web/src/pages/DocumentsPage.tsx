@@ -208,6 +208,24 @@ export default function DocumentsPage() {
     onError: () => setMessage({ type: 'error', text: 'Ошибка удаления документа' }),
   })
 
+  const [payQrModal, setPayQrModal] = useState<{ b64: string; url: string; amount: number; currency: string } | null>(null)
+
+  const payQrMutation = useMutation({
+    mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
+    onSuccess: (d: any) =>
+      setPayQrModal({
+        b64: d.qr_png_base64,
+        url: d.payment_url,
+        amount: d.amount,
+        currency: d.currency,
+      }),
+    onError: (e: any) =>
+      setMessage({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось получить QR',
+      }),
+  })
+
   const printPrimaryDocMutation = useMutation({
     mutationFn: async (row: { id: string; doc_number: string; doc_type: string }) => {
       const r = await primaryDocumentsApi.print(row.id)
@@ -530,6 +548,17 @@ export default function DocumentsPage() {
                     <td className="px-3 py-2 text-on-surface-variant">{doc.currency}</td>
                     <td className="px-3 py-2">
                       <div className="flex justify-end gap-2">
+                        {doc.doc_type === 'invoice' && (
+                          <button
+                            type="button"
+                            className="btn-ghost !px-2 !py-1 !text-xs text-teal-300"
+                            title="QR оплаты"
+                            disabled={payQrMutation.isPending}
+                            onClick={() => payQrMutation.mutate(doc.id)}
+                          >
+                            <Icon name="qr_code_2" className="text-sm" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn-ghost !px-2 !py-1 !text-xs"
@@ -563,6 +592,36 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {payQrModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Оплата по QR"
+        >
+          <div className="max-w-sm rounded-2xl bg-[#12161f] p-6 ring-1 ring-white/10">
+            <h3 className="mb-2 font-headline text-lg font-bold text-white">Оплата счёта</h3>
+            <p className="mb-4 text-sm text-zinc-400">
+              {payQrModal.amount.toFixed(2)} {payQrModal.currency} — демо-QR (не ЕРИП). Ссылка для теста ниже.
+            </p>
+            <div className="mb-4 flex justify-center rounded-xl bg-white p-3">
+              <img src={`data:image/png;base64,${payQrModal.b64}`} alt="QR оплаты" className="h-48 w-48" />
+            </div>
+            <a
+              href={payQrModal.url}
+              className="mb-4 block truncate text-center text-xs text-teal-400 underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {payQrModal.url}
+            </a>
+            <button type="button" className="btn-primary min-h-11 w-full" onClick={() => setPayQrModal(null)}>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bankApi, onecApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
@@ -17,7 +18,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 type BankAccount = { id: string; bank_name: string; bank_bic: string; account_number: string; currency: string; is_primary: boolean; is_active: boolean; color: string }
 type BankInfo = { name: string; bic: string; color: string }
-type Tab = 'overview' | 'accounts' | 'payments' | '1c'
+type Tab = 'overview' | 'accounts' | 'payments' | 'reconciliation' | '1c'
 
 export default function BankPage() {
   const qc = useQueryClient()
@@ -29,12 +30,26 @@ export default function BankPage() {
   const [paymentForm, setPaymentForm] = useState({ amount: '', recipient_name: '', description: '' })
   const [unpLookup, setUnpLookup] = useState('')
   const [lookupResult, setLookupResult] = useState<any>(null)
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const monthStartStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
+  const [recDateFrom, setRecDateFrom] = useState(monthStartStr)
+  const [recDateTo, setRecDateTo] = useState(todayStr)
+  const [importJson, setImportJson] = useState(
+    '[\n  {"transaction_date": "' +
+      monthStartStr +
+      '", "amount": 100.5, "direction": "credit", "description": "Поступление по выписке"}\n]'
+  )
 
   const { data: balanceData } = useQuery({ queryKey: ['bank-balance'], queryFn: () => bankApi.getBalance().then(r => r.data), refetchInterval: 15000 })
   const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
   const { data: accountsData } = useQuery({ queryKey: ['bank-accounts'], queryFn: () => bankApi.listAccounts().then(r => r.data) })
   const { data: banksData } = useQuery({ queryKey: ['available-banks'], queryFn: () => bankApi.listBanks().then(r => r.data) })
   const { data: onecStatus } = useQuery({ queryKey: ['onec-health'], queryFn: () => onecApi.health().then(r => r.data), refetchInterval: 30000 })
+  const { data: recData, isLoading: recLoading, refetch: refetchRec } = useQuery({
+    queryKey: ['bank-reconciliation', recDateFrom, recDateTo],
+    queryFn: () => bankApi.reconciliation(recDateFrom, recDateTo).then((r) => r.data),
+    enabled: tab === 'reconciliation',
+  })
 
   const addAccountMutation = useMutation({
     mutationFn: () => bankApi.createAccount(accountForm),
@@ -49,6 +64,18 @@ export default function BankPage() {
     onError: () => flash('error', 'Ошибка платежа'),
   })
   const lookupMutation = useMutation({ mutationFn: () => onecApi.lookupCounterparty(unpLookup), onSuccess: (res) => setLookupResult(res.data) })
+  const importStatementMutation = useMutation({
+    mutationFn: (lines: any[]) => bankApi.importStatement(lines),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['bank-balance'] })
+      qc.invalidateQueries({ queryKey: ['bank-statements'] })
+      qc.invalidateQueries({ queryKey: ['bank-reconciliation'] })
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      flash('success', `Импорт: создано ${res.data.created}, пропущено дублей ${res.data.skipped_duplicates}`)
+    },
+    onError: () => flash('error', 'Ошибка импорта (проверьте JSON)'),
+  })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }
   function selectBank(bank: BankInfo) { setAccountForm((f) => ({ ...f, bank_name: bank.name, bank_bic: bank.bic })) }
@@ -61,6 +88,7 @@ export default function BankPage() {
     { key: 'overview', icon: 'monitoring', label: 'Обзор' },
     { key: 'accounts', icon: 'account_balance', label: 'Счета' },
     { key: 'payments', icon: 'payments', label: 'Платежи' },
+    { key: 'reconciliation', icon: 'compare_arrows', label: 'Сверка' },
     { key: '1c', icon: 'integration_instructions', label: '1С' },
   ]
 
@@ -288,6 +316,75 @@ export default function BankPage() {
         </div>
       )}
 
+      {tab === 'reconciliation' && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+            <h3 className="mb-1 font-headline text-base font-bold text-white">Сверка учёт ↔ выписка</h3>
+            <p className="mb-4 text-[11px] text-zinc-500">
+              Обороты за период: весь учёт и отдельно операции с категорией <code className="text-teal-400">bank_import</code>.
+            </p>
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="label">С даты</label>
+                <input type="date" className="input min-h-11 w-full" value={recDateFrom} onChange={(e) => setRecDateFrom(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">По дату</label>
+                <input type="date" className="input min-h-11 w-full" value={recDateTo} onChange={(e) => setRecDateTo(e.target.value)} />
+              </div>
+            </div>
+            <button type="button" className="btn-secondary mb-4 min-h-11" onClick={() => refetchRec()} disabled={recLoading}>
+              <Icon name="refresh" className="text-lg" />
+              {recLoading ? 'Считаем…' : 'Пересчитать'}
+            </button>
+            {recData && (
+              <div className="space-y-2 rounded-xl bg-black/20 p-4 font-mono text-xs text-zinc-300">
+                <p>
+                  Учёт: доход {fmt(recData.book?.total_income)} · расход {fmt(recData.book?.total_expense)} · чистый{' '}
+                  <span className="text-white">{fmt(recData.book?.net)}</span> ({recData.book?.transactions_count} оп.)
+                </p>
+                <p>
+                  Импорт банка: доход {fmt(recData.bank_import?.total_income)} · расход {fmt(recData.bank_import?.total_expense)} · чистый{' '}
+                  <span className="text-white">{fmt(recData.bank_import?.net)}</span> ({recData.bank_import?.lines_count} оп.)
+                </p>
+                <p className="text-amber-300/90">
+                  Δ (учёт − импорт), BYN: {fmt(recData.delta_net_book_minus_bank_import)}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+            <h3 className="mb-1 font-headline text-base font-bold text-white">Импорт выписки (JSON)</h3>
+            <p className="mb-3 text-[11px] text-zinc-500">
+              Массив строк: <code className="text-zinc-400">transaction_date</code>, <code className="text-zinc-400">amount</code>,{' '}
+              <code className="text-zinc-400">direction</code> credit/debit, <code className="text-zinc-400">description</code>.
+            </p>
+            <textarea
+              className="input mb-3 min-h-[180px] w-full resize-y font-mono text-xs"
+              value={importJson}
+              onChange={(e) => setImportJson(e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn-primary min-h-11 w-full"
+              disabled={importStatementMutation.isPending}
+              onClick={() => {
+                try {
+                  const raw = JSON.parse(importJson)
+                  const lines = Array.isArray(raw) ? raw : raw.lines
+                  if (!Array.isArray(lines)) throw new Error('need array or { lines }')
+                  importStatementMutation.mutate(lines)
+                } catch {
+                  flash('error', 'Неверный JSON')
+                }
+              }}
+            >
+              {importStatementMutation.isPending ? 'Импорт…' : 'Импортировать в учёт'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 1C */}
       {tab === '1c' && (
         <div className="space-y-6">
@@ -303,6 +400,13 @@ export default function BankPage() {
                 )}
               </div>
             </div>
+            <p className="mb-3 text-xs text-zinc-500">
+              Endpoint и токен:{' '}
+              <Link to="/settings" className="text-teal-400 underline-offset-2 hover:underline">
+                Настройки → Интеграции
+              </Link>
+              .
+            </p>
             {onecStatus?.mode === 'mock' && (
               <div className="bg-tertiary/10 border border-tertiary/20 text-on-surface text-xs px-4 py-3 rounded-xl">
                 Используется заглушка 1С. После лицензии замените <code className="bg-tertiary/10 px-1 rounded">ONEC_MOCK_URL</code>.

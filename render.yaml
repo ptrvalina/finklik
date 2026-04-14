@@ -27,3 +27,6 @@ services:
       # Опционально: массовое обновление 1С (POST /api/v1/onec/admin/bulk-connections)
       - key: PROVISION_ADMIN_TOKEN
         generateValue: true
+      # Webhook оркестратора ИБ (POST /api/v1/onec/webhooks/provision)
+      - key: PROVISION_WEBHOOK_SECRET
+        generateValue: true

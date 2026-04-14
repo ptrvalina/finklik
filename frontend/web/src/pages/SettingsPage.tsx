@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, submissionsApi, billingApi } from '../api/client'
+import { teamApi, regulatoryApi, submissionsApi, billingApi, onecApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
 
@@ -8,7 +8,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
 }
 
-type Tab = 'profile' | 'billing' | 'team' | 'regulatory' | 'submissions'
+type Tab = 'profile' | 'billing' | 'team' | 'regulatory' | 'submissions' | 'integrations'
 
 const AUTHORITY_COLORS: Record<string, string> = {
   fsszn: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -48,13 +48,14 @@ export default function SettingsPage() {
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
         <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Настройки</h1>
-        <p className="mt-1 text-sm text-zinc-500">Профиль, команда, обновления законодательства и подача отчётов</p>
+        <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции 1С, команда, законодательство и отчёты</p>
       </div>
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
         <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
           {([
             { key: 'profile' as Tab, label: 'Профиль', icon: 'business' },
+            { key: 'integrations' as Tab, label: 'Интеграции', icon: 'integration_instructions' },
             { key: 'billing' as Tab, label: 'Тариф', icon: 'payments' },
             { key: 'team' as Tab, label: 'Команда', icon: 'group' },
             { key: 'regulatory' as Tab, label: 'Законодательство', icon: 'gavel' },
@@ -75,6 +76,7 @@ export default function SettingsPage() {
       </div>
 
       {tab === 'profile' && <ProfileSection />}
+      {tab === 'integrations' && <IntegrationsSection />}
       {tab === 'billing' && <BillingSection />}
       {tab === 'team' && <TeamSection isOwner={user?.role === 'owner'} />}
       {tab === 'regulatory' && <RegulatorySection />}
@@ -113,6 +115,111 @@ function ProfileSection() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function IntegrationsSection() {
+  const qc = useQueryClient()
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [endpoint, setEndpoint] = useState('')
+  const [token, setToken] = useState('')
+  const [protocol, setProtocol] = useState('custom-http')
+
+  const { data: cfg, isLoading } = useQuery({
+    queryKey: ['onec-config'],
+    queryFn: () => onecApi.getConfig().then((r) => r.data as any),
+  })
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      onecApi.saveConfig({
+        endpoint: endpoint.trim(),
+        token: token.trim(),
+        protocol: protocol || 'custom-http',
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['onec-config'] })
+      setToken('')
+      setMessage({ type: 'success', text: 'Подключение 1С сохранено' })
+    },
+    onError: (e: any) =>
+      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения' }),
+  })
+
+  useEffect(() => {
+    if (cfg?.configured && cfg.endpoint) {
+      setEndpoint(String(cfg.endpoint))
+      setProtocol(cfg.protocol || 'custom-http')
+    }
+  }, [cfg?.configured, cfg?.endpoint, cfg?.protocol])
+
+  if (isLoading) {
+    return <p className="text-sm text-zinc-500">Загрузка…</p>
+  }
+
+  return (
+    <div className="space-y-4">
+      {message && (
+        <div
+          className={`rounded-xl px-4 py-3 text-sm font-bold ${
+            message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+      <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+        <h3 className="mb-1 text-sm font-bold text-on-surface">1С: HTTP-сервис</h3>
+        <p className="mb-4 text-[11px] text-on-surface-variant">
+          Endpoint и токен для обмена с конфигурацией 1С (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
+        </p>
+        {cfg?.configured && (
+          <p className="mb-3 text-xs text-teal-300/90">
+            Сейчас: подключено · токен: {cfg.token_masked || '***'}
+          </p>
+        )}
+        <div className="space-y-3">
+          <div>
+            <label className="label">Endpoint (URL)</label>
+            <input
+              className="input min-h-11 w-full rounded-xl font-mono text-sm"
+              value={endpoint}
+              onChange={(e) => setEndpoint(e.target.value)}
+              placeholder="https://1c.example.com/api/finklik/"
+            />
+          </div>
+          <div>
+            <label className="label">Токен (введите новый или оставьте пустым при первом сохранении из формы)</label>
+            <input
+              type="password"
+              className="input min-h-11 w-full rounded-xl"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder={cfg?.configured ? 'Оставьте пустым, чтобы не менять' : 'Bearer-токен'}
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <label className="label">Протокол</label>
+            <select className="input min-h-11 w-full rounded-xl" value={protocol} onChange={(e) => setProtocol(e.target.value)}>
+              <option value="custom-http">custom-http</option>
+              <option value="odata">odata</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            className="btn-primary min-h-11"
+            disabled={!endpoint.trim() || !token.trim() || saveMutation.isPending}
+            onClick={() => saveMutation.mutate()}
+          >
+            {saveMutation.isPending ? 'Сохраняем…' : 'Сохранить подключение'}
+          </button>
+        </div>
+      </div>
+      <p className="text-[11px] text-zinc-600">
+        Реестр контура и health: раздел «Контур 1С» в меню. Очередь синхронизации — «Синхронизация 1С».
+      </p>
     </div>
   )
 }

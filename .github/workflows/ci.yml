@@ -37,6 +37,13 @@ jobs:
           # С pytest.ini (asyncio_default_test_loop_scope) нужен pytest-asyncio >= 1.3
           pip install "pytest>=8,<9" "pytest-asyncio>=1.3.0" httpx aiosqlite
 
+      - name: Python and Alembic heads
+        run: |
+          python --version
+          python -m alembic heads
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+
       - name: Backend unit tests
         run: python -m pytest tests/unit/ -v --tb=short
 

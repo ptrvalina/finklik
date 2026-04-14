@@ -1,6 +1,9 @@
+import base64
+import io
 import re
 from urllib.parse import quote
 
+import qrcode
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import select
@@ -238,6 +241,45 @@ async def delete_primary_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Документ не найден")
     await db.delete(doc)
+
+
+@router.get("/{doc_id}/payment-qr")
+async def primary_document_payment_qr(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """QR и ссылка для оплаты счёта (спринт 9): демо-формат, без реального ЕРИП."""
+    result = await db.execute(
+        select(PrimaryDocument).where(
+            PrimaryDocument.id == doc_id,
+            PrimaryDocument.organization_id == current_user.organization_id,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="QR оплаты доступен только для счёта (invoice)")
+
+    pay_url = f"{settings.FRONTEND_URL.rstrip('/')}/documents?pay={doc.id}"
+    qr_text = (
+        f"FINKLIK|PAY|{doc.currency}|{float(doc.amount_total):.2f}|{doc.doc_number}|{doc.id}|{doc.organization_id}"
+    )
+    img = qrcode.make(qr_text, box_size=4)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return {
+        "doc_id": doc.id,
+        "doc_number": doc.doc_number,
+        "amount": float(doc.amount_total),
+        "currency": doc.currency,
+        "payment_url": pay_url,
+        "qr_text": qr_text,
+        "qr_png_base64": b64,
+        "scheme": "finklik-demo",
+    }
 
 
 @router.get("/{doc_id}/print")

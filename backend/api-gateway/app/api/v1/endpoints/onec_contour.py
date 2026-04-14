@@ -102,3 +102,34 @@ async def bulk_upsert_onec_connections(
         updated += 1
     await db.flush()
     return {"updated": updated, "errors": errors}
+
+
+class ProvisionWebhookPayload(BaseModel):
+    organization_id: str = Field(min_length=8, max_length=36)
+    external_tenant_id: str | None = Field(default=None, max_length=128)
+    status: str = Field(pattern="^(ready|error|provisioning|pending_provisioning|suspended)$")
+    error: str | None = Field(default=None, max_length=2000)
+
+
+@router.post("/webhooks/provision")
+async def provision_webhook(
+    body: ProvisionWebhookPayload,
+    x_secret: str | None = Header(None, alias="X-Provision-Webhook-Secret"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Колбэк внешнего оркестратора после создания ИБ / tenant (секрет в PROVISION_WEBHOOK_SECRET)."""
+    if not settings.PROVISION_WEBHOOK_SECRET or x_secret != settings.PROVISION_WEBHOOK_SECRET:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    org_r = await db.execute(select(Organization).where(Organization.id == body.organization_id))
+    org = org_r.scalar_one_or_none()
+    if not org:
+        raise HTTPException(status_code=400, detail="organization not found")
+
+    contour = await ensure_onec_contour_record(db, org)
+    if body.external_tenant_id is not None:
+        contour.external_tenant_id = body.external_tenant_id
+    contour.status = body.status
+    contour.last_error = (body.error[:2000] if body.error else None)
+    await db.flush()
+    return {"ok": True, "contour_key": contour.contour_key}

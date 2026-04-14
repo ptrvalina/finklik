@@ -118,9 +118,15 @@ export const bankApi = {
   getBalance: () => api.get('/bank/balance'),
   getStatements: (limit?: number) => api.get('/bank/statements', { params: { limit } }),
   createPayment: (data: any) => api.post('/bank/payment', data),
+  importStatement: (lines: any[]) => api.post('/bank/statement/import', { lines }),
+  reconciliation: (date_from: string, date_to: string) =>
+    api.get('/bank/reconciliation', { params: { date_from, date_to } }),
+  externalStatementPreview: () => api.get('/bank/external-statement'),
 }
 
 export const onecApi = {
+  getConfig: () => api.get('/onec/config'),
+  saveConfig: (data: { endpoint: string; token: string; protocol?: string }) => api.put('/onec/config', data),
   contourStatus: () => api.get('/onec/contour/status'),
   health: () => api.get('/onec/health'),
   lookupCounterparty: (unp: string) => api.get('/onec/counterparty/lookup', { params: { unp } }),
@@ -227,4 +233,5 @@ export const primaryDocumentsApi = {
   update: (id: string, data: any) => api.put(`/primary-documents/${id}`, data),
   remove: (id: string) => api.delete(`/primary-documents/${id}`),
   print: (id: string) => api.get(`/primary-documents/${id}/print`, { responseType: 'blob' }),
+  paymentQr: (id: string) => api.get(`/primary-documents/${id}/payment-qr`),
 }

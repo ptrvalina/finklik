@@ -5,7 +5,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     APP_NAME: str = "ФинКлик API"
-    APP_VERSION: str = "0.3.0"
+    APP_VERSION: str = "0.4.0"
     DEBUG: bool = False
     DATABASE_URL: str = "sqlite+aiosqlite:///./finklik.db"
     # Redis опционален: без валидного сервера кэш тихо отключается (см. redis_cache.py).
@@ -45,6 +45,8 @@ class Settings(BaseSettings):
 
     # Массовое обновление подключений 1С (спринт 7). Пусто = эндпоинт отключён.
     PROVISION_ADMIN_TOKEN: str = ""
+    # Webhook оркестратора ИБ 1С. Пусто = POST /onec/webhooks/provision отключён (404).
+    PROVISION_WEBHOOK_SECRET: str = ""
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
