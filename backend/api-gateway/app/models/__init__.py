@@ -7,11 +7,12 @@ from app.models.bank_account import BankAccount
 from app.models.regulatory import RegulatoryUpdate, RegulatoryNotification, ReportSubmission
 from app.models.subscription import Plan, Subscription
 from app.models.onec import OneCConnection, OneCAccount
+from app.models.onec_sync import OneCSyncJob
 
 __all__ = [
     "Organization", "User", "Invitation", "Transaction",
     "Employee", "SalaryRecord", "CalendarEvent", "AuditLog",
     "Counterparty", "ScannedDocument", "BankAccount",
     "RegulatoryUpdate", "RegulatoryNotification", "ReportSubmission",
-    "Plan", "Subscription", "OneCConnection", "OneCAccount",
+    "Plan", "Subscription", "OneCConnection", "OneCAccount", "OneCSyncJob",
 ]

@@ -1,4 +1,7 @@
-from urllib.parse import urljoin
+import asyncio
+import uuid
+from datetime import datetime
+from urllib.parse import urlencode, urljoin
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,13 +9,17 @@ from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
 from app.core.deps import get_current_user
 from app.models.counterparty import Counterparty
 from app.models.onec import OneCAccount, OneCConnection
+from app.models.onec_sync import OneCSyncJob
+from app.models.transaction import Transaction
 from app.models.user import User
 
 router = APIRouter(prefix="/onec", tags=["1c-integration"])
+SYNC_RETRY_DELAY_SEC = 2
+_sync_worker_lock = asyncio.Lock()
 
 MOCK_COUNTERPARTIES = {
     "100000001": {"name": "ОАО Минский молочный завод №1", "unp": "100000001", "address": "г. Минск, ул. Маяковского, 108", "type": "Юридическое лицо", "account": "BY20AKBB30120000000040000000"},
@@ -51,6 +58,11 @@ class OneCConfigPayload(BaseModel):
     protocol: str = Field(default="custom-http", max_length=20)
 
 
+class OneCSyncTransactionPayload(BaseModel):
+    transaction_id: str = Field(min_length=8, max_length=64)
+    max_attempts: int = Field(default=3, ge=1, le=10)
+
+
 async def _get_onec_connection(db: AsyncSession, organization_id: str | None) -> OneCConnection | None:
     if not organization_id:
         return None
@@ -73,6 +85,110 @@ async def _onec_get(connection: OneCConnection, path: str) -> object:
         response = await client.get(url, headers=headers)
     response.raise_for_status()
     return response.json()
+
+
+async def _onec_post(connection: OneCConnection, path: str, payload: dict, idempotency_key: str) -> object:
+    url = urljoin(connection.endpoint.rstrip("/") + "/", path.lstrip("/"))
+    headers = {
+        "Authorization": f"Bearer {connection.token}",
+        "Idempotency-Key": idempotency_key,
+    }
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    return response.json()
+
+
+def _extract_external_id(payload: object) -> str:
+    if isinstance(payload, dict):
+        for field in ("onec_id", "external_id", "id"):
+            value = payload.get(field)
+            if value:
+                return str(value)
+    return str(uuid.uuid4())[:8]
+
+
+def _build_tx_payload(tx: Transaction) -> dict:
+    return {
+        "transaction_id": tx.id,
+        "type": tx.type,
+        "amount": float(tx.amount),
+        "vat_amount": float(tx.vat_amount),
+        "currency": tx.currency,
+        "counterparty_id": tx.counterparty_id,
+        "category": tx.category,
+        "description": tx.description,
+        "transaction_date": tx.transaction_date.isoformat(),
+    }
+
+
+async def _process_onec_sync_jobs() -> None:
+    async with _sync_worker_lock:
+        while True:
+            async with AsyncSessionLocal() as session:
+                job_result = await session.execute(
+                    select(OneCSyncJob)
+                    .where(OneCSyncJob.status.in_(["pending", "retry"]))
+                    .order_by(OneCSyncJob.created_at)
+                    .limit(1)
+                )
+                job = job_result.scalar_one_or_none()
+                if not job:
+                    return
+
+                job.status = "running"
+                job.started_at = datetime.utcnow()
+                job.attempts += 1
+                await session.commit()
+
+                tx_result = await session.execute(
+                    select(Transaction).where(
+                        Transaction.id == job.transaction_id,
+                        Transaction.organization_id == job.organization_id,
+                    )
+                )
+                tx = tx_result.scalar_one_or_none()
+                if not tx:
+                    job.status = "failed"
+                    job.last_error = "Транзакция не найдена"
+                    job.finished_at = datetime.utcnow()
+                    await session.commit()
+                    continue
+
+                conn_result = await session.execute(
+                    select(OneCConnection).where(OneCConnection.organization_id == job.organization_id)
+                )
+                connection = conn_result.scalar_one_or_none()
+
+                try:
+                    if connection:
+                        remote_payload = await _onec_post(
+                            connection=connection,
+                            path="/transactions/sync",
+                            payload=_build_tx_payload(tx),
+                            idempotency_key=job.idempotency_key,
+                        )
+                        external_id = _extract_external_id(remote_payload)
+                    else:
+                        external_id = str(uuid.uuid4())[:8]
+
+                    tx.status = "synced"
+                    job.status = "success"
+                    job.external_id = external_id
+                    job.last_error = None
+                    job.finished_at = datetime.utcnow()
+                    await session.commit()
+                except Exception as exc:
+                    job.last_error = str(exc)
+                    if job.attempts >= job.max_attempts:
+                        job.status = "failed"
+                        job.finished_at = datetime.utcnow()
+                    else:
+                        job.status = "retry"
+                    await session.commit()
+
+            if job.status == "retry":
+                await asyncio.sleep(SYNC_RETRY_DELAY_SEC)
 
 
 def _extract_items(payload: object, key: str) -> list[dict]:
@@ -301,7 +417,8 @@ async def search_counterparty(
     connection = await _get_onec_connection(db, current_user.organization_id)
     if connection:
         try:
-            payload = await _onec_get(connection, f"/counterparties/search?q={q}")
+            query = urlencode({"q": q})
+            payload = await _onec_get(connection, f"/counterparties/search?{query}")
             items = _extract_items(payload, "results")
             return {"results": items, "total": len(items)}
         except httpx.HTTPError:
@@ -341,16 +458,12 @@ async def get_chart_of_accounts(
 
 @router.post("/sync-transaction")
 async def sync_transaction_to_1c(
-    body: dict,
+    body: OneCSyncTransactionPayload,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Sync a transaction to 1C (mock — marks as synced in DB)."""
-    tx_id = body.get("transaction_id")
-    if not tx_id:
-        raise HTTPException(400, "transaction_id is required")
-
-    from app.models.transaction import Transaction
+    """Create async sync job for a transaction and trigger worker."""
+    tx_id = body.transaction_id
 
     result = await db.execute(
         select(Transaction).where(
@@ -362,13 +475,103 @@ async def sync_transaction_to_1c(
     if not tx:
         raise HTTPException(404, "Транзакция не найдена")
 
-    tx.status = "synced"
+    existing_job_result = await db.execute(
+        select(OneCSyncJob).where(
+            OneCSyncJob.organization_id == current_user.organization_id,
+            OneCSyncJob.transaction_id == tx_id,
+            OneCSyncJob.status.in_(["pending", "running", "retry"]),
+        )
+    )
+    existing_job = existing_job_result.scalar_one_or_none()
+    if existing_job:
+        return {
+            "queued": True,
+            "job_id": existing_job.id,
+            "transaction_id": tx_id,
+            "status": existing_job.status,
+        }
+
+    idempotency_key = f"{current_user.organization_id}:{tx_id}"
+    job = OneCSyncJob(
+        organization_id=current_user.organization_id,
+        transaction_id=tx_id,
+        max_attempts=body.max_attempts,
+        idempotency_key=idempotency_key,
+        status="pending",
+    )
+    db.add(job)
     await db.flush()
 
-    import uuid
+    asyncio.create_task(_process_onec_sync_jobs())
     return {
-        "synced": True,
-        "onec_id": str(uuid.uuid4())[:8],
+        "queued": True,
+        "job_id": job.id,
         "transaction_id": tx_id,
-        "status": "synced",
+        "status": job.status,
+    }
+
+
+@router.get("/sync-jobs")
+async def list_sync_jobs(
+    status: str | None = Query(None, description="pending|running|retry|success|failed"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    filters = [OneCSyncJob.organization_id == current_user.organization_id]
+    if status:
+        filters.append(OneCSyncJob.status == status)
+    result = await db.execute(
+        select(OneCSyncJob).where(*filters).order_by(OneCSyncJob.created_at.desc()).limit(100)
+    )
+    jobs = result.scalars().all()
+    return {
+        "jobs": [
+            {
+                "id": job.id,
+                "transaction_id": job.transaction_id,
+                "status": job.status,
+                "attempts": job.attempts,
+                "max_attempts": job.max_attempts,
+                "last_error": job.last_error,
+                "external_id": job.external_id,
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+            }
+            for job in jobs
+        ]
+    }
+
+
+@router.post("/sync-jobs/{job_id}/retry")
+async def retry_sync_job(
+    job_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(OneCSyncJob).where(
+            OneCSyncJob.id == job_id,
+            OneCSyncJob.organization_id == current_user.organization_id,
+        )
+    )
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Sync job не найден")
+    if job.status not in ("failed", "success"):
+        raise HTTPException(status_code=409, detail="Retry доступен только для завершённых задач")
+
+    job.status = "pending"
+    job.last_error = None
+    job.finished_at = None
+    job.started_at = None
+    job.external_id = None
+    job.attempts = 0
+    await db.flush()
+
+    asyncio.create_task(_process_onec_sync_jobs())
+    return {
+        "queued": True,
+        "job_id": job.id,
+        "transaction_id": job.transaction_id,
+        "status": job.status,
     }

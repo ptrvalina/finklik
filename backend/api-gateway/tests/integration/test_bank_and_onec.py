@@ -1,4 +1,6 @@
 """Integration tests for bank and 1C mock endpoints."""
+import asyncio
+
 import pytest
 from httpx import AsyncClient
 
@@ -138,3 +140,44 @@ async def test_onec_sync_accounts_mock(client: AsyncClient, auth_headers: dict):
     assert resp.status_code == 200
     data = resp.json()
     assert data["imported"] > 5
+
+
+@pytest.mark.asyncio
+async def test_onec_sync_transaction_job_flow(client: AsyncClient, auth_headers: dict):
+    tx_resp = await client.post(
+        "/api/v1/transactions",
+        json={
+            "type": "income",
+            "amount": 120.50,
+            "vat_amount": 20.08,
+            "currency": "BYN",
+            "category": "sales",
+            "description": "Тест синка в 1С",
+            "transaction_date": "2026-04-14",
+        },
+        headers=auth_headers,
+    )
+    assert tx_resp.status_code == 201
+    tx_id = tx_resp.json()["id"]
+
+    queue_resp = await client.post(
+        "/api/v1/onec/sync-transaction",
+        json={"transaction_id": tx_id, "max_attempts": 2},
+        headers=auth_headers,
+    )
+    assert queue_resp.status_code == 200
+    queued = queue_resp.json()
+    assert queued["queued"] is True
+    assert queued["transaction_id"] == tx_id
+
+    for _ in range(10):
+        jobs_resp = await client.get("/api/v1/onec/sync-jobs", headers=auth_headers)
+        assert jobs_resp.status_code == 200
+        jobs = jobs_resp.json()["jobs"]
+        target = next((job for job in jobs if job["transaction_id"] == tx_id), None)
+        assert target is not None
+        if target["status"] in ("success", "failed"):
+            break
+        await asyncio.sleep(0.05)
+
+    assert target["status"] == "success"
