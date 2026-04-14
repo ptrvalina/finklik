@@ -7,6 +7,20 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
+class PrimaryDocumentSequence(Base):
+    """Сквозная нумерация первичных документов по организации, типу и календарному году."""
+
+    __tablename__ = "primary_document_sequences"
+    __table_args__ = (UniqueConstraint("organization_id", "doc_type", "year", name="uq_primary_doc_seq_org_type_year"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    doc_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    last_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ScannedDocument(Base):
     __tablename__ = "scanned_documents"
 
@@ -46,6 +60,9 @@ class PrimaryDocument(Base):
 
     counterparty_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("counterparties.id"), nullable=True)
     transaction_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("transactions.id"), nullable=True)
+    related_document_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("primary_documents.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

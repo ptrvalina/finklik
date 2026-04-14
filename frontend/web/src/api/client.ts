@@ -220,8 +220,10 @@ export const documentsApi = {
 
 export const primaryDocumentsApi = {
   list: (params?: { doc_type?: string; status?: string }) => api.get('/primary-documents', { params }),
+  nextNumber: (doc_type: string) =>
+    api.get<{ doc_type: string; suggested_number: string }>('/primary-documents/next-number', { params: { doc_type } }),
   create: (data: any) => api.post('/primary-documents', data),
   update: (id: string, data: any) => api.put(`/primary-documents/${id}`, data),
   remove: (id: string) => api.delete(`/primary-documents/${id}`),
-  print: (id: string) => api.get(`/primary-documents/${id}/print`),
+  print: (id: string) => api.get(`/primary-documents/${id}/print`, { responseType: 'blob' }),
 }

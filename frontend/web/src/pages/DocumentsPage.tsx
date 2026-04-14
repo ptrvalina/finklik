@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { documentsApi, importApi, primaryDocumentsApi } from '../api/client'
+import { counterpartiesApi, documentsApi, importApi, primaryDocumentsApi } from '../api/client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -112,6 +112,7 @@ export default function DocumentsPage() {
   const [csvResult, setCsvResult] = useState<any>(null)
   const [docTypeFilter, setDocTypeFilter] = useState('')
   const [docStatusFilter, setDocStatusFilter] = useState('')
+  const [useAutoNumber, setUseAutoNumber] = useState(true)
   const [docForm, setDocForm] = useState({
     doc_type: 'invoice',
     doc_number: '',
@@ -122,6 +123,8 @@ export default function DocumentsPage() {
     amount_total: '',
     title: '',
     description: '',
+    counterparty_id: '',
+    related_document_id: '',
   })
 
   const { data: primaryDocsData, isLoading: primaryDocsLoading } = useQuery({
@@ -135,12 +138,42 @@ export default function DocumentsPage() {
         .then((r) => r.data),
   })
 
+  const { data: counterpartiesData } = useQuery({
+    queryKey: ['counterparties', 'short'],
+    queryFn: () => counterpartiesApi.list().then((r) => r.data as any[]),
+  })
+
+  const { data: nextNumPreview } = useQuery({
+    queryKey: ['primary-documents', 'next-number', docForm.doc_type],
+    queryFn: () => primaryDocumentsApi.nextNumber(docForm.doc_type).then((r) => r.data),
+    enabled: useAutoNumber,
+  })
+
+  const { data: invoiceListForLink } = useQuery({
+    queryKey: ['primary-documents', 'invoices-for-link'],
+    queryFn: () => primaryDocumentsApi.list({ doc_type: 'invoice' }).then((r) => r.data as any[]),
+  })
+
+  const invoiceOptions = Array.isArray(invoiceListForLink) ? invoiceListForLink : []
+
   const createPrimaryDocMutation = useMutation({
     mutationFn: () =>
       primaryDocumentsApi.create({
-        ...docForm,
+        doc_type: docForm.doc_type,
+        status: docForm.status,
+        issue_date: docForm.issue_date,
         due_date: docForm.due_date || null,
+        currency: docForm.currency,
         amount_total: Number(docForm.amount_total || 0),
+        title: docForm.title || null,
+        description: docForm.description || null,
+        use_auto_number: useAutoNumber,
+        ...(!useAutoNumber ? { doc_number: docForm.doc_number.trim() } : {}),
+        counterparty_id: docForm.counterparty_id || null,
+        related_document_id:
+          docForm.doc_type === 'act' || docForm.doc_type === 'waybill'
+            ? docForm.related_document_id || null
+            : null,
       }),
     onSuccess: () => {
       setDocForm({
@@ -153,8 +186,12 @@ export default function DocumentsPage() {
         amount_total: '',
         title: '',
         description: '',
+        counterparty_id: '',
+        related_document_id: '',
       })
       qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      qc.invalidateQueries({ queryKey: ['primary-documents', 'next-number'] })
+      qc.invalidateQueries({ queryKey: ['primary-documents', 'invoices-for-link'] })
       setMessage({ type: 'success', text: 'Документ создан' })
     },
     onError: (e: any) => {
@@ -172,15 +209,16 @@ export default function DocumentsPage() {
   })
 
   const printPrimaryDocMutation = useMutation({
-    mutationFn: (id: string) => primaryDocumentsApi.print(id),
-    onSuccess: (resp) => {
-      const doc = resp.data?.document
-      if (!doc) return
-      const file = new Blob([JSON.stringify(resp.data, null, 2)], { type: 'application/json;charset=utf-8' })
-      saveBlob(file, `${doc.type}_${doc.number}_print_preview.json`)
-      setMessage({ type: 'success', text: `Печатная форма подготовлена: ${doc.number}` })
+    mutationFn: async (row: { id: string; doc_number: string; doc_type: string }) => {
+      const r = await primaryDocumentsApi.print(row.id)
+      return { blob: r.data as Blob, ...row }
     },
-    onError: () => setMessage({ type: 'error', text: 'Ошибка формирования печатной формы' }),
+    onSuccess: ({ blob, doc_number, doc_type }) => {
+      const safe = `${doc_type}_${doc_number}`.replace(/[^\w.\-А-Яа-яЁё]/g, '_')
+      saveBlob(blob, `${safe.slice(0, 120)}.pdf`)
+      setMessage({ type: 'success', text: `PDF скачан: ${doc_number}` })
+    },
+    onError: () => setMessage({ type: 'error', text: 'Ошибка формирования PDF' }),
   })
 
   async function handleCsvPreview(file: File) {
@@ -352,17 +390,43 @@ export default function DocumentsPage() {
       </div>
 
       <h2 className="font-headline text-lg font-bold text-white sm:text-xl">Первичные документы</h2>
+      <p className="text-xs text-zinc-500 max-w-3xl">
+        Сценарий: счёт (invoice) → оплата (привяжите транзакцию позже в API / следующих спринтах) → акт или накладная с привязкой к счёту.
+        Печать — PDF с реквизитами ИП/ООО из организации.
+      </p>
 
       <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
         <h3 className="text-sm font-bold text-on-surface">Создать документ</h3>
-        <p className="text-[10px] text-on-surface-variant mb-4">Invoice / Act / Waybill с нумерацией по организации</p>
+        <p className="text-[10px] text-on-surface-variant mb-4">
+          Нумерация СЧ/АКТ/ТН по году; автонумерация или свой номер. Для акта и накладной можно выбрать счёт-основание.
+        </p>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-on-surface-variant">
+            <input
+              type="checkbox"
+              className="rounded border-outline-variant"
+              checked={useAutoNumber}
+              onChange={(e) => setUseAutoNumber(e.target.checked)}
+            />
+            Автонумерация
+          </label>
+          {useAutoNumber && nextNumPreview?.suggested_number && (
+            <span className="text-[11px] text-teal-300/90">Следующий: {nextNumPreview.suggested_number}</span>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <select className="input" value={docForm.doc_type} onChange={(e) => setDocForm({ ...docForm, doc_type: e.target.value })}>
+          <select className="input" value={docForm.doc_type} onChange={(e) => setDocForm({ ...docForm, doc_type: e.target.value, related_document_id: '' })}>
             <option value="invoice">Invoice (Счёт)</option>
             <option value="act">Act (Акт)</option>
             <option value="waybill">Waybill (Накладная)</option>
           </select>
-          <input className="input" placeholder="Номер документа" value={docForm.doc_number} onChange={(e) => setDocForm({ ...docForm, doc_number: e.target.value })} />
+          <input
+            className="input"
+            placeholder="Номер документа"
+            disabled={useAutoNumber}
+            value={docForm.doc_number}
+            onChange={(e) => setDocForm({ ...docForm, doc_number: e.target.value })}
+          />
           <select className="input" value={docForm.status} onChange={(e) => setDocForm({ ...docForm, status: e.target.value })}>
             <option value="draft">Черновик</option>
             <option value="issued">Выставлен</option>
@@ -373,13 +437,43 @@ export default function DocumentsPage() {
           <input type="date" className="input" value={docForm.due_date} onChange={(e) => setDocForm({ ...docForm, due_date: e.target.value })} />
           <input className="input" placeholder="BYN" value={docForm.currency} onChange={(e) => setDocForm({ ...docForm, currency: e.target.value.toUpperCase() })} />
           <input type="number" step="0.01" min="0" className="input" placeholder="Сумма" value={docForm.amount_total} onChange={(e) => setDocForm({ ...docForm, amount_total: e.target.value })} />
+          <select
+            className="input sm:col-span-2"
+            value={docForm.counterparty_id}
+            onChange={(e) => setDocForm({ ...docForm, counterparty_id: e.target.value })}
+          >
+            <option value="">Контрагент (необязательно)</option>
+            {(Array.isArray(counterpartiesData) ? counterpartiesData : []).map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.name} (УНП {c.unp})
+              </option>
+            ))}
+          </select>
+          {(docForm.doc_type === 'act' || docForm.doc_type === 'waybill') && (
+            <select
+              className="input sm:col-span-3"
+              value={docForm.related_document_id}
+              onChange={(e) => setDocForm({ ...docForm, related_document_id: e.target.value })}
+            >
+              <option value="">Счёт-основание (invoice)</option>
+              {invoiceOptions.map((inv: any) => (
+                <option key={inv.id} value={inv.id}>
+                  {inv.doc_number} от {inv.issue_date} — {Number(inv.amount_total).toFixed(2)} {inv.currency}
+                </option>
+              ))}
+            </select>
+          )}
           <input className="input sm:col-span-2" placeholder="Заголовок" value={docForm.title} onChange={(e) => setDocForm({ ...docForm, title: e.target.value })} />
           <input className="input sm:col-span-3" placeholder="Описание" value={docForm.description} onChange={(e) => setDocForm({ ...docForm, description: e.target.value })} />
         </div>
         <button
           type="button"
           className="btn-primary mt-4 min-h-11"
-          disabled={!docForm.doc_number || !docForm.amount_total || createPrimaryDocMutation.isPending}
+          disabled={
+            (!useAutoNumber && !docForm.doc_number.trim()) ||
+            !docForm.amount_total ||
+            createPrimaryDocMutation.isPending
+          }
           onClick={() => createPrimaryDocMutation.mutate()}
         >
           <Icon name="add" className="text-lg" />
@@ -440,7 +534,13 @@ export default function DocumentsPage() {
                           type="button"
                           className="btn-ghost !px-2 !py-1 !text-xs"
                           disabled={printPrimaryDocMutation.isPending}
-                          onClick={() => printPrimaryDocMutation.mutate(doc.id)}
+                          onClick={() =>
+                            printPrimaryDocMutation.mutate({
+                              id: doc.id,
+                              doc_number: doc.doc_number,
+                              doc_type: doc.doc_type,
+                            })
+                          }
                         >
                           <Icon name="print" className="text-sm" />
                         </button>

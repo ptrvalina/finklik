@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 DOC_TYPES = ("invoice", "act", "waybill")
@@ -10,10 +10,12 @@ DOC_STATUSES = ("draft", "issued", "paid", "cancelled")
 
 class PrimaryDocumentCreate(BaseModel):
     doc_type: str = Field(pattern="^(invoice|act|waybill)$")
-    doc_number: str = Field(min_length=1, max_length=40)
+    doc_number: str | None = Field(default=None, max_length=40)
+    use_auto_number: bool = False
     status: str = Field(default="draft", pattern="^(draft|issued|paid|cancelled)$")
     counterparty_id: str | None = None
     transaction_id: str | None = None
+    related_document_id: str | None = None
     title: str | None = Field(default=None, max_length=255)
     description: str | None = None
     issue_date: date
@@ -21,12 +23,20 @@ class PrimaryDocumentCreate(BaseModel):
     currency: str = Field(default="BYN", min_length=3, max_length=3)
     amount_total: Decimal = Field(ge=0)
 
+    @model_validator(mode="after")
+    def require_number_or_auto(self):
+        if not self.use_auto_number:
+            if not self.doc_number or not str(self.doc_number).strip():
+                raise ValueError("Укажите номер документа или включите автонумерацию")
+        return self
+
 
 class PrimaryDocumentUpdate(BaseModel):
     doc_number: str | None = Field(default=None, min_length=1, max_length=40)
     status: str | None = Field(default=None, pattern="^(draft|issued|paid|cancelled)$")
     counterparty_id: str | None = None
     transaction_id: str | None = None
+    related_document_id: str | None = None
     title: str | None = Field(default=None, max_length=255)
     description: str | None = None
     issue_date: date | None = None
@@ -42,6 +52,7 @@ class PrimaryDocumentResponse(BaseModel):
     status: str
     counterparty_id: str | None
     transaction_id: str | None
+    related_document_id: str | None
     title: str | None
     description: str | None
     issue_date: date
