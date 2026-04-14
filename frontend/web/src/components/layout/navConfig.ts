@@ -14,7 +14,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/calendar', label: 'Календарь', icon: 'calendar_today', description: 'Сроки и события' },
   { to: '/employees', label: 'Сотрудники', icon: 'group', description: 'Кадры и зарплата' },
   { to: '/taxes', label: 'Налоги', icon: 'account_balance', description: 'УСН, взносы' },
-  { to: '/documents', label: 'Документы', icon: 'description', description: 'Экспорт и импорт' },
+  { to: '/documents', label: 'Документы', icon: 'description', description: 'Первичка и экспорт отчётов' },
   { to: '/bank', label: 'Банк', icon: 'credit_card', description: 'Счета и платежи' },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', description: 'Клиенты и поставщики' },
   { to: '/onec-sync', label: 'Синхронизация 1С', icon: 'sync_alt', description: 'Очередь синхронизации и ошибки' },
