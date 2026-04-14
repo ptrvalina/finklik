@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = "gpt-4o-mini"
 
+    # Массовое обновление подключений 1С (спринт 7). Пусто = эндпоинт отключён.
+    PROVISION_ADMIN_TOKEN: str = ""
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def database_url_use_asyncpg(cls, v: object) -> object:

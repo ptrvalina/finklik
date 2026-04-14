@@ -24,3 +24,6 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET_KEY
         generateValue: true
+      # Опционально: массовое обновление 1С (POST /api/v1/onec/admin/bulk-connections)
+      - key: PROVISION_ADMIN_TOKEN
+        generateValue: true

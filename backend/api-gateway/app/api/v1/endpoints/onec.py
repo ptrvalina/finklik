@@ -180,8 +180,13 @@ async def onec_health(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    from app.services.onec_contour_service import update_contour_health_snapshot
+
     connection = await _get_onec_connection(db, current_user.organization_id)
     if not connection:
+        await update_contour_health_snapshot(
+            db, current_user.organization_id, ok=True, error=None
+        )
         return {
             "connected": True,
             "platform": "1С:Предприятие 8.3 (mock)",
@@ -193,6 +198,9 @@ async def onec_health(
         payload = await _onec_get(connection, "/health")
         if not isinstance(payload, dict):
             payload = {}
+        await update_contour_health_snapshot(
+            db, current_user.organization_id, ok=True, error=None
+        )
         return {
             "connected": True,
             "mode": "remote",
@@ -201,6 +209,9 @@ async def onec_health(
             "infobase": payload.get("infobase", "unknown"),
         }
     except httpx.HTTPError as exc:
+        await update_contour_health_snapshot(
+            db, current_user.organization_id, ok=False, error=str(exc)
+        )
         return {
             "connected": False,
             "mode": "remote",

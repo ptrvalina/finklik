@@ -8,6 +8,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 from app.core.deps import get_current_user
 from app.core.config import settings
 from app.models.user import User, Organization
+from app.services.onec_contour_service import ensure_onec_contour_record
 from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, TokenResponse, UserResponse
 from app.security import check_brute_force, record_failed_login, record_successful_login, audit_log
 
@@ -32,6 +33,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     )
     db.add(org)
     await db.flush()
+    await ensure_onec_contour_record(db, org)
 
     user = User(
         email=body.email,

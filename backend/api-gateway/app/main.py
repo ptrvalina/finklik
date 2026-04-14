@@ -21,6 +21,7 @@ from app.api.v1.endpoints.counterparties import router as cp_router
 from app.api.v1.endpoints.scanner import router as scanner_router
 from app.api.v1.endpoints.bank import router as bank_router
 from app.api.v1.endpoints.onec import router as onec_router
+from app.api.v1.endpoints.onec_contour import router as onec_contour_router
 from app.api.v1.endpoints.reports import router as reports_router
 from app.api.v1.endpoints.import_data import router as import_router
 from app.api.v1.endpoints.demo import router as demo_router
@@ -162,6 +163,7 @@ app.include_router(cp_router, prefix="/api/v1")
 app.include_router(scanner_router, prefix="/api/v1")
 app.include_router(bank_router, prefix="/api/v1")
 app.include_router(onec_router, prefix="/api/v1")
+app.include_router(onec_contour_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(import_router, prefix="/api/v1")
 app.include_router(demo_router, prefix="/api/v1")
