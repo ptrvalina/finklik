@@ -1,9 +1,15 @@
+from urllib.parse import urljoin
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.models.counterparty import Counterparty
+from app.models.onec import OneCAccount, OneCConnection
 from app.models.user import User
 
 router = APIRouter(prefix="/onec", tags=["1c-integration"])
@@ -39,21 +45,247 @@ CHART_OF_ACCOUNTS = [
 ]
 
 
-@router.get("/health")
-async def onec_health(current_user: User = Depends(get_current_user)):
+class OneCConfigPayload(BaseModel):
+    endpoint: HttpUrl
+    token: str = Field(min_length=8, max_length=4096)
+    protocol: str = Field(default="custom-http", max_length=20)
+
+
+async def _get_onec_connection(db: AsyncSession, organization_id: str | None) -> OneCConnection | None:
+    if not organization_id:
+        return None
+    result = await db.execute(
+        select(OneCConnection).where(OneCConnection.organization_id == organization_id)
+    )
+    return result.scalar_one_or_none()
+
+
+def _token_mask(token: str) -> str:
+    if len(token) <= 6:
+        return "***"
+    return f"{token[:3]}***{token[-3:]}"
+
+
+async def _onec_get(connection: OneCConnection, path: str) -> object:
+    url = urljoin(connection.endpoint.rstrip("/") + "/", path.lstrip("/"))
+    headers = {"Authorization": f"Bearer {connection.token}"}
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+
+def _extract_items(payload: object, key: str) -> list[dict]:
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        direct = payload.get(key)
+        if isinstance(direct, list):
+            return [item for item in direct if isinstance(item, dict)]
+        odata = payload.get("value")
+        if isinstance(odata, list):
+            return [item for item in odata if isinstance(item, dict)]
+    return []
+
+
+@router.get("/config")
+async def get_onec_config(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if not connection:
+        return {"configured": False}
     return {
-        "connected": True,
-        "platform": "1С:Предприятие 8.3 (mock)",
-        "infobase": "FinKlik_Demo",
-        "mode": "mock",
+        "configured": True,
+        "endpoint": connection.endpoint,
+        "protocol": connection.protocol,
+        "token_masked": _token_mask(connection.token),
     }
+
+
+@router.put("/config")
+async def upsert_onec_config(
+    body: OneCConfigPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
+
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if connection:
+        connection.endpoint = str(body.endpoint)
+        connection.token = body.token
+        connection.protocol = body.protocol
+    else:
+        connection = OneCConnection(
+            organization_id=current_user.organization_id,
+            endpoint=str(body.endpoint),
+            token=body.token,
+            protocol=body.protocol,
+        )
+        db.add(connection)
+    await db.flush()
+    return {"saved": True}
+
+
+@router.get("/health")
+async def onec_health(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if not connection:
+        return {
+            "connected": True,
+            "platform": "1С:Предприятие 8.3 (mock)",
+            "infobase": "FinKlik_Demo",
+            "mode": "mock",
+        }
+
+    try:
+        payload = await _onec_get(connection, "/health")
+        if not isinstance(payload, dict):
+            payload = {}
+        return {
+            "connected": True,
+            "mode": "remote",
+            "endpoint": connection.endpoint,
+            "platform": payload.get("platform", "1С"),
+            "infobase": payload.get("infobase", "unknown"),
+        }
+    except httpx.HTTPError as exc:
+        return {
+            "connected": False,
+            "mode": "remote",
+            "endpoint": connection.endpoint,
+            "error": str(exc),
+        }
+
+
+@router.post("/counterparty/sync")
+async def sync_counterparties_from_onec(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
+
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if connection:
+        try:
+            payload = await _onec_get(connection, "/counterparties")
+            items = _extract_items(payload, "counterparties")
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Ошибка синхронизации с 1С: {exc}") from exc
+    else:
+        items = list(MOCK_COUNTERPARTIES.values())
+
+    synced = 0
+    created = 0
+    updated = 0
+    for item in items:
+        unp = str(item.get("unp", "")).strip()
+        name = str(item.get("name", "")).strip()
+        if not unp or not name:
+            continue
+
+        result = await db.execute(
+            select(Counterparty).where(
+                Counterparty.organization_id == current_user.organization_id,
+                Counterparty.unp == unp,
+            )
+        )
+        cp = result.scalar_one_or_none()
+        if cp:
+            cp.name = name
+            cp.address = item.get("address")
+            cp.bank_account = item.get("account")
+            updated += 1
+        else:
+            db.add(
+                Counterparty(
+                    organization_id=current_user.organization_id,
+                    name=name,
+                    unp=unp,
+                    address=item.get("address"),
+                    bank_account=item.get("account"),
+                )
+            )
+            created += 1
+        synced += 1
+
+    await db.flush()
+    return {"synced": synced, "created": created, "updated": updated}
+
+
+@router.post("/accounts/sync")
+async def sync_chart_of_accounts(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
+
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if connection:
+        try:
+            payload = await _onec_get(connection, "/accounts")
+            accounts = _extract_items(payload, "accounts")
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Ошибка загрузки плана счетов: {exc}") from exc
+    else:
+        accounts = CHART_OF_ACCOUNTS
+
+    imported = 0
+    for account in accounts:
+        code = str(account.get("code", "")).strip()
+        name = str(account.get("name", "")).strip()
+        if not code or not name:
+            continue
+        result = await db.execute(
+            select(OneCAccount).where(
+                OneCAccount.organization_id == current_user.organization_id,
+                OneCAccount.code == code,
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            existing.name = name
+            existing.account_type = account.get("type")
+        else:
+            db.add(
+                OneCAccount(
+                    organization_id=current_user.organization_id,
+                    code=code,
+                    name=name,
+                    account_type=account.get("type"),
+                )
+            )
+        imported += 1
+
+    await db.flush()
+    return {"imported": imported}
 
 
 @router.get("/counterparty/lookup")
 async def lookup_counterparty(
     unp: str = Query(..., min_length=9, max_length=9),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if connection:
+        try:
+            payload = await _onec_get(connection, f"/counterparties/{unp}")
+            if isinstance(payload, dict) and payload.get("found") is False:
+                return {"found": False, "unp": unp, "message": "Контрагент не найден в 1С"}
+            if isinstance(payload, dict):
+                return {"found": True, **payload}
+        except httpx.HTTPError:
+            pass
+
     cp = MOCK_COUNTERPARTIES.get(unp)
     if cp:
         return {"found": True, **cp}
@@ -64,8 +296,17 @@ async def lookup_counterparty(
 async def search_counterparty(
     q: str = Query(..., min_length=2),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Search counterparties by name in the mock 1C database."""
+    connection = await _get_onec_connection(db, current_user.organization_id)
+    if connection:
+        try:
+            payload = await _onec_get(connection, f"/counterparties/search?q={q}")
+            items = _extract_items(payload, "results")
+            return {"results": items, "total": len(items)}
+        except httpx.HTTPError:
+            pass
+
     q_lower = q.lower()
     results = [
         cp for cp in MOCK_COUNTERPARTIES.values()
@@ -75,7 +316,26 @@ async def search_counterparty(
 
 
 @router.get("/accounts")
-async def get_chart_of_accounts(current_user: User = Depends(get_current_user)):
+async def get_chart_of_accounts(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.organization_id:
+        return {"accounts": CHART_OF_ACCOUNTS}
+
+    result = await db.execute(
+        select(OneCAccount).where(
+            OneCAccount.organization_id == current_user.organization_id
+        ).order_by(OneCAccount.code)
+    )
+    accounts = result.scalars().all()
+    if accounts:
+        return {
+            "accounts": [
+                {"code": a.code, "name": a.name, "type": a.account_type}
+                for a in accounts
+            ]
+        }
     return {"accounts": CHART_OF_ACCOUNTS}
 
 

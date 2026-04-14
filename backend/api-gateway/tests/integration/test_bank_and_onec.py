@@ -94,3 +94,47 @@ async def test_onec_chart_of_accounts(client: AsyncClient, auth_headers: dict):
     data = resp.json()
     assert "accounts" in data
     assert len(data["accounts"]) > 5
+
+
+@pytest.mark.asyncio
+async def test_onec_config_upsert(client: AsyncClient, auth_headers: dict):
+    resp = await client.put(
+        "/api/v1/onec/config",
+        json={
+            "endpoint": "https://onec.example.com",
+            "token": "super_secure_token_123",
+            "protocol": "odata",
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["saved"] is True
+
+    get_resp = await client.get("/api/v1/onec/config", headers=auth_headers)
+    assert get_resp.status_code == 200
+    cfg = get_resp.json()
+    assert cfg["configured"] is True
+    assert cfg["protocol"] == "odata"
+    assert cfg["endpoint"] == "https://onec.example.com/"
+
+
+@pytest.mark.asyncio
+async def test_onec_sync_counterparties_mock(client: AsyncClient, auth_headers: dict):
+    resp = await client.post("/api/v1/onec/counterparty/sync", headers=auth_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["synced"] >= 10
+    assert data["created"] >= 10
+
+    list_resp = await client.get("/api/v1/counterparties", headers=auth_headers)
+    assert list_resp.status_code == 200
+    cps = list_resp.json()
+    assert len(cps) >= 10
+
+
+@pytest.mark.asyncio
+async def test_onec_sync_accounts_mock(client: AsyncClient, auth_headers: dict):
+    resp = await client.post("/api/v1/onec/accounts/sync", headers=auth_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["imported"] > 5
