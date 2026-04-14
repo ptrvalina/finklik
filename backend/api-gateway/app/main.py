@@ -31,6 +31,7 @@ from app.api.v1.endpoints.assistant import router as assistant_router
 from app.api.v1.endpoints.billing import router as billing_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from app.services.onec_sync_service import process_onec_sync_jobs_forever
 from prometheus_fastapi_instrumentator import Instrumentator
 
 structlog.configure(
@@ -62,12 +63,16 @@ USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     log.info("startup", service="api-gateway", version=settings.APP_VERSION)
+    sync_poller_task: asyncio.Task | None = None
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             log.info("db_startup_ready", attempt=attempt)
+            # Render free plan fallback: run 1C sync poller in API process.
+            sync_poller_task = asyncio.create_task(process_onec_sync_jobs_forever())
+            log.info("onec_sync_poller_started", mode="in_process")
             break
         except Exception as exc:
             if attempt == max_attempts:
@@ -81,6 +86,12 @@ async def lifespan(application: FastAPI):
             log.warning("db_startup_retry", attempt=attempt, error=str(exc))
             await asyncio.sleep(2)
     yield
+    if sync_poller_task:
+        sync_poller_task.cancel()
+        try:
+            await sync_poller_task
+        except asyncio.CancelledError:
+            pass
     await engine.dispose()
     log.info("shutdown")
 

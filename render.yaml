@@ -24,15 +24,3 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET_KEY
         generateValue: true
-  - type: worker
-    name: finklik-onec-sync-worker
-    runtime: docker
-    plan: free
-    dockerfilePath: ./backend/api-gateway/Dockerfile
-    dockerContext: ./backend/api-gateway
-    dockerCommand: python worker_onec_sync.py
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: finklik-postgres
-          property: connectionString
