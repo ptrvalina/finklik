@@ -55,9 +55,9 @@ class Settings(BaseSettings):
         if not isinstance(v, str):
             return v
         if v.startswith("postgres://"):
-            return "postgresql+asyncpg://" + v[len("postgres://") :]
+            return "postgresql+asyncpg://" + v[len("postgres://"):]
         if v.startswith("postgresql://") and not v.startswith("postgresql+"):
-            return "postgresql+asyncpg://" + v[len("postgresql://") :]
+            return "postgresql+asyncpg://" + v[len("postgresql://"):]
         return v
 
     class Config:

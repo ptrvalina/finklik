@@ -1,6 +1,3 @@
-import uuid
-import ipaddress
-import socket
 from urllib.parse import urlencode, urljoin
 
 import httpx
@@ -9,7 +6,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.core.config import settings
+from app.security.ssrf import validate_outbound_http_url
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.counterparty import Counterparty
@@ -64,35 +61,14 @@ class OneCSyncTransactionPayload(BaseModel):
 
 
 async def _validate_onec_endpoint(endpoint: HttpUrl) -> None:
-    host = endpoint.host
-    if not host:
-        raise HTTPException(status_code=400, detail="Некорректный endpoint 1С")
-
-    if endpoint.scheme != "https" and not settings.DEBUG:
-        raise HTTPException(status_code=400, detail="Для production разрешен только https endpoint 1С")
-
-    # Fast path for literal IPs.
-    try:
-        ip = ipaddress.ip_address(host)
-        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved) and not settings.DEBUG:
-            raise HTTPException(status_code=400, detail="Приватные/локальные адреса 1С запрещены")
-        return
-    except ValueError:
-        pass
-
-    try:
-        infos = socket.getaddrinfo(host, endpoint.port or 443, proto=socket.IPPROTO_TCP)
-    except OSError:
-        raise HTTPException(status_code=400, detail="Не удалось разрешить хост endpoint 1С")
-
-    for info in infos:
-        addr = info[4][0]
-        try:
-            ip = ipaddress.ip_address(addr)
-        except ValueError:
-            continue
-        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved) and not settings.DEBUG:
-            raise HTTPException(status_code=400, detail="Endpoint 1С резолвится в приватную/локальную сеть")
+    validate_outbound_http_url(
+        str(endpoint),
+        invalid="Некорректный endpoint 1С",
+        https_required="Для production разрешен только https endpoint 1С",
+        resolve_failed="Не удалось разрешить хост endpoint 1С",
+        private_literal="Приватные/локальные адреса 1С запрещены",
+        private_resolved="Endpoint 1С резолвится в приватную/локальную сеть",
+    )
 
 
 async def _get_onec_connection(db: AsyncSession, organization_id: str | None) -> OneCConnection | None:

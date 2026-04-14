@@ -10,6 +10,7 @@ import httpx
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.config import settings
+from app.security.ssrf import validate_outbound_http_url
 from app.models.user import User
 from app.models.bank_account import BankAccount
 from app.schemas.bank_import import StatementImportPayload
@@ -399,6 +400,22 @@ async def fetch_external_statement_preview(
             "hint": "Задайте переменную окружения MOCK_BANK_URL или импортируйте JSON вручную",
         }
     url = settings.MOCK_BANK_URL.rstrip("/") + "/statement"
+    try:
+        validate_outbound_http_url(
+            url,
+            invalid="Некорректный MOCK_BANK_URL",
+            https_required="Для production MOCK_BANK_URL должен быть https",
+            resolve_failed="Не удалось разрешить хост MOCK_BANK_URL",
+            private_literal="MOCK_BANK_URL не должен указывать на приватный/локальный адрес",
+            private_resolved="MOCK_BANK_URL резолвится в приватную/локальную сеть",
+        )
+    except HTTPException as exc:
+        return {
+            "available": False,
+            "error": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+            "lines": [],
+            "hint": "Задайте публичный https MOCK_BANK_URL или импортируйте JSON вручную",
+        }
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
             r = await client.get(url)
