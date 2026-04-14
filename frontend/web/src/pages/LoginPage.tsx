@@ -24,7 +24,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-extrabold text-cyan-400 font-headline tracking-tight">ФинКлик</h1>
-          <p className="text-on-surface-variant text-sm mt-2">Бухгалтерия без бухгалтера</p>
+          <p className="text-on-surface-variant text-sm mt-2">БИЗНЕС В КАРМАНЕ</p>
         </div>
 
         <div className="bg-surface-container-high border border-outline-variant/20 rounded-xl p-6 shadow-2xl">

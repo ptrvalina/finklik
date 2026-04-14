@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ФинКлик — White Label для банков</title>
+<style>
+:root{
+  --bg:#070a10;--surface:#0f1420;--surface2:#161c2c;
+  --border:#1e2740;--accent:#4f8cff;--accent2:#6c5ce7;
+  --green:#00d68f;--orange:#ffaa00;--red:#ff4d6a;
+  --text:#e8ecf4;--muted:#8892a8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+
+/* --- slides --- */
+.slide{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:60px 24px;position:relative}
+.slide:nth-child(even){background:var(--surface)}
+.inner{max-width:960px;width:100%}
+
+/* --- hero --- */
+.hero{text-align:center}
+.hero .logo{font-size:3.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.hero h2{font-size:1.5rem;font-weight:400;color:var(--muted);margin-bottom:40px;max-width:560px;margin-inline:auto}
+.badge{display:inline-block;padding:6px 18px;border-radius:99px;font-size:.85rem;font-weight:600;border:1px solid var(--accent);color:var(--accent);margin-bottom:24px}
+
+/* --- section title --- */
+.stitle{font-size:2rem;font-weight:700;margin-bottom:8px}
+.stitle span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ssub{color:var(--muted);font-size:1.05rem;margin-bottom:40px}
+
+/* --- grid cards --- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:768px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:28px 24px}
+.card h3{font-size:1.1rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card p,.card li{color:var(--muted);font-size:.92rem}
+.card ul{list-style:none;padding:0}
+.card ul li{padding:4px 0;position:relative;padding-left:18px}
+.card ul li::before{content:"→";position:absolute;left:0;color:var(--accent)}
+
+.icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:1.3rem}
+.icon-blue{background:rgba(79,140,255,.15);color:var(--accent)}
+.icon-green{background:rgba(0,214,143,.15);color:var(--green)}
+.icon-orange{background:rgba(255,170,0,.15);color:var(--orange)}
+.icon-red{background:rgba(255,77,106,.15);color:var(--red)}
+.icon-purple{background:rgba(108,92,231,.15);color:var(--accent2)}
+
+/* --- problem block --- */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.problem-grid .cell{padding:20px 24px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+.problem-grid .cell:nth-child(even){border-right:none}
+.problem-grid .cell:nth-last-child(-n+2){border-bottom:none}
+.problem-grid .cell.head{background:var(--surface2);font-weight:600;font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.problem-grid .cell .label{font-weight:600;font-size:.95rem;margin-bottom:4px}
+.problem-grid .cell .desc{color:var(--muted);font-size:.88rem}
+@media(max-width:600px){.problem-grid{grid-template-columns:1fr}.problem-grid .cell{border-right:none}}
+
+/* --- big number --- */
+.big-num{font-size:3rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block}
+.num-label{color:var(--muted);font-size:1rem;margin-top:4px}
+
+/* --- table --- */
+.tbl{width:100%;border-collapse:collapse;margin-top:8px}
+.tbl th,.tbl td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);font-size:.92rem}
+.tbl th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.78rem;letter-spacing:.03em}
+.tbl td{color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:var(--surface2)}
+
+/* --- timeline --- */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:"";position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:28px}
+.tl-item:last-child{margin-bottom:0}
+.tl-dot{width:22px;height:22px;border-radius:50%;background:var(--accent);position:absolute;left:-32px;top:2px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff}
+.tl-item.done .tl-dot{background:var(--green)}
+.tl-item.future .tl-dot{background:var(--border)}
+.tl-title{font-weight:600;font-size:1.05rem;margin-bottom:4px}
+.tl-desc{color:var(--muted);font-size:.9rem}
+
+/* --- pricing cards --- */
+.price-card{border:2px solid var(--border);border-radius:16px;padding:32px 28px;position:relative;transition:border-color .2s}
+.price-card.featured{border-color:var(--accent)}
+.price-tag{position:absolute;top:-12px;right:20px;background:var(--accent);color:#fff;font-size:.75rem;font-weight:700;padding:4px 14px;border-radius:99px;text-transform:uppercase}
+.price-card h3{font-size:1.15rem;margin-bottom:16px}
+.price-card .price-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.price-card .price-line:last-child{border-bottom:none}
+.price-card .price-line .val{font-weight:600;color:var(--accent)}
+
+/* --- roi --- */
+.roi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center}
+@media(max-width:700px){.roi-grid{grid-template-columns:1fr 1fr}}
+.roi-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:24px 16px}
+.roi-val{font-size:1.6rem;font-weight:800;color:var(--green)}
+.roi-label{color:var(--muted);font-size:.82rem;margin-top:6px}
+
+/* --- security --- */
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.sec-grid{grid-template-columns:1fr}}
+.sec-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.sec-check{color:var(--green);font-size:1.1rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.sec-item .sec-title{font-weight:600;font-size:.92rem}
+.sec-item .sec-desc{color:var(--muted);font-size:.82rem}
+
+/* --- CTA --- */
+.cta{text-align:center;padding:80px 24px}
+.cta-btn{display:inline-block;padding:16px 48px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:1.1rem;font-weight:700;border-radius:14px;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,140,255,.35)}
+.cta-sub{color:var(--muted);margin-top:16px;font-size:.95rem}
+
+/* --- misc --- */
+.highlight{color:var(--accent);font-weight:600}
+.mt{margin-top:24px}
+.mb{margin-bottom:24px}
+.center{text-align:center}
+.flex-gap{display:flex;gap:20px;flex-wrap:wrap}
+
+/* --- comparison --- */
+.vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.vs-grid{grid-template-columns:1fr}}
+.vs-card{border-radius:16px;padding:28px 24px}
+.vs-card.left{background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.2)}
+.vs-card.right{background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.2)}
+.vs-card h3{margin-bottom:16px;font-size:1.05rem}
+.vs-card ul{list-style:none;padding:0}
+.vs-card ul li{padding:6px 0;font-size:.92rem;color:var(--muted);padding-left:22px;position:relative}
+.vs-card.left ul li::before{content:"✕";position:absolute;left:0;color:var(--red);font-weight:700}
+.vs-card.right ul li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+
+/* nav dots */
+.nav-dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:10px}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:var(--border);border:none;cursor:pointer;transition:background .2s}
+.nav-dot.active{background:var(--accent)}
+@media(max-width:600px){.nav-dots{display:none}}
+
+/* print */
+@media print{
+  .slide{min-height:auto;page-break-inside:avoid;padding:30px 20px}
+  body{background:#fff;color:#222}
+  .card,.tbl-wrap,.sec-item,.vs-card,.roi-card,.price-card{border-color:#ddd}
+  .nav-dots{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-dots" id="navDots"></nav>
+
+<!-- SLIDE 1: Hero -->
+<section class="slide" id="s1">
+<div class="inner hero">
+  <div class="badge">White Label решение</div>
+  <div class="logo">ФинКлик</div>
+  <h2>Готовая цифровая платформа бухгалтерского учёта для МСБ-клиентов вашего банка</h2>
+  <div class="flex-gap" style="justify-content:center;margin-top:40px">
+    <div style="text-align:center"><div class="big-num">4-8</div><div class="num-label">недель до запуска</div></div>
+    <div style="text-align:center;padding:0 40px"><div class="big-num">40K+</div><div class="num-label">клиентов</div></div>
+    <div style="text-align:center"><div class="big-num">×2.5</div><div class="num-label">рост ARPU</div></div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 2: Problem -->
+<section class="slide" id="s2">
+<div class="inner">
+  <div class="stitle"><span>Проблема</span></div>
+  <p class="ssub">4 из 5 предпринимателей в Беларуси ведут учёт в Excel или на бумаге</p>
+  <div class="problem-grid">
+    <div class="cell head">Боль клиента банка</div>
+    <div class="cell head">Последствия для банка</div>
+    <div class="cell"><div class="label">Нет автоматизации учёта</div><div class="desc">Ручной ввод, потеря данных, ошибки</div></div>
+    <div class="cell"><div class="label">Клиент уходит к конкурентам</div><div class="desc">Банки с экосистемой забирают клиентов</div></div>
+    <div class="cell"><div class="label">Ошибки в отчётности → штрафы</div><div class="desc">Пропущенные сроки, неверные суммы</div></div>
+    <div class="cell"><div class="label">Закрытие бизнеса = потеря клиента</div><div class="desc">Штрафы подрывают устойчивость МСБ</div></div>
+    <div class="cell"><div class="label">Нет интеграции «банк ↔ учёт»</div><div class="desc">Клиент вручную переносит данные</div></div>
+    <div class="cell"><div class="label">Низкая вовлечённость в ДБО</div><div class="desc">Клиент заходит только для платежей</div></div>
+    <div class="cell"><div class="label">Дорогой бухгалтер</div><div class="desc">Микробизнес экономит на качестве</div></div>
+    <div class="cell"><div class="label">Меньше оборотов по счёту</div><div class="desc">Клиент не растёт → комиссии падают</div></div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 3: Solution -->
+<section class="slide" id="s3">
+<div class="inner">
+  <div class="stitle"><span>Решение:</span> ФинКлик White Label</div>
+  <p class="ssub">Готовый продукт под вашим брендом — вместо 12-18 месяцев разработки с нуля</p>
+  <div class="grid3">
+    <div class="card">
+      <div class="icon icon-blue">📊</div>
+      <h3>Финансовый учёт</h3>
+      <ul><li>Доходы, расходы, возвраты, списания</li><li>10 категорий расходов</li><li>Импорт CSV / выписок</li><li>Экспорт PDF, CSV, TXT</li></ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-green">🏦</div>
+      <h3>Интеграция с банком</h3>
+      <ul><li>Автозагрузка выписок через API</li><li>Баланс в реальном времени</li><li>Создание платежей из учёта</li><li>Мульти-банк поддержка</li></ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-orange">📋</div>
+      <h3>Налоги и отчётность</h3>
+      <ul><li>УСН 3%/5%, НДС, ФСЗН</li><li>Декларации НДС, ПУ-3</li><li>Календарь дедлайнов</li><li>Автоподача в ФСЗН, ИМНС</li></ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-purple">🤖</div>
+      <h3>AI-модуль</h3>
+      <ul><li>OCR чеков, ТТН, актов</li><li>Извлечение реквизитов и НДС</li><li>ИИ-консультант по учёту</li><li>Точность ТТН: >90%</li></ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-red">👥</div>
+      <h3>Кадры и зарплата</h3>
+      <ul><li>Реестр сотрудников</li><li>Расчёт: оклад → налоги → на руки</li><li>Шифрование ПДн (AES-256)</li><li>Зарплатные ведомости</li></ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-blue">📡</div>
+      <h3>Мониторинг законов</h3>
+      <ul><li>ИМНС, ФСЗН, Белгосстрах</li><li>Новые формы и ставки</li><li>Push-уведомления</li><li>Фильтрация по категориям</li></ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 4: Security -->
+<section class="slide" id="s4">
+<div class="inner">
+  <div class="stitle"><span>Безопасность</span></div>
+  <p class="ssub">Соответствие требованиям регулятора — из коробки</p>
+  <div class="sec-grid">
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Шифрование ПДн</div><div class="sec-desc">AES-256 (Fernet), все персональные данные зашифрованы at rest</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Аутентификация</div><div class="sec-desc">JWT с refresh-токенами, 15 мин. жизнь access-токена</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Brute-force защита</div><div class="sec-desc">Блокировка после 5 неудач на 15 минут</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Rate limiting</div><div class="sec-desc">120 req/min на пользователя, burst до 30</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Security headers</div><div class="sec-desc">CSP, X-Frame-Options DENY, HSTS, XSS protection</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Аудит-лог</div><div class="sec-desc">Все действия: кто, что, когда, IP</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">Мульти-тенантность</div><div class="sec-desc">Изоляция данных по organization_id</div></div></div>
+    <div class="sec-item"><div class="sec-check">✓</div><div><div class="sec-title">HTTPS / TLS 1.2+</div><div class="sec-desc">Обязательно для production</div></div></div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 5: Tech stack -->
+<section class="slide" id="s5">
+<div class="inner">
+  <div class="stitle"><span>Технологии</span></div>
+  <p class="ssub">Современный стек, готовый к масштабированию</p>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Слой</th><th>Технологии</th><th>Для банка это значит</th></tr></thead>
+      <tbody>
+        <tr><td>Backend</td><td>Python, FastAPI, PostgreSQL</td><td>Стабильность, масштабируемость, большое комьюнити</td></tr>
+        <tr><td>Frontend</td><td>React, TypeScript, Tailwind CSS</td><td>Любой браузер, мобильная адаптация, PWA</td></tr>
+        <tr><td>Безопасность</td><td>JWT, AES-256, CSP, rate-limit</td><td>Соответствие требованиям регулятора</td></tr>
+        <tr><td>Инфраструктура</td><td>Docker, Prometheus, Grafana</td><td>Мониторинг 24/7, быстрый деплой</td></tr>
+        <tr><td>CI/CD</td><td>GitHub Actions, автотесты</td><td>Безошибочные обновления, zero downtime</td></tr>
+        <tr><td>API</td><td>REST, WebSocket, OpenAPI</td><td>Интеграция с любой АБС банка</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 6: Scaling -->
+<section class="slide" id="s6">
+<div class="inner">
+  <div class="stitle"><span>Масштабирование</span></div>
+  <p class="ssub">Архитектура рассчитана на 40 000+ клиентов</p>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Клиенты</th><th>Инфраструктура</th><th>~Стоимость/мес</th></tr></thead>
+      <tbody>
+        <tr><td>До 100</td><td>1 VPS (4 CPU, 8 GB)</td><td class="highlight">~50 USD</td></tr>
+        <tr><td>100 — 500</td><td>2-3 реплики API + Managed PostgreSQL</td><td class="highlight">~300 USD</td></tr>
+        <tr><td>500 — 5 000</td><td>Kubernetes, HPA, read-replicas</td><td class="highlight">~800 USD</td></tr>
+        <tr><td>5 000 — 40 000</td><td>K8s cluster, шардирование, CDN</td><td class="highlight">~2 500 USD</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid3 mt">
+    <div class="card center">
+      <div class="big-num" style="font-size:1.8rem">DB</div>
+      <p>Индексы по org_id, дате, категории, статусу</p>
+    </div>
+    <div class="card center">
+      <div class="big-num" style="font-size:1.8rem">Pool</div>
+      <p>20 + 30 overflow соединений с pre-ping</p>
+    </div>
+    <div class="card center">
+      <div class="big-num" style="font-size:1.8rem">Cache</div>
+      <p>Redis: дашборд, баланс, налоговый календарь</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 7: White Label scope -->
+<section class="slide" id="s7">
+<div class="inner">
+  <div class="stitle"><span>Что входит</span> в White Label</div>
+  <p class="ssub">Полная кастомизация + интеграция + поддержка</p>
+  <div class="grid3">
+    <div class="card">
+      <div class="icon icon-blue">🎨</div>
+      <h3>Бренд банка</h3>
+      <ul>
+        <li>Логотип, цвета, шрифты</li>
+        <li>Домен: business.yourbank.by</li>
+        <li>Email от имени банка</li>
+        <li>Дисклеймеры и соглашения</li>
+        <li>Favicon и PWA-иконки</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-green">🔗</div>
+      <h3>Интеграция с АБС</h3>
+      <ul>
+        <li>API загрузки выписок</li>
+        <li>Webhook-уведомления</li>
+        <li>SSO через систему банка</li>
+        <li>Обмен данными по контрагентам</li>
+        <li>Интеграция с 1С</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="icon icon-orange">🛠</div>
+      <h3>Поддержка</h3>
+      <ul>
+        <li>SLA на отклик и устранение</li>
+        <li>Ежемесячные обновления</li>
+        <li>Новые формы, ставки, законы</li>
+        <li>Выделенный канал поддержки</li>
+        <li>Обучение сотрудников банка</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 8: Pricing -->
+<section class="slide" id="s8">
+<div class="inner">
+  <div class="stitle"><span>Бизнес-модель</span></div>
+  <p class="ssub">Два варианта партнёрства</p>
+  <div class="grid2">
+    <div class="price-card">
+      <h3>Вариант A: Лицензия + поддержка</h3>
+      <div class="price-line"><span>Лицензия (perpetual)</span><span class="val">25 000 — 50 000 USD</span></div>
+      <div class="price-line"><span>Кастомизация под бренд</span><span class="val">5 000 — 10 000 USD</span></div>
+      <div class="price-line"><span>Интеграция с АБС</span><span class="val">10 000 — 20 000 USD</span></div>
+      <div class="price-line"><span>Поддержка и обновления</span><span class="val">1 500 — 3 000 USD/мес</span></div>
+    </div>
+    <div class="price-card featured">
+      <div class="price-tag">Рекомендуем</div>
+      <h3>Вариант B: SaaS (revenue share)</h3>
+      <div class="price-line"><span>Развёртывание + кастомизация</span><span class="val">10 000 — 15 000 USD</span></div>
+      <div class="price-line"><span>За активного клиента</span><span class="val">2 — 5 USD/мес</span></div>
+      <div class="price-line"><span>Минимальный платёж</span><span class="val">500 USD/мес</span></div>
+      <div class="price-line"><span>Масштабирование</span><span class="val">Линейное, предсказуемое</span></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 9: ROI -->
+<section class="slide" id="s9">
+<div class="inner">
+  <div class="stitle"><span>ROI</span> для банка</div>
+  <p class="ssub">Измеримый результат с первых месяцев</p>
+  <div class="roi-grid">
+    <div class="roi-card">
+      <div class="roi-val">−50%</div>
+      <div class="roi-label">Снижение churn МСБ<br>(с 8-12% до 4-6% в год)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-val">×2.5</div>
+      <div class="roi-label">Рост ARPU<br>(с 15-25 до 35-60 BYN/мес)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-val">Магнит</div>
+      <div class="roi-label">Привлечение новых клиентов<br>Бесплатная бухгалтерия = повод открыть счёт</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-val">Cross-sell</div>
+      <div class="roi-label">Данные о бизнесе клиента<br>→ зарплатный проект, эквайринг, кредит</div>
+    </div>
+  </div>
+  <div class="vs-grid mt">
+    <div class="vs-card left">
+      <h3>Разработка с нуля</h3>
+      <ul>
+        <li>12-18 месяцев до MVP</li>
+        <li>200-500K USD на R&D</li>
+        <li>Риск: сроки, баги, текучка</li>
+        <li>Обновления законодательства — сами</li>
+      </ul>
+    </div>
+    <div class="vs-card right">
+      <h3>ФинКлик White Label</h3>
+      <ul>
+        <li>4-8 недель до запуска</li>
+        <li>От 10K USD стартовые затраты</li>
+        <li>Проверено на реальных клиентах</li>
+        <li>Обновления законов — в комплекте</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 10: Roadmap -->
+<section class="slide" id="s10">
+<div class="inner">
+  <div class="stitle"><span>Дорожная карта</span></div>
+  <p class="ssub">Развитие продукта — совместно с банком-партнёром</p>
+  <div class="timeline">
+    <div class="tl-item done">
+      <div class="tl-dot">✓</div>
+      <div class="tl-title">Q2 2026 — Текущая версия</div>
+      <div class="tl-desc">Учёт, налоги, сканер документов, аналитика, AI-консультант, мульти-тенант, CI/CD, мониторинг</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">Q3</div>
+      <div class="tl-title">Q3 2026 — Мобильное приложение + Open Banking</div>
+      <div class="tl-desc">Нативное iOS/Android приложение, PSD2-like API, интеграция с эквайрингом</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">Q4</div>
+      <div class="tl-title">Q4 2026 — Кредитный скоринг + AI Cash Flow</div>
+      <div class="tl-desc">Скоринг на основе реальных данных учёта, AI-прогнозы денежного потока для банка и клиента</div>
+    </div>
+    <div class="tl-item future">
+      <div class="tl-dot">Q1</div>
+      <div class="tl-title">Q1 2027 — Маркетплейс + ЭДО</div>
+      <div class="tl-desc">Маркетплейс услуг (юристы, аудиторы), электронный документооборот, e-invoicing</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SLIDE 11: CTA -->
+<section class="slide" id="s11">
+<div class="inner cta">
+  <div class="stitle" style="font-size:2.4rem;margin-bottom:20px"><span>Готовы обсудить?</span></div>
+  <p style="color:var(--muted);font-size:1.1rem;max-width:480px;margin:0 auto 40px">Запросите персональную демонстрацию и коммерческое предложение для вашего банка</p>
+  <a href="mailto:contact@finklik.by" class="cta-btn">Запросить демо →</a>
+  <div class="cta-sub">Демонстрация • Коммерческое предложение • Пилотный проект</div>
+  <div style="margin-top:60px;color:var(--muted);font-size:.85rem">
+    © 2026 ФинКлик &nbsp;·&nbsp; Все права защищены &nbsp;·&nbsp; Документ конфиденциален
+  </div>
+</div>
+</section>
+
+<script>
+const slides=document.querySelectorAll('.slide');
+const nav=document.getElementById('navDots');
+slides.forEach((_,i)=>{const d=document.createElement('button');d.className='nav-dot';d.onclick=()=>slides[i].scrollIntoView({behavior:'smooth'});nav.appendChild(d)});
+const dots=nav.querySelectorAll('.nav-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const idx=[...slides].indexOf(e.target);dots.forEach((d,i)=>d.classList.toggle('active',i===idx))}})},{threshold:.5});
+slides.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

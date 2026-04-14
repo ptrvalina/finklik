@@ -72,7 +72,7 @@ export default function Layout() {
             <div className="min-w-0">
               <h1 className="font-headline text-lg font-bold tracking-tight text-white">ФинКлик</h1>
               <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-500">
-                {user?.org_name || 'Бухгалтерия'}
+                {user?.org_name || 'Организация'}
               </p>
             </div>
           </div>
