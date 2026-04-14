@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
-import { documentsApi, importApi } from '../api/client'
-import { useQueryClient } from '@tanstack/react-query'
+import { documentsApi, importApi, primaryDocumentsApi } from '../api/client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -110,6 +110,78 @@ export default function DocumentsPage() {
   const [csvPreview, setCsvPreview] = useState<any>(null)
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResult, setCsvResult] = useState<any>(null)
+  const [docTypeFilter, setDocTypeFilter] = useState('')
+  const [docStatusFilter, setDocStatusFilter] = useState('')
+  const [docForm, setDocForm] = useState({
+    doc_type: 'invoice',
+    doc_number: '',
+    status: 'draft',
+    issue_date: todayStr,
+    due_date: '',
+    currency: 'BYN',
+    amount_total: '',
+    title: '',
+    description: '',
+  })
+
+  const { data: primaryDocsData, isLoading: primaryDocsLoading } = useQuery({
+    queryKey: ['primary-documents', docTypeFilter, docStatusFilter],
+    queryFn: () =>
+      primaryDocumentsApi
+        .list({
+          doc_type: docTypeFilter || undefined,
+          status: docStatusFilter || undefined,
+        })
+        .then((r) => r.data),
+  })
+
+  const createPrimaryDocMutation = useMutation({
+    mutationFn: () =>
+      primaryDocumentsApi.create({
+        ...docForm,
+        due_date: docForm.due_date || null,
+        amount_total: Number(docForm.amount_total || 0),
+      }),
+    onSuccess: () => {
+      setDocForm({
+        doc_type: 'invoice',
+        doc_number: '',
+        status: 'draft',
+        issue_date: todayStr,
+        due_date: '',
+        currency: 'BYN',
+        amount_total: '',
+        title: '',
+        description: '',
+      })
+      qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      setMessage({ type: 'success', text: 'Документ создан' })
+    },
+    onError: (e: any) => {
+      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка создания документа' })
+    },
+  })
+
+  const deletePrimaryDocMutation = useMutation({
+    mutationFn: (id: string) => primaryDocumentsApi.remove(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      setMessage({ type: 'success', text: 'Документ удален' })
+    },
+    onError: () => setMessage({ type: 'error', text: 'Ошибка удаления документа' }),
+  })
+
+  const printPrimaryDocMutation = useMutation({
+    mutationFn: (id: string) => primaryDocumentsApi.print(id),
+    onSuccess: (resp) => {
+      const doc = resp.data?.document
+      if (!doc) return
+      const file = new Blob([JSON.stringify(resp.data, null, 2)], { type: 'application/json;charset=utf-8' })
+      saveBlob(file, `${doc.type}_${doc.number}_print_preview.json`)
+      setMessage({ type: 'success', text: `Печатная форма подготовлена: ${doc.number}` })
+    },
+    onError: () => setMessage({ type: 'error', text: 'Ошибка формирования печатной формы' }),
+  })
 
   async function handleCsvPreview(file: File) {
     setCsvFile(file)
@@ -277,6 +349,119 @@ export default function DocumentsPage() {
             </button>
           </div>
         ))}
+      </div>
+
+      <h2 className="font-headline text-lg font-bold text-white sm:text-xl">Первичные документы</h2>
+
+      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+        <h3 className="text-sm font-bold text-on-surface">Создать документ</h3>
+        <p className="text-[10px] text-on-surface-variant mb-4">Invoice / Act / Waybill с нумерацией по организации</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <select className="input" value={docForm.doc_type} onChange={(e) => setDocForm({ ...docForm, doc_type: e.target.value })}>
+            <option value="invoice">Invoice (Счёт)</option>
+            <option value="act">Act (Акт)</option>
+            <option value="waybill">Waybill (Накладная)</option>
+          </select>
+          <input className="input" placeholder="Номер документа" value={docForm.doc_number} onChange={(e) => setDocForm({ ...docForm, doc_number: e.target.value })} />
+          <select className="input" value={docForm.status} onChange={(e) => setDocForm({ ...docForm, status: e.target.value })}>
+            <option value="draft">Черновик</option>
+            <option value="issued">Выставлен</option>
+            <option value="paid">Оплачен</option>
+            <option value="cancelled">Отменён</option>
+          </select>
+          <input type="date" className="input" value={docForm.issue_date} onChange={(e) => setDocForm({ ...docForm, issue_date: e.target.value })} />
+          <input type="date" className="input" value={docForm.due_date} onChange={(e) => setDocForm({ ...docForm, due_date: e.target.value })} />
+          <input className="input" placeholder="BYN" value={docForm.currency} onChange={(e) => setDocForm({ ...docForm, currency: e.target.value.toUpperCase() })} />
+          <input type="number" step="0.01" min="0" className="input" placeholder="Сумма" value={docForm.amount_total} onChange={(e) => setDocForm({ ...docForm, amount_total: e.target.value })} />
+          <input className="input sm:col-span-2" placeholder="Заголовок" value={docForm.title} onChange={(e) => setDocForm({ ...docForm, title: e.target.value })} />
+          <input className="input sm:col-span-3" placeholder="Описание" value={docForm.description} onChange={(e) => setDocForm({ ...docForm, description: e.target.value })} />
+        </div>
+        <button
+          type="button"
+          className="btn-primary mt-4 min-h-11"
+          disabled={!docForm.doc_number || !docForm.amount_total || createPrimaryDocMutation.isPending}
+          onClick={() => createPrimaryDocMutation.mutate()}
+        >
+          <Icon name="add" className="text-lg" />
+          {createPrimaryDocMutation.isPending ? 'Создаём...' : 'Создать документ'}
+        </button>
+      </div>
+
+      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h3 className="text-sm font-bold text-on-surface">Список документов</h3>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <select className="input" value={docTypeFilter} onChange={(e) => setDocTypeFilter(e.target.value)}>
+              <option value="">Все типы</option>
+              <option value="invoice">Invoice</option>
+              <option value="act">Act</option>
+              <option value="waybill">Waybill</option>
+            </select>
+            <select className="input" value={docStatusFilter} onChange={(e) => setDocStatusFilter(e.target.value)}>
+              <option value="">Все статусы</option>
+              <option value="draft">Черновик</option>
+              <option value="issued">Выставлен</option>
+              <option value="paid">Оплачен</option>
+              <option value="cancelled">Отменён</option>
+            </select>
+          </div>
+        </div>
+
+        {primaryDocsLoading ? (
+          <p className="mt-4 text-sm text-zinc-500">Загрузка документов...</p>
+        ) : (primaryDocsData?.length ?? 0) === 0 ? (
+          <p className="mt-4 text-sm text-zinc-500">Документов пока нет.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[860px] text-left text-xs">
+              <thead>
+                <tr className="bg-surface-container-high/50 text-[10px] uppercase tracking-wider text-on-surface-variant">
+                  <th className="px-3 py-2">Тип</th>
+                  <th className="px-3 py-2">Номер</th>
+                  <th className="px-3 py-2">Статус</th>
+                  <th className="px-3 py-2">Дата</th>
+                  <th className="px-3 py-2 text-right">Сумма</th>
+                  <th className="px-3 py-2">Валюта</th>
+                  <th className="px-3 py-2 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/5">
+                {primaryDocsData.map((doc: any) => (
+                  <tr key={doc.id} className="hover:bg-surface-container-high/30">
+                    <td className="px-3 py-2 text-on-surface">{doc.doc_type}</td>
+                    <td className="px-3 py-2 text-on-surface">{doc.doc_number}</td>
+                    <td className="px-3 py-2 text-on-surface-variant">{doc.status}</td>
+                    <td className="px-3 py-2 text-on-surface-variant">{doc.issue_date}</td>
+                    <td className="px-3 py-2 text-right font-bold text-on-surface">{Number(doc.amount_total || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 text-on-surface-variant">{doc.currency}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          className="btn-ghost !px-2 !py-1 !text-xs"
+                          disabled={printPrimaryDocMutation.isPending}
+                          onClick={() => printPrimaryDocMutation.mutate(doc.id)}
+                        >
+                          <Icon name="print" className="text-sm" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-ghost !px-2 !py-1 !text-xs text-error"
+                          disabled={deletePrimaryDocMutation.isPending}
+                          onClick={() => {
+                            if (confirm('Удалить документ?')) deletePrimaryDocMutation.mutate(doc.id)
+                          }}
+                        >
+                          <Icon name="delete" className="text-sm" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

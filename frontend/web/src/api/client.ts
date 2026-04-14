@@ -217,3 +217,11 @@ export const documentsApi = {
   financialReportPdf: (date_from: string, date_to: string) =>
     api.get('/export/financial-report.pdf', { params: { date_from, date_to }, responseType: 'blob' }),
 }
+
+export const primaryDocumentsApi = {
+  list: (params?: { doc_type?: string; status?: string }) => api.get('/primary-documents', { params }),
+  create: (data: any) => api.post('/primary-documents', data),
+  update: (id: string, data: any) => api.put(`/primary-documents/${id}`, data),
+  remove: (id: string) => api.delete(`/primary-documents/${id}`),
+  print: (id: string) => api.get(`/primary-documents/${id}/print`),
+}
