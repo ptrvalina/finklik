@@ -121,6 +121,7 @@ export const bankApi = {
 }
 
 export const onecApi = {
+  contourStatus: () => api.get('/onec/contour/status'),
   health: () => api.get('/onec/health'),
   lookupCounterparty: (unp: string) => api.get('/onec/counterparty/lookup', { params: { unp } }),
   searchCounterparty: (q: string) => api.get('/onec/counterparty/search', { params: { q } }),

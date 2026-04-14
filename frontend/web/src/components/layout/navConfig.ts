@@ -17,6 +17,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/documents', label: 'Документы', icon: 'description', description: 'Первичка и экспорт отчётов' },
   { to: '/bank', label: 'Банк', icon: 'credit_card', description: 'Счета и платежи' },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', description: 'Клиенты и поставщики' },
+  { to: '/onec-contour', label: 'Контур 1С', icon: 'hub', description: 'Реестр контура и health' },
   { to: '/onec-sync', label: 'Синхронизация 1С', icon: 'sync_alt', description: 'Очередь синхронизации и ошибки' },
   { to: '/scanner', label: 'Сканер', icon: 'document_scanner', description: 'Документы и OCR' },
   { to: '/assistant', label: 'Консультант', icon: 'smart_toy', description: 'ИИ-подсказки по учёту' },
