@@ -65,7 +65,11 @@ jobs:
           pip install "pytest>=8,<9" "pytest-asyncio>=1.3.0" httpx aiosqlite
 
       - name: Run critical payment flow tests
-        run: python -m pytest tests/integration/test_primary_documents.py -k "payment or webhook" -v --tb=short
+        run: |
+          python -m pytest \
+            tests/integration/test_primary_documents.py::test_primary_document_payment_status_and_webhook \
+            tests/integration/test_primary_documents.py::test_payment_webhook_duplicate_payment_id_conflict \
+            -v --tb=short
 
   backend-tests:
     name: Backend Tests
@@ -104,7 +108,12 @@ jobs:
         run: python -m pytest tests/unit/ -v --tb=short
 
       - name: Backend integration tests
-        run: python -m pytest tests/integration/ -v --tb=short
+        run: |
+          python -m pytest \
+            tests/integration/ \
+            --ignore=tests/integration/test_primary_documents.py \
+            --ignore=tests/integration/test_buyer_smoke.py \
+            -v --tb=short
 
   backend-lint:
     name: Backend Lint

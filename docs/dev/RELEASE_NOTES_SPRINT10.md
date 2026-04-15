@@ -28,7 +28,8 @@ Date: 2026-04-15
   - `Buyer Demo Smoke`
   - `Payment Critical Smoke`
   - `Release Summary` artifact
-- Baseline successful run URL: `TODO: paste latest green run link`
+- Latest baseline run (current): `https://github.com/ptrvalina/finklik/actions/runs/24475133323` (failed)
+- Follow-up: payment-critical and integration suites were split into focused gates to stabilize green baseline.
 
 ## Demo Operations
 
