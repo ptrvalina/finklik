@@ -41,6 +41,7 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+artifacts/
 
 # Docker / локальные volume-данные (если монтируются в репо)
 postgres_data/

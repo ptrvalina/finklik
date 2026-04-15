@@ -2,6 +2,20 @@
 
 Run this quick checklist right before a buyer call.
 
+## Fast Command
+
+```bash
+make demo-smoke
+```
+
+Alternative:
+
+```bash
+python scripts/pre_demo_smoke.py
+```
+
+The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
+
 ## 1) Health and Readiness
 
 - Open `/health` and confirm service is reachable.

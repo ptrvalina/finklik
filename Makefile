@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke
 
 PYTHON = python3
 COMPOSE = docker compose -f infrastructure/docker/docker-compose.dev.yml
@@ -50,6 +50,9 @@ test-unit: ## Только юнит-тесты
 
 test-integration: ## Только интеграционные тесты
 	cd backend/api-gateway && $(PYTHON) -m pytest tests/integration/ -v --tb=short
+
+demo-smoke: ## Быстрый pre-demo smoke (backend+frontend)
+	@$(PYTHON) scripts/pre_demo_smoke.py
 
 test-load: ## Нагрузочное тестирование (1000 клиентов)
 	@echo "⚡ Запускаем нагрузочный тест..."
