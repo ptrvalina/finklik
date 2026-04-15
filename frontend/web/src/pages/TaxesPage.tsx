@@ -30,7 +30,11 @@ export default function TaxesPage() {
     queryKey: ['tax-calendar', year],
     queryFn: () => taxApi.calendar(year).then(r => r.data),
   })
-  const { data: rulesValidation } = useQuery({
+  const {
+    data: rulesValidation,
+    refetch: refetchRulesValidation,
+    isFetching: isRulesValidationFetching,
+  } = useQuery({
     queryKey: ['tax-rules-validation'],
     queryFn: () => taxApi.validateRules().then(r => r.data),
     retry: false,
@@ -77,6 +81,14 @@ export default function TaxesPage() {
               Налоговые правила: {rulesValidation.ok ? 'валидны' : 'ошибка конфигурации'}
             </span>
             <span className="text-xs opacity-80">Источник: {rulesValidation.source}</span>
+            <button
+              type="button"
+              className="rounded border border-current/30 px-2 py-0.5 text-xs font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => refetchRulesValidation()}
+              disabled={isRulesValidationFetching}
+            >
+              {isRulesValidationFetching ? 'Обновляем...' : 'Обновить статус правил'}
+            </button>
             {rulesValidation.using_fallback && (
               <span className="rounded bg-error/20 px-2 py-0.5 text-xs font-semibold text-error">
                 fallback
