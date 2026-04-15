@@ -217,11 +217,13 @@ export default function DocumentsPage() {
     isPaid?: boolean
   } | null>(null)
   const [payLinkEmail, setPayLinkEmail] = useState('')
+  const [paymentEvents, setPaymentEvents] = useState<any[]>([])
 
   const payQrMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
     onSuccess: (d: any) => {
       setPayLinkEmail('')
+      setPaymentEvents([])
       setPayQrModal({
         docId: d.doc_id,
         b64: d.qr_png_base64,
@@ -295,6 +297,16 @@ export default function DocumentsPage() {
       setMessage({
         type: 'error',
         text: e?.response?.data?.detail || 'Не удалось отправить ссылку на оплату',
+      }),
+  })
+
+  const paymentEventsMutation = useMutation({
+    mutationFn: (docId: string) => primaryDocumentsApi.paymentEvents(docId).then((r) => r.data),
+    onSuccess: (d: any) => setPaymentEvents(Array.isArray(d?.events) ? d.events : []),
+    onError: (e: any) =>
+      setMessage({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось загрузить историю оплат',
       }),
   })
 
@@ -718,6 +730,27 @@ export default function DocumentsPage() {
             >
               {checkPaymentStatusMutation.isPending ? 'Проверяем...' : 'Проверить статус оплаты'}
             </button>
+            <button
+              type="button"
+              className="btn-ghost mb-3 min-h-11 w-full"
+              disabled={paymentEventsMutation.isPending}
+              onClick={() => paymentEventsMutation.mutate(payQrModal.docId)}
+            >
+              {paymentEventsMutation.isPending ? 'Загружаем...' : 'Показать историю оплат'}
+            </button>
+            {paymentEvents.length > 0 && (
+              <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-white/10 p-2 text-xs text-zinc-300">
+                {paymentEvents.map((e: any) => (
+                  <div key={e.id} className="mb-2 border-b border-white/10 pb-2 last:mb-0 last:border-0 last:pb-0">
+                    <div className="font-semibold text-zinc-200">{e.event_type}</div>
+                    <div className="text-[11px] text-zinc-500">{e.created_at}</div>
+                    {e.payload && (
+                      <div className="mt-1 text-[11px] text-zinc-400">{JSON.stringify(e.payload)}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             {!payQrModal.isPaid && (
               <button
                 type="button"

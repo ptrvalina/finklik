@@ -1,6 +1,7 @@
 import base64
 import hmac
 import io
+import json
 import re
 from decimal import Decimal
 from urllib.parse import quote
@@ -16,7 +17,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.counterparty import Counterparty
-from app.models.document import PrimaryDocument
+from app.models.document import PaymentEvent, PrimaryDocument
 from app.models.transaction import Transaction
 from app.models.user import Organization, User
 from app.schemas.primary_document import (
@@ -44,6 +45,25 @@ class PaymentWebhookPayload(BaseModel):
 
 class PaymentLinkSendPayload(BaseModel):
     email: EmailStr
+
+
+async def _record_payment_event(
+    db: AsyncSession,
+    *,
+    doc: PrimaryDocument,
+    event_type: str,
+    source: str,
+    payload: dict | None = None,
+) -> None:
+    db.add(
+        PaymentEvent(
+            organization_id=doc.organization_id,
+            doc_id=doc.id,
+            event_type=event_type,
+            source=source,
+            payload_json=json.dumps(payload, ensure_ascii=False) if payload is not None else None,
+        )
+    )
 
 
 async def _mark_invoice_paid(
@@ -405,6 +425,14 @@ async def send_primary_document_payment_link(
         currency=doc.currency,
         payment_url=payment_url,
     )
+    await _record_payment_event(
+        db,
+        doc=doc,
+        event_type="payment_link_sent",
+        source="ui",
+        payload={"email": str(body.email), "email_sent": bool(sent), "payment_url": payment_url},
+    )
+    await db.flush()
     return {
         "ok": True,
         "email": str(body.email),
@@ -429,6 +457,13 @@ async def primary_document_mark_paid(
     if not doc:
         raise HTTPException(status_code=404, detail="Документ не найден")
     await _mark_invoice_paid(db, doc, description="Ручное подтверждение оплаты из интерфейса")
+    await _record_payment_event(
+        db,
+        doc=doc,
+        event_type="manual_mark_paid",
+        source="ui",
+        payload={"status": doc.status, "transaction_id": doc.transaction_id},
+    )
     await db.flush()
     return {
         "ok": True,
@@ -477,9 +512,36 @@ async def payment_webhook(
             payment_id=body.payment_id,
             description=body.description,
         )
+        await _record_payment_event(
+            db,
+            doc=doc,
+            event_type="webhook_paid",
+            source="webhook",
+            payload={
+                "payment_id": body.payment_id,
+                "amount": body.amount,
+                "currency": body.currency,
+                "transaction_id": doc.transaction_id,
+            },
+        )
     elif body.status == "pending":
         if doc.status == "draft":
             doc.status = "issued"
+        await _record_payment_event(
+            db,
+            doc=doc,
+            event_type="webhook_pending",
+            source="webhook",
+            payload={"payment_id": body.payment_id},
+        )
+    elif body.status == "failed":
+        await _record_payment_event(
+            db,
+            doc=doc,
+            event_type="webhook_failed",
+            source="webhook",
+            payload={"payment_id": body.payment_id, "description": body.description},
+        )
 
     await db.flush()
     return {
@@ -488,6 +550,53 @@ async def payment_webhook(
         "status": doc.status,
         "transaction_id": doc.transaction_id,
     }
+
+
+@router.get("/{doc_id}/payment-events")
+async def primary_document_payment_events(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PrimaryDocument).where(
+            PrimaryDocument.id == doc_id,
+            PrimaryDocument.organization_id == current_user.organization_id,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="История оплаты доступна только для счёта (invoice)")
+
+    events_r = await db.execute(
+        select(PaymentEvent)
+        .where(
+            PaymentEvent.organization_id == doc.organization_id,
+            PaymentEvent.doc_id == doc.id,
+        )
+        .order_by(PaymentEvent.created_at.desc())
+    )
+    events = events_r.scalars().all()
+    data = []
+    for ev in events:
+        payload = None
+        if ev.payload_json:
+            try:
+                payload = json.loads(ev.payload_json)
+            except Exception:
+                payload = {"raw": ev.payload_json}
+        data.append(
+            {
+                "id": ev.id,
+                "event_type": ev.event_type,
+                "source": ev.source,
+                "created_at": ev.created_at.isoformat(),
+                "payload": payload,
+            }
+        )
+    return {"doc_id": doc.id, "events": data}
 
 
 @router.get("/{doc_id}/print")

@@ -322,3 +322,14 @@ async def test_send_payment_link_email_endpoint(client: AsyncClient, auth_header
         assert f"pay={doc_id}" in body["payment_url"]
     finally:
         settings.EMAIL_API_KEY = old_email_key
+
+    mark = await client.post(f"/api/v1/primary-documents/{doc_id}/mark-paid", headers=auth_headers)
+    assert mark.status_code == 200
+
+    events = await client.get(f"/api/v1/primary-documents/{doc_id}/payment-events", headers=auth_headers)
+    assert events.status_code == 200
+    body = events.json()
+    assert body["doc_id"] == doc_id
+    types = [e["event_type"] for e in body["events"]]
+    assert "payment_link_sent" in types
+    assert "manual_mark_paid" in types
