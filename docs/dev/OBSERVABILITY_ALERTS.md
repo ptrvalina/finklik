@@ -2,6 +2,12 @@
 
 Production monitoring baseline for Sprint 10 stabilization.
 
+## Ready-to-import Grafana dashboard
+
+- File: `docs/dev/GRAFANA_DASHBOARD_MINIMAL.json`
+- Import path in Grafana: **Dashboards -> New -> Import -> Upload JSON file**
+- Datasource: select your Prometheus datasource during import
+
 ## Key Metrics
 
 - `tax_rules_validate_fallback_total{cause="missing|error"}`
