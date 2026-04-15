@@ -287,3 +287,38 @@ async def test_payment_webhook_duplicate_payment_id_conflict(client: AsyncClient
         assert second.status_code == 409
     finally:
         settings.PAYMENT_WEBHOOK_SECRET = old_secret
+
+
+@pytest.mark.asyncio
+async def test_send_payment_link_email_endpoint(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-16",
+            "currency": "BYN",
+            "amount_total": 77.7,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    old_email_key = settings.EMAIL_API_KEY
+    settings.EMAIL_API_KEY = ""
+    try:
+        send = await client.post(
+            f"/api/v1/primary-documents/{doc_id}/payment-link/send",
+            json={"email": "buyer@example.com"},
+            headers=auth_headers,
+        )
+        assert send.status_code == 200
+        body = send.json()
+        assert body["ok"] is True
+        assert body["email"] == "buyer@example.com"
+        assert body["email_sent"] is False
+        assert f"pay={doc_id}" in body["payment_url"]
+    finally:
+        settings.EMAIL_API_KEY = old_email_key

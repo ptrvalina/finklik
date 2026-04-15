@@ -45,3 +45,56 @@ async def send_invite_email(to_email: str, org_name: str, invite_code: str, invi
     except Exception as exc:
         log.error("email.exception", to=to_email, error=str(exc))
         return False
+
+
+async def send_payment_link_email(
+    to_email: str,
+    *,
+    org_name: str,
+    doc_number: str,
+    amount: float,
+    currency: str,
+    payment_url: str,
+) -> bool:
+    if not settings.EMAIL_API_KEY:
+        log.warning("email.skipped", to=to_email, reason="EMAIL_API_KEY not set")
+        return False
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                settings.EMAIL_API_URL,
+                headers={
+                    "Authorization": f"Bearer {settings.EMAIL_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": settings.EMAIL_FROM,
+                    "to": [to_email],
+                    "subject": f"Ссылка на оплату счёта {doc_number} — ФинКлик",
+                    "html": (
+                        f"<h2>Счёт {doc_number} к оплате</h2>"
+                        f"<p>Сумма: <b>{amount:.2f} {currency}</b></p>"
+                        f"<p>Оплатить можно по ссылке:</p>"
+                        f'<p><a href="{payment_url}">{payment_url}</a></p>'
+                        f"<p>Организация: {org_name}</p>"
+                        f"<p>— Команда ФинКлик</p>"
+                    ),
+                },
+            )
+            if resp.status_code < 300:
+                log.info("email.sent", to=to_email, status=resp.status_code, kind="payment_link")
+                return True
+            log.error(
+                "email.failed",
+                to=to_email,
+                status=resp.status_code,
+                body=resp.text[:200],
+                kind="payment_link",
+            )
+            return False
+    except Exception as exc:
+        log.error("email.exception", to=to_email, error=str(exc), kind="payment_link")
+        return False

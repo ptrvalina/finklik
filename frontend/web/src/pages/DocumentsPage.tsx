@@ -216,10 +216,12 @@ export default function DocumentsPage() {
     currency: string
     isPaid?: boolean
   } | null>(null)
+  const [payLinkEmail, setPayLinkEmail] = useState('')
 
   const payQrMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
-    onSuccess: (d: any) =>
+    onSuccess: (d: any) => {
+      setPayLinkEmail('')
       setPayQrModal({
         docId: d.doc_id,
         b64: d.qr_png_base64,
@@ -227,7 +229,8 @@ export default function DocumentsPage() {
         amount: d.amount,
         currency: d.currency,
         isPaid: false,
-      }),
+      })
+    },
     onError: (e: any) =>
       setMessage({
         type: 'error',
@@ -275,6 +278,23 @@ export default function DocumentsPage() {
       setMessage({
         type: 'error',
         text: e?.response?.data?.detail || 'Не удалось отметить счёт как оплаченный',
+      }),
+  })
+
+  const sendPaymentLinkMutation = useMutation({
+    mutationFn: ({ docId, email }: { docId: string; email: string }) =>
+      primaryDocumentsApi.sendPaymentLink(docId, email).then((r) => r.data),
+    onSuccess: (d: any) => {
+      if (d?.email_sent) {
+        setMessage({ type: 'success', text: `Ссылка на оплату отправлена: ${d.email}` })
+      } else {
+        setMessage({ type: 'success', text: `Email не отправлен (нет ключа), ссылка готова: ${d.payment_url}` })
+      }
+    },
+    onError: (e: any) =>
+      setMessage({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось отправить ссылку на оплату',
       }),
   })
 
@@ -671,6 +691,25 @@ export default function DocumentsPage() {
             >
               {payQrModal.url}
             </a>
+            <div className="mb-3 space-y-2">
+              <input
+                type="email"
+                className="input w-full"
+                placeholder="Email для отправки ссылки"
+                value={payLinkEmail}
+                onChange={(e) => setPayLinkEmail(e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn-ghost min-h-11 w-full"
+                disabled={sendPaymentLinkMutation.isPending || !payLinkEmail.trim()}
+                onClick={() =>
+                  sendPaymentLinkMutation.mutate({ docId: payQrModal.docId, email: payLinkEmail.trim() })
+                }
+              >
+                {sendPaymentLinkMutation.isPending ? 'Отправляем...' : 'Отправить ссылку на email'}
+              </button>
+            </div>
             <button
               type="button"
               className="btn-ghost mb-3 min-h-11 w-full"

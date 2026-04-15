@@ -236,4 +236,6 @@ export const primaryDocumentsApi = {
   paymentQr: (id: string) => api.get(`/primary-documents/${id}/payment-qr`),
   paymentStatus: (id: string) => api.get(`/primary-documents/${id}/payment-status`),
   markPaid: (id: string) => api.post(`/primary-documents/${id}/mark-paid`),
+  sendPaymentLink: (id: string, email: string) =>
+    api.post(`/primary-documents/${id}/payment-link/send`, { email }),
 }

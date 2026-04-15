@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 import qrcode
 from fastapi import APIRouter, Depends, HTTPException, Header, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +26,7 @@ from app.schemas.primary_document import (
 )
 from app.services.primary_document_numbering import allocate_next_document_number, peek_next_document_number
 from app.services.primary_document_pdf import PrimaryDocumentPdfContext, generate_primary_document_pdf
+from app.services.email_service import send_payment_link_email
 
 router = APIRouter(prefix="/primary-documents", tags=["primary-documents"])
 
@@ -39,6 +40,10 @@ class PaymentWebhookPayload(BaseModel):
     currency: str | None = Field(default=None, min_length=3, max_length=3)
     payment_id: str | None = Field(default=None, min_length=3, max_length=128)
     description: str | None = Field(default=None, max_length=500)
+
+
+class PaymentLinkSendPayload(BaseModel):
+    email: EmailStr
 
 
 async def _mark_invoice_paid(
@@ -365,6 +370,46 @@ async def primary_document_payment_status(
         "status": doc.status,
         "is_paid": doc.status == "paid",
         "transaction_id": doc.transaction_id,
+    }
+
+
+@router.post("/{doc_id}/payment-link/send")
+async def send_primary_document_payment_link(
+    doc_id: str,
+    body: PaymentLinkSendPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PrimaryDocument).where(
+            PrimaryDocument.id == doc_id,
+            PrimaryDocument.organization_id == current_user.organization_id,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="Ссылка оплаты доступна только для счёта (invoice)")
+
+    org_row = await db.execute(select(Organization).where(Organization.id == doc.organization_id))
+    org = org_row.scalar_one_or_none()
+    org_name = org.name if org else "ФинКлик"
+
+    payment_url = f"{settings.FRONTEND_URL.rstrip('/')}/documents?pay={doc.id}"
+    sent = await send_payment_link_email(
+        str(body.email),
+        org_name=org_name,
+        doc_number=doc.doc_number,
+        amount=float(doc.amount_total),
+        currency=doc.currency,
+        payment_url=payment_url,
+    )
+    return {
+        "ok": True,
+        "email": str(body.email),
+        "email_sent": sent,
+        "payment_url": payment_url,
     }
 
 
