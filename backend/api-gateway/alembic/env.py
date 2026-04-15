@@ -1,4 +1,6 @@
 import asyncio
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -6,13 +8,18 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+# Ensure `app` package is importable regardless current working directory.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.core.config import settings
-from app.core.database import Base
-from app import models as _models  # noqa: F401
+from app.core.config import settings  # noqa: E402
+from app.core.database import Base  # noqa: E402
+from app import models as _models  # noqa: E402,F401
 
 target_metadata = Base.metadata
 
