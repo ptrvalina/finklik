@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://localhost:3000",
+        "https://finklik.vercel.app",
+        "https://ptrvalina.github.io",
     ]
     MOCK_BANK_URL: str = "http://localhost:8001"
     ONEC_MOCK_URL: str = "http://localhost:8002"

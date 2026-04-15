@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthStore>()(
           const detail = e.response?.data?.detail
           const fallback =
             e.code === 'ERR_NETWORK' || !e.response
-              ? 'Сервер API недоступен (часто это localhost с GitHub Pages — задайте VITE_API_URL и пересоберите фронт).'
+              ? 'Не удалось связаться с API. Убедитесь, что VITE_API_URL указывает на бэкенд при сборке. Если URL верный, проверьте CORS на сервере (должен быть разрешён Origin этого сайта).'
               : 'Ошибка входа'
           set({ error: detail || fallback, isLoading: false })
           throw e

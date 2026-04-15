@@ -1,7 +1,24 @@
 import axios from 'axios'
 import { resolveAppPath } from '../appBase'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+/** Продакшен API; используется, если VITE_API_URL не задан при сборке (частая причина запросов на localhost). */
+const PRODUCTION_API_BASE = 'https://finklik-api.onrender.com'
+
+function resolveApiBase(): string {
+  const fromEnv = import.meta.env.VITE_API_URL
+  if (fromEnv && String(fromEnv).trim()) {
+    return String(fromEnv).replace(/\/$/, '')
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname
+    if (host === 'finklik.vercel.app' || host === 'ptrvalina.github.io') {
+      return PRODUCTION_API_BASE
+    }
+  }
+  return 'http://localhost:8000'
+}
+
+const BASE = resolveApiBase()
 type RetryableRequestConfig = {
   _retry?: boolean
   headers?: Record<string, string>

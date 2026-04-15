@@ -107,6 +107,7 @@ async def refresh_tokens(body: RefreshRequest, db: AsyncSession = Depends(get_db
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     org_name = None
+    org = None
     if current_user.organization_id:
         result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
         org = result.scalar_one_or_none()
