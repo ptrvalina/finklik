@@ -73,6 +73,11 @@ export default function TaxesPage() {
               Налоговые правила: {rulesValidation.ok ? 'валидны' : 'ошибка конфигурации'}
             </span>
             <span className="text-xs opacity-80">Источник: {rulesValidation.source}</span>
+            {rulesValidation.using_fallback && (
+              <span className="rounded bg-error/20 px-2 py-0.5 text-xs font-semibold text-error">
+                fallback
+              </span>
+            )}
             {Array.isArray(rulesValidation.years) && (
               <span className="text-xs opacity-80">Годы: {rulesValidation.years.join(', ')}</span>
             )}

@@ -108,6 +108,7 @@ def validate_tax_rules_config() -> dict:
     payload = {
         "ok": True,
         "source": "default",
+        "using_fallback": True,
         "path": str(config_path),
         "years": [],
         "warnings": [],
@@ -134,10 +135,12 @@ def validate_tax_rules_config() -> dict:
                 Decimal(str(row[key]))
             parsed_years.append(year)
         payload["source"] = "config"
+        payload["using_fallback"] = False
         payload["years"] = sorted(parsed_years)
         return payload
     except Exception as exc:
         payload["ok"] = False
+        payload["using_fallback"] = True
         payload["errors"].append(str(exc))
         payload["warnings"].append("При ошибке будет использован встроенный fallback.")
         payload["years"] = sorted(_DEFAULT_TAX_RULES_BY_YEAR.keys())

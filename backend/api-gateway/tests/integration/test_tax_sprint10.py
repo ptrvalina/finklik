@@ -85,4 +85,5 @@ async def test_validate_tax_rules_endpoint_for_owner(client: AsyncClient, auth_h
     data = r.json()
     assert "ok" in data
     assert "source" in data
+    assert "using_fallback" in data
     assert isinstance(data.get("years"), list)
