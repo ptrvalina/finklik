@@ -30,6 +30,11 @@ export default function TaxesPage() {
     queryKey: ['tax-calendar', year],
     queryFn: () => taxApi.calendar(year).then(r => r.data),
   })
+  const { data: rulesValidation } = useQuery({
+    queryKey: ['tax-rules-validation'],
+    queryFn: () => taxApi.validateRules().then(r => r.data),
+    retry: false,
+  })
 
   return (
     <div className="max-w-7xl space-y-8">
@@ -53,6 +58,39 @@ export default function TaxesPage() {
       {(isError || calendarError) && (
         <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm flex items-center gap-2">
           <Icon name="error" className="text-lg" /> Не удалось загрузить данные
+        </div>
+      )}
+      {rulesValidation && (
+        <div
+          className={`rounded-xl px-4 py-3 text-sm ${
+            rulesValidation.ok
+              ? 'bg-secondary/10 border border-secondary/20 text-secondary'
+              : 'bg-error/10 border border-error/20 text-error'
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold">
+              Налоговые правила: {rulesValidation.ok ? 'валидны' : 'ошибка конфигурации'}
+            </span>
+            <span className="text-xs opacity-80">Источник: {rulesValidation.source}</span>
+            {Array.isArray(rulesValidation.years) && (
+              <span className="text-xs opacity-80">Годы: {rulesValidation.years.join(', ')}</span>
+            )}
+          </div>
+          {Array.isArray(rulesValidation.warnings) && rulesValidation.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs opacity-90">
+              {rulesValidation.warnings.map((w: string, i: number) => (
+                <li key={i}>• {w}</li>
+              ))}
+            </ul>
+          )}
+          {Array.isArray(rulesValidation.errors) && rulesValidation.errors.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs">
+              {rulesValidation.errors.map((e: string, i: number) => (
+                <li key={i}>• {e}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

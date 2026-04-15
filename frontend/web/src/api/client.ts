@@ -91,6 +91,7 @@ export const taxApi = {
   calculate: (params: { period_start: string; period_end: string; with_vat?: boolean }) =>
     api.get('/tax/calculate', { params }),
   calendar: (year: number) => api.get('/tax/calendar', { params: { year } }),
+  validateRules: () => api.get('/tax/rules/validate'),
 }
 
 export const reportsApi = {
