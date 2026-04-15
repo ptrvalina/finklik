@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     PROVISION_ADMIN_TOKEN: str = ""
     # Webhook оркестратора ИБ 1С. Пусто = POST /onec/webhooks/provision отключён (404).
     PROVISION_WEBHOOK_SECRET: str = ""
+    # Webhook подтверждения оплаты счёта. Пусто = POST /primary-documents/webhooks/payment отключён (404).
+    PAYMENT_WEBHOOK_SECRET: str = ""
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

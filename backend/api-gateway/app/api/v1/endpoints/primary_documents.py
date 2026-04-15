@@ -1,10 +1,12 @@
 import base64
+import hmac
 import io
 import re
 from urllib.parse import quote
 
 import qrcode
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from pydantic import BaseModel, Field
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +27,43 @@ from app.services.primary_document_numbering import allocate_next_document_numbe
 from app.services.primary_document_pdf import PrimaryDocumentPdfContext, generate_primary_document_pdf
 
 router = APIRouter(prefix="/primary-documents", tags=["primary-documents"])
+
+
+class PaymentWebhookPayload(BaseModel):
+    doc_id: str | None = Field(default=None, min_length=8, max_length=64)
+    organization_id: str | None = Field(default=None, min_length=8, max_length=64)
+    doc_number: str | None = Field(default=None, min_length=1, max_length=40)
+    status: str = Field(default="paid", pattern="^(paid|pending|failed)$")
+    amount: float | None = Field(default=None, gt=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    description: str | None = Field(default=None, max_length=500)
+
+
+async def _mark_invoice_paid(
+    db: AsyncSession,
+    doc: PrimaryDocument,
+    *,
+    amount: float | None = None,
+    currency: str | None = None,
+    description: str | None = None,
+) -> None:
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="Операция оплаты применима только к invoice")
+    if not doc.transaction_id:
+        tx = Transaction(
+            organization_id=doc.organization_id,
+            type="income",
+            amount=amount if amount is not None else doc.amount_total,
+            currency=(currency or doc.currency).upper(),
+            category="bank_import",
+            description=description or f"Оплата по счёту {doc.doc_number}",
+            transaction_date=doc.issue_date,
+            status="posted",
+        )
+        db.add(tx)
+        await db.flush()
+        doc.transaction_id = tx.id
+    doc.status = "paid"
 
 
 async def _validate_links(
@@ -279,6 +318,108 @@ async def primary_document_payment_qr(
         "qr_text": qr_text,
         "qr_png_base64": b64,
         "scheme": "finklik-demo",
+    }
+
+
+@router.get("/{doc_id}/payment-status")
+async def primary_document_payment_status(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PrimaryDocument).where(
+            PrimaryDocument.id == doc_id,
+            PrimaryDocument.organization_id == current_user.organization_id,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="Статус оплаты доступен только для счёта (invoice)")
+    return {
+        "doc_id": doc.id,
+        "doc_number": doc.doc_number,
+        "status": doc.status,
+        "is_paid": doc.status == "paid",
+        "transaction_id": doc.transaction_id,
+    }
+
+
+@router.post("/{doc_id}/mark-paid")
+async def primary_document_mark_paid(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PrimaryDocument).where(
+            PrimaryDocument.id == doc_id,
+            PrimaryDocument.organization_id == current_user.organization_id,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    await _mark_invoice_paid(db, doc, description="Ручное подтверждение оплаты из интерфейса")
+    await db.flush()
+    return {
+        "ok": True,
+        "doc_id": doc.id,
+        "status": doc.status,
+        "transaction_id": doc.transaction_id,
+    }
+
+
+@router.post("/webhooks/payment")
+async def payment_webhook(
+    body: PaymentWebhookPayload,
+    x_secret: str | None = Header(None, alias="X-Payment-Webhook-Secret"),
+    db: AsyncSession = Depends(get_db),
+):
+    expected = settings.PAYMENT_WEBHOOK_SECRET
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not hmac.compare_digest((x_secret or "").encode(), expected.encode()):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if body.doc_id:
+        result = await db.execute(select(PrimaryDocument).where(PrimaryDocument.id == body.doc_id))
+    else:
+        if not body.organization_id or not body.doc_number:
+            raise HTTPException(status_code=400, detail="Нужен doc_id или пара organization_id + doc_number")
+        result = await db.execute(
+            select(PrimaryDocument).where(
+                PrimaryDocument.organization_id == body.organization_id,
+                PrimaryDocument.doc_number == body.doc_number,
+                PrimaryDocument.doc_type == "invoice",
+            )
+        )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    if doc.doc_type != "invoice":
+        raise HTTPException(status_code=400, detail="Webhook оплаты применим только к invoice")
+
+    if body.status == "paid":
+        await _mark_invoice_paid(
+            db,
+            doc,
+            amount=body.amount,
+            currency=body.currency,
+            description=body.description,
+        )
+    elif body.status == "pending":
+        if doc.status == "draft":
+            doc.status = "issued"
+
+    await db.flush()
+    return {
+        "ok": True,
+        "doc_id": doc.id,
+        "status": doc.status,
+        "transaction_id": doc.transaction_id,
     }
 
 

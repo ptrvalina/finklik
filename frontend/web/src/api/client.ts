@@ -234,4 +234,6 @@ export const primaryDocumentsApi = {
   remove: (id: string) => api.delete(`/primary-documents/${id}`),
   print: (id: string) => api.get(`/primary-documents/${id}/print`, { responseType: 'blob' }),
   paymentQr: (id: string) => api.get(`/primary-documents/${id}/payment-qr`),
+  paymentStatus: (id: string) => api.get(`/primary-documents/${id}/payment-status`),
+  markPaid: (id: string) => api.post(`/primary-documents/${id}/mark-paid`),
 }

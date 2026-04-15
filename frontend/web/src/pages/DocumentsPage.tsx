@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { counterpartiesApi, documentsApi, importApi, primaryDocumentsApi } from '../api/client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -208,21 +208,73 @@ export default function DocumentsPage() {
     onError: () => setMessage({ type: 'error', text: 'Ошибка удаления документа' }),
   })
 
-  const [payQrModal, setPayQrModal] = useState<{ b64: string; url: string; amount: number; currency: string } | null>(null)
+  const [payQrModal, setPayQrModal] = useState<{
+    docId: string
+    b64: string
+    url: string
+    amount: number
+    currency: string
+    isPaid?: boolean
+  } | null>(null)
 
   const payQrMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
     onSuccess: (d: any) =>
       setPayQrModal({
+        docId: d.doc_id,
         b64: d.qr_png_base64,
         url: d.payment_url,
         amount: d.amount,
         currency: d.currency,
+        isPaid: false,
       }),
     onError: (e: any) =>
       setMessage({
         type: 'error',
         text: e?.response?.data?.detail || 'Не удалось получить QR',
+      }),
+  })
+
+  const checkPaymentStatusMutation = useMutation({
+    mutationFn: (docId: string) => primaryDocumentsApi.paymentStatus(docId).then((r) => r.data),
+    onSuccess: (d: any) => {
+      const paid = Boolean(d?.is_paid)
+      setPayQrModal((prev) => (prev ? { ...prev, isPaid: paid } : prev))
+      if (paid) {
+        qc.invalidateQueries({ queryKey: ['primary-documents'] })
+        setMessage({ type: 'success', text: 'Оплата подтверждена, статус счёта обновлён' })
+      } else {
+        setMessage({ type: 'success', text: 'Оплата пока не подтверждена' })
+      }
+    },
+    onError: (e: any) =>
+      setMessage({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось проверить статус оплаты',
+      }),
+  })
+
+  useEffect(() => {
+    if (!payQrModal || payQrModal.isPaid) return
+    const id = window.setInterval(() => {
+      if (!checkPaymentStatusMutation.isPending) {
+        checkPaymentStatusMutation.mutate(payQrModal.docId)
+      }
+    }, 10000)
+    return () => window.clearInterval(id)
+  }, [payQrModal, checkPaymentStatusMutation])
+
+  const markPaidMutation = useMutation({
+    mutationFn: (docId: string) => primaryDocumentsApi.markPaid(docId).then((r) => r.data),
+    onSuccess: () => {
+      setPayQrModal((prev) => (prev ? { ...prev, isPaid: true } : prev))
+      qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      setMessage({ type: 'success', text: 'Счёт вручную отмечен как оплаченный' })
+    },
+    onError: (e: any) =>
+      setMessage({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось отметить счёт как оплаченный',
       }),
   })
 
@@ -409,7 +461,7 @@ export default function DocumentsPage() {
 
       <h2 className="font-headline text-lg font-bold text-white sm:text-xl">Первичные документы</h2>
       <p className="text-xs text-zinc-500 max-w-3xl">
-        Сценарий: счёт (invoice) → оплата (привяжите транзакцию позже в API / следующих спринтах) → акт или накладная с привязкой к счёту.
+        Сценарий: счёт (invoice) → оплата (статус подтягивается через webhook/polling) → акт или накладная с привязкой к счёту.
         Печать — PDF с реквизитами ИП/ООО из организации.
       </p>
 
@@ -605,6 +657,9 @@ export default function DocumentsPage() {
             <p className="mb-4 text-sm text-zinc-400">
               {payQrModal.amount.toFixed(2)} {payQrModal.currency} — демо-QR (не ЕРИП). Ссылка для теста ниже.
             </p>
+            <p className={`mb-3 text-xs font-semibold ${payQrModal.isPaid ? 'text-secondary' : 'text-zinc-400'}`}>
+              Статус оплаты: {payQrModal.isPaid ? 'оплачен' : 'ожидает оплаты'}
+            </p>
             <div className="mb-4 flex justify-center rounded-xl bg-white p-3">
               <img src={`data:image/png;base64,${payQrModal.b64}`} alt="QR оплаты" className="h-48 w-48" />
             </div>
@@ -616,6 +671,24 @@ export default function DocumentsPage() {
             >
               {payQrModal.url}
             </a>
+            <button
+              type="button"
+              className="btn-ghost mb-3 min-h-11 w-full"
+              disabled={checkPaymentStatusMutation.isPending}
+              onClick={() => checkPaymentStatusMutation.mutate(payQrModal.docId)}
+            >
+              {checkPaymentStatusMutation.isPending ? 'Проверяем...' : 'Проверить статус оплаты'}
+            </button>
+            {!payQrModal.isPaid && (
+              <button
+                type="button"
+                className="btn-ghost mb-3 min-h-11 w-full"
+                disabled={markPaidMutation.isPending}
+                onClick={() => markPaidMutation.mutate(payQrModal.docId)}
+              >
+                {markPaidMutation.isPending ? 'Отмечаем...' : 'Отметить как оплаченный (demo)'}
+              </button>
+            )}
             <button type="button" className="btn-primary min-h-11 w-full" onClick={() => setPayQrModal(null)}>
               Закрыть
             </button>

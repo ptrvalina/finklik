@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from app.core.config import settings
+
 
 @pytest.mark.asyncio
 async def test_primary_document_create_list_and_print(client: AsyncClient, auth_headers: dict):
@@ -148,3 +150,75 @@ async def test_primary_document_act_rejects_non_invoice_link(client: AsyncClient
         headers=auth_headers,
     )
     assert act_bad.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_primary_document_payment_status_and_webhook(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-15",
+            "currency": "BYN",
+            "amount_total": 150.75,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    st1 = await client.get(f"/api/v1/primary-documents/{doc_id}/payment-status", headers=auth_headers)
+    assert st1.status_code == 200
+    assert st1.json()["is_paid"] is False
+
+    old_secret = settings.PAYMENT_WEBHOOK_SECRET
+    settings.PAYMENT_WEBHOOK_SECRET = "test-payment-secret"
+    try:
+        wh = await client.post(
+            "/api/v1/primary-documents/webhooks/payment",
+            json={
+                "doc_id": doc_id,
+                "status": "paid",
+                "amount": 150.75,
+                "currency": "byn",
+                "description": "Оплата по ссылке",
+            },
+            headers={"X-Payment-Webhook-Secret": "test-payment-secret"},
+        )
+        assert wh.status_code == 200
+        body = wh.json()
+        assert body["status"] == "paid"
+        assert body["transaction_id"]
+    finally:
+        settings.PAYMENT_WEBHOOK_SECRET = old_secret
+
+    st2 = await client.get(f"/api/v1/primary-documents/{doc_id}/payment-status", headers=auth_headers)
+    assert st2.status_code == 200
+    assert st2.json()["is_paid"] is True
+    assert st2.json()["status"] == "paid"
+    assert st2.json()["transaction_id"]
+
+
+@pytest.mark.asyncio
+async def test_primary_document_mark_paid(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-16",
+            "currency": "BYN",
+            "amount_total": 10,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    mark = await client.post(f"/api/v1/primary-documents/{doc_id}/mark-paid", headers=auth_headers)
+    assert mark.status_code == 200
+    assert mark.json()["status"] == "paid"
+    assert mark.json()["transaction_id"]
