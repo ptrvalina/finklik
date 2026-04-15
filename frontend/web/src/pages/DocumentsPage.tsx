@@ -12,6 +12,31 @@ function saveBlob(blob: Blob, fileName: string) {
   a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
 }
 
+function paymentEventLabel(eventType: string): string {
+  const labels: Record<string, string> = {
+    payment_link_sent: 'Ссылка на оплату отправлена',
+    manual_mark_paid: 'Ручное подтверждение оплаты',
+    webhook_paid: 'Webhook: оплата подтверждена',
+    webhook_pending: 'Webhook: оплата ожидается',
+    webhook_failed: 'Webhook: ошибка оплаты',
+    webhook_conflict: 'Webhook: конфликт параметров платежа',
+  }
+  return labels[eventType] || eventType
+}
+
+function formatEventDate(value: string): string {
+  const dt = new Date(value)
+  if (Number.isNaN(dt.getTime())) return value
+  return dt.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
 export default function DocumentsPage() {
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
@@ -801,12 +826,12 @@ export default function DocumentsPage() {
                 {filteredPaymentEvents.map((e: any) => (
                   <div key={e.id} className="mb-2 border-b border-white/10 pb-2 last:mb-0 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="font-semibold text-zinc-200">{e.event_type}</div>
+                      <div className="font-semibold text-zinc-200">{paymentEventLabel(String(e.event_type || ''))}</div>
                       <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase text-zinc-400">
                         {e.source}
                       </span>
                     </div>
-                    <div className="text-[11px] text-zinc-500">{e.created_at}</div>
+                    <div className="text-[11px] text-zinc-500">{formatEventDate(String(e.created_at || ''))}</div>
                     {e.payload && (
                       <>
                         <button
