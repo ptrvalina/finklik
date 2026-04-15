@@ -2,6 +2,7 @@
 
 import hmac
 
+import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
@@ -16,6 +17,15 @@ from app.models.user import Organization, User
 from app.services.onec_contour_service import ensure_onec_contour_record, get_or_create_contour
 
 router = APIRouter(prefix="/onec", tags=["1c-integration"])
+log = structlog.get_logger(__name__)
+
+
+def _mask_secret(value: str | None) -> str:
+    if not value:
+        return "<empty>"
+    if len(value) <= 4:
+        return "*" * len(value)
+    return f"{value[:2]}***{len(value)}"
 
 
 def _require_provision_admin(
@@ -125,8 +135,15 @@ async def provision_webhook(
     """Колбэк внешнего оркестратора после создания ИБ / tenant (секрет в PROVISION_WEBHOOK_SECRET)."""
     expected = settings.PROVISION_WEBHOOK_SECRET
     if not expected:
+        log.warning("onec_provision_webhook_rejected", reason="webhook_secret_not_configured")
         raise HTTPException(status_code=404, detail="Not found")
     if not hmac.compare_digest((x_secret or "").encode(), expected.encode()):
+        log.warning(
+            "onec_provision_webhook_rejected",
+            reason="bad_secret",
+            secret_preview=_mask_secret(x_secret),
+            organization_id=body.organization_id,
+        )
         raise HTTPException(status_code=404, detail="Not found")
 
     org_r = await db.execute(select(Organization).where(Organization.id == body.organization_id))
@@ -140,4 +157,10 @@ async def provision_webhook(
     contour.status = body.status
     contour.last_error = (body.error[:2000] if body.error else None)
     await db.flush()
+    log.info(
+        "onec_provision_webhook_processed",
+        organization_id=body.organization_id,
+        status=body.status,
+        has_error=bool(body.error),
+    )
     return {"ok": True, "contour_key": contour.contour_key}

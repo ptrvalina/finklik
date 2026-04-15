@@ -7,6 +7,7 @@ from decimal import Decimal
 from urllib.parse import quote
 
 import qrcode
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from pydantic import BaseModel, EmailStr, Field
 from fastapi.responses import Response
@@ -30,6 +31,26 @@ from app.services.primary_document_pdf import PrimaryDocumentPdfContext, generat
 from app.services.email_service import send_payment_link_email
 
 router = APIRouter(prefix="/primary-documents", tags=["primary-documents"])
+log = structlog.get_logger(__name__)
+
+
+def _mask_secret(value: str | None) -> str:
+    if not value:
+        return "<empty>"
+    if len(value) <= 4:
+        return "*" * len(value)
+    return f"{value[:2]}***{len(value)}"
+
+
+def _mask_email(value: str) -> str:
+    if "@" not in value:
+        return "***"
+    local, domain = value.split("@", 1)
+    if len(local) <= 2:
+        local_masked = "*" * len(local)
+    else:
+        local_masked = f"{local[0]}***{local[-1]}"
+    return f"{local_masked}@{domain}"
 
 
 class PaymentWebhookPayload(BaseModel):
@@ -411,6 +432,8 @@ async def send_primary_document_payment_link(
         raise HTTPException(status_code=404, detail="Документ не найден")
     if doc.doc_type != "invoice":
         raise HTTPException(status_code=400, detail="Ссылка оплаты доступна только для счёта (invoice)")
+    if doc.status == "paid":
+        raise HTTPException(status_code=409, detail="Счёт уже оплачен, повторная ссылка не требуется")
 
     org_row = await db.execute(select(Organization).where(Organization.id == doc.organization_id))
     org = org_row.scalar_one_or_none()
@@ -433,6 +456,13 @@ async def send_primary_document_payment_link(
         payload={"email": str(body.email), "email_sent": bool(sent), "payment_url": payment_url},
     )
     await db.flush()
+    log.info(
+        "payment_link_send_requested",
+        doc_id=doc.id,
+        organization_id=doc.organization_id,
+        email=_mask_email(str(body.email)),
+        email_sent=bool(sent),
+    )
     return {
         "ok": True,
         "email": str(body.email),
@@ -481,8 +511,16 @@ async def payment_webhook(
 ):
     expected = settings.PAYMENT_WEBHOOK_SECRET
     if not expected:
+        log.warning("payment_webhook_rejected", reason="webhook_secret_not_configured")
         raise HTTPException(status_code=404, detail="Not found")
     if not hmac.compare_digest((x_secret or "").encode(), expected.encode()):
+        log.warning(
+            "payment_webhook_rejected",
+            reason="bad_secret",
+            secret_preview=_mask_secret(x_secret),
+            has_doc_id=bool(body.doc_id),
+            has_payment_id=bool(body.payment_id),
+        )
         raise HTTPException(status_code=404, detail="Not found")
 
     if body.doc_id:
@@ -561,6 +599,14 @@ async def payment_webhook(
         )
 
     await db.flush()
+    log.info(
+        "payment_webhook_processed",
+        doc_id=doc.id,
+        organization_id=doc.organization_id,
+        status=body.status,
+        payment_id_hint=_mask_secret(body.payment_id),
+        has_amount=body.amount is not None,
+    )
     return {
         "ok": True,
         "doc_id": doc.id,

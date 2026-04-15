@@ -339,3 +339,62 @@ async def test_send_payment_link_email_endpoint(client: AsyncClient, auth_header
     types = [e["event_type"] for e in body["events"]]
     assert "payment_link_sent" in types
     assert "manual_mark_paid" in types
+    summary = body["summary"]
+    assert summary["total"] >= 2
+    assert summary["manual_updates"] >= 1
+    assert summary["link_sent"] >= 1
+    assert summary["by_type"]["manual_mark_paid"] >= 1
+    assert summary["by_type"]["payment_link_sent"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_send_payment_link_email_rejects_invalid_email(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-16",
+            "currency": "BYN",
+            "amount_total": 12.5,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    send = await client.post(
+        f"/api/v1/primary-documents/{doc_id}/payment-link/send",
+        json={"email": "not-an-email"},
+        headers=auth_headers,
+    )
+    assert send.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_send_payment_link_email_rejects_paid_invoice(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-16",
+            "currency": "BYN",
+            "amount_total": 55.0,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    mark = await client.post(f"/api/v1/primary-documents/{doc_id}/mark-paid", headers=auth_headers)
+    assert mark.status_code == 200
+
+    send = await client.post(
+        f"/api/v1/primary-documents/{doc_id}/payment-link/send",
+        json={"email": "buyer@example.com"},
+        headers=auth_headers,
+    )
+    assert send.status_code == 409

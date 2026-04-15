@@ -64,6 +64,31 @@ make clean        # Полная очистка
 
 ---
 
+## Версии Python (backend)
+
+- Рекомендуется: `Python 3.11` (CI baseline).
+- Поддерживаемо: `Python 3.12` (после локальной проверки).
+- Не рекомендуется для локальных интеграционных тестов: `Python 3.14` (известная несовместимость `passlib`/`bcrypt`).
+
+### Troubleshooting: `passlib` / `bcrypt` на Python 3.14
+
+Если интеграционные тесты падают с ошибками вида `bcrypt`/`passlib`, переключите окружение backend на `Python 3.11`.
+
+Быстрый чек:
+
+```bash
+python --version
+```
+
+Рекомендуемый запуск тестов:
+
+```bash
+cd backend/api-gateway
+python -m pytest tests/unit -q
+```
+
+---
+
 ## Как добавить новый API эндпоинт
 
 1. Создай схему в `app/schemas/your_module.py`

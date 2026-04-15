@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from decimal import Decimal
 from datetime import date, datetime, timezone
+from pathlib import Path
 import structlog
 from prometheus_client import Counter
 
@@ -206,7 +207,7 @@ async def validate_tax_rules(
             cause=cause,
             source=payload.get("source"),
             first_error=(payload.get("errors") or [None])[0],
-            path=payload.get("path"),
+            path=Path(str(payload.get("path", ""))).name,
         )
     return payload
 
