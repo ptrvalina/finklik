@@ -153,3 +153,42 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: "http://localhost:8000"
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs:
+      - buyer-demo-smoke
+      - payment-critical-smoke
+      - backend-tests
+      - backend-lint
+      - frontend-build
+    if: always()
+
+    steps:
+      - name: Generate summary markdown
+        shell: bash
+        run: |
+          cat <<'EOF' > release-summary.md
+          # CI Release Summary
+
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ## Jobs
+
+          - Buyer Demo Smoke: `${{ needs.buyer-demo-smoke.result }}`
+          - Payment Critical Smoke: `${{ needs.payment-critical-smoke.result }}`
+          - Backend Tests: `${{ needs.backend-tests.result }}`
+          - Backend Lint: `${{ needs.backend-lint.result }}`
+          - Frontend Build: `${{ needs.frontend-build.result }}`
+
+          ## Readiness Gate
+
+          Gate is **PASS** only if all jobs above are `success`.
+          EOF
+
+      - name: Upload release summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-summary
+          path: release-summary.md
