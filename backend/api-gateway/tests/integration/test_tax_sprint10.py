@@ -1,5 +1,6 @@
 """Sprint 10: production tax calculator details."""
 
+from pathlib import Path
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -87,3 +88,31 @@ async def test_validate_tax_rules_endpoint_for_owner(client: AsyncClient, auth_h
     assert "source" in data
     assert "using_fallback" in data
     assert isinstance(data.get("years"), list)
+
+
+@pytest.mark.asyncio
+async def test_validate_tax_rules_fallback_on_invalid_config(client: AsyncClient, auth_headers: dict):
+    from app.services import tax_calculator as tax_calc_module
+
+    config_path = Path(tax_calc_module.__file__).resolve().parent.parent / "config" / "tax_rules.json"
+    had_config = config_path.is_file()
+    backup = config_path.read_text(encoding="utf-8") if had_config else None
+    try:
+        config_path.write_text('{"years": ', encoding="utf-8")
+
+        r = await client.get("/api/v1/tax/rules/validate", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert data["using_fallback"] is True
+        assert data["ok"] is False
+        assert isinstance(data.get("errors"), list) and len(data["errors"]) >= 1
+        assert isinstance(data.get("years"), list) and len(data["years"]) >= 1
+
+        metrics = await client.get("/metrics")
+        assert metrics.status_code == 200
+        assert "tax_rules_validate_fallback_total" in metrics.text
+    finally:
+        if had_config and backup is not None:
+            config_path.write_text(backup, encoding="utf-8")
+        elif config_path.exists():
+            config_path.unlink()

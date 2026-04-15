@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from decimal import Decimal
 from datetime import date, datetime, timezone
+import structlog
+from prometheus_client import Counter
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -19,6 +21,13 @@ from app.services.tax_calculator import (
 
 tax_router = APIRouter(prefix="/tax", tags=["tax"])
 calendar_router = APIRouter(prefix="/calendar", tags=["calendar"])
+log = structlog.get_logger(__name__)
+
+tax_rules_fallback_counter = Counter(
+    "tax_rules_validate_fallback_total",
+    "Number of tax rules validation requests that used fallback values.",
+    ["cause"],
+)
 
 
 # ── Налоговые эндпоинты ───────────────────────────────────────────────────────
@@ -186,7 +195,20 @@ async def validate_tax_rules(
 ):
     if current_user.role != "owner":
         raise HTTPException(status_code=403, detail="Только owner может валидировать налоговые правила")
-    return validate_tax_rules_config()
+    payload = validate_tax_rules_config()
+    if payload.get("using_fallback"):
+        cause = "missing" if payload.get("ok") else "error"
+        tax_rules_fallback_counter.labels(cause=cause).inc()
+        log.warning(
+            "tax_rules_validation_fallback",
+            user_id=current_user.id,
+            organization_id=current_user.organization_id,
+            cause=cause,
+            source=payload.get("source"),
+            first_error=(payload.get("errors") or [None])[0],
+            path=payload.get("path"),
+        )
+    return payload
 
 
 # ── Календарные эндпоинты ─────────────────────────────────────────────────────
