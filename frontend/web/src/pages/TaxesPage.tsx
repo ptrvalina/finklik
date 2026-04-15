@@ -38,6 +38,8 @@ export default function TaxesPage() {
     queryKey: ['tax-rules-validation'],
     queryFn: () => taxApi.validateRules().then(r => r.data),
     retry: false,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   })
   const fallbackReason =
     rulesValidation?.using_fallback && Array.isArray(rulesValidation.errors) && rulesValidation.errors.length > 0
