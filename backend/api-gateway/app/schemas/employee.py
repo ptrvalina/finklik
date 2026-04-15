@@ -101,6 +101,8 @@ class TaxCalculationResult(BaseModel):
     fsszn_deadline: date | None = None
     assumptions: list[str] = Field(default_factory=list)
     breakdown: list[str] = Field(default_factory=list)
+    regulatory_version: str | None = None
+    regulatory_year: int | None = None
 
 
 # ── Календарь ─────────────────────────────────────────────────────────────────

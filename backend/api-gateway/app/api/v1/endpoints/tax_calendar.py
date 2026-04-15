@@ -14,7 +14,7 @@ from app.schemas.employee import (
     CalendarEventCreate, CalendarEventUpdate, CalendarEventResponse,
 )
 from app.services.tax_calculator import (
-    calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar
+    calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year
 )
 
 tax_router = APIRouter(prefix="/tax", tags=["tax"])
@@ -57,6 +57,7 @@ async def calculate_taxes(
             warnings.append("НДС включён по режиму osn_vat, even if with_vat=false.")
 
     regime_code = "usn_3" if with_vat_effective else "usn_5"
+    rules = get_tax_rules_for_year(period_end.year)
 
     # Доходы за период
     income_q = await db.execute(
@@ -90,6 +91,8 @@ async def calculate_taxes(
         period_start=period_start,
         period_end=period_end,
         with_vat=with_vat_effective,
+        usn_rate_with_vat=rules.usn_rate_with_vat,
+        usn_rate_without_vat=rules.usn_rate_without_vat,
     )
 
     # НДС (если плательщик НДС)
@@ -97,6 +100,7 @@ async def calculate_taxes(
         sales_with_vat=income if with_vat_effective else Decimal("0"),
         purchases_with_vat=expense if with_vat_effective else Decimal("0"),
         period_end=period_end,
+        vat_rate=rules.vat_rate,
     )
 
     # ФСЗН (ФОТ из зарплатных записей)
@@ -107,11 +111,17 @@ async def calculate_taxes(
         )
     )
     fot = Decimal(str(fot_q.scalar()))
-    fsszn_employer, fsszn_employee, fsszn_deadline = calculate_fsszn(fot, period_end)
+    fsszn_employer, fsszn_employee, fsszn_deadline = calculate_fsszn(
+        fot,
+        period_end,
+        fsszn_employer_rate=rules.fsszn_employer,
+        fsszn_employee_rate=rules.fsszn_employee,
+    )
 
     total = usn.usn_to_pay + vat_to_pay + fsszn_employer
     assumptions = [
         f"Режим организации: {org_regime}",
+        f"Нормативная версия: {rules.version} ({rules.year})",
         f"НДС включён в расчёт: {'да' if with_vat_effective else 'нет'}",
         "База УСН: все доходы за выбранный период.",
         "ФСЗН: 34% наниматель и 1% удержание из зарплаты.",
@@ -140,7 +150,7 @@ async def calculate_taxes(
         vat_purchases=vat_purchases,
         vat_to_pay=vat_to_pay,
         fsszn_fot=fot,
-        fsszn_employer_rate=Decimal("34"),
+        fsszn_employer_rate=rules.fsszn_employer * 100,
         fsszn_employer_amount=fsszn_employer,
         fsszn_employee_amount=fsszn_employee,
         total_to_pay=total,
@@ -149,6 +159,8 @@ async def calculate_taxes(
         fsszn_deadline=fsszn_deadline,
         assumptions=assumptions,
         breakdown=breakdown,
+        regulatory_version=rules.version,
+        regulatory_year=rules.year,
     )
 
 

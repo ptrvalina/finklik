@@ -69,6 +69,12 @@ export default function TaxesPage() {
               <div className="rounded-lg bg-surface-container-high/40 px-3 py-2 text-[11px] text-on-surface-variant">
                 Режим: <span className="font-semibold text-on-surface">{data.tax_regime}</span>
               </div>
+              {data.regulatory_version && (
+                <div className="rounded-lg bg-surface-container-high/40 px-3 py-2 text-[11px] text-on-surface-variant">
+                  Нормативка: <span className="font-semibold text-on-surface">{data.regulatory_version}</span>
+                  {data.regulatory_year ? ` (${data.regulatory_year})` : ''}
+                </div>
+              )}
               {[
                 { label: 'Доходы', value: `${fmt(data.income)} BYN`, color: 'text-secondary' },
                 { label: 'Расходы', value: `${fmt(data.expense)} BYN`, color: 'text-error' },

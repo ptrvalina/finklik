@@ -46,6 +46,8 @@ async def test_tax_calculation_returns_breakdown_and_deadlines(client: AsyncClie
     assert isinstance(data.get("assumptions"), list) and len(data["assumptions"]) >= 1
     assert isinstance(data.get("breakdown"), list) and len(data["breakdown"]) >= 1
     assert data.get("fsszn_deadline")
+    assert data.get("regulatory_version")
+    assert data.get("regulatory_year") in (2024, 2025, 2026)
     # If VAT is included by effective regime/flag, VAT deadline should be present.
     if data.get("vat_to_pay", 0) >= 0:
         assert "vat_deadline" in data
@@ -73,3 +75,4 @@ async def test_tax_calculation_respects_org_regime_and_warns(client: AsyncClient
     assert data["vat_to_pay"] == 0
     assumptions = data.get("assumptions") or []
     assert any("проигнорирован" in str(a) for a in assumptions)
+    assert data.get("regulatory_version")

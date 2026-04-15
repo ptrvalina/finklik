@@ -31,6 +31,56 @@ CHILD_DEDUCTION_1_2 = Decimal("37")    # на 1-го и 2-го ребёнка
 CHILD_DEDUCTION_3_PLUS = Decimal("70") # на 3-го и более
 
 
+@dataclass(frozen=True)
+class TaxRules:
+    year: int
+    version: str
+    usn_rate_with_vat: Decimal
+    usn_rate_without_vat: Decimal
+    vat_rate: Decimal
+    fsszn_employer: Decimal
+    fsszn_employee: Decimal
+
+
+_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
+    2024: TaxRules(
+        year=2024,
+        version="RB-TAX-2024.1",
+        usn_rate_with_vat=Decimal("0.03"),
+        usn_rate_without_vat=Decimal("0.05"),
+        vat_rate=Decimal("0.20"),
+        fsszn_employer=Decimal("0.34"),
+        fsszn_employee=Decimal("0.01"),
+    ),
+    2025: TaxRules(
+        year=2025,
+        version="RB-TAX-2025.1",
+        usn_rate_with_vat=Decimal("0.03"),
+        usn_rate_without_vat=Decimal("0.05"),
+        vat_rate=Decimal("0.20"),
+        fsszn_employer=Decimal("0.34"),
+        fsszn_employee=Decimal("0.01"),
+    ),
+    2026: TaxRules(
+        year=2026,
+        version="RB-TAX-2026.1",
+        usn_rate_with_vat=Decimal("0.03"),
+        usn_rate_without_vat=Decimal("0.05"),
+        vat_rate=Decimal("0.20"),
+        fsszn_employer=Decimal("0.34"),
+        fsszn_employee=Decimal("0.01"),
+    ),
+}
+
+
+def get_tax_rules_for_year(year: int) -> TaxRules:
+    if year in _TAX_RULES_BY_YEAR:
+        return _TAX_RULES_BY_YEAR[year]
+    # Fallback to nearest known year to avoid hard failures.
+    nearest = max(k for k in _TAX_RULES_BY_YEAR.keys() if k <= year) if any(k <= year for k in _TAX_RULES_BY_YEAR.keys()) else min(_TAX_RULES_BY_YEAR.keys())
+    return _TAX_RULES_BY_YEAR[nearest]
+
+
 @dataclass
 class TaxResult:
     period_start: date
@@ -92,12 +142,14 @@ def calculate_usn(
     period_end: date,
     with_vat: bool = False,
     paid_before: Decimal = Decimal("0"),
+    usn_rate_with_vat: Decimal = USN_RATE_WITH_VAT,
+    usn_rate_without_vat: Decimal = USN_RATE_WITHOUT_VAT,
 ) -> TaxResult:
     """
     Расчёт упрощённого налога (УСН).
     with_vat=True → ставка 3%, иначе 5%.
     """
-    rate = USN_RATE_WITH_VAT if with_vat else USN_RATE_WITHOUT_VAT
+    rate = usn_rate_with_vat if with_vat else usn_rate_without_vat
     tax_base = income
     usn_amount = _round(tax_base * rate)
     usn_to_pay = max(usn_amount - paid_before, Decimal("0"))
@@ -126,13 +178,14 @@ def calculate_vat(
     sales_with_vat: Decimal,
     purchases_with_vat: Decimal,
     period_end: date,
+    vat_rate: Decimal = VAT_RATE,
 ) -> tuple[Decimal, Decimal, Decimal, date]:
     """
     Расчёт НДС к уплате.
     Возвращает: (НДС с продаж, НДС с покупок, К уплате, дедлайн)
     """
-    vat_sales = _round(sales_with_vat * VAT_RATE / (1 + VAT_RATE))
-    vat_purchases = _round(purchases_with_vat * VAT_RATE / (1 + VAT_RATE))
+    vat_sales = _round(sales_with_vat * vat_rate / (1 + vat_rate))
+    vat_purchases = _round(purchases_with_vat * vat_rate / (1 + vat_rate))
     vat_to_pay = max(vat_sales - vat_purchases, Decimal("0"))
     deadline = _month_deadline(period_end.year, period_end.month, day=20)
     return vat_sales, vat_purchases, vat_to_pay, deadline
@@ -141,13 +194,15 @@ def calculate_vat(
 def calculate_fsszn(
     fot: Decimal,
     period_end: date,
+    fsszn_employer_rate: Decimal = FSSZN_EMPLOYER,
+    fsszn_employee_rate: Decimal = FSSZN_EMPLOYEE,
 ) -> tuple[Decimal, Decimal, date]:
     """
     Расчёт ФСЗН.
     Возвращает: (взнос нанимателя 34%, удержание с работника 1%, дедлайн)
     """
-    employer = _round(fot * FSSZN_EMPLOYER)
-    employee = _round(fot * FSSZN_EMPLOYEE)
+    employer = _round(fot * fsszn_employer_rate)
+    employee = _round(fot * fsszn_employee_rate)
     # Срок: 15-е числа месяца, следующего за кварталом
     quarter = (period_end.month - 1) // 3 + 1
     deadline = _quarter_deadline(period_end.year, quarter)
