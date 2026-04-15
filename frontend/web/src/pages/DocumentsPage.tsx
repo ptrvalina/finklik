@@ -219,6 +219,8 @@ export default function DocumentsPage() {
   const [payLinkEmail, setPayLinkEmail] = useState('')
   const [paymentEvents, setPaymentEvents] = useState<any[]>([])
   const [paymentSummary, setPaymentSummary] = useState<any | null>(null)
+  const [paymentEventFilter, setPaymentEventFilter] = useState<'all' | 'webhook' | 'ui' | 'email'>('all')
+  const [expandedEventIds, setExpandedEventIds] = useState<Record<string, boolean>>({})
 
   const payQrMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
@@ -226,6 +228,8 @@ export default function DocumentsPage() {
       setPayLinkEmail('')
       setPaymentEvents([])
       setPaymentSummary(null)
+      setPaymentEventFilter('all')
+      setExpandedEventIds({})
       setPayQrModal({
         docId: d.doc_id,
         b64: d.qr_png_base64,
@@ -313,6 +317,14 @@ export default function DocumentsPage() {
         type: 'error',
         text: e?.response?.data?.detail || 'Не удалось загрузить историю оплат',
       }),
+  })
+
+  const filteredPaymentEvents = paymentEvents.filter((e: any) => {
+    if (paymentEventFilter === 'all') return true
+    if (paymentEventFilter === 'webhook') return String(e?.source || '') === 'webhook'
+    if (paymentEventFilter === 'ui') return String(e?.source || '') === 'ui'
+    if (paymentEventFilter === 'email') return String(e?.event_type || '').includes('payment_link')
+    return true
   })
 
   useEffect(() => {
@@ -767,15 +779,57 @@ export default function DocumentsPage() {
                     конфликты: {paymentSummary.webhook_conflict ?? 0}
                   </div>
                 )}
-                {paymentEvents.map((e: any) => (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {[
+                    { id: 'all', label: 'Все' },
+                    { id: 'webhook', label: 'Webhook' },
+                    { id: 'ui', label: 'UI' },
+                    { id: 'email', label: 'Email' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`rounded px-2 py-1 text-[10px] ${
+                        paymentEventFilter === opt.id ? 'bg-primary/20 text-primary' : 'bg-white/5 text-zinc-400'
+                      }`}
+                      onClick={() => setPaymentEventFilter(opt.id as any)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {filteredPaymentEvents.map((e: any) => (
                   <div key={e.id} className="mb-2 border-b border-white/10 pb-2 last:mb-0 last:border-0 last:pb-0">
-                    <div className="font-semibold text-zinc-200">{e.event_type}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-semibold text-zinc-200">{e.event_type}</div>
+                      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase text-zinc-400">
+                        {e.source}
+                      </span>
+                    </div>
                     <div className="text-[11px] text-zinc-500">{e.created_at}</div>
                     {e.payload && (
-                      <div className="mt-1 text-[11px] text-zinc-400">{JSON.stringify(e.payload)}</div>
+                      <>
+                        <button
+                          type="button"
+                          className="mt-1 text-[11px] text-teal-300 underline"
+                          onClick={() =>
+                            setExpandedEventIds((prev) => ({ ...prev, [e.id]: !prev[e.id] }))
+                          }
+                        >
+                          {expandedEventIds[e.id] ? 'Скрыть детали' : 'Показать детали'}
+                        </button>
+                        {expandedEventIds[e.id] && (
+                          <div className="mt-1 rounded bg-black/30 p-1 text-[11px] text-zinc-400">
+                            {JSON.stringify(e.payload)}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
+                {filteredPaymentEvents.length === 0 && (
+                  <div className="text-[11px] text-zinc-500">Нет событий по выбранному фильтру.</div>
+                )}
               </div>
             )}
             {!payQrModal.isPaid && (
