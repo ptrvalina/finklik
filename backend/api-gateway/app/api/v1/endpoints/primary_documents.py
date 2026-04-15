@@ -2,6 +2,7 @@ import base64
 import hmac
 import io
 import re
+from decimal import Decimal
 from urllib.parse import quote
 
 import qrcode
@@ -62,6 +63,10 @@ async def _mark_invoice_paid(
         )
         existing = existing_r.scalar_one_or_none()
         if existing:
+            expected_amount = amount if amount is not None else doc.amount_total
+            expected_currency = (currency or doc.currency).upper()
+            if Decimal(str(existing.amount)) != Decimal(str(expected_amount)) or existing.currency.upper() != expected_currency:
+                raise HTTPException(status_code=409, detail="Повторный payment_id с другой суммой или валютой")
             doc.transaction_id = existing.id
             doc.status = "paid"
             return

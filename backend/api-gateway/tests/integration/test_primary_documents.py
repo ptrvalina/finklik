@@ -238,3 +238,52 @@ async def test_primary_document_mark_paid(client: AsyncClient, auth_headers: dic
     assert mark.status_code == 200
     assert mark.json()["status"] == "paid"
     assert mark.json()["transaction_id"]
+
+
+@pytest.mark.asyncio
+async def test_payment_webhook_duplicate_payment_id_conflict(client: AsyncClient, auth_headers: dict):
+    create = await client.post(
+        "/api/v1/primary-documents",
+        json={
+            "doc_type": "invoice",
+            "use_auto_number": True,
+            "status": "issued",
+            "issue_date": "2026-04-16",
+            "currency": "BYN",
+            "amount_total": 20,
+        },
+        headers=auth_headers,
+    )
+    assert create.status_code == 201
+    doc_id = create.json()["id"]
+
+    old_secret = settings.PAYMENT_WEBHOOK_SECRET
+    settings.PAYMENT_WEBHOOK_SECRET = "test-payment-secret"
+    try:
+        first = await client.post(
+            "/api/v1/primary-documents/webhooks/payment",
+            json={
+                "doc_id": doc_id,
+                "status": "paid",
+                "payment_id": "pay-dup-1",
+                "amount": 20,
+                "currency": "BYN",
+            },
+            headers={"X-Payment-Webhook-Secret": "test-payment-secret"},
+        )
+        assert first.status_code == 200
+
+        second = await client.post(
+            "/api/v1/primary-documents/webhooks/payment",
+            json={
+                "doc_id": doc_id,
+                "status": "paid",
+                "payment_id": "pay-dup-1",
+                "amount": 21,
+                "currency": "BYN",
+            },
+            headers={"X-Payment-Webhook-Secret": "test-payment-secret"},
+        )
+        assert second.status_code == 409
+    finally:
+        settings.PAYMENT_WEBHOOK_SECRET = old_secret
