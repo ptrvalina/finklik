@@ -17,6 +17,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    import structlog
+    _log = structlog.get_logger()
+
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
@@ -25,25 +28,29 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if existing_org.scalar_one_or_none():
         raise HTTPException(status_code=409, detail=f"Организация с УНП {body.org_unp} уже зарегистрирована")
 
-    org = Organization(
-        name=body.org_name,
-        unp=body.org_unp,
-        legal_form=body.legal_form,
-        tax_regime=body.tax_regime,
-    )
-    db.add(org)
-    await db.flush()
-    await ensure_onec_contour_record(db, org)
+    try:
+        org = Organization(
+            name=body.org_name,
+            unp=body.org_unp,
+            legal_form=body.legal_form,
+            tax_regime=body.tax_regime,
+        )
+        db.add(org)
+        await db.flush()
+        await ensure_onec_contour_record(db, org)
 
-    user = User(
-        email=body.email,
-        hashed_password=hash_password(body.password),
-        full_name=body.full_name,
-        role="owner",
-        organization_id=org.id,
-    )
-    db.add(user)
-    await db.flush()
+        user = User(
+            email=body.email,
+            hashed_password=hash_password(body.password),
+            full_name=body.full_name,
+            role="owner",
+            organization_id=org.id,
+        )
+        db.add(user)
+        await db.flush()
+    except Exception as exc:
+        _log.error("register_failed", error=str(exc), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Ошибка регистрации: {type(exc).__name__}: {exc}")
 
     access_token = create_access_token(str(user.id), str(org.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
