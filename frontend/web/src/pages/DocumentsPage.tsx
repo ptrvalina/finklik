@@ -37,6 +37,32 @@ function formatEventDate(value: string): string {
   })
 }
 
+function paymentPayloadEntries(payload: Record<string, any>): Array<{ label: string; value: string }> {
+  const labels: Record<string, string> = {
+    payment_id: 'ID платежа',
+    amount: 'Сумма',
+    currency: 'Валюта',
+    transaction_id: 'ID транзакции',
+    payment_url: 'Ссылка оплаты',
+    email: 'Email',
+    email_sent: 'Email отправлен',
+    status: 'Статус',
+    detail: 'Детали',
+    description: 'Описание',
+  }
+  return Object.entries(payload)
+    .filter(([, v]) => v !== null && v !== undefined && String(v) !== '')
+    .map(([k, v]) => {
+      const value =
+        typeof v === 'boolean'
+          ? (v ? 'Да' : 'Нет')
+          : typeof v === 'number'
+            ? String(v)
+            : String(v)
+      return { label: labels[k] || k, value }
+    })
+}
+
 export default function DocumentsPage() {
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
@@ -844,8 +870,19 @@ export default function DocumentsPage() {
                           {expandedEventIds[e.id] ? 'Скрыть детали' : 'Показать детали'}
                         </button>
                         {expandedEventIds[e.id] && (
-                          <div className="mt-1 rounded bg-black/30 p-1 text-[11px] text-zinc-400">
-                            {JSON.stringify(e.payload)}
+                          <div className="mt-1 rounded bg-black/30 p-2 text-[11px] text-zinc-300">
+                            {paymentPayloadEntries(e.payload).length > 0 ? (
+                              <div className="space-y-1">
+                                {paymentPayloadEntries(e.payload).map((entry) => (
+                                  <div key={`${e.id}-${entry.label}`} className="flex items-start justify-between gap-2">
+                                    <span className="text-zinc-500">{entry.label}</span>
+                                    <span className="break-all text-right">{entry.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-zinc-500">Нет деталей</span>
+                            )}
                           </div>
                         )}
                       </>
