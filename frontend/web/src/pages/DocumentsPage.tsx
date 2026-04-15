@@ -157,6 +157,7 @@ export default function DocumentsPage() {
 
   const qc = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const payQueryHandledRef = useRef(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvPreview, setCsvPreview] = useState<any>(null)
   const [csvImporting, setCsvImporting] = useState(false)
@@ -297,6 +298,10 @@ export default function DocumentsPage() {
       }),
   })
 
+  const openPaymentModal = (docId: string) => {
+    payQrMutation.mutate(docId)
+  }
+
   const checkPaymentStatusMutation = useMutation({
     mutationFn: (docId: string) => primaryDocumentsApi.paymentStatus(docId).then((r) => r.data),
     onSuccess: (d: any) => {
@@ -386,6 +391,16 @@ export default function DocumentsPage() {
     }, 10000)
     return () => window.clearInterval(id)
   }, [payQrModal, paymentEventsMutation])
+
+  useEffect(() => {
+    if (payQueryHandledRef.current) return
+    if (primaryDocsLoading) return
+    const query = new URLSearchParams(window.location.search)
+    const payDocId = query.get('pay')
+    if (!payDocId) return
+    payQueryHandledRef.current = true
+    openPaymentModal(payDocId)
+  }, [primaryDocsLoading])
 
   const printPrimaryDocMutation = useMutation({
     mutationFn: async (row: { id: string; doc_number: string; doc_type: string }) => {
@@ -735,7 +750,7 @@ export default function DocumentsPage() {
                             className="btn-ghost !px-2 !py-1 !text-xs text-teal-300"
                             title="QR оплаты"
                             disabled={payQrMutation.isPending}
-                            onClick={() => payQrMutation.mutate(doc.id)}
+                            onClick={() => openPaymentModal(doc.id)}
                           >
                             <Icon name="qr_code_2" className="text-sm" />
                           </button>
@@ -904,7 +919,18 @@ export default function DocumentsPage() {
                 {markPaidMutation.isPending ? 'Отмечаем...' : 'Отметить как оплаченный (demo)'}
               </button>
             )}
-            <button type="button" className="btn-primary min-h-11 w-full" onClick={() => setPayQrModal(null)}>
+            <button
+              type="button"
+              className="btn-primary min-h-11 w-full"
+              onClick={() => {
+                setPayQrModal(null)
+                const u = new URL(window.location.href)
+                if (u.searchParams.has('pay')) {
+                  u.searchParams.delete('pay')
+                  window.history.replaceState({}, '', u.toString())
+                }
+              }}
+            >
               Закрыть
             </button>
           </div>
