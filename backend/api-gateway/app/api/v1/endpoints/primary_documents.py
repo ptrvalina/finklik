@@ -36,6 +36,7 @@ class PaymentWebhookPayload(BaseModel):
     status: str = Field(default="paid", pattern="^(paid|pending|failed)$")
     amount: float | None = Field(default=None, gt=0)
     currency: str | None = Field(default=None, min_length=3, max_length=3)
+    payment_id: str | None = Field(default=None, min_length=3, max_length=128)
     description: str | None = Field(default=None, max_length=500)
 
 
@@ -45,10 +46,25 @@ async def _mark_invoice_paid(
     *,
     amount: float | None = None,
     currency: str | None = None,
+    payment_id: str | None = None,
     description: str | None = None,
 ) -> None:
     if doc.doc_type != "invoice":
         raise HTTPException(status_code=400, detail="Операция оплаты применима только к invoice")
+    tag = f"payment:{payment_id}" if payment_id else None
+    if tag:
+        existing_r = await db.execute(
+            select(Transaction).where(
+                Transaction.organization_id == doc.organization_id,
+                Transaction.category == "bank_import",
+                Transaction.description == tag,
+            )
+        )
+        existing = existing_r.scalar_one_or_none()
+        if existing:
+            doc.transaction_id = existing.id
+            doc.status = "paid"
+            return
     if not doc.transaction_id:
         tx = Transaction(
             organization_id=doc.organization_id,
@@ -56,7 +72,7 @@ async def _mark_invoice_paid(
             amount=amount if amount is not None else doc.amount_total,
             currency=(currency or doc.currency).upper(),
             category="bank_import",
-            description=description or f"Оплата по счёту {doc.doc_number}",
+            description=tag or description or f"Оплата по счёту {doc.doc_number}",
             transaction_date=doc.issue_date,
             status="posted",
         )
@@ -408,6 +424,7 @@ async def payment_webhook(
             doc,
             amount=body.amount,
             currency=body.currency,
+            payment_id=body.payment_id,
             description=body.description,
         )
     elif body.status == "pending":

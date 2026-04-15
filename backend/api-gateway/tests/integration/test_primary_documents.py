@@ -181,6 +181,7 @@ async def test_primary_document_payment_status_and_webhook(client: AsyncClient, 
             json={
                 "doc_id": doc_id,
                 "status": "paid",
+                "payment_id": "pay-001",
                 "amount": 150.75,
                 "currency": "byn",
                 "description": "Оплата по ссылке",
@@ -191,6 +192,21 @@ async def test_primary_document_payment_status_and_webhook(client: AsyncClient, 
         body = wh.json()
         assert body["status"] == "paid"
         assert body["transaction_id"]
+        tx_id = body["transaction_id"]
+
+        wh_dup = await client.post(
+            "/api/v1/primary-documents/webhooks/payment",
+            json={
+                "doc_id": doc_id,
+                "status": "paid",
+                "payment_id": "pay-001",
+                "amount": 150.75,
+                "currency": "byn",
+            },
+            headers={"X-Payment-Webhook-Secret": "test-payment-secret"},
+        )
+        assert wh_dup.status_code == 200
+        assert wh_dup.json()["transaction_id"] == tx_id
     finally:
         settings.PAYMENT_WEBHOOK_SECRET = old_secret
 
