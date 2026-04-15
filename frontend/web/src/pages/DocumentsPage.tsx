@@ -218,12 +218,14 @@ export default function DocumentsPage() {
   } | null>(null)
   const [payLinkEmail, setPayLinkEmail] = useState('')
   const [paymentEvents, setPaymentEvents] = useState<any[]>([])
+  const [paymentSummary, setPaymentSummary] = useState<any | null>(null)
 
   const payQrMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.paymentQr(id).then((r) => r.data),
     onSuccess: (d: any) => {
       setPayLinkEmail('')
       setPaymentEvents([])
+      setPaymentSummary(null)
       setPayQrModal({
         docId: d.doc_id,
         b64: d.qr_png_base64,
@@ -302,13 +304,25 @@ export default function DocumentsPage() {
 
   const paymentEventsMutation = useMutation({
     mutationFn: (docId: string) => primaryDocumentsApi.paymentEvents(docId).then((r) => r.data),
-    onSuccess: (d: any) => setPaymentEvents(Array.isArray(d?.events) ? d.events : []),
+    onSuccess: (d: any) => {
+      setPaymentEvents(Array.isArray(d?.events) ? d.events : [])
+      setPaymentSummary(d?.summary || null)
+    },
     onError: (e: any) =>
       setMessage({
         type: 'error',
         text: e?.response?.data?.detail || 'Не удалось загрузить историю оплат',
       }),
   })
+
+  useEffect(() => {
+    if (!payQrModal) return
+    if (!paymentEventsMutation.isPending) paymentEventsMutation.mutate(payQrModal.docId)
+    const id = window.setInterval(() => {
+      if (!paymentEventsMutation.isPending) paymentEventsMutation.mutate(payQrModal.docId)
+    }, 10000)
+    return () => window.clearInterval(id)
+  }, [payQrModal, paymentEventsMutation])
 
   const printPrimaryDocMutation = useMutation({
     mutationFn: async (row: { id: string; doc_number: string; doc_type: string }) => {
@@ -740,6 +754,12 @@ export default function DocumentsPage() {
             </button>
             {paymentEvents.length > 0 && (
               <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-white/10 p-2 text-xs text-zinc-300">
+                {paymentSummary && (
+                  <div className="mb-2 rounded bg-white/5 p-2 text-[11px] text-zinc-400">
+                    Всего: {paymentSummary.total ?? 0} • webhook ok: {paymentSummary.webhook_success ?? 0} •
+                    конфликты: {paymentSummary.webhook_conflict ?? 0}
+                  </div>
+                )}
                 {paymentEvents.map((e: any) => (
                   <div key={e.id} className="mb-2 border-b border-white/10 pb-2 last:mb-0 last:border-0 last:pb-0">
                     <div className="font-semibold text-zinc-200">{e.event_type}</div>

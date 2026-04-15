@@ -504,26 +504,43 @@ async def payment_webhook(
         raise HTTPException(status_code=400, detail="Webhook оплаты применим только к invoice")
 
     if body.status == "paid":
-        await _mark_invoice_paid(
-            db,
-            doc,
-            amount=body.amount,
-            currency=body.currency,
-            payment_id=body.payment_id,
-            description=body.description,
-        )
-        await _record_payment_event(
-            db,
-            doc=doc,
-            event_type="webhook_paid",
-            source="webhook",
-            payload={
-                "payment_id": body.payment_id,
-                "amount": body.amount,
-                "currency": body.currency,
-                "transaction_id": doc.transaction_id,
-            },
-        )
+        try:
+            await _mark_invoice_paid(
+                db,
+                doc,
+                amount=body.amount,
+                currency=body.currency,
+                payment_id=body.payment_id,
+                description=body.description,
+            )
+            await _record_payment_event(
+                db,
+                doc=doc,
+                event_type="webhook_paid",
+                source="webhook",
+                payload={
+                    "payment_id": body.payment_id,
+                    "amount": body.amount,
+                    "currency": body.currency,
+                    "transaction_id": doc.transaction_id,
+                },
+            )
+        except HTTPException as exc:
+            if exc.status_code == 409:
+                await _record_payment_event(
+                    db,
+                    doc=doc,
+                    event_type="webhook_conflict",
+                    source="webhook",
+                    payload={
+                        "payment_id": body.payment_id,
+                        "amount": body.amount,
+                        "currency": body.currency,
+                        "detail": str(exc.detail),
+                    },
+                )
+                await db.flush()
+            raise
     elif body.status == "pending":
         if doc.status == "draft":
             doc.status = "issued"
@@ -596,7 +613,21 @@ async def primary_document_payment_events(
                 "payload": payload,
             }
         )
-    return {"doc_id": doc.id, "events": data}
+    by_type: dict[str, int] = {}
+    for ev in events:
+        by_type[ev.event_type] = by_type.get(ev.event_type, 0) + 1
+    return {
+        "doc_id": doc.id,
+        "events": data,
+        "summary": {
+            "total": len(events),
+            "webhook_success": by_type.get("webhook_paid", 0),
+            "webhook_conflict": by_type.get("webhook_conflict", 0),
+            "manual_updates": by_type.get("manual_mark_paid", 0),
+            "link_sent": by_type.get("payment_link_sent", 0),
+            "by_type": by_type,
+        },
+    }
 
 
 @router.get("/{doc_id}/print")

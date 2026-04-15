@@ -285,6 +285,12 @@ async def test_payment_webhook_duplicate_payment_id_conflict(client: AsyncClient
             headers={"X-Payment-Webhook-Secret": "test-payment-secret"},
         )
         assert second.status_code == 409
+
+        events = await client.get(f"/api/v1/primary-documents/{doc_id}/payment-events", headers=auth_headers)
+        assert events.status_code == 200
+        body = events.json()
+        assert body["summary"]["webhook_conflict"] >= 1
+        assert "webhook_conflict" in [e["event_type"] for e in body["events"]]
     finally:
         settings.PAYMENT_WEBHOOK_SECRET = old_secret
 
