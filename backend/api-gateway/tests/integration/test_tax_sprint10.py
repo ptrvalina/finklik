@@ -2,6 +2,9 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.models.user import Organization
 
 
 @pytest.mark.asyncio
@@ -46,3 +49,27 @@ async def test_tax_calculation_returns_breakdown_and_deadlines(client: AsyncClie
     # If VAT is included by effective regime/flag, VAT deadline should be present.
     if data.get("vat_to_pay", 0) >= 0:
         assert "vat_deadline" in data
+
+
+@pytest.mark.asyncio
+async def test_tax_calculation_respects_org_regime_and_warns(client: AsyncClient, auth_headers: dict, db_session):
+    me = await client.get("/api/v1/auth/me", headers=auth_headers)
+    assert me.status_code == 200
+    org_id = me.json()["organization_id"]
+
+    org_r = await db_session.execute(select(Organization).where(Organization.id == org_id))
+    org = org_r.scalar_one()
+    org.tax_regime = "usn_no_vat"
+    await db_session.flush()
+
+    r = await client.get(
+        "/api/v1/tax/calculate",
+        params={"period_start": "2026-04-01", "period_end": "2026-04-30", "with_vat": "true"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["tax_regime"] == "usn_5"
+    assert data["vat_to_pay"] == 0
+    assumptions = data.get("assumptions") or []
+    assert any("проигнорирован" in str(a) for a in assumptions)

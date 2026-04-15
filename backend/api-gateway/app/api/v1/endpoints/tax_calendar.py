@@ -38,7 +38,24 @@ async def calculate_taxes(
         org = org_r.scalar_one_or_none()
 
     org_regime = (org.tax_regime if org else "usn_no_vat").strip().lower()
-    with_vat_effective = with_vat or org_regime in ("usn_vat", "osn_vat")
+    allowed_regimes = {"usn_no_vat", "usn_vat", "osn_vat"}
+    if org_regime not in allowed_regimes:
+        org_regime = "usn_no_vat"
+
+    warnings: list[str] = []
+    if org_regime == "usn_no_vat":
+        with_vat_effective = False
+        if with_vat:
+            warnings.append("Параметр with_vat=true проигнорирован: режим организации usn_no_vat.")
+    elif org_regime == "usn_vat":
+        with_vat_effective = True
+        if not with_vat:
+            warnings.append("НДС включён по режиму usn_vat, even if with_vat=false.")
+    else:  # osn_vat
+        with_vat_effective = True
+        if not with_vat:
+            warnings.append("НДС включён по режиму osn_vat, even if with_vat=false.")
+
     regime_code = "usn_3" if with_vat_effective else "usn_5"
 
     # Доходы за период
@@ -98,7 +115,7 @@ async def calculate_taxes(
         f"НДС включён в расчёт: {'да' if with_vat_effective else 'нет'}",
         "База УСН: все доходы за выбранный период.",
         "ФСЗН: 34% наниматель и 1% удержание из зарплаты.",
-    ]
+    ] + warnings
     breakdown = [
         f"Доходы: {income} BYN",
         f"Расходы: {expense} BYN",
