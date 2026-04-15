@@ -35,6 +35,10 @@ export default function TaxesPage() {
     queryFn: () => taxApi.validateRules().then(r => r.data),
     retry: false,
   })
+  const fallbackReason =
+    rulesValidation?.using_fallback && Array.isArray(rulesValidation.errors) && rulesValidation.errors.length > 0
+      ? String(rulesValidation.errors[0])
+      : null
 
   return (
     <div className="max-w-7xl space-y-8">
@@ -95,6 +99,12 @@ export default function TaxesPage() {
                 <li key={i}>• {e}</li>
               ))}
             </ul>
+          )}
+          {rulesValidation.using_fallback && (
+            <div className="mt-3 rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">
+              <span className="font-semibold">Причина fallback:</span>{' '}
+              {fallbackReason || 'Конфиг налоговых правил недоступен, используются встроенные значения.'}
+            </div>
           )}
         </div>
       )}
