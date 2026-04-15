@@ -103,6 +103,47 @@ def _tax_rules_by_year() -> dict[int, TaxRules]:
         return _DEFAULT_TAX_RULES_BY_YEAR
 
 
+def validate_tax_rules_config() -> dict:
+    config_path = Path(__file__).resolve().parent.parent / "config" / "tax_rules.json"
+    payload = {
+        "ok": True,
+        "source": "default",
+        "path": str(config_path),
+        "years": [],
+        "warnings": [],
+        "errors": [],
+    }
+    if not config_path.is_file():
+        payload["warnings"].append("Конфиг не найден, используются встроенные правила.")
+        payload["years"] = sorted(_DEFAULT_TAX_RULES_BY_YEAR.keys())
+        return payload
+    try:
+        raw = json.loads(config_path.read_text(encoding="utf-8"))
+        years = raw.get("years", {}) if isinstance(raw, dict) else {}
+        if not isinstance(years, dict) or not years:
+            raise ValueError("В tax_rules.json отсутствует непустой объект years")
+        parsed_years: list[int] = []
+        for y, row in years.items():
+            year = int(y)
+            if not isinstance(row, dict):
+                raise ValueError(f"Год {year}: запись должна быть объектом")
+            required = ("usn_rate_with_vat", "usn_rate_without_vat", "vat_rate", "fsszn_employer", "fsszn_employee")
+            for key in required:
+                if key not in row:
+                    raise ValueError(f"Год {year}: отсутствует поле {key}")
+                Decimal(str(row[key]))
+            parsed_years.append(year)
+        payload["source"] = "config"
+        payload["years"] = sorted(parsed_years)
+        return payload
+    except Exception as exc:
+        payload["ok"] = False
+        payload["errors"].append(str(exc))
+        payload["warnings"].append("При ошибке будет использован встроенный fallback.")
+        payload["years"] = sorted(_DEFAULT_TAX_RULES_BY_YEAR.keys())
+        return payload
+
+
 def get_tax_rules_for_year(year: int) -> TaxRules:
     rules_by_year = _tax_rules_by_year()
     if year in rules_by_year:

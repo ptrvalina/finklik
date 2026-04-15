@@ -14,7 +14,7 @@ from app.schemas.employee import (
     CalendarEventCreate, CalendarEventUpdate, CalendarEventResponse,
 )
 from app.services.tax_calculator import (
-    calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year
+    calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year, validate_tax_rules_config
 )
 
 tax_router = APIRouter(prefix="/tax", tags=["tax"])
@@ -178,6 +178,15 @@ async def get_tax_calendar(
     legal_form = org.legal_form if org else "ip"
     events = generate_tax_calendar(year, tax_regime=tax_regime, legal_form=legal_form)
     return {"year": year, "tax_regime": tax_regime, "legal_form": legal_form, "events": events, "total": len(events)}
+
+
+@tax_router.get("/rules/validate")
+async def validate_tax_rules(
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Только owner может валидировать налоговые правила")
+    return validate_tax_rules_config()
 
 
 # ── Календарные эндпоинты ─────────────────────────────────────────────────────

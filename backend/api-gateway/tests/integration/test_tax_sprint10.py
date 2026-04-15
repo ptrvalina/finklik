@@ -76,3 +76,13 @@ async def test_tax_calculation_respects_org_regime_and_warns(client: AsyncClient
     assumptions = data.get("assumptions") or []
     assert any("проигнорирован" in str(a) for a in assumptions)
     assert data.get("regulatory_version")
+
+
+@pytest.mark.asyncio
+async def test_validate_tax_rules_endpoint_for_owner(client: AsyncClient, auth_headers: dict):
+    r = await client.get("/api/v1/tax/rules/validate", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert "ok" in data
+    assert "source" in data
+    assert isinstance(data.get("years"), list)
