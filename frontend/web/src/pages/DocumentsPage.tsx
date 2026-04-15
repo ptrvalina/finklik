@@ -640,7 +640,27 @@ export default function DocumentsPage() {
                   <tr key={doc.id} className="hover:bg-surface-container-high/30">
                     <td className="px-3 py-2 text-on-surface">{doc.doc_type}</td>
                     <td className="px-3 py-2 text-on-surface">{doc.doc_number}</td>
-                    <td className="px-3 py-2 text-on-surface-variant">{doc.status}</td>
+                    <td className="px-3 py-2 text-on-surface-variant">
+                      {doc.doc_type === 'invoice' ? (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold ${
+                            doc.status === 'paid'
+                              ? 'bg-secondary/10 text-secondary'
+                              : doc.status === 'issued'
+                                ? 'bg-amber-500/10 text-amber-300'
+                                : 'bg-surface-variant text-on-surface-variant'
+                          }`}
+                        >
+                          <Icon
+                            name={doc.status === 'paid' ? 'check_circle' : doc.status === 'issued' ? 'schedule' : 'description'}
+                            className="text-xs"
+                          />
+                          {doc.status}
+                        </span>
+                      ) : (
+                        doc.status
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-on-surface-variant">{doc.issue_date}</td>
                     <td className="px-3 py-2 text-right font-bold text-on-surface">{Number(doc.amount_total || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 text-on-surface-variant">{doc.currency}</td>
@@ -736,22 +756,9 @@ export default function DocumentsPage() {
                 {sendPaymentLinkMutation.isPending ? 'Отправляем...' : 'Отправить ссылку на email'}
               </button>
             </div>
-            <button
-              type="button"
-              className="btn-ghost mb-3 min-h-11 w-full"
-              disabled={checkPaymentStatusMutation.isPending}
-              onClick={() => checkPaymentStatusMutation.mutate(payQrModal.docId)}
-            >
-              {checkPaymentStatusMutation.isPending ? 'Проверяем...' : 'Проверить статус оплаты'}
-            </button>
-            <button
-              type="button"
-              className="btn-ghost mb-3 min-h-11 w-full"
-              disabled={paymentEventsMutation.isPending}
-              onClick={() => paymentEventsMutation.mutate(payQrModal.docId)}
-            >
-              {paymentEventsMutation.isPending ? 'Загружаем...' : 'Показать историю оплат'}
-            </button>
+            <p className="mb-3 text-[11px] text-zinc-500">
+              Статус и история обновляются автоматически каждые 10 секунд.
+            </p>
             {paymentEvents.length > 0 && (
               <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-white/10 p-2 text-xs text-zinc-300">
                 {paymentSummary && (
