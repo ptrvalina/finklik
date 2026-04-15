@@ -22,6 +22,20 @@ Date: 2026-04-15
 - Recommended backend runtime for local integration tests is Python 3.11.
 - Python 3.14 may fail integration test setup because of known `passlib`/`bcrypt` incompatibility.
 
+## CI Baseline
+
+- CI workflow now includes explicit readiness gates:
+  - `Buyer Demo Smoke`
+  - `Payment Critical Smoke`
+  - `Release Summary` artifact
+- Baseline successful run URL: `TODO: paste latest green run link`
+
+## Demo Operations
+
+- Demo tenant checklist: `docs/dev/DEMO_TENANT_CHECKLIST.md`
+- Pre-demo smoke guide: `docs/dev/PRE_DEMO_SMOKE.md`
+- Sales flow script: `docs/sales/BUYER_DEMO_SCRIPT.md`
+
 ## Files to Review
 
 - `backend/api-gateway/app/api/v1/endpoints/tax_calendar.py`

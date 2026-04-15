@@ -215,6 +215,9 @@
 Техническая готовность к релизу и мониторингу:
 - `docs/dev/RELEASE_READINESS_CHECKLIST.md`
 - `docs/dev/OBSERVABILITY_ALERTS.md`
+- `docs/dev/RELEASE_NOTES_SPRINT10.md`
+- `docs/dev/DEMO_TENANT_CHECKLIST.md`
+- `docs/dev/PRE_DEMO_SMOKE.md`
 
 Контакт: [вставить email / телефон]
 

@@ -46,3 +46,9 @@ Goal: prove business value, reliability, and readiness for bank white-label roll
 - Tax rules widget visible and healthy (`using_fallback=false`).
 - Backup scenario available for fallback warning screen.
 - Contact slide prepared with next action and timeline.
+
+## Operational References
+
+- Demo tenant prep: `docs/dev/DEMO_TENANT_CHECKLIST.md`
+- Last-minute smoke: `docs/dev/PRE_DEMO_SMOKE.md`
+- CI readiness overview: `docs/dev/RELEASE_NOTES_SPRINT10.md`

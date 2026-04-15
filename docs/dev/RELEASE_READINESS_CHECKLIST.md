@@ -43,3 +43,5 @@ Use this checklist before demo/release cut.
 - At least one invoice in `issued` and one in `paid`.
 - Tax page shows calculation, rules version, and validation widget.
 - Backup plan prepared in case external email API is disabled.
+- Follow `docs/dev/DEMO_TENANT_CHECKLIST.md` for stable demo tenant state.
+- Run `docs/dev/PRE_DEMO_SMOKE.md` before the call.
