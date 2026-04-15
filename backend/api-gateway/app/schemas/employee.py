@@ -97,6 +97,10 @@ class TaxCalculationResult(BaseModel):
 
     total_to_pay: Decimal
     deadline: date
+    vat_deadline: date | None = None
+    fsszn_deadline: date | None = None
+    assumptions: list[str] = Field(default_factory=list)
+    breakdown: list[str] = Field(default_factory=list)
 
 
 # ── Календарь ─────────────────────────────────────────────────────────────────

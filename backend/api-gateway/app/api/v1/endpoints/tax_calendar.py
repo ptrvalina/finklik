@@ -32,6 +32,14 @@ async def calculate_taxes(
     db: AsyncSession = Depends(get_db),
 ):
     org_id = current_user.organization_id
+    org = None
+    if org_id:
+        org_r = await db.execute(select(Organization).where(Organization.id == org_id))
+        org = org_r.scalar_one_or_none()
+
+    org_regime = (org.tax_regime if org else "usn_no_vat").strip().lower()
+    with_vat_effective = with_vat or org_regime in ("usn_vat", "osn_vat")
+    regime_code = "usn_3" if with_vat_effective else "usn_5"
 
     # Доходы за период
     income_q = await db.execute(
@@ -64,13 +72,13 @@ async def calculate_taxes(
         income=income,
         period_start=period_start,
         period_end=period_end,
-        with_vat=with_vat,
+        with_vat=with_vat_effective,
     )
 
     # НДС (если плательщик НДС)
     vat_sales, vat_purchases, vat_to_pay, vat_deadline = calculate_vat(
-        sales_with_vat=income if with_vat else Decimal("0"),
-        purchases_with_vat=expense if with_vat else Decimal("0"),
+        sales_with_vat=income if with_vat_effective else Decimal("0"),
+        purchases_with_vat=expense if with_vat_effective else Decimal("0"),
         period_end=period_end,
     )
 
@@ -85,11 +93,25 @@ async def calculate_taxes(
     fsszn_employer, fsszn_employee, fsszn_deadline = calculate_fsszn(fot, period_end)
 
     total = usn.usn_to_pay + vat_to_pay + fsszn_employer
+    assumptions = [
+        f"Режим организации: {org_regime}",
+        f"НДС включён в расчёт: {'да' if with_vat_effective else 'нет'}",
+        "База УСН: все доходы за выбранный период.",
+        "ФСЗН: 34% наниматель и 1% удержание из зарплаты.",
+    ]
+    breakdown = [
+        f"Доходы: {income} BYN",
+        f"Расходы: {expense} BYN",
+        f"УСН ({usn.usn_rate}%): {usn.usn_to_pay} BYN",
+        f"НДС к уплате: {vat_to_pay} BYN",
+        f"ФСЗН нанимателя: {fsszn_employer} BYN",
+        f"Итого: {total} BYN",
+    ]
 
     return TaxCalculationResult(
         period_start=period_start,
         period_end=period_end,
-        tax_regime="usn_3" if with_vat else "usn_5",
+        tax_regime=regime_code,
         income=income,
         expense=expense,
         tax_base=income,
@@ -106,6 +128,10 @@ async def calculate_taxes(
         fsszn_employee_amount=fsszn_employee,
         total_to_pay=total,
         deadline=usn.deadline,
+        vat_deadline=vat_deadline if with_vat_effective else None,
+        fsszn_deadline=fsszn_deadline,
+        assumptions=assumptions,
+        breakdown=breakdown,
     )
 
 

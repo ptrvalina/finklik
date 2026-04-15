@@ -66,6 +66,9 @@ export default function TaxesPage() {
             <div className="text-on-surface-variant text-sm">Считаем...</div>
           ) : (
             <div className="space-y-4">
+              <div className="rounded-lg bg-surface-container-high/40 px-3 py-2 text-[11px] text-on-surface-variant">
+                Режим: <span className="font-semibold text-on-surface">{data.tax_regime}</span>
+              </div>
               {[
                 { label: 'Доходы', value: `${fmt(data.income)} BYN`, color: 'text-secondary' },
                 { label: 'Расходы', value: `${fmt(data.expense)} BYN`, color: 'text-error' },
@@ -89,6 +92,38 @@ export default function TaxesPage() {
                     <p className="text-xs font-bold text-error">Крайний срок</p>
                     <p className="text-sm font-bold text-on-surface">{data.deadline}</p>
                   </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-2 text-[11px] text-on-surface-variant sm:grid-cols-2">
+                {data.vat_deadline && (
+                  <div className="rounded-lg bg-surface-container-high/40 px-3 py-2">
+                    НДС дедлайн: <span className="font-semibold text-on-surface">{data.vat_deadline}</span>
+                  </div>
+                )}
+                {data.fsszn_deadline && (
+                  <div className="rounded-lg bg-surface-container-high/40 px-3 py-2">
+                    ФСЗН дедлайн: <span className="font-semibold text-on-surface">{data.fsszn_deadline}</span>
+                  </div>
+                )}
+              </div>
+              {Array.isArray(data.assumptions) && data.assumptions.length > 0 && (
+                <div className="rounded-lg border border-outline-variant/15 p-3">
+                  <p className="mb-2 text-xs font-semibold text-on-surface">Допущения расчёта</p>
+                  <ul className="space-y-1 text-[11px] text-on-surface-variant">
+                    {data.assumptions.map((a: string, i: number) => (
+                      <li key={i}>• {a}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {Array.isArray(data.breakdown) && data.breakdown.length > 0 && (
+                <div className="rounded-lg border border-outline-variant/15 p-3">
+                  <p className="mb-2 text-xs font-semibold text-on-surface">Шаги расчёта</p>
+                  <ul className="space-y-1 text-[11px] text-on-surface-variant">
+                    {data.breakdown.map((a: string, i: number) => (
+                      <li key={i}>• {a}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
