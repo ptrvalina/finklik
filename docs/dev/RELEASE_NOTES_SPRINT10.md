@@ -30,6 +30,7 @@ Date: 2026-04-15
   - `Release Summary` artifact
 - Latest baseline run (current): `https://github.com/ptrvalina/finklik/actions/runs/24475133323` (failed)
 - Follow-up: payment-critical and integration suites were split into focused gates to stabilize green baseline.
+- Latest post-fix run (pending): `https://github.com/ptrvalina/finklik/actions/workflows/ci.yml`
 
 ## Demo Operations
 
