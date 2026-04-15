@@ -30,7 +30,15 @@ Date: 2026-04-15
   - `Release Summary` artifact
 - Latest baseline run (current): `https://github.com/ptrvalina/finklik/actions/runs/24475133323` (failed)
 - Follow-up: payment-critical and integration suites were split into focused gates to stabilize green baseline.
-- Latest post-fix run (pending): `https://github.com/ptrvalina/finklik/actions/workflows/ci.yml`
+- Latest post-fix run: `https://github.com/ptrvalina/finklik/actions/runs/24475966177` (success)
+
+## Sprint 10 Status
+
+- Status: **Complete**
+- Exit criteria met:
+  - Tax rules fallback observability and UI signaling implemented.
+  - Buyer demo and payment critical smoke gates are green in CI.
+  - Release readiness and demo runbooks are published in `docs/dev` and `docs/sales`.
 
 ## Demo Operations
 
