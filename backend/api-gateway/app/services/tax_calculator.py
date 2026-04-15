@@ -11,9 +11,12 @@
   НДС:   20 числа месяца, следующего за отчётным
   ФСЗН:  15 числа месяца, следующего за кварталом
 """
+import json
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 
 
 CENT = Decimal("0.01")
@@ -42,7 +45,7 @@ class TaxRules:
     fsszn_employee: Decimal
 
 
-_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
+_DEFAULT_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
     2024: TaxRules(
         year=2024,
         version="RB-TAX-2024.1",
@@ -73,12 +76,41 @@ _TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
 }
 
 
+@lru_cache(maxsize=1)
+def _tax_rules_by_year() -> dict[int, TaxRules]:
+    config_path = Path(__file__).resolve().parent.parent / "config" / "tax_rules.json"
+    if not config_path.is_file():
+        return _DEFAULT_TAX_RULES_BY_YEAR
+    try:
+        raw = json.loads(config_path.read_text(encoding="utf-8"))
+        years = raw.get("years", {}) if isinstance(raw, dict) else {}
+        loaded: dict[int, TaxRules] = {}
+        for y, row in years.items():
+            year = int(y)
+            if not isinstance(row, dict):
+                continue
+            loaded[year] = TaxRules(
+                year=year,
+                version=str(row.get("version") or f"RB-TAX-{year}.1"),
+                usn_rate_with_vat=Decimal(str(row.get("usn_rate_with_vat"))),
+                usn_rate_without_vat=Decimal(str(row.get("usn_rate_without_vat"))),
+                vat_rate=Decimal(str(row.get("vat_rate"))),
+                fsszn_employer=Decimal(str(row.get("fsszn_employer"))),
+                fsszn_employee=Decimal(str(row.get("fsszn_employee"))),
+            )
+        return loaded or _DEFAULT_TAX_RULES_BY_YEAR
+    except Exception:
+        return _DEFAULT_TAX_RULES_BY_YEAR
+
+
 def get_tax_rules_for_year(year: int) -> TaxRules:
-    if year in _TAX_RULES_BY_YEAR:
-        return _TAX_RULES_BY_YEAR[year]
+    rules_by_year = _tax_rules_by_year()
+    if year in rules_by_year:
+        return rules_by_year[year]
     # Fallback to nearest known year to avoid hard failures.
-    nearest = max(k for k in _TAX_RULES_BY_YEAR.keys() if k <= year) if any(k <= year for k in _TAX_RULES_BY_YEAR.keys()) else min(_TAX_RULES_BY_YEAR.keys())
-    return _TAX_RULES_BY_YEAR[nearest]
+    keys = sorted(rules_by_year.keys())
+    nearest = max(k for k in keys if k <= year) if any(k <= year for k in keys) else min(keys)
+    return rules_by_year[nearest]
 
 
 @dataclass

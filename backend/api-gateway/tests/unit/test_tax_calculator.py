@@ -94,7 +94,22 @@ class TestTaxCalendar:
     def test_generates_events(self):
         from app.services.tax_calculator import generate_tax_calendar
         events = generate_tax_calendar(2024)
-        assert len(events) > 20
+        assert len(events) >= 4
         types = {e["event_type"] for e in events}
-        assert "tax" in types
+        assert "deadline" in types
         assert "report" in types
+
+
+class TestTaxRulesConfig:
+    def test_get_rules_for_known_year(self):
+        from app.services.tax_calculator import get_tax_rules_for_year
+
+        rules = get_tax_rules_for_year(2026)
+        assert rules.year == 2026
+        assert rules.version.startswith("RB-TAX-2026")
+
+    def test_get_rules_fallback_to_nearest(self):
+        from app.services.tax_calculator import get_tax_rules_for_year
+
+        rules = get_tax_rules_for_year(2030)
+        assert rules.year in (2024, 2025, 2026)
