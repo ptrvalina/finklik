@@ -6,6 +6,7 @@ Use this checklist before demo/release cut.
 
 - Backend: `python -m flake8 app tests --config=.flake8`
 - Backend unit tests: `python -m pytest tests/unit -q`
+- Backend buyer smoke: `python -m pytest tests/integration/test_buyer_smoke.py -q`
 - Frontend build: `npm run build`
 - Frontend lint (if enabled in project): `npm run lint`
 
@@ -26,6 +27,9 @@ Use this checklist before demo/release cut.
 - `GET /tax/rules/validate` for owner:
   - `using_fallback=false` in healthy config
   - fallback reason visible in UI when config is invalid
+- CI must include:
+  - `Buyer Demo Smoke` job
+  - `Payment Critical Smoke` job
 
 ## 4) Security Smoke
 
