@@ -37,7 +37,11 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
         db.add(org)
         await db.flush()
-        await ensure_onec_contour_record(db, org)
+
+        try:
+            await ensure_onec_contour_record(db, org)
+        except Exception as contour_exc:
+            _log.warning("onec_contour_skipped", error=str(contour_exc))
 
         user = User(
             email=body.email,
@@ -48,7 +52,11 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
         db.add(user)
         await db.flush()
+        await db.commit()
+    except HTTPException:
+        raise
     except Exception as exc:
+        await db.rollback()
         _log.error("register_failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Ошибка регистрации: {type(exc).__name__}: {exc}")
 
