@@ -21,6 +21,7 @@ Date: 2026-04-15
 
 - Recommended backend runtime for local integration tests is Python 3.11.
 - Python 3.14 may fail integration test setup because of known `passlib`/`bcrypt` incompatibility.
+- Public frontend access note (2026-04-16): GitHub Pages redeploy triggered to ensure production API binding (`https://finklik-api.onrender.com`) for accountant UAT.
 
 ## CI Baseline
 
