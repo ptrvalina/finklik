@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { appBasePath } from './appBase'
 import { useAuthStore } from './store/authStore'
 import LoginPage from './pages/LoginPage'
@@ -31,8 +31,12 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const Router = typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io'
+    ? HashRouter
+    : BrowserRouter
+
   return (
-    <BrowserRouter basename={appBasePath || undefined}>
+    <Router basename={appBasePath || undefined}>
       <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
@@ -55,6 +59,6 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   )
 }
