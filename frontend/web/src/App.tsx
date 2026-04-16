@@ -31,13 +31,26 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const Router = typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io'
-    ? HashRouter
-    : BrowserRouter
+  const useHash = typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io'
 
+  const router = useHash
+    ? (
+      <HashRouter>
+        <AppRoutes />
+      </HashRouter>
+    )
+    : (
+      <BrowserRouter basename={appBasePath || undefined}>
+        <AppRoutes />
+      </BrowserRouter>
+    )
+
+  return router
+}
+
+function AppRoutes() {
   return (
-    <Router basename={appBasePath || undefined}>
-      <Routes>
+    <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
@@ -59,6 +72,5 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
   )
 }
