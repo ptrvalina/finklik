@@ -42,6 +42,12 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
 2. Upload a small JPG or PDF on Scanner page — success, result card, optional «Предупреждения» if OCR used mock fallback.
 3. Recent scans list loads without 500.
 
+## 3c) Regulatory & report submissions (roadmap sprints 11–12 slice)
+
+1. Confirm migration `sprint12_regulatory_reporting` is applied (tables `regulatory_updates`, `report_submissions` exist) — see `docs/dev/PRODUCT_SPRINT_ALIGNMENT.md`.
+2. **Settings → Регламентные обновления**: list loads, optional seed updates on first call.
+3. **Settings → Подача отчётов**: create a mock report (e.g. ФСЗН / ПУ-3), confirm, submit — success message with reference.
+
 ## 4) Backup Branches
 
 - If email provider is down: show graceful fallback (`email_sent=false`).

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamApi, regulatoryApi, submissionsApi, billingApi, onecApi } from '../api/client'
+import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
 
@@ -245,7 +246,7 @@ function BillingSection() {
       qc.invalidateQueries({ queryKey: ['billing-subscription'] })
       setMessage({ type: 'success', text: res.data.message })
     },
-    onError: (e: any) => setMessage({ type: 'error', text: e.response?.data?.detail || 'Ошибка' }),
+    onError: (e: any) => setMessage({ type: 'error', text: formatApiDetail(e.response?.data?.detail) || 'Ошибка' }),
   })
 
   const plans = plansData?.plans ?? []
@@ -377,7 +378,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
       setInviteForm({ email: '', role: 'accountant' })
       setMessage({ type: 'success', text: `Приглашение создано. Код: ${res.data.invite_code}` })
     },
-    onError: (e: any) => setMessage({ type: 'error', text: e.response?.data?.detail || 'Ошибка' }),
+    onError: (e: any) => setMessage({ type: 'error', text: formatApiDetail(e.response?.data?.detail) || 'Ошибка' }),
   })
 
   const deactivateMutation = useMutation({
@@ -686,7 +687,7 @@ function SubmissionsSection() {
       setPreviewData(res.data)
       flash('success', 'Отчёт сформирован — проверьте и подтвердите')
     },
-    onError: (e: any) => flash('error', e.response?.data?.detail || 'Ошибка'),
+    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка'),
   })
 
   const confirmMutation = useMutation({
