@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФинКлик — стратегический брифинг для ПАО ВТБ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070c;
+      --surface: #0a0e16;
+      --card: #111827;
+      --border: rgba(255, 255, 255, 0.07);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --teal: #14b8a6;
+      --teal-dim: rgba(20, 184, 166, 0.12);
+      --cyan: #06b6d4;
+      --accent-line: linear-gradient(90deg, var(--teal), var(--cyan));
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .deck { height: 100vh; position: relative; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: clamp(1.1rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.75rem);
+      padding-bottom: 4.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(1.25rem);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+    .eyebrow {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-size: clamp(1.45rem, 3.8vw, 2.35rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      max-width: 52rem;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, #5eead4, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 {
+      font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      max-width: 48rem;
+    }
+    .lead {
+      font-size: clamp(0.88rem, 1.5vw, 1.02rem);
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 46rem;
+      margin-top: 0.35rem;
+    }
+    .disc {
+      font-size: 0.68rem;
+      color: #64748b;
+      line-height: 1.45;
+      max-width: 48rem;
+      margin-top: 0.75rem;
+      border-left: 2px solid var(--border);
+      padding-left: 0.65rem;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+      max-width: 960px;
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.85rem;
+      max-width: 1000px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .card h3 {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+    .card p, .card li {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .card ul { margin: 0.35rem 0 0 1rem; }
+    .tbl {
+      width: 100%;
+      max-width: 980px;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      margin-top: 0.65rem;
+    }
+    .tbl th, .tbl td {
+      text-align: left;
+      padding: 0.45rem 0.55rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .tbl th {
+      color: var(--teal);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.58rem;
+    }
+    .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 0.65rem; max-width: 980px; }
+    .num { font-weight: 700; color: #e2e8f0; font-variant-numeric: tabular-nums; }
+    .pos { color: #5eead4; font-weight: 600; }
+    .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; max-width: 980px; margin-top: 0.65rem; }
+    @media (max-width: 720px) { .cols2 { grid-template-columns: 1fr; } }
+
+    /* Модельный график */
+    .chart-cap { font-size: 0.65rem; color: var(--muted); margin-top: 0.75rem; max-width: 520px; }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 140px;
+      margin-top: 0.5rem;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-width: 520px;
+    }
+    .bar-chart .b {
+      flex: 1;
+      background: linear-gradient(180deg, rgba(20,184,166,.5), rgba(6,182,212,.25));
+      border-radius: 4px 4px 0 0;
+      min-height: 8px;
+      position: relative;
+    }
+    .bar-chart .b span {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.55rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+      max-width: 920px;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      text-align: center;
+    }
+    .kpi .v {
+      font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+      font-weight: 800;
+      background: var(--accent-line);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .kpi .l { font-size: 0.65rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.35; }
+
+    .img-frame {
+      margin-top: 0.5rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      max-height: min(42vh, 380px);
+      min-height: 160px;
+      overflow: hidden;
+      position: relative;
+    }
+    .img-frame.with-photo .mock { display: none; }
+    .img-frame img {
+      width: 100%;
+      max-height: min(42vh, 380px);
+      object-fit: contain;
+      object-position: top center;
+      display: block;
+    }
+    .mock {
+      display: flex;
+      height: 100%;
+      min-height: 160px;
+      font-size: 8px;
+    }
+    .mock-side {
+      width: 48px;
+      background: #0c1018;
+      border-right: 1px solid var(--border);
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .mock-dot { height: 4px; border-radius: 2px; background: rgba(255,255,255,.06); }
+    .mock-dot.on { background: var(--teal); box-shadow: 0 0 8px rgba(20,184,166,.4); }
+    .mock-main { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .mock-top { display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; }
+    .mock-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+    .mk { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 4px; }
+    .mk .t { font-size: 6px; color: #64748b; text-transform: uppercase; }
+    .mk .n { font-size: 10px; font-weight: 700; color: #fff; }
+
+    .footer-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.65rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(transparent, rgba(5, 7, 12, 0.96));
+      z-index: 50;
+    }
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .nav-btn:hover { border-color: rgba(20, 184, 166, 0.35); }
+    .progress { flex: 1; max-width: 200px; height: 3px; background: var(--border); border-radius: 99px; margin: 0 0.75rem; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--accent-line); border-radius: 99px; transition: width 0.35s ease; }
+    .slide-num { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    a { color: #5eead4; text-decoration: none; border-bottom: 1px solid rgba(94, 234, 212, 0.25); }
+    a:hover { border-bottom-color: #5eead4; }
+    .quote {
+      margin-top: 0.85rem;
+      padding: 0.9rem 1rem;
+      border-left: 3px solid var(--teal);
+      background: var(--teal-dim);
+      border-radius: 0 10px 10px 0;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      max-width: 44rem;
+    }
+    .big { font-size: clamp(1.5rem, 3.5vw, 2.1rem); font-weight: 800; letter-spacing: -0.02em; margin-top: 0.5rem; }
+    .big span { color: #5eead4; }
+
+    @media print {
+      html, body { height: auto; overflow: visible; background: #fff; color: #111; }
+      .footer-nav { display: none !important; }
+      .deck { height: auto; }
+      .slide {
+        position: relative;
+        opacity: 1 !important;
+        transform: none !important;
+        page-break-after: always;
+        padding: 1cm;
+        border: 1px solid #ddd;
+      }
+      .slide:last-child { page-break-after: auto; }
+      .card, .tbl-wrap, .img-frame, .kpi, .bar-chart { border-color: #e2e8f0; background: #f8fafc; }
+      .lead, .card p, .disc { color: #334155 !important; }
+      .eyebrow { color: #0f766e; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+
+    <section class="slide active" data-slide>
+      <p class="eyebrow">Конфиденциально · Стратегический брифинг</p>
+      <h1><span class="grad">ФинКлик</span> — платформа учёта, налогов и автоматизации для экосистемы МСП банка</h1>
+      <p class="lead">Предлагаем рассмотреть продукт как готовый цифровой слой между расчётным обслуживанием и операционной деятельностью клиента: учёт, отчётность, 1С, документооборот, OCR и сопровождение в едином интерфейсе премиум-класса.</p>
+      <p class="disc">Документ подготовлен для ПАО ВТБ. Содержание не является публичной офертой. Финансовые сценарии иллюстративные; фактические показатели определяются моделью банка и результатами due diligence.</p>
+      <p class="lead" style="margin-top:1.25rem;font-size:0.75rem;color:#64748b">Навигация: ← → · Пробел · Home / End · свайп · Ctrl+P (PDF)</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Тезисы для ЛПР</p>
+      <h2>Три опорных аргумента</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3>1. Ускорение выхода на рынок</h3>
+          <p>Готовый продуктовый контур (веб-клиент, API, мульти-тенантность, наблюдаемость) сокращает горизонт запуска white-label модуля по сравнению с программой собственной разработки.</p>
+        </div>
+        <div class="card">
+          <h3>2. Измеримый экономический эффект</h3>
+          <p>Рост вовлечённости в ДБО, снижение оттока МСП, дополнительный ARPU от подписок и кросс-продуктов при наличии «липкого» учётного сервиса внутри экосистемы банка.</p>
+        </div>
+        <div class="card">
+          <h3>3. Дифференциация на витрине</h3>
+          <p>Нативная интеграция с 1С, OCR-конвейер для первичных документов, ИИ-ассистент и аналитический слой — зона, где сложно конкурировать точечными виджетами или внешними ссылками на сторонние SaaS.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Рынок и контекст</p>
+      <h2>Цифровизация учёта МСП — устойчивый вектор спроса</h2>
+      <p class="lead">Регуляторное усложнение отчётности, ожидания клиентов по «одному окну» и развитие open API стимулируют банки наращивать нефинансовые сервисы вокруг РКО. Учёт и налоги — логичное продолжение воронки удержания.</p>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v">↑</div><div class="l">Спрос на embedded-сервисы вокруг счёта и выписки</div></div>
+        <div class="kpi"><div class="v">API</div><div class="l">Стандартизация интеграций с АБС и внешними контурами</div></div>
+        <div class="kpi"><div class="v">AI</div><div class="l">Снижение стоимости поддержки и ручного ввода</div></div>
+        <div class="kpi"><div class="v">1С</div><div class="l">Фактический стандарт учёта для значимой части МСП</div></div>
+      </div>
+      <p class="disc">Отраслевые агрегированные оценки рынка не приводятся сознательно: корректнее опереться на внутренние данные ВТБ по сегментам и чувствительности клиентов (предлагается на этапе совместной сессии).</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Стратегический разрыв</p>
+      <h2>Где банк теряет ценность без сильного учётного контура</h2>
+      <div class="grid2">
+        <div class="card"><h3>Фрагментация</h3><p>Клиент ведёт учёт в Excel, стороннем SaaS или у аутсорсера — банк не видит полной картины оборотов и обязательств.</p></div>
+        <div class="card"><h3>Слабая «липкость» ДБО</h3><p>Без ежедневного ценностного контакта выше риск переключения на конкурента с более широкой экосистемой.</p></div>
+        <div class="card"><h3>Упущенный data asset</h3><p>Категории расходов, налоговая нагрузка, кассовые разрывы — сигналы для кредитного и транзакционного cross-sell остаются вне контура банка.</p></div>
+        <div class="card"><h3>Стоимость догоняющей разработки</h3><p>Greenfield-проект учётного модуля тянет за собой мультифункциональную команду, сроки и регуляторные риски на всём жизненном цикле.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Определение продукта</p>
+      <h2>ФинКлик — независимая мульти-тенантная платформа</h2>
+      <p class="lead">Единый клиентский опыт: финансовые операции, налоговые режимы и календарь обязательств, кадры и расчёт вознаграждений, контрагенты, банковские счета (в т.ч. мульти-банк), импорт выписок, экспорт отчётности, контур 1С, OCR и интеллектуальный ассистент.</p>
+      <div class="quote">Для финансового института поставляется как white-label: бренд, домен, юридические тексты и интеграционные контуры задаются политикой банка; платформа остаётся масштабируемым ядром.</div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Потенциал для банка</p>
+      <h2>Дерево драйверов коммерческого и удерживающего эффекта</h2>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th>Драйвер</th><th>Механика</th><th>Как измерять</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">Прямая монетизация</td><td>Подписка / плата за организацию / revenue share с поставщиком модуля</td><td>MRR по сегментам МСП, ARPORA</td></tr>
+            <tr><td class="num">Удержание РКО</td><td>Снижение churn за счёт ежедневного учётного сценария внутри ДБО</td><td>Cohort churn до/после, NPS ДБО</td></tr>
+            <tr><td class="num">Cross-sell</td><td>Кредит, эквайринг, зарплатный проект, депозиты — на основе данных учёта</td><td>Конверсия офферов, глубина отношений</td></tr>
+            <tr><td class="num">Эффективность поддержки</td><td>OCR и ИИ-ассистент снижают нагрузку на линию и ошибки ввода</td><td>Тикеты на единицу клиента, STP-доля операций</td></tr>
+            <tr><td class="num">Скорость запуска</td><td>Смещение capex/opex из длинного цикла R&amp;D в контролируемый интеграционный бюджет</td><td>Time-to-market, TCO 3 года</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="disc">Модель эффекта согласуется с финансовым блоком и риск-функцией банка; мы предоставляем исходные допущения для симуляций после NDA.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Иллюстративная аналитика</p>
+      <h2>Сценарное наращивание вовлечённости (пример построения)</h2>
+      <p class="lead">Ниже — абстрактная динамика «глубины использования» учётного модуля по месяцам после запуска: не прогноз для ВТБ, а демонстрация формы кривой, которую банк может параметризовать своими N и конверсиями.</p>
+      <div class="bar-chart" aria-hidden="true">
+        <div class="b" style="height:22%"><span>M1</span></div>
+        <div class="b" style="height:28%"><span>M2</span></div>
+        <div class="b" style="height:38%"><span>M3</span></div>
+        <div class="b" style="height:48%"><span>M4</span></div>
+        <div class="b" style="height:58%"><span>M5</span></div>
+        <div class="b" style="height:72%"><span>M6</span></div>
+        <div class="b" style="height:85%"><span>M9</span></div>
+        <div class="b" style="height:100%"><span>M12</span></div>
+      </div>
+      <p class="chart-cap">Ось Y: условный индекс активности (DAU/WAU, число проведённых операций, доля клиентов с ≥1 действием в неделю) — метрики выбираются совместно.</p>
+      <div class="cols2" style="margin-top:0.75rem">
+        <div class="card"><h3>Базовый сценарий</h3><p>Умеренный маркетинг модуля, ограниченный сегмент МСП на пилоте, стандартный прайс-лист.</p></div>
+        <div class="card"><h3>Расширенный сценарий</h3><p>Подключение кросс-каналов (менеджеры РКО, онбординг юрлиц), бандл с тарифами РКО, промо ИИ-сканера.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Функциональная глубина</p>
+      <h2>Модули платформы</h2>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Модуль</th><th>Возможности</th><th>Ценность для банка</th></tr></thead>
+          <tbody>
+            <tr><td class="num">Учёт и операции</td><td>Доходы, расходы, возвраты, списания, категории, импорт CSV/выписок</td><td>Единая правда по движению средств клиента</td></tr>
+            <tr><td class="num">Налоги и календарь</td><td>Режимы, расчёты, сроки, визуализация обязательств</td><td>Снижение репутационных рисков «пропущенного срока»</td></tr>
+            <tr><td class="num">Банк</td><td>Мульти-счёт, платежи, сверка, интеграция с выпиской</td><td>Укрепление основного банковского отношения</td></tr>
+            <tr><td class="num">Контрагенты и документы</td><td>Справочники, идентификаторы, импорт/экспорт отчётности</td><td>Качество данных для скоринга и комплаенса</td></tr>
+            <tr><td class="num">Кадры и вознаграждения</td><td>Реестр, расчёты, ведомости</td><td>Связка с зарплатным продуктом банка</td></tr>
+            <tr><td class="num">1С · OCR · ИИ</td><td>Контур синхронизации, сканирование PDF/изображений, ассистент</td><td>Сильное УТП витрины; снижение ручного труда</td></tr>
+            <tr><td class="num">Аналитика</td><td>Дашборды, структура расходов, инсайты</td><td>Прозрачность для клиента и для RM банка</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Конкурентная позиция</p>
+      <h2>Матрица: собственная разработка, экосистемные игроки, ФинКлик</h2>
+      <p class="lead">Публичные программы крупных банков закрывают базовый учёт; ФинКлик позиционируется как специализированное ядро с фокусом на UX, интеграции и автоматизацию первички.</p>
+      <p class="lead" style="font-size:0.78rem;margin-top:0.35rem">
+        Справочно: <a href="https://www.sberbank.ru/ru/s_m_business/nbs/accounting" target="_blank" rel="noopener">СберБизнес — бухгалтерия</a> ·
+        <a href="https://www.vtb.ru/malyj-biznes/cifra/onlayn-buhgalteriya-dlya-biznesa/" target="_blank" rel="noopener">ВТБ — онлайн-бухгалтерия для бизнеса</a>
+      </p>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Критерий</th><th>Разработка in-house</th><th>Типовой внешний SaaS</th><th>ФинКлик</th></tr></thead>
+          <tbody>
+            <tr><td>Срок вывода white-label</td><td>Длинный цикл</td><td>Средний</td><td class="pos">Короткий интеграционный контур</td></tr>
+            <tr><td>Контроль бренда и данных</td><td>Полный</td><td>Ограничен</td><td class="pos">Под политикой банка</td></tr>
+            <tr><td>1С + очередь синхронизации в UI</td><td>Зависит от ресурса</td><td>Частично</td><td class="pos">Встроено в продукт</td></tr>
+            <tr><td>OCR / PDF pipeline</td><td>Отдельный проект</td><td>Разрозненно</td><td class="pos">Единый сервисный слой</td></tr>
+            <tr><td>TCO 3 года</td><td>Высокий риск раздувания</td><td>Подписки + кастом</td><td class="pos">Предсказуемый лицензионный контур</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Архитектура и масштаб</p>
+      <h2>Готовность к нагрузке и росту базы</h2>
+      <div class="grid3">
+        <div class="card"><h3>Мульти-тенантность</h3><p>Жёсткая изоляция данных по организации на уровне запросов и схемы БД.</p></div>
+        <div class="card"><h3>Горизонтальное масштабирование</h3><p>Stateless API, пулы соединений, кэширование горячих представлений (дашборд, баланс, календарь).</p></div>
+        <div class="card"><h3>Наблюдаемость</h3><p>Метрики, журналы, трассировка — основа для SLA и аудита эксплуатации.</p></div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:0.75rem">
+        <table class="tbl">
+          <thead><tr><th>Масштаб клиентской базы</th><th>Архитектурный паттерн</th><th>Комментарий</th></tr></thead>
+          <tbody>
+            <tr><td>до 10²</td><td>Компактный контур</td><td>Пилот, регион, ограниченная когорта</td></tr>
+            <tr><td>10³ — 10⁴</td><td>Репликация API, управляемая БД</td><td>Типовой продакшен регионального банка</td></tr>
+            <tr><td>10⁴+</td><td>Кластеризация, шардирование по ключу тенанта</td><td>Дорожная карта масштабирования согласуется на DD</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="disc">Точные цифры узлов и стоимости инфраструктуры — в приложении к техническому due diligence; ориентир «десятки тысяч активных организаций» заложен в архитектурные решения продукта.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Информационная безопасность</p>
+      <h2>Соответствие ожиданиям финансового института</h2>
+      <div class="cols2">
+        <div class="card">
+          <h3>Защита данных</h3>
+          <ul>
+            <li>Шифрование персональных и чувствительных данных at rest</li>
+            <li>JWT с refresh, короткоживущий access-токен</li>
+            <li>Rate limiting, защита от brute-force</li>
+            <li>Security headers (CSP, HSTS, ограничение фрейминга)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Управление и аудит</h3>
+          <ul>
+            <li>Журналирование действий пользователей (кто / что / когда / IP)</li>
+            <li>Разграничение ролей (владелец, бухгалтер, наблюдатель)</li>
+            <li>OpenAPI для формализации интеграций</li>
+            <li>Готовность к прохождению чек-листа ИБ банка под NDA</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интеграция</p>
+      <h2>Контур встраивания в ландшафт банка</h2>
+      <div class="grid2">
+        <div class="card"><h3>АБС и выписки</h3><p>REST API импорта движений, webhooks по новым операциям, согласование форматов с командой интеграции.</p></div>
+        <div class="card"><h3>Идентификация</h3><p>SSO / OAuth-подобные сценарии — по политике IAM банка; маппинг корпоративного клиента на тенанта платформы.</p></div>
+        <div class="card"><h3>1С и внешние системы</h3><p>Очередь задач синхронизации, мониторинг состояния, ручной и автоматический retry.</p></div>
+        <div class="card"><h3>Каналы продаж</h3><p>Встраивание в интернет-банк МСП, мобильное приложение (по дорожной карте), офферы RM.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Дорожная карта продукта</p>
+      <h2>Развитие после интеграции v1</h2>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Горизонт</th><th>Фокус</th></tr></thead>
+          <tbody>
+            <tr><td class="num">0–6 мес.</td><td>Стабилизация продакшена, метрики качества OCR, расширение отчётности, нагрузочное тестирование</td></tr>
+            <tr><td class="num">6–12 мес.</td><td>Углубление open API, мобильный клиент, сценарии эквайринга и кассовых разрывов</td></tr>
+            <tr><td class="num">12–24 мес.</td><td>Кредитные и риск-модели на основе учётных рядов, маркетплейс проверенных партнёров (юристы, аудит)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="disc">Приоритеты уточняются совместной продуктовой комитетом банка + вендор; таблица отражает типовую логику развития enterprise-SaaS.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой</p>
+      <h2>Клиентский интерфейс (пример состояния продукта)</h2>
+      <p class="lead">Ниже — макет в стиле поставляемого UI; при наличии файлов в каталоге <code style="color:#94a3b8">media/</code> подставляются реальные скриншоты для демонстрации.</p>
+      <div class="cols2">
+        <div class="img-frame" data-img="media/dashboard.png">
+          <div class="mock">
+            <aside class="mock-side" aria-hidden="true"><div class="mock-dot on"></div><div class="mock-dot"></div><div class="mock-dot"></div></aside>
+            <div class="mock-main">
+              <div class="mock-top"><span>Дашборд</span><span>● Онлайн</span></div>
+              <div class="mock-kpis">
+                <div class="mk"><div class="t">Выручка</div><div class="n">—</div></div>
+                <div class="mk"><div class="t">Расходы</div><div class="n">—</div></div>
+                <div class="mk"><div class="t">Маржа</div><div class="n">—</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="img-frame" data-img="media/analytics.png">
+          <div class="mock">
+            <aside class="mock-side" aria-hidden="true"><div class="mock-dot"></div><div class="mock-dot on"></div></aside>
+            <div class="mock-main">
+              <div class="mock-top"><span>Аналитика</span><span>● Онлайн</span></div>
+              <div class="mock-kpis">
+                <div class="mk"><div class="t">Тренд</div><div class="n">↗</div></div>
+                <div class="mk"><div class="t">Структура</div><div class="n">∑</div></div>
+                <div class="mk"><div class="t">Инсайт</div><div class="n">AI</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Инвестиционный контур</p>
+      <h2>Оценка стратегической сделки</h2>
+      <p class="lead">Диапазон <strong class="pos">USD 5–7 млн</strong> отражает покупку зрелого IP и команды сопровождения против альтернативы многолетней программы in-house с неопределённостью сроков и качества UX.</p>
+      <div class="grid2">
+        <div class="card"><h3>Сравнение с альтернативной стоимостью</h3><p>Совокупная стоимость владения greenfield-проектом (FTE × горизонт + инфраструктура + регуляторные итерации) в корпоративной модели часто сопоставима или выше, при этом не переносит риск на внешнего поставщика.</p></div>
+        <div class="card"><h3>Структура сделки</h3><p>Asset deal, эксклюзивная лицензия на территории, совместное предприятие или гибрид — обсуждается с юридическим и налоговым контурами банка.</p></div>
+        <div class="card"><h3>Что получает банк</h3><p>Кодовая база, документация API, runbook эксплуатации, передача знаний, сопровождение интеграции согласованным пакетом часов.</p></div>
+        <div class="card"><h3>Следующие шаги</h3><p>NDA → технический и продуктовый due diligence → пилот на выбранной когорте → коммерческое закрытие и план интеграции в витрину.</p></div>
+      </div>
+      <div class="big">Ориентир: <span>USD 5 000 000 — 7 000 000</span></div>
+      <p class="disc">Сумма не является публичной офертой; финальные условия — в term sheet после due diligence и согласования модели exclusivity.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Заключение</p>
+      <h2>ФинКлик — готовность к диалогу с ПАО ВТБ</h2>
+      <div class="quote">Мы предлагаем рассмотреть платформу как стратегический актив для усиления экосистемы МСП: измеримые KPI, профессиональная архитектура, white-label и зрелый пользовательский слой. Готовы к NDA и демонстрации под ваши сценарии и сегментацию.</div>
+      <p class="lead" style="margin-top:1rem">Контакт для координации встречи: <em style="color:#94a3b8">[указать e-mail и телефон]</em></p>
+      <p class="disc">Материал конфиденциален. Запрещено распространение за пределами уполномоченных подразделений ПАО ВТБ без письменного согласия правообладателя.</p>
+    </section>
+  </div>
+
+  <div class="footer-nav">
+    <button type="button" class="nav-btn" id="prev" aria-label="Назад">←</button>
+    <div class="progress" aria-hidden="true"><div class="progress-bar" id="bar"></div></div>
+    <span class="slide-num" id="num">1 / 16</span>
+    <button type="button" class="nav-btn" id="next" aria-label="Вперёд">→</button>
+  </div>
+
+  <script>
+    (function () {
+      var slides = [].slice.call(document.querySelectorAll('[data-slide]'));
+      var i = 0;
+      var touchStartX = null;
+
+      document.querySelectorAll('[data-img]').forEach(function (el) {
+        var src = el.getAttribute('data-img');
+        var img = new Image();
+        img.alt = '';
+        img.onload = function () {
+          el.insertBefore(img, el.firstChild);
+          el.classList.add('with-photo');
+        };
+        img.src = src;
+      });
+
+      function render() {
+        slides.forEach(function (s, j) {
+          s.classList.toggle('active', j === i);
+        });
+        document.getElementById('num').textContent = i + 1 + ' / ' + slides.length;
+        document.getElementById('bar').style.width = ((i + 1) / slides.length * 100) + '%';
+      }
+
+      function go(d) {
+        i = Math.max(0, Math.min(slides.length - 1, i + d));
+        render();
+      }
+
+      document.getElementById('prev').onclick = function () { go(-1); };
+      document.getElementById('next').onclick = function () { go(1); };
+      document.onkeydown = function (e) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(1); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+        if (e.key === 'Home') { i = 0; render(); }
+        if (e.key === 'End') { i = slides.length - 1; render(); }
+      };
+      document.getElementById('deck').ontouchstart = function (e) { touchStartX = e.changedTouches[0].screenX; };
+      document.getElementById('deck').ontouchend = function (e) {
+        if (touchStartX == null) return;
+        var dx = e.changedTouches[0].screenX - touchStartX;
+        touchStartX = null;
+        if (dx < -48) go(1);
+        if (dx > 48) go(-1);
+      };
+      render();
+    })();
+  </script>
+</body>
+</html>

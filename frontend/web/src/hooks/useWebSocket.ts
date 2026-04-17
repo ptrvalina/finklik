@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { resolveApiBase } from '../api/client'
 
 export interface WsNotification {
   id: string
@@ -7,9 +8,11 @@ export interface WsNotification {
   timestamp: number
 }
 
-const _apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = _apiBase.replace(/^http/, 'ws') + '/ws'
 const RECONNECT_DELAY = 3000
+
+function wsUrlFromApiBase(apiBase: string): string {
+  return apiBase.replace(/^http/, 'ws') + '/ws'
+}
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
@@ -22,7 +25,7 @@ export function useWebSocket() {
     if (!token) return
 
     try {
-      const ws = new WebSocket(`${WS_URL}?token=${token}`)
+      const ws = new WebSocket(`${wsUrlFromApiBase(resolveApiBase())}?token=${token}`)
       wsRef.current = ws
 
       ws.onopen = () => setConnected(true)

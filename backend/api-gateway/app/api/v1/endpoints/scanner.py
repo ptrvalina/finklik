@@ -17,8 +17,28 @@ class TextParseRequest(BaseModel):
     text: str
     doc_type: str | None = None
 
-MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_SIZE = 25 * 1024 * 1024  # 25 MB (как в UI сканера)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"}
+
+
+def _normalize_upload_content_type(content_type: str | None, filename: str) -> str | None:
+    """Часть клиентов шлёт application/octet-stream — сопоставляем по расширению."""
+    ct = (content_type or "").strip().lower() or None
+    fn = (filename or "").lower()
+    if ct in ALLOWED_TYPES:
+        return ct
+    if ct == "application/octet-stream" or ct is None:
+        if fn.endswith(".pdf"):
+            return "application/pdf"
+        if fn.endswith((".jpg", ".jpeg")):
+            return "image/jpeg"
+        if fn.endswith(".png"):
+            return "image/png"
+        if fn.endswith(".webp"):
+            return "image/webp"
+        if fn.endswith(".heic"):
+            return "image/heic"
+    return ct
 
 
 @router.post("/upload")
@@ -27,14 +47,18 @@ async def upload_and_scan(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if file.content_type and file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(400, f"Неподдерживаемый формат: {file.content_type}. Разрешены: JPEG, PNG, WebP, HEIC, PDF")
+    effective_type = _normalize_upload_content_type(file.content_type, file.filename or "")
+    if effective_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            400,
+            f"Неподдерживаемый формат: {file.content_type or 'не указан'}. Разрешены: JPEG, PNG, WebP, HEIC, PDF",
+        )
 
     contents = await file.read()
     if len(contents) > MAX_SIZE:
-        raise HTTPException(400, "Файл слишком большой (макс. 10 МБ)")
+        raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 
-    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, file.content_type)
+    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
 
     doc = ScannedDocument(
         organization_id=current_user.organization_id,

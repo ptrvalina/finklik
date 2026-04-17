@@ -4,7 +4,7 @@ import { resolveAppPath } from '../appBase'
 /** Продакшен API; используется, если VITE_API_URL не задан при сборке (частая причина запросов на localhost). */
 const PRODUCTION_API_BASE = 'https://finklik-api.onrender.com'
 
-function resolveApiBase(): string {
+export function resolveApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL
   if (fromEnv && String(fromEnv).trim()) {
     return String(fromEnv).replace(/\/$/, '')
@@ -159,7 +159,8 @@ export const scannerApi = {
   upload: (file: File) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/scanner/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    // Не задавать Content-Type вручную: boundary обязателен для multipart, иначе сервер не парсит тело.
+    return api.post('/scanner/upload', form)
   },
   parseText: (text: string, doc_type?: string) =>
     api.post('/scanner/parse-text', { text, doc_type }),
@@ -171,12 +172,12 @@ export const importApi = {
   previewCsv: (file: File) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/import/transactions-csv/preview', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    return api.post('/import/transactions-csv/preview', form)
   },
   importCsv: (file: File) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/import/transactions-csv', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    return api.post('/import/transactions-csv', form)
   },
 }
 

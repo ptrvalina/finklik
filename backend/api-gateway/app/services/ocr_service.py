@@ -97,7 +97,15 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         return out
 
     # Для реального OCR парсим тот же текстовый пайплайн.
-    parsed = parse_text_document(text, detect_doc_type(filename))
+    try:
+        parsed = parse_text_document(text, detect_doc_type(filename))
+    except Exception as exc:
+        out = mock_ocr_process(filename, file_bytes)
+        out["warnings"] = list(out.get("warnings", [])) + [
+            f"Ошибка разбора после OCR ({type(exc).__name__}), использован mock fallback"
+        ]
+        return out
+
     # Эвристика confidence: от длины и наличия ключевых полей.
     conf = 40 + min(45, len(text) // 30)
     if parsed.get("parsed", {}).get("amount", 0) > 0:
@@ -285,7 +293,10 @@ def parse_text_document(text: str, doc_type_hint: str | None = None) -> dict:
     doc_type = doc_type_hint or _detect_type_from_text(text)
 
     if doc_type == "ttn" and extract_ttn_data is not None:
-        ttn = extract_ttn_data(text)
+        try:
+            ttn = extract_ttn_data(text)
+        except Exception:
+            return _extract_generic(text, "ttn")
         items_data = [asdict(item) for item in ttn.items]
         return {
             "doc_type": "ttn",
