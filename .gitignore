@@ -45,3 +45,6 @@ artifacts/
 
 # Docker / локальные volume-данные (если монтируются в репо)
 postgres_data/
+
+# Локальные черновики регистрации / тестовые JSON
+tmp_register.json

@@ -36,6 +36,12 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
 3. Confirm tax validation widget is present.
 4. Confirm no fallback warning in normal demo scenario.
 
+## 3b) Scanner (post v0.2.0)
+
+1. Confirm API DB has migration `sprint10_scanned_documents` applied (`scanned_documents` table exists).
+2. Upload a small JPG or PDF on Scanner page — success, result card, optional «Предупреждения» if OCR used mock fallback.
+3. Recent scans list loads without 500.
+
 ## 4) Backup Branches
 
 - If email provider is down: show graceful fallback (`email_sent=false`).

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi, dashboardApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { formatApiDetail } from '../utils/apiError'
 
 type ParsedData = {
   type?: string; amount?: number; vat_amount?: number; description?: string
@@ -10,6 +11,7 @@ type ParsedData = {
 type ScanResult = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
   ocr_text: string; parsed: ParsedData; created_at: string
+  warnings?: string[]
 }
 type HistoryItem = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
@@ -90,7 +92,7 @@ export default function ScannerPage() {
       reader.readAsDataURL(file)
     }
     uploadMutation.mutate(file)
-  }, [])
+  }, [uploadMutation.mutate])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false)
@@ -211,7 +213,7 @@ export default function ScannerPage() {
               </div>
               {parseTextMutation.isError && (
                 <div className="mt-3 bg-error/10 border border-error/20 text-error px-4 py-2 rounded-lg text-sm">
-                  {(parseTextMutation.error as any)?.response?.data?.detail || 'Ошибка при распознавании'}
+                  {formatApiDetail((parseTextMutation.error as any)?.response?.data?.detail) || 'Ошибка при распознавании'}
                 </div>
               )}
             </div>
@@ -219,7 +221,7 @@ export default function ScannerPage() {
 
           {uploadMutation.isError && (
             <div className="mt-4 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">
-              Ошибка: {(uploadMutation.error as any)?.response?.data?.detail || 'Попробуйте ещё раз'}
+              Ошибка: {formatApiDetail((uploadMutation.error as any)?.response?.data?.detail) || 'Попробуйте ещё раз'}
             </div>
           )}
 
@@ -271,10 +273,10 @@ export default function ScannerPage() {
                     {scanResult.parsed.vat_amount != null && <Field label="НДС" value={`${scanResult.parsed.vat_amount.toFixed(2)} BYN`} />}
                     {scanResult.parsed.items_count != null && <Field label="Позиций" value={String(scanResult.parsed.items_count)} />}
                   </div>
-                  {(scanResult as any)?.warnings?.length > 0 && (
+                  {scanResult.warnings && scanResult.warnings.length > 0 && (
                     <div className="bg-tertiary/5 border border-tertiary/20 rounded-lg p-3 space-y-1">
                       <p className="text-[10px] text-tertiary font-bold uppercase tracking-wider">Предупреждения</p>
-                      {(scanResult as any).warnings.map((w: string, i: number) => (
+                      {scanResult.warnings.map((w: string, i: number) => (
                         <p key={i} className="text-xs text-on-surface-variant">• {w}</p>
                       ))}
                     </div>

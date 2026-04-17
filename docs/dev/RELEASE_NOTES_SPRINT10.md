@@ -47,6 +47,10 @@ Date: 2026-04-15
 - Pre-demo smoke guide: `docs/dev/PRE_DEMO_SMOKE.md`
 - Sales flow script: `docs/sales/BUYER_DEMO_SCRIPT.md`
 
+## Next
+
+- Follow-up release: **`docs/dev/RELEASE_NOTES_SPRINT11.md`** (scanner persistence, multipart upload, WS base URL).
+
 ## Files to Review
 
 - `backend/api-gateway/app/api/v1/endpoints/tax_calendar.py`
