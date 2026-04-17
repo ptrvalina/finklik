@@ -18,3 +18,4 @@ prometheus-fastapi-instrumentator==7.0.0
 alembic==1.13.1
 qrcode==7.4.2
 pillow==10.2.0
+pytesseract==0.3.10

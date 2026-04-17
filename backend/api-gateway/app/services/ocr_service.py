@@ -1,17 +1,23 @@
 """
 OCR-сервис для распознавания документов.
 
-MVP: mock-распознавание, имитирующее реальный OCR.
-В проде заменить на Tesseract / Google Vision / Yandex Vision.
+Режимы:
+- Tesseract OCR (реальное распознавание, если зависимости доступны)
+- fallback на mock-данные (для dev/ограниченных окружений)
 """
-import json
+import io
 import random
 import re
 import sys
 import os
 from datetime import date, timedelta
-from decimal import Decimal
 from dataclasses import asdict
+try:
+    import pytesseract
+    from PIL import Image
+except Exception:
+    pytesseract = None
+    Image = None
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'ai', 'inference', 'app'))
 try:
@@ -52,6 +58,50 @@ def mock_ocr_process(filename: str, file_bytes: bytes) -> dict:
         return _mock_invoice(size_kb)
     else:
         return _mock_receipt(size_kb)
+
+
+def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | None = None) -> dict:
+    """
+    Реальное OCR через Tesseract.
+
+    Если OCR недоступен (нет бинарника/библиотеки) или формат не поддержан,
+    функция возвращает mock-результат с warning, чтобы UI не падал.
+    """
+    if pytesseract is None or Image is None:
+        out = mock_ocr_process(filename, file_bytes)
+        out["warnings"] = list(out.get("warnings", [])) + ["Tesseract OCR недоступен в окружении, использован mock fallback"]
+        return out
+
+    # PDF/HEIC требует внешних конвертеров (poppler/heif). Пока мягкий fallback.
+    if (content_type or "").lower() == "application/pdf" or filename.lower().endswith(".pdf"):
+        out = mock_ocr_process(filename, file_bytes)
+        out["warnings"] = list(out.get("warnings", [])) + ["PDF пока обрабатывается в демо-режиме (mock fallback)"]
+        return out
+
+    try:
+        img = Image.open(io.BytesIO(file_bytes))
+        # Базовая нормализация для лучшего OCR.
+        img = img.convert("L")
+        text = pytesseract.image_to_string(img, lang="rus+eng")
+        text = (text or "").strip()
+    except Exception as exc:
+        out = mock_ocr_process(filename, file_bytes)
+        out["warnings"] = list(out.get("warnings", [])) + [f"OCR error, использован mock fallback: {type(exc).__name__}"]
+        return out
+
+    if len(text) < 10:
+        out = mock_ocr_process(filename, file_bytes)
+        out["warnings"] = list(out.get("warnings", [])) + ["Не удалось надежно распознать текст, использован mock fallback"]
+        return out
+
+    # Для реального OCR парсим тот же текстовый пайплайн.
+    parsed = parse_text_document(text, detect_doc_type(filename))
+    # Эвристика confidence: от длины и наличия ключевых полей.
+    conf = 40 + min(45, len(text) // 30)
+    if parsed.get("parsed", {}).get("amount", 0) > 0:
+        conf += 10
+    parsed["confidence"] = min(95, max(parsed.get("confidence", 0), conf))
+    return parsed
 
 
 def _merge_ttn_extractor(mock_result: dict) -> dict:

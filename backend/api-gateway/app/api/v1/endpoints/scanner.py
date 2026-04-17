@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.document import ScannedDocument
-from app.services.ocr_service import mock_ocr_process, detect_doc_type, parse_text_document
+from app.services.ocr_service import tesseract_ocr_process, parse_text_document
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -34,7 +34,7 @@ async def upload_and_scan(
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, "Файл слишком большой (макс. 10 МБ)")
 
-    ocr_result = mock_ocr_process(file.filename or "doc.jpg", contents)
+    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, file.content_type)
 
     doc = ScannedDocument(
         organization_id=current_user.organization_id,
@@ -58,6 +58,7 @@ async def upload_and_scan(
         "confidence": doc.confidence,
         "ocr_text": doc.ocr_text,
         "parsed": ocr_result.get("parsed", {}),
+        "warnings": ocr_result.get("warnings", []),
         "created_at": doc.created_at.isoformat(),
     }
 
