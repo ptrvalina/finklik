@@ -10,6 +10,10 @@ import random
 import re
 import sys
 import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 from datetime import date, timedelta
 from dataclasses import asdict
 try:
@@ -72,17 +76,15 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         out["warnings"] = list(out.get("warnings", [])) + ["Tesseract OCR недоступен в окружении, использован mock fallback"]
         return out
 
-    # PDF/HEIC требует внешних конвертеров (poppler/heif). Пока мягкий fallback.
-    if (content_type or "").lower() == "application/pdf" or filename.lower().endswith(".pdf"):
-        out = mock_ocr_process(filename, file_bytes)
-        out["warnings"] = list(out.get("warnings", [])) + ["PDF пока обрабатывается в демо-режиме (mock fallback)"]
-        return out
-
     try:
-        img = Image.open(io.BytesIO(file_bytes))
-        # Базовая нормализация для лучшего OCR.
-        img = img.convert("L")
-        text = pytesseract.image_to_string(img, lang="rus+eng")
+        is_pdf = (content_type or "").lower() == "application/pdf" or filename.lower().endswith(".pdf")
+        if is_pdf:
+            text = _ocr_pdf_with_tesseract(file_bytes)
+        else:
+            img = Image.open(io.BytesIO(file_bytes))
+            # Базовая нормализация для лучшего OCR.
+            img = img.convert("L")
+            text = pytesseract.image_to_string(img, lang="rus+eng")
         text = (text or "").strip()
     except Exception as exc:
         out = mock_ocr_process(filename, file_bytes)
@@ -102,6 +104,46 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         conf += 10
     parsed["confidence"] = min(95, max(parsed.get("confidence", 0), conf))
     return parsed
+
+
+def _ocr_pdf_with_tesseract(file_bytes: bytes) -> str:
+    """
+    OCR для PDF через poppler (pdftoppm) + tesseract.
+    Берем до 5 страниц, чтобы не перегружать free-tier CPU.
+    """
+    if shutil.which("pdftoppm") is None:
+        raise RuntimeError("pdftoppm not found; install poppler-utils")
+
+    with tempfile.TemporaryDirectory(prefix="ocr_pdf_") as td:
+        tmp = Path(td)
+        pdf_path = tmp / "input.pdf"
+        pdf_path.write_bytes(file_bytes)
+        out_prefix = tmp / "page"
+
+        cmd = [
+            "pdftoppm",
+            "-png",
+            "-r",
+            "250",
+            str(pdf_path),
+            str(out_prefix),
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise RuntimeError(f"pdftoppm failed: {proc.stderr.strip() or proc.stdout.strip()}")
+
+        page_files = sorted(tmp.glob("page-*.png"))
+        if not page_files:
+            raise RuntimeError("no rendered PDF pages")
+
+        chunks: list[str] = []
+        for page in page_files[:5]:
+            img = Image.open(page).convert("L")
+            page_text = pytesseract.image_to_string(img, lang="rus+eng")
+            if page_text and page_text.strip():
+                chunks.append(page_text.strip())
+
+        return "\n\n".join(chunks).strip()
 
 
 def _merge_ttn_extractor(mock_result: dict) -> dict:
