@@ -73,8 +73,8 @@ fi
 
 source "$VENV/bin/activate"
 pip install -q -r backend/api-gateway/requirements.txt
-pip install -q pytest pytest-asyncio pytest-cov httpx
-ok "Python зависимости установлены"
+pip install -q -r backend/api-gateway/requirements-dev.txt
+ok "Python зависимости установлены (включая dev: flake8, pytest, …)"
 
 # ── Frontend зависимости ──────────────────────────────────────────────
 echo ""

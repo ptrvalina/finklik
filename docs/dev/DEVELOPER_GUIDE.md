@@ -22,6 +22,7 @@ make dev
 
 | Документ | Назначение |
 |----------|------------|
+| [`../../README.md`](../../README.md) | Обзор репозитория и быстрые команды. |
 | [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md) | Теххвосты без внешних API (чеклист). |
 | [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md) | Задачи до появления госAPI, ЭЦП, договоров с банком и т.д. |
 | [`PRODUCT_SPRINT_ALIGNMENT.md`](PRODUCT_SPRINT_ALIGNMENT.md) | Соответствие продуктовых спринтов и фактических релизов. |
@@ -77,9 +78,10 @@ make clean        # Полная очистка
 make verify-pre-release  # Alembic heads + unit tests (api-gateway); на Unix также: `bash scripts/verify_pre_release.sh`
 make verify-like-ci      # Как job «Backend Tests» в CI: alembic + unit + integration (metrics, submissions, scanner)
 make verify-like-ci-script  # То же через `python scripts/verify_like_ci.py` (подхватывает `backend/api-gateway/.venv311` при наличии)
+make typecheck-web   # Только проверка типов фронта (`tsc --noEmit`), без полной сборки
 ```
 
-Зависимости для полного локального прогона (flake8 + pytest как в CI): в каталоге `backend/api-gateway` выполните `pip install -r requirements.txt -r requirements-dev.txt` (см. [`requirements-dev.txt`](../../backend/api-gateway/requirements-dev.txt)).
+Зависимости для полного локального прогона (flake8 + pytest как в CI): в каталоге `backend/api-gateway` выполните `pip install -r requirements.txt -r requirements-dev.txt` (см. [`requirements-dev.txt`](../../backend/api-gateway/requirements-dev.txt)). Скрипт [`bootstrap.sh`](../../scripts/bootstrap.sh) подтягивает `requirements-dev.txt` после основного `requirements.txt`.
 
 ### Мок-портал подачи отчётов
 

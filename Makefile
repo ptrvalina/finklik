@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke alembic-heads verify-pre-release verify-like-ci
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web
 
 # Windows Store / Git Bash: часто есть только `python`; CI/Linux обычно — `python3`.
 ifeq ($(OS),Windows_NT)
@@ -54,6 +54,9 @@ verify-like-ci: ## Как job backend-tests в .github/workflows/ci.yml (рек�
 verify-like-ci-script: ## Тот же набор через scripts/verify_like_ci.py (автовыбор .venv311 при наличии)
 	@$(PYTHON) scripts/verify_like_ci.py
 
+typecheck-web: ## TypeScript без сборки (npm run typecheck)
+	cd frontend/web && npm run typecheck
+
 seed: ## Загрузить тестовые данные
 	@echo "🌱 Загружаем тестовые данные..."
 	$(PYTHON) scripts/generate_test_data.py --count 10
@@ -78,8 +81,8 @@ test-load: ## Нагрузочное тестирование (1000 клиент
 lint: ## Проверка кода (flake8, mypy, eslint)
 	@echo "🔍 Линтинг Python..."
 	cd backend/api-gateway && $(PYTHON) -m flake8 app/ --max-line-length=120 --exclude=__pycache__ || true
-	@echo "🔍 Линтинг TypeScript..."
-	cd frontend/web && npm run lint --silent || true
+	@echo "🔍 TypeScript (tsc --noEmit)..."
+	cd frontend/web && npm run typecheck
 	@echo "✅ Линтинг завершён"
 
 security: ## Проверка безопасности
