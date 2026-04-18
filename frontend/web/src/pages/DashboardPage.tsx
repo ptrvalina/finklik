@@ -78,7 +78,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Дашборд</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Главная</h1>
           <p className="mt-1 text-sm text-zinc-500">УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3">

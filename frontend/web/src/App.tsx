@@ -16,6 +16,7 @@ import ScannerPage from './pages/ScannerPage'
 import OnecSyncPage from './pages/OnecSyncPage'
 import OnecContourPage from './pages/OnecContourPage'
 import SettingsPage from './pages/SettingsPage'
+import ReportingPage from './features/reporting/ReportingPage'
 import CurrencyPage from './features/currency/CurrencyPage'
 import AssistantPage from './pages/AssistantPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
@@ -62,6 +63,8 @@ function AppRoutes() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="taxes" element={<TaxesPage />} />
+          <Route path="reporting" element={<ReportingPage />} />
+          <Route path="reporting/:authority" element={<ReportingPage />} />
           <Route path="documents" element={<DocumentsPage />} />
           <Route path="bank" element={<BankPage />} />
           <Route path="currency" element={<CurrencyPage />} />

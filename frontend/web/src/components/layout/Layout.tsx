@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
-import { ALL_NAV_ITEMS, MOBILE_BAR_LEFT, MOBILE_BAR_RIGHT, MOBILE_SCANNER } from './navConfig'
+import { ALL_NAV_ITEMS, flattenNavForSheet, MOBILE_BAR_LEFT, MOBILE_BAR_RIGHT, MOBILE_SCANNER } from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -78,9 +78,53 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
-          {ALL_NAV_ITEMS.map(({ to, label, icon, end }) => {
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+          <nav className="space-y-0.5">
+          {ALL_NAV_ITEMS.map((item) => {
+            const { to, label, icon, end, flyout } = item
             const active = pathActive(location.pathname, to, end)
+            if (flyout?.length) {
+              return (
+                <div key={to} className="group relative">
+                  <NavLink
+                    to={to}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-white/[0.07] text-white shadow-sm ring-1 ring-white/[0.06]'
+                        : 'text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200'
+                    }`}
+                  >
+                    <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
+                    <span>{label}</span>
+                    <Icon
+                      name="expand_more"
+                      className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-teal-400/90 rotate-180' : 'text-zinc-500 group-hover:rotate-180'}`}
+                    />
+                  </NavLink>
+                  <div
+                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1 rounded-xl border border-white/[0.08] bg-[#12161f] py-1.5 opacity-0 shadow-2xl ring-1 ring-black/40 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100"
+                    role="menu"
+                    aria-label={`${label}: выбор органа`}
+                  >
+                    {flyout.map((c) => {
+                      const subActive = pathActive(location.pathname, c.to, true)
+                      return (
+                        <NavLink
+                          key={c.to}
+                          to={c.to}
+                          role="menuitem"
+                          className={`block px-3 py-2 text-sm font-medium transition-colors ${
+                            subActive ? 'bg-teal-500/15 text-teal-200' : 'text-zinc-300 hover:bg-white/[0.05] hover:text-white'
+                          }`}
+                        >
+                          {c.label}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            }
             return (
               <NavLink
                 key={to}
@@ -98,7 +142,8 @@ export default function Layout() {
               </NavLink>
             )
           })}
-        </nav>
+          </nav>
+        </div>
 
         <div className="border-t border-white/[0.06] p-3">
           <div className="mb-3 rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/[0.05]">
@@ -365,11 +410,11 @@ export default function Layout() {
               </button>
             </div>
             <div className="grid max-h-[calc(88vh-4rem)] grid-cols-3 gap-2 overflow-y-auto p-4 sm:grid-cols-4">
-              {ALL_NAV_ITEMS.map(({ to, label, icon, end, description }) => {
+              {flattenNavForSheet(ALL_NAV_ITEMS).map(({ to, label, icon, end, description }) => {
                 const active = pathActive(location.pathname, to, end)
                 return (
                   <NavLink
-                    key={to}
+                    key={to + label}
                     to={to}
                     end={end}
                     onClick={() => setMoreOpen(false)}
