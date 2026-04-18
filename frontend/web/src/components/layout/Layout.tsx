@@ -2,7 +2,13 @@ import { useEffect, useState, useRef } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
-import { ALL_NAV_ITEMS, flattenNavForSheet, MOBILE_BAR_LEFT, MOBILE_BAR_RIGHT, MOBILE_SCANNER } from './navConfig'
+import {
+  ALL_NAV_ITEMS,
+  flattenNavForSheetWithAssistant,
+  MOBILE_BAR_LEFT,
+  MOBILE_BAR_RIGHT,
+  MOBILE_SCANNER,
+} from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -148,25 +154,34 @@ export default function Layout() {
         </div>
 
         <div className="border-t border-white/[0.06] p-3">
-          <div className="mb-3 rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-700 to-zinc-800 text-sm font-bold text-white">
-                {(user?.full_name || '?').slice(0, 1).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{user?.full_name}</p>
-                <p className="truncate text-[11px] text-zinc-500">{roleLabel}</p>
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+          <NavLink
+            to="/assistant"
+            className={({ isActive }) =>
+              `tap-highlight-none flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-center transition-colors ${
+                isActive
+                  ? 'bg-teal-500/15 ring-1 ring-teal-500/35'
+                  : 'bg-white/[0.03] ring-1 ring-white/[0.06] hover:bg-white/[0.06]'
+              }`
+            }
+            aria-label="Консультант"
           >
-            <Icon name="logout" className="text-lg" />
-            Выйти
-          </button>
+            {({ isActive }) => (
+              <>
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                    isActive
+                      ? 'bg-gradient-to-br from-violet-500/30 to-cyan-600/25 text-teal-200'
+                      : 'bg-gradient-to-br from-violet-500/15 to-cyan-600/15 text-zinc-300'
+                  }`}
+                >
+                  <Icon name="smart_toy" filled={isActive} className="text-[28px]" />
+                </div>
+                <span className={`text-[11px] font-bold leading-tight ${isActive ? 'text-teal-200' : 'text-zinc-400'}`}>
+                  Консультант
+                </span>
+              </>
+            )}
+          </NavLink>
         </div>
       </aside>
 
@@ -239,6 +254,7 @@ export default function Layout() {
                   <div className="border-b border-white/[0.06] px-3 pb-2">
                     <p className="truncate text-sm font-semibold text-white">{user?.full_name}</p>
                     <p className="truncate text-xs text-zinc-500">{user?.email}</p>
+                    <p className="truncate text-[11px] text-zinc-600">{roleLabel}</p>
                   </div>
                   <Link
                     to="/settings"
@@ -412,7 +428,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="grid max-h-[calc(88vh-4rem)] grid-cols-3 gap-2 overflow-y-auto p-4 sm:grid-cols-4">
-              {flattenNavForSheet(ALL_NAV_ITEMS).map(({ to, label, icon, end, description }) => {
+              {flattenNavForSheetWithAssistant(ALL_NAV_ITEMS).map(({ to, label, icon, end, description }) => {
                 const active = pathActive(location.pathname, to, end)
                 return (
                   <NavLink

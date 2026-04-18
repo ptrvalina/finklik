@@ -29,6 +29,21 @@ export function flattenNavForSheet(
   return out
 }
 
+/** Консультант вынесен вниз сайдбара (desktop); в списке «Все сервисы» на мобильных добавляется отдельно. */
+export const ASSISTANT_SHEET_ITEM = {
+  to: '/assistant',
+  label: 'Консультант',
+  icon: 'smart_toy',
+  end: true as const,
+  description: 'ИИ-подсказки по учёту',
+}
+
+export function flattenNavForSheetWithAssistant(
+  items: NavItem[],
+): Array<{ to: string; label: string; icon: string; end?: boolean; description?: string }> {
+  return [...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM]
+}
+
 export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Главная', icon: 'dashboard', end: true, description: 'Сводка и метрики' },
   {
@@ -61,8 +76,6 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/onec-contour', label: 'Контур 1С', icon: 'hub', description: 'Реестр контура и health' },
   { to: '/onec-sync', label: 'Синхронизация 1С', icon: 'sync_alt', description: 'Очередь синхронизации и ошибки' },
   { to: '/scanner', label: 'Сканер', icon: 'document_scanner', description: 'Документы и OCR' },
-  { to: '/assistant', label: 'Консультант', icon: 'smart_toy', description: 'ИИ-подсказки по учёту' },
-  { to: '/settings', label: 'Настройки', icon: 'settings', description: 'Команда и compliance' },
 ]
 
 type BarItem = { to: string; label: string; icon: string; end?: boolean }
