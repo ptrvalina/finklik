@@ -8,7 +8,6 @@ import TransactionsPage from './pages/TransactionsPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
 import EmployeesPage from './pages/EmployeesPage'
-import TaxesPage from './pages/TaxesPage'
 import DocumentsPage from './pages/DocumentsPage'
 import BankPage from './pages/BankPage'
 import CounterpartiesPage from './pages/CounterpartiesPage'
@@ -62,7 +61,7 @@ function AppRoutes() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="employees" element={<EmployeesPage />} />
-          <Route path="taxes" element={<TaxesPage />} />
+          <Route path="taxes" element={<Navigate to="/bank" replace />} />
           <Route path="reporting" element={<ReportingPage />} />
           <Route path="reporting/:authority" element={<ReportingPage />} />
           <Route path="documents" element={<DocumentsPage />} />

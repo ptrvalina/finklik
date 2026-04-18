@@ -82,7 +82,9 @@ export default function Layout() {
           <nav className="space-y-0.5">
           {ALL_NAV_ITEMS.map((item) => {
             const { to, label, icon, end, flyout } = item
-            const active = pathActive(location.pathname, to, end)
+            const active =
+              pathActive(location.pathname, to, end) ||
+              (flyout?.some((c) => pathActive(location.pathname, c.to, true)) ?? false)
             if (flyout?.length) {
               return (
                 <div key={to} className="group relative">
