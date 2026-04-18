@@ -34,6 +34,15 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  // Default Content-Type: application/json ломает multipart: браузер должен сам подставить boundary.
+  if (config.data instanceof FormData) {
+    const h = config.headers
+    if (h && typeof (h as { delete?: (k: string) => void }).delete === 'function') {
+      ;(h as { delete: (k: string) => void }).delete('Content-Type')
+    } else {
+      delete (h as Record<string, unknown>)?.['Content-Type']
+    }
+  }
   return config
 })
 

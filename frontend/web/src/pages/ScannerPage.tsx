@@ -4,6 +4,15 @@ import { scannerApi, dashboardApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { formatApiDetail } from '../utils/apiError'
 
+function clientErrorText(err: unknown): string {
+  const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
+  const d = formatApiDetail(e?.response?.data?.detail)
+  if (d) return d
+  if (e?.response?.status) return `Код ответа: ${e.response.status}`
+  if (e?.message) return e.message
+  return ''
+}
+
 type ParsedData = {
   type?: string; amount?: number; vat_amount?: number; description?: string
   transaction_date?: string; counterparty_name?: string; doc_number?: string; items_count?: number
@@ -221,7 +230,7 @@ export default function ScannerPage() {
 
           {uploadMutation.isError && (
             <div className="mt-4 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">
-              Ошибка: {formatApiDetail((uploadMutation.error as any)?.response?.data?.detail) || 'Попробуйте ещё раз'}
+              Ошибка: {clientErrorText(uploadMutation.error) || 'Попробуйте ещё раз'}
             </div>
           )}
 
