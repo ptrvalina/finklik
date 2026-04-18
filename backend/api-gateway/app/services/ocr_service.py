@@ -324,6 +324,84 @@ def parse_text_document(text: str, doc_type_hint: str | None = None) -> dict:
     return _extract_generic(text, doc_type)
 
 
+# Маркеры строки с итогом (чеки РБ/РФ: «Итого: 44 500» без копеек, «1 234,56» с копейками).
+_MONEY_LINE = (
+    r"(?:итого|итог|всего|сумма\s*документа|сумма\s*к\s*оплате|к\s*оплате|итого\s*к\s*оплате)"
+)
+_VAT_LINE = r"(?:ндс|в\s*т\.\s*ч\.\s*ндс|в\s*т\.ч\.\s*ндс)"
+
+
+def _norm_money_token(s: str) -> str:
+    return re.sub(r"[\s\xa0\u202f]", "", s).replace(",", ".")
+
+
+def parse_total_amount_from_text(text: str) -> float:
+    """
+    Извлекает итоговую сумму из текста чека/накладной.
+    Поддерживает «44 500», «1 234,56», «44500», «500» после маркеров «Итого» и т.п.
+    """
+    t = text.replace("\u00a0", " ")
+    # 1) Дробная часть (1–2 знака): запятая или точка
+    m = re.search(_MONEY_LINE + r"[:\s]*([\d\s\xa0\u202f]+[.,]\d{1,2})\b", t, re.IGNORECASE)
+    if m:
+        try:
+            return float(_norm_money_token(m.group(1)))
+        except ValueError:
+            pass
+    # 2) Целое с группировкой тысяч пробелами (44 500) или короткое целое (500)
+    m = re.search(_MONEY_LINE + r"[:\s]*(\d{1,3}(?:[\s\xa0\u202f]\d{3})*)(?![\d.,])", t, re.IGNORECASE)
+    if m:
+        try:
+            v = float(_norm_money_token(m.group(1)))
+            if v > 0:
+                return v
+        except ValueError:
+            pass
+    # 3) Крупное целое без пробелов (44500)
+    m = re.search(_MONEY_LINE + r"[:\s]*(\d{4,})(?![\d.,])", t, re.IGNORECASE)
+    if m:
+        try:
+            return float(m.group(1))
+        except ValueError:
+            pass
+    # 4) Общее «Сумма» в конце строки (слабее, чем итого)
+    m = re.search(r"(?:^|\n)\s*Сумма[:\s]*(\d{1,3}(?:[\s\xa0\u202f]\d{3})*)(?![\d.,])", t, re.IGNORECASE | re.MULTILINE)
+    if m:
+        try:
+            v = float(_norm_money_token(m.group(1)))
+            if v > 0:
+                return v
+        except ValueError:
+            pass
+    return 0.0
+
+
+def parse_vat_amount_from_text(text: str) -> float:
+    """НДС: те же форматы, что и для суммы."""
+    t = text.replace("\u00a0", " ")
+    m = re.search(_VAT_LINE + r"[^\d]{0,12}([\d\s\xa0\u202f]+[.,]\d{1,2})\b", t, re.IGNORECASE)
+    if m:
+        try:
+            return float(_norm_money_token(m.group(1)))
+        except ValueError:
+            pass
+    m = re.search(_VAT_LINE + r"[^\d]{0,12}(\d{1,3}(?:[\s\xa0\u202f]\d{3})*)(?![\d.,])", t, re.IGNORECASE)
+    if m:
+        try:
+            v = float(_norm_money_token(m.group(1)))
+            if v > 0:
+                return v
+        except ValueError:
+            pass
+    m = re.search(_VAT_LINE + r"[^\d]{0,12}(\d{4,})(?![\d.,])", t, re.IGNORECASE)
+    if m:
+        try:
+            return float(m.group(1))
+        except ValueError:
+            pass
+    return 0.0
+
+
 def _detect_type_from_text(text: str) -> str:
     t = text.lower()
     if any(k in t for k in ("товарно-транспортная", "ттн", "грузоотправитель")):
@@ -339,24 +417,10 @@ def _detect_type_from_text(text: str) -> str:
 
 def _extract_generic(text: str, doc_type: str) -> dict:
     """Extract basic fields from any document text."""
-    amount = 0.0
-    vat = 0.0
+    amount = parse_total_amount_from_text(text)
+    vat = parse_vat_amount_from_text(text)
     doc_date = date.today().isoformat()
     description = ""
-
-    amount_match = re.search(r'(?:итого|сумма|к оплате)[:\s]*([\d\s]+[.,]\d{2})', text, re.IGNORECASE)
-    if amount_match:
-        try:
-            amount = float(re.sub(r'[\s\xa0]', '', amount_match.group(1)).replace(',', '.'))
-        except ValueError:
-            pass
-
-    vat_match = re.search(r'(?:ндс|НДС)[:\s]*([\d\s]+[.,]\d{2})', text, re.IGNORECASE)
-    if vat_match:
-        try:
-            vat = float(re.sub(r'[\s\xa0]', '', vat_match.group(1)).replace(',', '.'))
-        except ValueError:
-            pass
 
     date_match = re.search(r'(\d{2}[./]\d{2}[./]\d{4})', text)
     if date_match:
