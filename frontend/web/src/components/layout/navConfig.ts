@@ -38,10 +38,18 @@ export const ASSISTANT_SHEET_ITEM = {
   description: 'ИИ-подсказки по учёту',
 }
 
+export const SCANNER_SHEET_ITEM = {
+  to: '/scanner',
+  label: 'Сканер',
+  icon: 'document_scanner',
+  end: true as const,
+  description: 'Документы и OCR',
+}
+
 export function flattenNavForSheetWithAssistant(
   items: NavItem[],
 ): Array<{ to: string; label: string; icon: string; end?: boolean; description?: string }> {
-  return [...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM]
+  return [...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM, SCANNER_SHEET_ITEM]
 }
 
 export const ALL_NAV_ITEMS: NavItem[] = [
@@ -73,21 +81,24 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   },
   { to: '/documents', label: 'Документы', icon: 'description', description: 'Первичка и экспорт отчётов' },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', description: 'Клиенты и поставщики' },
-  { to: '/onec-contour', label: 'Контур 1С', icon: 'hub', description: 'Реестр контура и health' },
-  { to: '/onec-sync', label: 'Синхронизация 1С', icon: 'sync_alt', description: 'Очередь синхронизации и ошибки' },
-  { to: '/scanner', label: 'Сканер', icon: 'document_scanner', description: 'Документы и OCR' },
+  {
+    to: '/onec-contour',
+    label: '1С',
+    icon: 'hub',
+    description: 'Контур и синхронизация',
+    flyout: [
+      { to: '/onec-contour', label: 'Контур' },
+      { to: '/onec-sync', label: 'Синхронизация' },
+    ],
+  },
 ]
 
 type BarItem = { to: string; label: string; icon: string; end?: boolean }
 
-/** Слева и справа от центральной кнопки сканера. */
-export const MOBILE_BAR_LEFT: BarItem[] = [
+/** Нижняя панель (мобильные): без отдельного FAB — сканер и в шапке. */
+export const MOBILE_BAR_ITEMS: BarItem[] = [
   { to: '/', label: 'Главная', icon: 'home', end: true },
   { to: '/transactions', label: 'Операции', icon: 'receipt_long' },
-]
-
-export const MOBILE_BAR_RIGHT: BarItem[] = [
+  { to: '/scanner', label: 'Сканер', icon: 'document_scanner' },
   { to: '/bank', label: 'Счета', icon: 'credit_card' },
 ]
-
-export const MOBILE_SCANNER = { to: '/scanner', label: 'Сканер', icon: 'document_scanner' } as const

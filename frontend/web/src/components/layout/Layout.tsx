@@ -2,13 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
-import {
-  ALL_NAV_ITEMS,
-  flattenNavForSheetWithAssistant,
-  MOBILE_BAR_LEFT,
-  MOBILE_BAR_RIGHT,
-  MOBILE_SCANNER,
-} from './navConfig'
+import { ALL_NAV_ITEMS, flattenNavForSheetWithAssistant, MOBILE_BAR_ITEMS } from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -112,7 +106,7 @@ export default function Layout() {
                   <div
                     className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1 rounded-xl border border-white/[0.08] bg-[#12161f] py-1.5 opacity-0 shadow-2xl ring-1 ring-black/40 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100"
                     role="menu"
-                    aria-label={`${label}: выбор органа`}
+                    aria-label={`${label}: подразделы`}
                   >
                     {flyout.map((c) => {
                       const subActive = pathActive(location.pathname, c.to, true)
@@ -187,9 +181,9 @@ export default function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#070a10]/90 px-4 backdrop-blur-xl sm:h-16 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex min-w-0 items-center gap-2 lg:hidden">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-white/[0.06] bg-[#070a10]/90 px-3 backdrop-blur-xl sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06] ring-1 ring-white/10">
                 <Icon name="account_balance" className="text-lg text-teal-300" />
               </div>
@@ -199,39 +193,34 @@ export default function Layout() {
               </div>
             </div>
 
-            <div className={`relative mx-auto hidden max-w-md flex-1 lg:mx-0 lg:block ${searchOpen ? '!block w-full' : ''}`}>
-              <Icon
-                name="search"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"
-              />
-              <input
-                type="search"
-                placeholder="Поиск по операциям, разделам…"
-                className="input h-10 rounded-xl bg-white/[0.05] pl-10 pr-4 ring-1 ring-white/[0.06] placeholder:text-zinc-600"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') navigate('/transactions')
-                }}
-              />
-            </div>
-
-            <button
-              type="button"
-              className="tap-highlight-none ml-auto flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-zinc-300 ring-1 ring-white/[0.06] lg:hidden"
-              aria-label="Поиск"
-              onClick={() => setSearchOpen((v) => !v)}
+            <NavLink
+              to="/scanner"
+              end
+              className={({ isActive }) =>
+                `tap-highlight-none flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 transition-colors sm:min-h-11 sm:px-4 ${
+                  isActive
+                    ? 'border-teal-500/35 bg-teal-500/10 text-teal-200 ring-1 ring-teal-500/20'
+                    : 'border-white/[0.08] bg-white/[0.04] text-zinc-200 hover:bg-white/[0.07]'
+                }`
+              }
             >
-              <Icon name="search" className="text-xl" />
-            </button>
+              {({ isActive }) => (
+                <>
+                  <Icon name="document_scanner" filled={isActive} className="shrink-0 text-[22px] sm:text-2xl" />
+                  <span className="truncate text-sm font-bold tracking-tight">Сканер</span>
+                </>
+              )}
+            </NavLink>
           </div>
 
-          <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
             <div className="hidden items-center gap-1.5 rounded-full bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-zinc-400 sm:flex">
               <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
               {connected ? 'Онлайн' : 'Офлайн'}
             </div>
             <button
               type="button"
-              className="tap-highlight-none relative flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.05] text-zinc-300 ring-1 ring-white/[0.06]"
+              className="tap-highlight-none relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] text-zinc-300 ring-1 ring-white/[0.06] sm:h-11 sm:w-11"
               aria-label="Уведомления"
             >
               <Icon name="notifications" className="text-xl" />
@@ -239,11 +228,22 @@ export default function Layout() {
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-teal-400 ring-2 ring-[#070a10]" />
               )}
             </button>
+            <button
+              type="button"
+              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ring-1 ring-white/[0.06] sm:h-11 sm:w-11 ${
+                searchOpen ? 'bg-teal-500/15 text-teal-300 ring-teal-500/30' : 'bg-white/[0.05] text-zinc-300'
+              }`}
+              aria-label={searchOpen ? 'Закрыть поиск' : 'Поиск'}
+              aria-expanded={searchOpen}
+              onClick={() => setSearchOpen((v) => !v)}
+            >
+              <Icon name="search" className="text-xl" />
+            </button>
             <div className="relative" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="tap-highlight-none flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-600 to-zinc-800 text-sm font-bold text-white ring-1 ring-white/10"
+                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-600 to-zinc-800 text-sm font-bold text-white ring-1 ring-white/10 sm:h-11 sm:w-11"
                 aria-expanded={userOpen}
                 aria-haspopup="true"
               >
@@ -280,7 +280,7 @@ export default function Layout() {
 
         {/* Mobile expanded search */}
         {searchOpen && (
-          <div className="border-b border-white/[0.06] bg-[#0a0d14] px-4 py-3 lg:hidden">
+          <div className="border-b border-white/[0.06] bg-[#0a0d14] px-4 py-3">
             <div className="relative">
               <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
@@ -337,8 +337,8 @@ export default function Layout() {
         className="fixed bottom-0 left-0 right-0 z-[70] border-t border-white/[0.08] bg-[#0a0d14]/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-xl lg:hidden"
         aria-label="Основная навигация"
       >
-        <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-1 pt-1">
-          {MOBILE_BAR_LEFT.map(({ to, label, icon, end }) => {
+        <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
+          {MOBILE_BAR_ITEMS.map(({ to, label, icon, end }) => {
             const active = pathActive(location.pathname, to, end)
             return (
               <NavLink
@@ -349,38 +349,8 @@ export default function Layout() {
                   active ? 'text-teal-300' : 'text-zinc-500'
                 }`}
               >
-                <Icon name={icon} filled={active} className="text-[24px]" />
-                <span className="max-w-[4.5rem] truncate text-[10px] font-semibold">{label}</span>
-              </NavLink>
-            )
-          })}
-
-          <div className="relative flex flex-col items-center px-1">
-            <NavLink
-              to={MOBILE_SCANNER.to}
-              className={`tap-highlight-none -mt-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-600 text-[#042028] shadow-lg shadow-teal-500/25 ring-2 ring-[#0a0d14] ${
-                pathActive(location.pathname, MOBILE_SCANNER.to, false) ? 'ring-teal-300/50' : ''
-              }`}
-              aria-label={MOBILE_SCANNER.label}
-            >
-              <Icon name={MOBILE_SCANNER.icon} filled className="text-[28px]" />
-            </NavLink>
-            <span className="mt-1 text-[10px] font-semibold text-zinc-500">{MOBILE_SCANNER.label}</span>
-          </div>
-
-          {MOBILE_BAR_RIGHT.map(({ to, label, icon, end }) => {
-            const active = pathActive(location.pathname, to, end)
-            return (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={`tap-highlight-none flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
-                  active ? 'text-teal-300' : 'text-zinc-500'
-                }`}
-              >
-                <Icon name={icon} filled={active} className="text-[24px]" />
-                <span className="max-w-[4.5rem] truncate text-[10px] font-semibold">{label}</span>
+                <Icon name={icon} filled={active} className="text-[22px]" />
+                <span className="max-w-[3.25rem] truncate text-[9px] font-semibold sm:max-w-[4rem] sm:text-[10px]">{label}</span>
               </NavLink>
             )
           })}
