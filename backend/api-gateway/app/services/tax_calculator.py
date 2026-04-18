@@ -1,8 +1,8 @@
 """
 Расчёт налогов по белорусскому законодательству.
 
-УСН: ставки 3% (с НДС) и 5% (без НДС)
-НДС: 20% (основная), 10% (продукты/лекарства), 0% (экспорт)
+УСН: 6% (режим с НДС / без НДС в карточке влияет на НДС, не на ставку УСН)
+НДС: ставки 10%, 20%, 25% по видам операций; в расчёте по умолчанию — ставка из конфига (vat_rate)
 ФСЗН: 34% (наниматель) + 1% (работник)
 НДФЛ: 13% (с вычетами на детей)
 
@@ -22,9 +22,9 @@ from pathlib import Path
 CENT = Decimal("0.01")
 
 # Ставки налогов
-USN_RATE_WITH_VAT = Decimal("0.03")    # 3% с НДС
-USN_RATE_WITHOUT_VAT = Decimal("0.05") # 5% без НДС
-VAT_RATE = Decimal("0.20")             # 20%
+USN_RATE_WITH_VAT = Decimal("0.06")    # 6%
+USN_RATE_WITHOUT_VAT = Decimal("0.06") # 6%
+VAT_RATE = Decimal("0.20")             # базовая ставка для расчёта в приложении (фактические 10/20/25% — по операциям)
 FSSZN_EMPLOYER = Decimal("0.34")       # 34%
 FSSZN_EMPLOYEE = Decimal("0.01")       # 1%
 INCOME_TAX_RATE = Decimal("0.13")      # 13%
@@ -49,8 +49,8 @@ _DEFAULT_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
     2024: TaxRules(
         year=2024,
         version="RB-TAX-2024.1",
-        usn_rate_with_vat=Decimal("0.03"),
-        usn_rate_without_vat=Decimal("0.05"),
+        usn_rate_with_vat=Decimal("0.06"),
+        usn_rate_without_vat=Decimal("0.06"),
         vat_rate=Decimal("0.20"),
         fsszn_employer=Decimal("0.34"),
         fsszn_employee=Decimal("0.01"),
@@ -58,8 +58,8 @@ _DEFAULT_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
     2025: TaxRules(
         year=2025,
         version="RB-TAX-2025.1",
-        usn_rate_with_vat=Decimal("0.03"),
-        usn_rate_without_vat=Decimal("0.05"),
+        usn_rate_with_vat=Decimal("0.06"),
+        usn_rate_without_vat=Decimal("0.06"),
         vat_rate=Decimal("0.20"),
         fsszn_employer=Decimal("0.34"),
         fsszn_employee=Decimal("0.01"),
@@ -67,8 +67,8 @@ _DEFAULT_TAX_RULES_BY_YEAR: dict[int, TaxRules] = {
     2026: TaxRules(
         year=2026,
         version="RB-TAX-2026.1",
-        usn_rate_with_vat=Decimal("0.03"),
-        usn_rate_without_vat=Decimal("0.05"),
+        usn_rate_with_vat=Decimal("0.06"),
+        usn_rate_without_vat=Decimal("0.06"),
         vat_rate=Decimal("0.20"),
         fsszn_employer=Decimal("0.34"),
         fsszn_employee=Decimal("0.01"),
@@ -223,7 +223,8 @@ def calculate_usn(
 ) -> TaxResult:
     """
     Расчёт упрощённого налога (УСН).
-    with_vat=True → ставка 3%, иначе 5%.
+    Ставка УСН задаётся правилами года (по умолчанию 6% для обоих вариантов).
+    with_vat влияет на код режима в результате и на связку с НДС в учёте.
     """
     rate = usn_rate_with_vat if with_vat else usn_rate_without_vat
     tax_base = income
@@ -237,7 +238,7 @@ def calculate_usn(
     result = TaxResult(
         period_start=period_start,
         period_end=period_end,
-        tax_regime="usn_3" if with_vat else "usn_5",
+        tax_regime="usn_6_vat" if with_vat else "usn_6_no_vat",
         income=income,
         tax_base=tax_base,
         usn_rate=rate * 100,
@@ -257,7 +258,8 @@ def calculate_vat(
     vat_rate: Decimal = VAT_RATE,
 ) -> tuple[Decimal, Decimal, Decimal, date]:
     """
-    Расчёт НДС к уплате.
+    Расчёт НДС к уплате (обратное выделение по одной ставке).
+    Фактические ставки НДС могут быть 10%, 20% или 25%; здесь передаётся выбранная для модели.
     Возвращает: (НДС с продаж, НДС с покупок, К уплате, дедлайн)
     """
     vat_sales = _round(sales_with_vat * vat_rate / (1 + vat_rate))

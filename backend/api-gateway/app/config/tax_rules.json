@@ -2,25 +2,28 @@
   "years": {
     "2024": {
       "version": "RB-TAX-2024.1",
-      "usn_rate_with_vat": "0.03",
-      "usn_rate_without_vat": "0.05",
+      "usn_rate_with_vat": "0.06",
+      "usn_rate_without_vat": "0.06",
       "vat_rate": "0.20",
+      "vat_rates_applicable": "10%,20%,25%",
       "fsszn_employer": "0.34",
       "fsszn_employee": "0.01"
     },
     "2025": {
       "version": "RB-TAX-2025.1",
-      "usn_rate_with_vat": "0.03",
-      "usn_rate_without_vat": "0.05",
+      "usn_rate_with_vat": "0.06",
+      "usn_rate_without_vat": "0.06",
       "vat_rate": "0.20",
+      "vat_rates_applicable": "10%,20%,25%",
       "fsszn_employer": "0.34",
       "fsszn_employee": "0.01"
     },
     "2026": {
       "version": "RB-TAX-2026.1",
-      "usn_rate_with_vat": "0.03",
-      "usn_rate_without_vat": "0.05",
+      "usn_rate_with_vat": "0.06",
+      "usn_rate_without_vat": "0.06",
       "vat_rate": "0.20",
+      "vat_rates_applicable": "10%,20%,25%",
       "fsszn_employer": "0.34",
       "fsszn_employee": "0.01"
     }

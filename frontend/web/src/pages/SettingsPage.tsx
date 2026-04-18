@@ -29,7 +29,7 @@ const TAX_REGIME_LABELS: Record<string, string> = {
   usn_no_vat: 'УСН без НДС',
   usn_vat: 'УСН с НДС',
   osn_vat: 'Общая с НДС',
-  usn_3: 'УСН (3%)',
+  usn_6: 'УСН (6%)',
 }
 
 export default function SettingsPage() {

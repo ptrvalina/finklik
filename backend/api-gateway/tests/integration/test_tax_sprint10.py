@@ -44,7 +44,7 @@ async def test_tax_calculation_returns_breakdown_and_deadlines(client: AsyncClie
     )
     assert r.status_code == 200
     data = r.json()
-    assert data["tax_regime"] in ("usn_3", "usn_5")
+    assert data["tax_regime"] in ("usn_6_vat", "usn_6_no_vat")
     assert isinstance(data.get("assumptions"), list) and len(data["assumptions"]) >= 1
     assert isinstance(data.get("breakdown"), list) and len(data["breakdown"]) >= 1
     assert data.get("fsszn_deadline")
@@ -74,7 +74,7 @@ async def test_tax_calculation_respects_org_regime_and_warns(client: AsyncClient
     )
     assert r.status_code == 200
     data = r.json()
-    assert data["tax_regime"] == "usn_5"
+    assert data["tax_regime"] == "usn_6_no_vat"
     assert Decimal(str(data["vat_to_pay"])) == 0
     assumptions = data.get("assumptions") or []
     assert any("проигнорирован" in str(a) for a in assumptions)

@@ -123,8 +123,8 @@ class TestSecurity:
 
 class TestTaxCalculator:
 
-    def test_usn_3_percent(self):
-        """УСН 3% рассчитывается правильно."""
+    def test_usn_6_percent_with_vat(self):
+        """УСН 6% рассчитывается правильно (флаг с НДС)."""
         from app.services.tax_calculator import calculate_usn
 
         result = calculate_usn(
@@ -133,12 +133,12 @@ class TestTaxCalculator:
             period_end=date(2024, 3, 31),
             with_vat=True,
         )
-        assert result.usn_amount == Decimal("300.00")
-        assert result.usn_to_pay == Decimal("300.00")
+        assert result.usn_amount == Decimal("600.00")
+        assert result.usn_to_pay == Decimal("600.00")
         assert result.deadline == date(2024, 4, 25)
 
-    def test_usn_5_percent(self):
-        """УСН 5% рассчитывается правильно."""
+    def test_usn_6_percent_without_vat(self):
+        """УСН 6% без флага НДС — та же ставка, другой код режима."""
         from app.services.tax_calculator import calculate_usn
 
         result = calculate_usn(
@@ -147,7 +147,7 @@ class TestTaxCalculator:
             period_end=date(2024, 3, 31),
             with_vat=False,
         )
-        assert result.usn_amount == Decimal("500.00")
+        assert result.usn_amount == Decimal("600.00")
 
     def test_usn_with_paid_before(self):
         """УСН учитывает ранее уплаченные авансы."""
@@ -160,7 +160,7 @@ class TestTaxCalculator:
             with_vat=True,
             paid_before=Decimal("200"),
         )
-        assert result.usn_to_pay == Decimal("100.00")
+        assert result.usn_to_pay == Decimal("400.00")
 
     def test_vat_calculation(self):
         """НДС рассчитывается методом обратного выделения."""

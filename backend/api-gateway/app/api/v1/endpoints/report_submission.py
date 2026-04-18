@@ -170,7 +170,7 @@ async def _build_report_data(
             usn_rate_with_vat=rules.usn_rate_with_vat,
             usn_rate_without_vat=rules.usn_rate_without_vat,
         )
-        label = "УСН 3% (с НДС)" if with_vat else "УСН 5% (без НДС)"
+        label = "УСН 6% (с НДС)" if with_vat else "УСН 6% (без НДС)"
         return {
             **base,
             "form": "Декларация по УСН",
@@ -814,13 +814,13 @@ def _generate_mock_report_data(authority: str, report_type: str, period: str, or
         return {
             **base,
             "form": "Декларация по УСН",
-            "tax_regime": "УСН 3%",
+            "tax_regime": "УСН 6%",
             "revenue": "48 500.00 BYN",
             "tax_base": "48 500.00 BYN",
-            "tax_rate": "3%",
-            "tax_amount": "1 455.00 BYN",
+            "tax_rate": "6%",
+            "tax_amount": "2 910.00 BYN",
             "prepaid": "0.00 BYN",
-            "to_pay": "1 455.00 BYN",
+            "to_pay": "2 910.00 BYN",
         }
     elif authority == "imns" and report_type == "vat-declaration":
         return {

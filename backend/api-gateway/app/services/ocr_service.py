@@ -205,7 +205,7 @@ def _mock_receipt(size_kb: float) -> dict:
     return {
         "doc_type": "receipt",
         "confidence": confidence,
-        "ocr_text": f"КАССОВЫЙ ЧЕК\n{shop}\nУНП 123456789\nДата: {d.isoformat()}\nИТОГО: {amount} BYN\nНДС 20%: {vat} BYN",
+        "ocr_text": f"КАССОВЫЙ ЧЕК\n{shop}\nУНП 123456789\nДата: {d.isoformat()}\nИТОГО: {amount} BYN\nВ т.ч. НДС: {vat} BYN",
         "parsed": {
             "type": "expense",
             "amount": amount,
@@ -272,7 +272,7 @@ def _mock_act(size_kb: float) -> dict:
     return {
         "doc_type": "act",
         "confidence": confidence,
-        "ocr_text": f"АКТ ВЫПОЛНЕННЫХ РАБОТ № {doc_num}\nИсполнитель: {contractor}\nДата: {d.isoformat()}\nСумма: {amount} BYN\nНДС 20%: {vat} BYN",
+        "ocr_text": f"АКТ ВЫПОЛНЕННЫХ РАБОТ № {doc_num}\nИсполнитель: {contractor}\nДата: {d.isoformat()}\nСумма: {amount} BYN\nВ т.ч. НДС: {vat} BYN",
         "parsed": {
             "type": "expense",
             "amount": amount,
@@ -518,7 +518,7 @@ def _mock_invoice(size_kb: float) -> dict:
     return {
         "doc_type": "invoice",
         "confidence": confidence,
-        "ocr_text": f"СЧЁТ-ФАКТУРА № {doc_num}\nПоставщик: {company}\nДата: {d.isoformat()}\nК оплате: {amount} BYN\nВ т.ч. НДС 20%: {vat} BYN",
+        "ocr_text": f"СЧЁТ-ФАКТУРА № {doc_num}\nПоставщик: {company}\nДата: {d.isoformat()}\nК оплате: {amount} BYN\nВ т.ч. НДС: {vat} BYN",
         "parsed": {
             "type": "expense",
             "amount": amount,

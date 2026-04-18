@@ -66,7 +66,7 @@ async def calculate_taxes(
         if not with_vat:
             warnings.append("НДС включён по режиму osn_vat, even if with_vat=false.")
 
-    regime_code = "usn_3" if with_vat_effective else "usn_5"
+    regime_code = "usn_6_vat" if with_vat_effective else "usn_6_no_vat"
     rules = get_tax_rules_for_year(period_end.year)
 
     # Доходы за период
@@ -133,6 +133,7 @@ async def calculate_taxes(
         f"Режим организации: {org_regime}",
         f"Нормативная версия: {rules.version} ({rules.year})",
         f"НДС включён в расчёт: {'да' if with_vat_effective else 'нет'}",
+        "Ставки НДС по законодательству: 10%, 20%, 25%; в модели используется vat_rate из конфига.",
         "База УСН: все доходы за выбранный период.",
         "ФСЗН: 34% наниматель и 1% удержание из зарплаты.",
     ] + warnings

@@ -5,7 +5,7 @@ from datetime import date
 
 
 class TestUSN:
-    def test_usn_3_percent(self):
+    def test_usn_6_percent_with_vat_flag(self):
         from app.services.tax_calculator import calculate_usn
         result = calculate_usn(
             income=Decimal("10000"),
@@ -13,11 +13,12 @@ class TestUSN:
             period_end=date(2024, 3, 31),
             with_vat=True,
         )
-        assert result.usn_amount == Decimal("300.00")
-        assert result.usn_to_pay == Decimal("300.00")
+        assert result.usn_amount == Decimal("600.00")
+        assert result.usn_to_pay == Decimal("600.00")
         assert result.deadline == date(2024, 4, 25)
+        assert result.tax_regime == "usn_6_vat"
 
-    def test_usn_5_percent(self):
+    def test_usn_6_percent_without_vat_flag(self):
         from app.services.tax_calculator import calculate_usn
         result = calculate_usn(
             income=Decimal("10000"),
@@ -25,7 +26,8 @@ class TestUSN:
             period_end=date(2024, 3, 31),
             with_vat=False,
         )
-        assert result.usn_amount == Decimal("500.00")
+        assert result.usn_amount == Decimal("600.00")
+        assert result.tax_regime == "usn_6_no_vat"
 
     def test_usn_with_paid_before(self):
         from app.services.tax_calculator import calculate_usn
@@ -36,7 +38,7 @@ class TestUSN:
             with_vat=True,
             paid_before=Decimal("200"),
         )
-        assert result.usn_to_pay == Decimal("100.00")
+        assert result.usn_to_pay == Decimal("400.00")
 
 
 class TestVAT:

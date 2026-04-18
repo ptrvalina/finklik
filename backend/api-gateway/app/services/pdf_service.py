@@ -73,7 +73,7 @@ def generate_financial_report_pdf(
         ["Доходы", _fmt(income)],
         ["Расходы", _fmt(expense)],
         ["Прибыль", _fmt(profit)],
-        ["УСН 3%", _fmt(tax_usn)],
+        ["УСН 6%", _fmt(tax_usn)],
         ["НДС к уплате", _fmt(tax_vat)],
     ]
     summary_table = Table(summary_data, colWidths=[100 * mm, 60 * mm])
