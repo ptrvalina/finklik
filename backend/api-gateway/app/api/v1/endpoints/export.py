@@ -17,6 +17,7 @@ from app.services.export_service import (
     export_fsszn_pu3_txt,
 )
 from app.services.pdf_service import generate_financial_report_pdf
+from app.services.pu3_aggregation import build_pu3_aggregates
 from decimal import Decimal
 from app.security import get_encryptor
 
@@ -285,28 +286,17 @@ async def download_fsszn_pu3(
     if emp_result:
         emp_names = {e.id: enc.decrypt(e.full_name_enc) for e in emp_result.scalars().all()}
 
-    agg: dict[str, dict] = {}
-    for r in records:
-        if r.employee_id not in agg:
-            agg[r.employee_id] = {"name": emp_names.get(r.employee_id, "—"), "gross": 0.0, "employer": 0.0, "employee": 0.0}
-        agg[r.employee_id]["gross"] += float(r.gross_salary)
-        agg[r.employee_id]["employer"] += float(r.fsszn_employer)
-        agg[r.employee_id]["employee"] += float(r.fsszn_employee)
-
-    employees_data = sorted(agg.values(), key=lambda x: x["name"])
-    total_fot = Decimal(str(sum(e["gross"] for e in employees_data)))
-    total_employer = Decimal(str(sum(e["employer"] for e in employees_data)))
-    total_employee = Decimal(str(sum(e["employee"] for e in employees_data)))
+    pu3 = build_pu3_aggregates(records, emp_names)
 
     txt_bytes = export_fsszn_pu3_txt(
         org_name=org_name,
         unp=unp,
         quarter=quarter,
         year=year,
-        employees_data=employees_data,
-        total_fot=total_fot,
-        total_employer=total_employer,
-        total_employee=total_employee,
+        employees_data=pu3.employees_data,
+        total_fot=pu3.total_fot,
+        total_employer=pu3.total_employer,
+        total_employee=pu3.total_employee,
     )
     return Response(
         content=txt_bytes,

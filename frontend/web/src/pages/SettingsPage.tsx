@@ -662,6 +662,125 @@ function RegulatorySection() {
   )
 }
 
+function reportPreviewFieldOrder(k: string): number {
+  const order: Record<string, number> = { warnings: 0, source: 1, form: 2, organization: 3, unp: 4, period: 5 }
+  return order[k] ?? 50
+}
+
+function ReportSubmissionPreview({ data }: { data: Record<string, unknown> | null | undefined }) {
+  if (!data || typeof data !== 'object') {
+    return <p className="text-xs text-on-surface-variant">Нет данных предпросмотра</p>
+  }
+  const entries = [...Object.entries(data)].sort(([a], [b]) => reportPreviewFieldOrder(a) - reportPreviewFieldOrder(b))
+
+  return (
+    <div className="space-y-3 text-xs">
+      {entries.map(([k, v]) => {
+        if (k === 'warnings') {
+          if (!Array.isArray(v) || v.length === 0) return null
+          return (
+            <div key={k} className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+              <p className="mb-2 flex items-center gap-1 font-bold text-amber-200">
+                <Icon name="warning" className="text-base" /> Предупреждения
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-amber-100/95">
+                {(v as string[]).map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        if (k === 'source') {
+          const ledger = v === 'ledger'
+          return (
+            <p key={k} className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-on-surface">Источник данных:</span>
+              <span
+                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${
+                  ledger ? 'border border-secondary/30 bg-secondary/15 text-secondary' : 'border border-outline-variant/30 bg-surface-container-high text-on-surface-variant'
+                }`}
+              >
+                {String(v)}
+              </span>
+            </p>
+          )
+        }
+
+        if (k === 'numeric' && typeof v === 'object' && v !== null && !Array.isArray(v)) {
+          return (
+            <div key={k} className="rounded-xl bg-surface-container-high p-3">
+              <p className="mb-2 font-bold text-on-surface">Числовые показатели</p>
+              <pre className="overflow-x-auto whitespace-pre-wrap break-all text-[11px] text-on-surface-variant">{JSON.stringify(v, null, 2)}</pre>
+            </div>
+          )
+        }
+
+        if (Array.isArray(v)) {
+          const rowsLike = k === 'rows' && v.length > 0 && typeof v[0] === 'object' && v[0] !== null
+          if (rowsLike) {
+            const rows = v as Record<string, unknown>[]
+            const cols = Object.keys(rows[0])
+            return (
+              <div key={k} className="overflow-x-auto rounded-xl bg-surface-container-low p-3">
+                <p className="mb-2 font-bold text-on-surface">{k}</p>
+                <table className="w-full border-collapse text-left text-[11px]">
+                  <thead>
+                    <tr className="border-b border-outline-variant/30 text-on-surface-variant">
+                      {cols.map((hk) => (
+                        <th key={hk} className="pb-2 pr-3 font-semibold">
+                          {hk}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, i) => (
+                      <tr key={i} className="border-b border-outline-variant/10">
+                        {cols.map((hk) => (
+                          <td key={hk} className="py-2 pr-3 align-top">
+                            {String(row[hk] ?? '')}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
+          return (
+            <div key={k} className="rounded-xl bg-surface-container-low p-3">
+              <p className="mb-1 font-bold text-on-surface">{k}</p>
+              <ul className="list-disc space-y-1 pl-5 text-on-surface-variant">
+                {(v as unknown[]).map((item, i) => (
+                  <li key={i}>{typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        if (typeof v === 'object' && v !== null) {
+          return (
+            <div key={k} className="rounded-xl bg-surface-container-low p-3">
+              <p className="mb-1 font-bold text-on-surface">{k}</p>
+              <pre className="overflow-x-auto whitespace-pre-wrap text-[11px] text-on-surface-variant">{JSON.stringify(v, null, 2)}</pre>
+            </div>
+          )
+        }
+
+        return (
+          <p key={k} className="break-words">
+            <span className="font-bold text-on-surface">{k}:</span> <span className="text-on-surface-variant">{String(v)}</span>
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 function SubmissionsSection() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
@@ -900,26 +1019,8 @@ function SubmissionsSection() {
             )
           }
         >
-          <div className="space-y-1 rounded-lg bg-surface-container-low p-4 font-mono text-xs text-on-surface-variant">
-            {previewData.report_data &&
-              Object.entries(previewData.report_data).map(([k, v]: [string, any]) => (
-                <div key={k}>
-                  {typeof v === 'object' && Array.isArray(v) ? (
-                    <div className="mt-2">
-                      <p className="mb-1 font-bold text-on-surface">{k}:</p>
-                      {v.map((row: any, i: number) => (
-                        <p key={i} className="pl-4">
-                          {JSON.stringify(row)}
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>
-                      <span className="font-bold text-on-surface">{k}:</span> {String(v)}
-                    </p>
-                  )}
-                </div>
-              ))}
+          <div className="rounded-lg bg-surface-container-low p-4">
+            <ReportSubmissionPreview data={previewData.report_data} />
           </div>
         </AppModal>
       )}

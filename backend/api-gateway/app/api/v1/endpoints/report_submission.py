@@ -27,6 +27,7 @@ from app.models.regulatory import ReportSubmission
 from app.models.transaction import Transaction
 from app.models.user import Organization, User
 from app.security import get_encryptor
+from app.services.pu3_aggregation import build_pu3_aggregates
 from app.services.tax_calculator import calculate_fsszn, calculate_usn, calculate_vat, get_tax_rules_for_year
 
 router = APIRouter(prefix="/submissions", tags=["report-submissions"])
@@ -213,54 +214,38 @@ async def _build_report_data(
             for e in emp_res.scalars().all():
                 emp_names[e.id] = enc.decrypt(e.full_name_enc)
 
-        agg: dict[str, dict] = {}
-        for r in records:
-            if r.employee_id not in agg:
-                agg[r.employee_id] = {
-                    "name": emp_names.get(r.employee_id, "—"),
-                    "gross": Decimal("0"),
-                    "employer": Decimal("0"),
-                    "employee": Decimal("0"),
-                }
-            agg[r.employee_id]["gross"] += r.gross_salary
-            agg[r.employee_id]["employer"] += r.fsszn_employer
-            agg[r.employee_id]["employee"] += r.fsszn_employee
+        pu3 = build_pu3_aggregates(records, emp_names)
 
         rows = []
-        total_gross = Decimal("0")
-        total_employer = Decimal("0")
-        total_employee = Decimal("0")
-        for row in sorted(agg.values(), key=lambda x: x["name"]):
-            g = row["gross"].quantize(Decimal("0.01"))
-            emp = row["employer"].quantize(Decimal("0.01"))
-            ee = row["employee"].quantize(Decimal("0.01"))
-            total_gross += g
-            total_employer += emp
-            total_employee += ee
+        for emp in pu3.employees_data:
+            g = Decimal(str(emp["gross"])).quantize(Decimal("0.01"))
+            emp_amt = Decimal(str(emp["employer"])).quantize(Decimal("0.01"))
             rows.append(
                 {
-                    "fio": row["name"],
+                    "fio": emp["name"],
                     "salary": _fmt_byn(g).replace(" BYN", ""),
-                    "fsszn": _fmt_byn(emp).replace(" BYN", ""),
+                    "fsszn_34": _fmt_byn(emp_amt).replace(" BYN", ""),
+                    "fsszn_1": _fmt_byn(Decimal(str(emp["employee"])).quantize(Decimal("0.01"))).replace(" BYN", ""),
                 }
             )
 
         if not records:
             base["warnings"].append("Нет записей зарплаты за выбранный период в учёте — строки персонального учёта пустые.")
 
+        n = len(pu3.employees_data)
         return {
             **base,
             "form": "ПУ-3",
-            "employees_count": len(agg),
-            "total_fot": _fmt_byn(total_gross),
-            "fsszn_34_percent": _fmt_byn(total_employer),
-            "fsszn_1_percent": _fmt_byn(total_employee),
+            "employees_count": n,
+            "total_fot": _fmt_byn(pu3.total_fot),
+            "fsszn_34_percent": _fmt_byn(pu3.total_employer),
+            "fsszn_1_percent": _fmt_byn(pu3.total_employee),
             "rows": rows,
             "numeric": {
-                "employees_count": len(agg),
-                "total_gross": float(total_gross),
-                "total_employer": float(total_employer),
-                "total_employee": float(total_employee),
+                "employees_count": n,
+                "total_gross": float(pu3.total_fot),
+                "total_employer": float(pu3.total_employer),
+                "total_employee": float(pu3.total_employee),
             },
         }
 

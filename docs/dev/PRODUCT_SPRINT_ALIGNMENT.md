@@ -6,7 +6,7 @@
 
 | Продукт (scaling-plan) | Смысл | Состояние в репозитории |
 |------------------------|--------|-------------------------|
-| **Спринт 11.** Регламентированные отчёты | Реальные форматы, заполнение из учёта, предпросмотр, валидация, версии форм | Частично: экспорт [`export.py`](../../backend/api-gateway/app/api/v1/endpoints/export.py) (`tax-report.txt`, `vat-declaration.txt`, `fsszn-pu3.txt`, PDF), калькулятор [`tax_calculator.py`](../../backend/api-gateway/app/services/tax_calculator.py). Нет полноценных XML/официальных схем и версионирования нормативки. |
+| **Спринт 11.** Регламентированные отчёты | Реальные форматы, заполнение из учёта, предпросмотр, валидация, версии форм | Частично: экспорт [`export.py`](../../backend/api-gateway/app/api/v1/endpoints/export.py) (`tax-report.txt`, `vat-declaration.txt`, `fsszn-pu3.txt`, PDF), ПУ-3: единая агрегация зарплаты [`pu3_aggregation.py`](../../backend/api-gateway/app/services/pu3_aggregation.py) для экспорта и черновика подачи; калькулятор [`tax_calculator.py`](../../backend/api-gateway/app/services/tax_calculator.py). Нет полноценных XML/официальных схем и версионирования нормативки. |
 | **Спринт 12.** Госпорталы | Интеграция с порталами, ЭЦП, статусы, архив | Частично: мок-пайплайн [`report_submission.py`](../../backend/api-gateway/app/api/v1/endpoints/report_submission.py), черновик заполняется из учёта (`report_data.source`: `ledger`), UI **Настройки → Подача отчётов** [`SettingsPage.tsx`](../../frontend/web/src/pages/SettingsPage.tsx). Реальных API порталов и ЭЦП нет. |
 
 ## Инфраструктура для продакшена
