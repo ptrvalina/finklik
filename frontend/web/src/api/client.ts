@@ -4,10 +4,23 @@ import { resolveAppPath } from '../appBase'
 /** Продакшен API; используется, если VITE_API_URL не задан при сборке (частая причина запросов на localhost). */
 const PRODUCTION_API_BASE = 'https://finklik-api.onrender.com'
 
+/** GitHub Pages отдаёт только статику: POST на тот же origin даёт 405. Частая ошибка — указать URL Pages в VITE_API_URL. */
+function isGithubPagesOrigin(url: string): boolean {
+  try {
+    return new URL(url).hostname.endsWith('.github.io')
+  } catch {
+    return false
+  }
+}
+
 export function resolveApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL
   if (fromEnv && String(fromEnv).trim()) {
-    return String(fromEnv).replace(/\/$/, '')
+    const candidate = String(fromEnv).replace(/\/$/, '')
+    if (isGithubPagesOrigin(candidate)) {
+      return PRODUCTION_API_BASE
+    }
+    return candidate
   }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname

@@ -3,6 +3,7 @@
 # URL: https://<owner>.github.io/<repo>/
 #
 # VITE_API_URL: задайте в Settings → Actions → Variables, если API не https://finklik-api.onrender.com
+# Не указывайте URL GitHub Pages (https://<user>.github.io/<repo>/): POST к API даст 405.
 
 name: Deploy GitHub Pages
 
