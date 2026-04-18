@@ -38,6 +38,7 @@ finklik/
 │   ├── pages/                      ← React страницы
 │   ├── components/                 ← UI компоненты
 │   ├── api/                        ← axios клиент
+│   ├── utils/                      ← fileDownload, submissionExport, apiError
 │   └── store/                      ← Zustand store
 ├── scripts/                        ← утилиты разработки
 ├── tests/                          ← тесты

@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke alembic-heads
 
 PYTHON = python3
 COMPOSE = docker compose -f infrastructure/docker/docker-compose.dev.yml
@@ -36,6 +36,9 @@ migrate: ## Применить миграции БД
 	cd backend/api-gateway && $(PYTHON) -m alembic upgrade head || \
 	  $(PYTHON) -c "import asyncio; from app.core.database import engine, Base; import app.models; asyncio.run(engine.begin().__aenter__().__aexit__(None,None,None))"
 	@echo "✅ Миграции применены"
+
+alembic-heads: ## Показать head-ревизии Alembic (api-gateway)
+	cd backend/api-gateway && $(PYTHON) -m alembic heads
 
 seed: ## Загрузить тестовые данные
 	@echo "🌱 Загружаем тестовые данные..."

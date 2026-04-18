@@ -9,6 +9,13 @@
 
 ## 2. Миграции Alembic
 
+Локально проверить граф ревизий без подключения к БД:
+
+```bash
+make alembic-heads
+# или: cd backend/api-gateway && python -m alembic heads
+```
+
 На сервере с доступом к **боевой** `DATABASE_URL`:
 
 ```bash

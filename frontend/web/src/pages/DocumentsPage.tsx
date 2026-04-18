@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { counterpartiesApi, documentsApi, importApi, primaryDocumentsApi } from '../api/client'
+import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
-}
-
-function saveBlob(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
 }
 
 function paymentEventLabel(eventType: string): string {

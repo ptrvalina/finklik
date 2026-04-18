@@ -978,9 +978,34 @@ function SubmissionsSection() {
                 value={createForm.report_period}
                 onChange={(e) => setCreateForm({ ...createForm, report_period: e.target.value })}
               >
-                {[1, 2, 3, 4].map((q) => (
-                  <option key={q} value={`${new Date().getFullYear()}-Q${q}`}>{new Date().getFullYear()} Q{q}</option>
-                ))}
+                {[0, 1].map((dy) => {
+                  const y = new Date().getFullYear() - dy
+                  return (
+                    <optgroup key={`q-${y}`} label={`Кварталы ${y}`}>
+                      {[1, 2, 3, 4].map((q) => (
+                        <option key={`${y}-Q${q}`} value={`${y}-Q${q}`}>
+                          Q{q}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )
+                })}
+                {[0, 1].map((dy) => {
+                  const y = new Date().getFullYear() - dy
+                  return (
+                    <optgroup key={`m-${y}`} label={`Месяцы ${y}`}>
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const m = i + 1
+                        const mm = m < 10 ? `0${m}` : `${m}`
+                        return (
+                          <option key={`${y}-M${mm}`} value={`${y}-M${mm}`}>
+                            Месяц {mm}
+                          </option>
+                        )
+                      })}
+                    </optgroup>
+                  )
+                })}
               </select>
             </div>
           </div>
