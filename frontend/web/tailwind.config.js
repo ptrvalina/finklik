@@ -5,16 +5,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        canvas: {
+          DEFAULT: 'rgb(var(--color-canvas) / <alpha-value>)',
+        },
         surface: {
-          DEFAULT: '#ffffff',
-          dim: '#fafafa',
-          bright: '#ffffff',
-          'container-lowest': '#fafafa',
-          'container-low': '#f4f4f5',
-          container: '#f4f4f5',
-          'container-high': '#ececee',
-          'container-highest': '#e4e4e7',
-          variant: '#e4e4e7',
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          dim: 'rgb(var(--color-surface-dim) / <alpha-value>)',
+          bright: 'rgb(var(--color-surface-bright) / <alpha-value>)',
+          'container-lowest': 'rgb(var(--color-surface-container-lowest) / <alpha-value>)',
+          'container-low': 'rgb(var(--color-surface-container-low) / <alpha-value>)',
+          container: 'rgb(var(--color-surface-container) / <alpha-value>)',
+          'container-high': 'rgb(var(--color-surface-container-high) / <alpha-value>)',
+          'container-highest': 'rgb(var(--color-surface-container-highest) / <alpha-value>)',
+          variant: 'rgb(var(--color-surface-variant) / <alpha-value>)',
           tint: '#0d9488',
         },
         primary: {
@@ -52,9 +55,15 @@ export default {
           container: '#fee2e2',
         },
         'on-error': { DEFAULT: '#ffffff', container: '#7f1d1d' },
-        'on-surface': { DEFAULT: '#18181b', variant: '#52525b' },
-        'on-background': '#18181b',
-        outline: { DEFAULT: '#d4d4d8', variant: '#a1a1aa' },
+        'on-surface': {
+          DEFAULT: 'rgb(var(--color-on-surface) / <alpha-value>)',
+          variant: 'rgb(var(--color-on-surface-variant) / <alpha-value>)',
+        },
+        'on-background': 'rgb(var(--color-on-background) / <alpha-value>)',
+        outline: {
+          DEFAULT: 'rgb(var(--color-outline) / <alpha-value>)',
+          variant: 'rgb(var(--color-outline-variant) / <alpha-value>)',
+        },
         'inverse-surface': '#18181b',
         'inverse-on-surface': '#fafafa',
         'inverse-primary': '#5eead4',

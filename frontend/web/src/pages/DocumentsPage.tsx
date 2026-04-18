@@ -791,7 +791,7 @@ export default function DocumentsPage() {
           aria-modal="true"
           aria-label="Оплата по QR"
         >
-          <div className="max-w-sm rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-lift">
+          <div className="max-w-sm rounded-2xl border border-zinc-200/90 bg-surface p-6 shadow-lift dark:border-zinc-700/80">
             <h3 className="mb-2 font-headline text-lg font-bold text-on-surface">Оплата счёта</h3>
             <p className="mb-4 text-sm text-zinc-600">
               {payQrModal.amount.toFixed(2)} {payQrModal.currency} — демо-QR (не ЕРИП). Ссылка для теста ниже.
@@ -835,7 +835,7 @@ export default function DocumentsPage() {
             {paymentEvents.length > 0 && (
               <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2 text-xs text-zinc-700">
                 {paymentSummary && (
-                  <div className="mb-2 rounded border border-zinc-200/60 bg-white p-2 text-[11px] text-zinc-600">
+                  <div className="mb-2 rounded border border-zinc-200/60 bg-surface p-2 text-[11px] text-zinc-600 dark:border-zinc-700/60 dark:text-zinc-400">
                     Всего: {paymentSummary.total ?? 0} • webhook ok: {paymentSummary.webhook_success ?? 0} •
                     конфликты: {paymentSummary.webhook_conflict ?? 0}
                   </div>
@@ -851,7 +851,7 @@ export default function DocumentsPage() {
                       key={opt.id}
                       type="button"
                       className={`rounded px-2 py-1 text-[10px] ${
-                        paymentEventFilter === opt.id ? 'bg-primary/15 text-primary' : 'bg-white text-zinc-600 ring-1 ring-zinc-200/80'
+                        paymentEventFilter === opt.id ? 'bg-primary/15 text-primary' : 'bg-surface text-zinc-600 ring-1 ring-zinc-200/80 dark:text-zinc-400 dark:ring-zinc-700/80'
                       }`}
                       onClick={() => setPaymentEventFilter(opt.id as any)}
                     >
@@ -880,7 +880,7 @@ export default function DocumentsPage() {
                           {expandedEventIds[e.id] ? 'Скрыть детали' : 'Показать детали'}
                         </button>
                         {expandedEventIds[e.id] && (
-                          <div className="mt-1 rounded border border-zinc-200/80 bg-white p-2 text-[11px] text-zinc-700">
+                          <div className="mt-1 rounded border border-zinc-200/80 bg-surface p-2 text-[11px] text-zinc-700 dark:border-zinc-700/80 dark:text-zinc-300">
                             {paymentPayloadEntries(e.payload).length > 0 ? (
                               <div className="space-y-1">
                                 {paymentPayloadEntries(e.payload).map((entry) => (

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
+import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -35,12 +36,45 @@ const TAX_REGIME_LABELS: Record<string, string> = {
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>('profile')
   const user = useAuthStore(s => s.user)
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
         <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Настройки</h1>
         <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции 1С, команда и законодательство</p>
+      </div>
+
+      <div className="rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft dark:border-zinc-700/80 sm:p-5">
+        <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
+              theme === 'light'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-zinc-200/80 bg-surface text-on-surface-variant hover:border-zinc-300 dark:border-zinc-700/80'
+            }`}
+          >
+            <Icon name="light_mode" className="text-lg" />
+            Светлая
+          </button>
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
+              theme === 'dark'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-zinc-200/80 bg-surface text-on-surface-variant hover:border-zinc-300 dark:border-zinc-700/80'
+            }`}
+          >
+            <Icon name="dark_mode" className="text-lg" />
+            Тёмная
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-on-surface-variant">Сохраняется только в этом браузере.</p>
       </div>
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">

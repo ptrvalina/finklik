@@ -128,7 +128,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar grid */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-card">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-surface shadow-card dark:border-zinc-700/80">
         {/* Days header */}
         <div className="grid grid-cols-7 bg-surface-container-high">
           {DAYS.map(d => (

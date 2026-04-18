@@ -97,7 +97,7 @@ export default function AssistantPage() {
         </p>
       </div>
 
-      <div className="flex min-h-[min(420px,50vh)] flex-1 flex-col rounded-2xl border border-zinc-200/90 bg-white shadow-card sm:min-h-[480px]">
+      <div className="flex min-h-[min(420px,50vh)] flex-1 flex-col rounded-2xl border border-zinc-200/90 bg-surface shadow-card dark:border-zinc-700/80 sm:min-h-[480px]">
         <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
           {messages.length === 0 && !chatMutation.isPending && (
             <div className="space-y-4">

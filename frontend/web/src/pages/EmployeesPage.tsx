@@ -440,7 +440,7 @@ export default function EmployeesPage() {
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
-                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-white py-2.5 text-xs font-bold text-primary"
+                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-surface py-2.5 text-xs font-bold text-primary dark:border-zinc-700/80"
                             onClick={() => openSalary(emp)}
                           >
                             <Icon name="calculate" className="text-lg" /> Зарплата

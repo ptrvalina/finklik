@@ -45,7 +45,7 @@ export default function ReportingPage() {
             <Link
               key={l.to}
               to={l.to}
-              className="tap-highlight-none rounded-lg border border-zinc-200/90 bg-white px-3 py-2 text-xs font-bold text-zinc-800 transition-colors hover:border-primary/35 hover:bg-primary/5 hover:text-primary"
+              className="tap-highlight-none rounded-lg border border-zinc-200/90 bg-surface px-3 py-2 text-xs font-bold text-zinc-800 transition-colors hover:border-primary/35 hover:bg-primary/5 hover:text-primary dark:border-zinc-700/80 dark:text-zinc-200"
             >
               {l.label}
             </Link>

@@ -23,7 +23,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas p-4">
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-tertiary/5 blur-3xl rounded-full" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/5 blur-3xl rounded-full" />
 
@@ -33,7 +33,7 @@ export default function RegisterPage() {
           <p className="text-on-surface-variant text-sm mt-2">Создайте аккаунт — это займёт 1 минуту</p>
         </div>
 
-        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 shadow-card">
+        <div className="rounded-xl border border-zinc-200/80 bg-surface p-6 shadow-card dark:border-zinc-700/80">
           <h2 className="text-lg font-bold font-headline text-on-surface mb-6">Регистрация</h2>
 
           {error && (

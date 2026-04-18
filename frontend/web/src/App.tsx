@@ -1,6 +1,7 @@
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { appBasePath } from './appBase'
 import { useAuthStore } from './store/authStore'
+import ThemeHydration from './components/ThemeHydration'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
@@ -46,7 +47,12 @@ export default function App() {
       </BrowserRouter>
     )
 
-  return router
+  return (
+    <>
+      <ThemeHydration />
+      {router}
+    </>
+  )
 }
 
 function AppRoutes() {

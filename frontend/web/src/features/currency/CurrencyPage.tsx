@@ -102,7 +102,7 @@ export default function CurrencyPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="lg:col-span-2 rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-card">
+        <section className="lg:col-span-2 rounded-2xl border border-zinc-200/90 bg-surface p-5 shadow-card dark:border-zinc-700/80">
           <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
             <Icon name="swap_horiz" className="text-primary" />
             Конвертер
@@ -208,7 +208,7 @@ export default function CurrencyPage() {
                   ))}
                 </div>
               )}
-              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg border border-zinc-200/80 bg-white shadow-soft">
+              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg border border-zinc-200/80 bg-surface shadow-soft dark:border-zinc-700/80">
                 <table className="w-full text-left text-sm">
                   <thead className="sticky top-0 border-b border-zinc-200/80 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
                     <tr>

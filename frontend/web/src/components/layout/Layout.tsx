@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
+import { useThemeStore } from '../../store/themeStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { ALL_NAV_ITEMS, flattenNavForSheetWithAssistant, MOBILE_BAR_ITEMS } from './navConfig'
 
@@ -22,6 +23,8 @@ function pathActive(pathname: string, to: string, end?: boolean) {
 
 export default function Layout() {
   const { user, logout } = useAuthStore()
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const navigate = useNavigate()
   const location = useLocation()
   const { connected, notifications, dismissNotification } = useWebSocket()
@@ -61,16 +64,16 @@ export default function Layout() {
     user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : user?.role === 'viewer' ? 'Наблюдатель' : user?.role
 
   return (
-    <div className="flex h-[100dvh] bg-white text-on-surface font-body antialiased">
+    <div className="flex h-[100dvh] bg-canvas text-on-surface font-body antialiased">
       {/* Desktop sidebar — светлый премиум-контур */}
-      <aside className="hidden lg:flex h-full w-[260px] flex-shrink-0 flex-col border-r border-zinc-200/90 bg-zinc-50/80 backdrop-blur-sm">
+      <aside className="hidden h-full w-[260px] flex-shrink-0 flex-col border-r border-zinc-200/90 bg-surface-container-low/80 backdrop-blur-sm dark:border-zinc-800/90 lg:flex">
         <div className="px-5 pt-8 pb-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/12 to-primary-container/20 ring-1 ring-primary/20 shadow-soft">
               <Icon name="account_balance" className="text-xl text-primary" filled />
             </div>
             <div className="min-w-0">
-              <h1 className="font-headline text-lg font-bold tracking-tight text-zinc-900">ФинКлик</h1>
+              <h1 className="font-headline text-lg font-bold tracking-tight text-on-surface">ФинКлик</h1>
               <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-500">
                 {user?.org_name || 'Организация'}
               </p>
@@ -92,8 +95,8 @@ export default function Layout() {
                     to={to}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-white text-primary shadow-soft ring-1 ring-zinc-200/90'
-                        : 'text-zinc-600 hover:bg-white/90 hover:text-zinc-900'
+                        ? 'bg-surface text-primary shadow-soft ring-1 ring-zinc-200/90 dark:ring-zinc-700/80'
+                        : 'text-zinc-600 hover:bg-surface/90 hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
                     }`}
                   >
                     <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
@@ -104,7 +107,7 @@ export default function Layout() {
                     />
                   </NavLink>
                   <div
-                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1 rounded-xl border border-zinc-200/90 bg-white py-1.5 opacity-0 shadow-lift ring-1 ring-zinc-100 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100"
+                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1 rounded-xl border border-zinc-200/90 bg-surface py-1.5 opacity-0 shadow-lift ring-1 ring-zinc-100 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-zinc-700/80 dark:ring-zinc-800"
                     role="menu"
                     aria-label={`${label}: подразделы`}
                   >
@@ -116,7 +119,7 @@ export default function Layout() {
                           to={c.to}
                           role="menuitem"
                           className={`block px-3 py-2 text-sm font-medium transition-colors ${
-                            subActive ? 'bg-primary/10 text-primary' : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900'
+                            subActive ? 'bg-primary/10 text-primary' : 'text-zinc-700 hover:bg-surface-container-low hover:text-on-surface dark:text-zinc-300 dark:hover:text-on-surface'
                           }`}
                         >
                           {c.label}
@@ -134,8 +137,8 @@ export default function Layout() {
                 end={end}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-white text-primary shadow-soft ring-1 ring-zinc-200/90'
-                    : 'text-zinc-600 hover:bg-white/90 hover:text-zinc-900'
+                    ? 'bg-surface text-primary shadow-soft ring-1 ring-zinc-200/90 dark:ring-zinc-700/80'
+                    : 'text-zinc-600 hover:bg-surface/90 hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
                 }`}
               >
                 <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
@@ -147,7 +150,7 @@ export default function Layout() {
           </nav>
         </div>
 
-        <div className="flex justify-center border-t border-zinc-200/80 p-3">
+        <div className="flex justify-center border-t border-zinc-200/80 p-3 dark:border-zinc-800/80">
           <NavLink
             to="/assistant"
             title="Консультант"
@@ -155,8 +158,8 @@ export default function Layout() {
             className={({ isActive }) =>
               `tap-highlight-none flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-zinc-200/80 transition-colors ${
                 isActive
-                  ? 'bg-violet-50 text-violet-700 ring-violet-200'
-                  : 'bg-white text-zinc-500 shadow-soft hover:bg-zinc-50 hover:text-zinc-800'
+                  ? 'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-950/60 dark:text-violet-200 dark:ring-violet-800'
+                  : 'bg-surface text-zinc-500 shadow-soft hover:bg-surface-container-low hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
               }`
             }
           >
@@ -167,14 +170,14 @@ export default function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-zinc-200/90 bg-white/90 px-3 backdrop-blur-md sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-zinc-200/90 bg-surface/90 px-3 backdrop-blur-md dark:border-zinc-800/90 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-zinc-50 ring-1 ring-zinc-200/80 shadow-soft">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container-low ring-1 ring-zinc-200/80 shadow-soft dark:ring-zinc-700/80">
                 <Icon name="account_balance" className="text-lg text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="truncate font-headline text-sm font-bold text-zinc-900">ФинКлик</p>
+                <p className="truncate font-headline text-sm font-bold text-on-surface">ФинКлик</p>
                 <p className="truncate text-[10px] text-zinc-500">{user?.org_name}</p>
               </div>
             </div>
@@ -188,7 +191,7 @@ export default function Layout() {
                 `tap-highlight-none flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-zinc-200/80 transition-colors sm:h-10 sm:w-10 ${
                   isActive
                     ? 'bg-primary/10 text-primary ring-primary/25'
-                    : 'bg-zinc-50 text-zinc-600 shadow-soft hover:bg-white hover:text-zinc-900'
+                    : 'bg-surface-container-low text-zinc-600 shadow-soft hover:bg-surface hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
                 }`
               }
             >
@@ -197,24 +200,37 @@ export default function Layout() {
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
-            <div className="hidden items-center gap-1.5 rounded-full border border-zinc-200/80 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-600 sm:flex">
+            <div className="hidden items-center gap-1.5 rounded-full border border-zinc-200/80 bg-surface-container-low px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:border-zinc-700/80 dark:text-zinc-400 sm:flex">
               <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
               {connected ? 'Онлайн' : 'Офлайн'}
             </div>
+            {/* Колокольчик + тема — одна плашка вверху справа */}
+            <div className="flex items-center gap-0.5 rounded-xl border border-zinc-200/90 bg-surface-container-low p-1 shadow-soft dark:border-zinc-700/80 sm:gap-1 sm:p-1.5">
+              <button
+                type="button"
+                className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400"
+                aria-label="Уведомления"
+              >
+                <Icon name="notifications" className="text-xl" />
+                {notifications.length > 0 && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-zinc-800 sm:right-1.5 sm:top-1.5" />
+                )}
+              </button>
+              <span className="hidden h-6 w-px bg-zinc-200 dark:bg-zinc-600 sm:block" aria-hidden />
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="tap-highlight-none flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400 dark:hover:text-on-surface"
+                aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+                title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+              >
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-xl" />
+              </button>
+            </div>
             <button
               type="button"
-              className="tap-highlight-none relative flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 shadow-soft sm:h-11 sm:w-11 hover:bg-white hover:text-zinc-900"
-              aria-label="Уведомления"
-            >
-              <Icon name="notifications" className="text-xl" />
-              {notifications.length > 0 && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-zinc-100" />
-              )}
-            </button>
-            <button
-              type="button"
-              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 sm:h-11 sm:w-11 ${
-                searchOpen ? 'bg-primary/10 text-primary ring-2 ring-primary/20' : 'bg-zinc-50 text-zinc-600 shadow-soft hover:bg-white'
+              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 sm:h-11 sm:w-11 dark:border-zinc-700/80 ${
+                searchOpen ? 'bg-primary/10 text-primary ring-2 ring-primary/20' : 'bg-surface-container-low text-zinc-600 shadow-soft hover:bg-surface dark:text-zinc-400'
               }`}
               aria-label={searchOpen ? 'Закрыть поиск' : 'Поиск'}
               aria-expanded={searchOpen}
@@ -233,9 +249,9 @@ export default function Layout() {
                 {(user?.full_name || '?').slice(0, 1).toUpperCase()}
               </button>
               {userOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-zinc-200/90 bg-white py-2 shadow-lift ring-1 ring-zinc-100">
-                  <div className="border-b border-zinc-100 px-3 pb-2">
-                    <p className="truncate text-sm font-semibold text-zinc-900">{user?.full_name}</p>
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-zinc-200/90 bg-surface py-2 shadow-lift ring-1 ring-zinc-100 dark:border-zinc-700/80 dark:ring-zinc-800">
+                  <div className="border-b border-zinc-100 px-3 pb-2 dark:border-zinc-800">
+                    <p className="truncate text-sm font-semibold text-on-surface">{user?.full_name}</p>
                     <p className="truncate text-xs text-zinc-500">{user?.email}</p>
                     <p className="truncate text-[11px] text-zinc-500">{roleLabel}</p>
                   </div>
@@ -263,7 +279,7 @@ export default function Layout() {
 
         {/* Mobile expanded search */}
         {searchOpen && (
-          <div className="border-b border-zinc-200/80 bg-zinc-50/95 px-4 py-3">
+          <div className="border-b border-zinc-200/80 bg-surface-container-low/95 px-4 py-3 dark:border-zinc-800/80">
             <div className="relative">
               <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
@@ -291,7 +307,7 @@ export default function Layout() {
               >
                 <span className="min-w-0 text-on-surface">
                   <span className="font-bold text-primary">{n.event}:</span>{' '}
-                  <span className="text-zinc-600">
+                  <span className="text-zinc-600 dark:text-zinc-400">
                     {typeof n.data === 'object' ? JSON.stringify(n.data) : String(n.data)}
                   </span>
                 </span>
@@ -308,7 +324,7 @@ export default function Layout() {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-zinc-50/50">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-surface-container-low/50">
           <div className="mx-auto max-w-[1600px] px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:px-8 lg:py-8 lg:pb-8">
             <Outlet />
           </div>
@@ -317,7 +333,7 @@ export default function Layout() {
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-zinc-200/90 bg-white/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-zinc-200/90 bg-surface/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] dark:border-zinc-800/90 lg:hidden"
         aria-label="Основная навигация"
       >
         <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
@@ -365,16 +381,16 @@ export default function Layout() {
             aria-label="Закрыть"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[1.25rem] border border-zinc-200/90 bg-white shadow-lift motion-safe:transition-transform">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[1.25rem] border border-zinc-200/90 bg-surface shadow-lift motion-safe:transition-transform dark:border-zinc-700/80">
+            <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
               <div>
-                <p className="font-headline text-base font-bold text-zinc-900">Сервисы</p>
+                <p className="font-headline text-base font-bold text-on-surface">Сервисы</p>
                 <p className="text-xs text-zinc-500">Все разделы ФинКлик</p>
               </div>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200/80 bg-zinc-50 text-zinc-600 hover:bg-white"
+                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200/80 bg-surface-container-low text-zinc-600 hover:bg-surface dark:border-zinc-700/80 dark:text-zinc-400"
                 aria-label="Закрыть"
               >
                 <Icon name="close" className="text-xl" />
@@ -392,17 +408,17 @@ export default function Layout() {
                     className={`tap-highlight-none flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-colors ${
                       active
                         ? 'bg-primary/8 ring-1 ring-primary/25 shadow-soft'
-                        : 'border border-zinc-200/70 bg-zinc-50/80 hover:bg-white hover:shadow-soft'
+                        : 'border border-zinc-200/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-zinc-700/60'
                     }`}
                   >
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                        active ? 'bg-primary/12 text-primary' : 'bg-white text-zinc-600 ring-1 ring-zinc-200/80'
+                        active ? 'bg-primary/12 text-primary' : 'bg-surface text-zinc-600 ring-1 ring-zinc-200/80 dark:text-zinc-400 dark:ring-zinc-700/80'
                       }`}
                     >
                       <Icon name={icon} filled={active} className="text-[26px]" />
                     </div>
-                    <span className="text-[11px] font-bold leading-tight text-zinc-900">{label}</span>
+                    <span className="text-[11px] font-bold leading-tight text-on-surface">{label}</span>
                     {description && <span className="line-clamp-2 text-[9px] leading-tight text-zinc-500">{description}</span>}
                   </NavLink>
                 )

@@ -104,7 +104,7 @@ export default function OnboardingChecklist() {
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
                 s.done
                   ? 'border border-emerald-200/80 bg-emerald-50 text-emerald-900'
-                  : 'border border-zinc-200/80 bg-white text-zinc-800 hover:border-primary/30 hover:bg-primary/5'
+                  : 'border border-zinc-200/80 bg-surface text-zinc-800 hover:border-primary/30 hover:bg-primary/5 dark:border-zinc-700/80 dark:text-zinc-200'
               }`}
             >
               <span

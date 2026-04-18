@@ -2,22 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Семантические RGB (без запятых) для Tailwind `rgb(var(...) / <alpha>)` */
 @layer base {
+  :root {
+    --color-canvas: 255 255 255;
+    --color-surface: 255 255 255;
+    --color-surface-dim: 250 250 250;
+    --color-surface-bright: 255 255 255;
+    --color-surface-container-lowest: 250 250 250;
+    --color-surface-container-low: 244 244 245;
+    --color-surface-container: 244 244 245;
+    --color-surface-container-high: 236 236 238;
+    --color-surface-container-highest: 228 228 231;
+    --color-surface-variant: 228 228 231;
+    --color-on-surface: 24 24 27;
+    --color-on-surface-variant: 82 82 91;
+    --color-on-background: 24 24 27;
+    --color-outline: 212 212 216;
+    --color-outline-variant: 161 161 170;
+  }
+
+  .dark {
+    --color-canvas: 9 9 11;
+    --color-surface: 24 24 27;
+    --color-surface-dim: 9 9 11;
+    --color-surface-bright: 39 39 42;
+    --color-surface-container-lowest: 9 9 11;
+    --color-surface-container-low: 24 24 27;
+    --color-surface-container: 39 39 42;
+    --color-surface-container-high: 39 39 42;
+    --color-surface-container-highest: 63 63 70;
+    --color-surface-variant: 63 63 70;
+    --color-on-surface: 250 250 250;
+    --color-on-surface-variant: 161 161 170;
+    --color-on-background: 250 250 250;
+    --color-outline: 63 63 70;
+    --color-outline-variant: 82 82 91;
+  }
+
   * { box-sizing: border-box; }
   html {
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-surface text-on-surface antialiased;
+    @apply bg-canvas text-on-surface antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #f4f4f5; }
-  ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+  ::-webkit-scrollbar-track { @apply bg-surface-container-low; }
+  ::-webkit-scrollbar-thumb { @apply rounded-[10px] bg-outline; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-outline-variant; }
   ::selection { @apply bg-primary/15 text-on-surface; }
 }
 
@@ -34,8 +71,8 @@
     @apply inline-flex items-center justify-center gap-2 px-4 py-2
            bg-surface-container-high text-on-surface text-sm font-bold
            rounded-xl border border-zinc-200/80 shadow-soft
-           hover:bg-white hover:border-zinc-300/90 transition-colors
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           hover:bg-surface hover:border-zinc-300/90 transition-colors
+           dark:border-zinc-600/80 dark:hover:border-zinc-500 dark:hover:bg-surface-container;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-3 py-2
@@ -43,28 +80,36 @@
            rounded-xl hover:bg-surface-container-high hover:text-on-surface transition-colors;
   }
   .card {
-    @apply bg-white rounded-2xl border border-zinc-200/70 shadow-soft;
+    @apply bg-surface rounded-2xl border border-zinc-200/70 shadow-soft
+           dark:border-zinc-700/80;
   }
   .card-elevated {
-    @apply bg-white rounded-2xl border border-zinc-200/60 shadow-card;
+    @apply bg-surface rounded-2xl border border-zinc-200/60 shadow-card
+           dark:border-zinc-700/70;
   }
   .input {
-    @apply w-full bg-white border border-zinc-200/90 rounded-xl
+    @apply w-full bg-surface border border-zinc-200/90 rounded-xl
            px-4 py-2 text-sm text-on-surface
            focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40
-           placeholder:text-on-surface-variant/60;
+           placeholder:text-on-surface-variant/60
+           dark:border-zinc-600/90;
   }
   .label {
     @apply block text-xs font-bold text-on-surface-variant tracking-widest uppercase font-label mb-2;
   }
   .metric-blade {
-    @apply bg-white border border-zinc-200/70 p-6 rounded-2xl relative overflow-hidden shadow-soft
-           hover:shadow-card hover:border-zinc-200 transition-shadow duration-200;
+    @apply bg-surface border border-zinc-200/70 p-6 rounded-2xl relative overflow-hidden shadow-soft
+           hover:shadow-card hover:border-zinc-200 transition-shadow duration-200
+           dark:border-zinc-700/80 dark:hover:border-zinc-600;
   }
   .glass-panel {
     backdrop-filter: blur(16px);
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(228, 228, 231, 0.9);
+  }
+  .dark .glass-panel {
+    background: rgba(24, 24, 27, 0.92);
+    border: 1px solid rgba(63, 63, 70, 0.85);
   }
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
