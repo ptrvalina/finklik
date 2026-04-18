@@ -443,7 +443,7 @@ export default function DocumentsPage() {
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Документы</h1>
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Документы</h1>
         <p className="mt-1 text-sm text-zinc-500">Импорт и экспорт данных</p>
       </div>
 
@@ -456,7 +456,7 @@ export default function DocumentsPage() {
       )}
 
       {/* CSV Import */}
-      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Icon name="upload_file" className="text-primary" />
@@ -552,11 +552,11 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      <h2 className="font-headline text-lg font-bold text-white sm:text-xl">Экспорт</h2>
+      <h2 className="font-headline text-lg font-bold text-on-surface sm:text-xl">Экспорт</h2>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {docs.map(doc => (
-          <div key={doc.loadKey} className="group rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] transition-colors hover:bg-surface-container sm:p-6">
+          <div key={doc.loadKey} className="group rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft transition-colors hover:bg-surface-container sm:p-6">
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-surface-bright">
@@ -578,13 +578,13 @@ export default function DocumentsPage() {
         ))}
       </div>
 
-      <h2 className="font-headline text-lg font-bold text-white sm:text-xl">Первичные документы</h2>
+      <h2 className="font-headline text-lg font-bold text-on-surface sm:text-xl">Первичные документы</h2>
       <p className="text-xs text-zinc-500 max-w-3xl">
         Сценарий: счёт (invoice) → оплата (статус подтягивается через webhook/polling) → акт или накладная с привязкой к счёту.
         Печать — PDF с реквизитами ИП/ООО из организации.
       </p>
 
-      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
         <h3 className="text-sm font-bold text-on-surface">Создать документ</h3>
         <p className="text-[10px] text-on-surface-variant mb-4">
           Нумерация СЧ/АКТ/ТН по году; автонумерация или свой номер. Для акта и накладной можно выбрать счёт-основание.
@@ -600,7 +600,7 @@ export default function DocumentsPage() {
             Автонумерация
           </label>
           {useAutoNumber && nextNumPreview?.suggested_number && (
-            <span className="text-[11px] text-teal-300/90">Следующий: {nextNumPreview.suggested_number}</span>
+            <span className="text-[11px] text-primary">Следующий: {nextNumPreview.suggested_number}</span>
           )}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -670,7 +670,7 @@ export default function DocumentsPage() {
         </button>
       </div>
 
-      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h3 className="text-sm font-bold text-on-surface">Список документов</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -742,7 +742,7 @@ export default function DocumentsPage() {
                         {doc.doc_type === 'invoice' && (
                           <button
                             type="button"
-                            className="btn-ghost !px-2 !py-1 !text-xs text-teal-300"
+                            className="btn-ghost !px-2 !py-1 !text-xs text-primary"
                             title="QR оплаты"
                             disabled={payQrMutation.isPending}
                             onClick={() => openPaymentModal(doc.id)}
@@ -791,20 +791,20 @@ export default function DocumentsPage() {
           aria-modal="true"
           aria-label="Оплата по QR"
         >
-          <div className="max-w-sm rounded-2xl bg-[#12161f] p-6 ring-1 ring-white/10">
-            <h3 className="mb-2 font-headline text-lg font-bold text-white">Оплата счёта</h3>
-            <p className="mb-4 text-sm text-zinc-400">
+          <div className="max-w-sm rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-lift">
+            <h3 className="mb-2 font-headline text-lg font-bold text-on-surface">Оплата счёта</h3>
+            <p className="mb-4 text-sm text-zinc-600">
               {payQrModal.amount.toFixed(2)} {payQrModal.currency} — демо-QR (не ЕРИП). Ссылка для теста ниже.
             </p>
-            <p className={`mb-3 text-xs font-semibold ${payQrModal.isPaid ? 'text-secondary' : 'text-zinc-400'}`}>
+            <p className={`mb-3 text-xs font-semibold ${payQrModal.isPaid ? 'text-secondary' : 'text-zinc-500'}`}>
               Статус оплаты: {payQrModal.isPaid ? 'оплачен' : 'ожидает оплаты'}
             </p>
-            <div className="mb-4 flex justify-center rounded-xl bg-white p-3">
+            <div className="mb-4 flex justify-center rounded-xl border border-zinc-100 bg-zinc-50 p-3">
               <img src={`data:image/png;base64,${payQrModal.b64}`} alt="QR оплаты" className="h-48 w-48" />
             </div>
             <a
               href={payQrModal.url}
-              className="mb-4 block truncate text-center text-xs text-teal-400 underline"
+              className="mb-4 block truncate text-center text-xs text-primary underline"
               target="_blank"
               rel="noreferrer"
             >
@@ -833,9 +833,9 @@ export default function DocumentsPage() {
               Статус и история обновляются автоматически каждые 10 секунд.
             </p>
             {paymentEvents.length > 0 && (
-              <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-white/10 p-2 text-xs text-zinc-300">
+              <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2 text-xs text-zinc-700">
                 {paymentSummary && (
-                  <div className="mb-2 rounded bg-white/5 p-2 text-[11px] text-zinc-400">
+                  <div className="mb-2 rounded border border-zinc-200/60 bg-white p-2 text-[11px] text-zinc-600">
                     Всего: {paymentSummary.total ?? 0} • webhook ok: {paymentSummary.webhook_success ?? 0} •
                     конфликты: {paymentSummary.webhook_conflict ?? 0}
                   </div>
@@ -851,7 +851,7 @@ export default function DocumentsPage() {
                       key={opt.id}
                       type="button"
                       className={`rounded px-2 py-1 text-[10px] ${
-                        paymentEventFilter === opt.id ? 'bg-primary/20 text-primary' : 'bg-white/5 text-zinc-400'
+                        paymentEventFilter === opt.id ? 'bg-primary/15 text-primary' : 'bg-white text-zinc-600 ring-1 ring-zinc-200/80'
                       }`}
                       onClick={() => setPaymentEventFilter(opt.id as any)}
                     >
@@ -860,10 +860,10 @@ export default function DocumentsPage() {
                   ))}
                 </div>
                 {filteredPaymentEvents.map((e: any) => (
-                  <div key={e.id} className="mb-2 border-b border-white/10 pb-2 last:mb-0 last:border-0 last:pb-0">
+                  <div key={e.id} className="mb-2 border-b border-zinc-200/70 pb-2 last:mb-0 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="font-semibold text-zinc-200">{paymentEventLabel(String(e.event_type || ''))}</div>
-                      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase text-zinc-400">
+                      <div className="font-semibold text-zinc-900">{paymentEventLabel(String(e.event_type || ''))}</div>
+                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase text-zinc-600">
                         {e.source}
                       </span>
                     </div>
@@ -872,7 +872,7 @@ export default function DocumentsPage() {
                       <>
                         <button
                           type="button"
-                          className="mt-1 text-[11px] text-teal-300 underline"
+                          className="mt-1 text-[11px] text-primary underline"
                           onClick={() =>
                             setExpandedEventIds((prev) => ({ ...prev, [e.id]: !prev[e.id] }))
                           }
@@ -880,7 +880,7 @@ export default function DocumentsPage() {
                           {expandedEventIds[e.id] ? 'Скрыть детали' : 'Показать детали'}
                         </button>
                         {expandedEventIds[e.id] && (
-                          <div className="mt-1 rounded bg-black/30 p-2 text-[11px] text-zinc-300">
+                          <div className="mt-1 rounded border border-zinc-200/80 bg-white p-2 text-[11px] text-zinc-700">
                             {paymentPayloadEntries(e.payload).length > 0 ? (
                               <div className="space-y-1">
                                 {paymentPayloadEntries(e.payload).map((entry) => (

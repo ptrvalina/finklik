@@ -209,7 +209,7 @@ export default function EmployeesPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Сотрудники</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Сотрудники</h1>
           <p className="mt-1 text-sm text-zinc-500">Команда, зарплаты и кадровый учёт</p>
         </div>
         <button
@@ -235,7 +235,7 @@ export default function EmployeesPage() {
 
       {/* Tabs */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
           {(
             [
               { key: 'active' as Tab, label: 'Активные', count: employees.length },
@@ -263,7 +263,7 @@ export default function EmployeesPage() {
       {/* Payroll */}
       {tab === 'payroll' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:gap-4 sm:p-5">
+          <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:gap-4 sm:p-5">
             <div>
               <label className="label">Год</label>
               <input type="number" className="input w-28 min-h-11 rounded-xl" value={payrollYear} onChange={(e) => setPayrollYear(Number(e.target.value))} />
@@ -286,7 +286,7 @@ export default function EmployeesPage() {
               {payrollLoading ? 'Загрузка...' : `${payroll.length} записей`}
             </span>
           </div>
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
             {payroll.length === 0 ? (
               <div className="p-12 text-center text-sm text-zinc-500">{payrollLoading ? 'Загрузка...' : 'Нет расчётов'}</div>
             ) : (
@@ -297,7 +297,7 @@ export default function EmployeesPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Сотрудник</p>
-                          <p className="font-mono text-xs text-zinc-300">{r.employee_id.slice(0, 8)}…</p>
+                          <p className="font-mono text-xs text-zinc-500">{r.employee_id.slice(0, 8)}…</p>
                         </div>
                         <span
                           className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${
@@ -312,11 +312,11 @@ export default function EmployeesPage() {
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-zinc-500">К выдаче</span>
-                          <p className="font-headline font-bold text-teal-300">{fmt(r.net_salary)}</p>
+                          <p className="font-headline font-bold text-primary">{fmt(r.net_salary)}</p>
                         </div>
                         <div className="text-right">
                           <span className="text-zinc-500">Начислено</span>
-                          <p className="font-bold text-white">{fmt(r.gross_salary)}</p>
+                          <p className="font-bold text-on-surface">{fmt(r.gross_salary)}</p>
                         </div>
                         <div>
                           <span className="text-zinc-500">НДФЛ</span>
@@ -371,13 +371,13 @@ export default function EmployeesPage() {
       {/* Employee list */}
       {tab !== 'payroll' && (
         <>
-          <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
+          <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
             <div className="min-w-0 flex-1 sm:min-w-[200px]">
               <label className="label">Поиск</label>
               <div className="relative">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-zinc-500" />
                 <input
-                  className="input min-h-11 rounded-xl bg-white/[0.06] pl-10 ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl pl-10"
                   placeholder="ФИО или должность"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -390,7 +390,7 @@ export default function EmployeesPage() {
             </label>
           </div>
 
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
             {isLoading ? (
               <div className="p-12 text-center text-sm text-zinc-500">Загружаем...</div>
             ) : filtered.length === 0 ? (
@@ -404,17 +404,17 @@ export default function EmployeesPage() {
                   {filtered.map((emp) => (
                     <li key={emp.id} className="p-4">
                       <div className="flex gap-3">
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
-                          <Icon name="person" className="text-xl text-teal-300" />
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100">
+                          <Icon name="person" className="text-xl text-primary" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-headline text-sm font-bold text-white">{emp.full_name}</p>
+                          <p className="font-headline text-sm font-bold text-on-surface">{emp.full_name}</p>
                           <p className="text-xs text-zinc-500">{emp.position}</p>
                           {emp.identification_number && (
                             <p className="mt-1 font-mono text-[10px] text-zinc-500">ИД {emp.identification_number}</p>
                           )}
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                            <span className="font-bold text-white">{fmt(emp.salary)} BYN</span>
+                            <span className="font-bold text-on-surface">{fmt(emp.salary)} BYN</span>
                             <span>·</span>
                             <span>{tab === 'fired' ? emp.fire_date || '—' : `с ${emp.hire_date}`}</span>
                             {emp.has_children > 0 && (
@@ -423,12 +423,12 @@ export default function EmployeesPage() {
                               </span>
                             )}
                             {emp.disability_group != null && (
-                              <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold text-amber-200">
+                              <span className="rounded-md border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-950">
                                 инв. {emp.disability_group} гр.
                               </span>
                             )}
                             {emp.is_pensioner && (
-                              <span className="rounded-md border border-zinc-500/30 bg-zinc-500/10 px-2 py-0.5 text-[9px] font-bold text-zinc-300">
+                              <span className="rounded-md border border-zinc-300/80 bg-zinc-100 px-2 py-0.5 text-[9px] font-bold text-zinc-700">
                                 пенсионер
                               </span>
                             )}
@@ -440,14 +440,14 @@ export default function EmployeesPage() {
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
-                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl bg-white/[0.06] py-2.5 text-xs font-bold text-teal-300"
+                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-white py-2.5 text-xs font-bold text-primary"
                             onClick={() => openSalary(emp)}
                           >
                             <Icon name="calculate" className="text-lg" /> Зарплата
                           </button>
                           <button
                             type="button"
-                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl bg-white/[0.06] py-2.5 text-xs font-bold text-zinc-200"
+                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-zinc-50 py-2.5 text-xs font-bold text-zinc-700"
                             onClick={() => openEdit(emp)}
                           >
                             <Icon name="edit" className="text-lg" /> Изменить
@@ -555,7 +555,7 @@ export default function EmployeesPage() {
             <label className="label">Дата увольнения</label>
             <input
               type="date"
-              className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+              className="input min-h-11 rounded-xl"
               value={fireDate}
               onChange={(e) => setFireDate(e.target.value)}
             />
@@ -591,7 +591,7 @@ export default function EmployeesPage() {
                 <div className="sm:col-span-2">
                   <label className="label">ФИО</label>
                   <input
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.full_name}
                     onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                     disabled={!!editingEmployee}
@@ -600,7 +600,7 @@ export default function EmployeesPage() {
                 <div>
                   <label className="label">Идентификационный номер (личный)</label>
                   <input
-                    className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl font-mono"
                     placeholder="1234567A001PB0"
                     maxLength={14}
                     value={form.identification_number}
@@ -610,7 +610,7 @@ export default function EmployeesPage() {
                 <div>
                   <label className="label">Гражданство</label>
                   <input
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     placeholder="например, Республика Беларусь"
                     value={form.citizenship}
                     onChange={(e) => setForm({ ...form, citizenship: e.target.value })}
@@ -619,7 +619,7 @@ export default function EmployeesPage() {
                 <div className="sm:col-span-2">
                   <label className="label">Должность</label>
                   <input
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.position}
                     onChange={(e) => setForm({ ...form, position: e.target.value })}
                   />
@@ -629,7 +629,7 @@ export default function EmployeesPage() {
                   <input
                     type="number"
                     inputMode="decimal"
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.salary}
                     onChange={(e) => setForm({ ...form, salary: e.target.value })}
                   />
@@ -639,7 +639,7 @@ export default function EmployeesPage() {
                     <label className="label">Дата найма</label>
                     <input
                       type="date"
-                      className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                      className="input min-h-11 rounded-xl"
                       value={form.hire_date}
                       onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
                     />
@@ -654,7 +654,7 @@ export default function EmployeesPage() {
                     min={0}
                     max={24}
                     placeholder="8"
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.work_hours_per_day}
                     onChange={(e) => setForm({ ...form, work_hours_per_day: e.target.value })}
                   />
@@ -668,7 +668,7 @@ export default function EmployeesPage() {
                     min={0}
                     max={168}
                     placeholder="40"
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.work_hours_per_week}
                     onChange={(e) => setForm({ ...form, work_hours_per_week: e.target.value })}
                   />
@@ -684,7 +684,7 @@ export default function EmployeesPage() {
                 <div className="sm:col-span-2">
                   <label className="label">Вид документа</label>
                   <select
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.id_document_type}
                     onChange={(e) =>
                       setForm({ ...form, id_document_type: e.target.value as IdDocType })
@@ -702,7 +702,7 @@ export default function EmployeesPage() {
                     <div>
                       <label className="label">Серия</label>
                       <input
-                        className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                        className="input min-h-11 rounded-xl font-mono"
                         value={form.id_doc_series}
                         onChange={(e) => setForm({ ...form, id_doc_series: e.target.value })}
                       />
@@ -710,7 +710,7 @@ export default function EmployeesPage() {
                     <div>
                       <label className="label">Номер</label>
                       <input
-                        className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                        className="input min-h-11 rounded-xl font-mono"
                         value={form.id_doc_number}
                         onChange={(e) => setForm({ ...form, id_doc_number: e.target.value })}
                       />
@@ -718,7 +718,7 @@ export default function EmployeesPage() {
                     <div className="sm:col-span-2">
                       <label className="label">Кем выдан</label>
                       <input
-                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        className="input min-h-11 rounded-xl"
                         value={form.id_doc_issued_by}
                         onChange={(e) => setForm({ ...form, id_doc_issued_by: e.target.value })}
                       />
@@ -727,7 +727,7 @@ export default function EmployeesPage() {
                       <label className="label">Дата выдачи</label>
                       <input
                         type="date"
-                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        className="input min-h-11 rounded-xl"
                         value={form.id_doc_issued_date}
                         onChange={(e) => setForm({ ...form, id_doc_issued_date: e.target.value })}
                       />
@@ -736,7 +736,7 @@ export default function EmployeesPage() {
                       <label className="label">Срок действия (если есть)</label>
                       <input
                         type="date"
-                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        className="input min-h-11 rounded-xl"
                         value={form.id_doc_expiry_date}
                         onChange={(e) => setForm({ ...form, id_doc_expiry_date: e.target.value })}
                       />
@@ -754,7 +754,7 @@ export default function EmployeesPage() {
                   <input
                     type="number"
                     min={0}
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.has_children}
                     onChange={(e) => setForm({ ...form, has_children: Number(e.target.value) })}
                   />
@@ -762,7 +762,7 @@ export default function EmployeesPage() {
                 <div>
                   <label className="label">Инвалидность (группа)</label>
                   <select
-                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    className="input min-h-11 rounded-xl"
                     value={form.disability_group}
                     onChange={(e) =>
                       setForm({
@@ -777,7 +777,7 @@ export default function EmployeesPage() {
                     <option value="3">III группа</option>
                   </select>
                 </div>
-                <label className="flex items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-3 text-sm text-zinc-300 ring-1 ring-white/[0.06] sm:col-span-2">
+                <label className="flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-3 text-sm text-zinc-700 sm:col-span-2">
                   <input
                     type="checkbox"
                     checked={form.is_pensioner}
@@ -811,7 +811,7 @@ export default function EmployeesPage() {
             </button>
           }
         >
-          <p className="text-sm font-semibold text-white">{selectedEmployee.full_name}</p>
+          <p className="text-sm font-semibold text-on-surface">{selectedEmployee.full_name}</p>
           <p className="mb-4 text-xs text-zinc-500">
             Оклад: {fmt(selectedEmployee.salary)} BYN · {selectedEmployee.position}
           </p>
@@ -820,7 +820,7 @@ export default function EmployeesPage() {
               <label className="label">Год</label>
               <input
                 type="number"
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.period_year}
                 onChange={(e) => setSalaryForm({ ...salaryForm, period_year: Number(e.target.value) })}
               />
@@ -828,7 +828,7 @@ export default function EmployeesPage() {
             <div>
               <label className="label">Месяц</label>
               <select
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.period_month}
                 onChange={(e) => setSalaryForm({ ...salaryForm, period_month: Number(e.target.value) })}
               >
@@ -843,7 +843,7 @@ export default function EmployeesPage() {
               <label className="label">Бонус</label>
               <input
                 type="number"
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.bonus}
                 onChange={(e) => setSalaryForm({ ...salaryForm, bonus: Number(e.target.value) })}
               />
@@ -853,7 +853,7 @@ export default function EmployeesPage() {
               <input
                 type="number"
                 min={0}
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.sick_days}
                 onChange={(e) => setSalaryForm({ ...salaryForm, sick_days: Number(e.target.value) })}
               />
@@ -863,7 +863,7 @@ export default function EmployeesPage() {
               <input
                 type="number"
                 min={0}
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.vacation_days}
                 onChange={(e) => setSalaryForm({ ...salaryForm, vacation_days: Number(e.target.value) })}
               />
@@ -873,15 +873,15 @@ export default function EmployeesPage() {
               <input
                 type="number"
                 min={1}
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={salaryForm.work_days_plan}
                 onChange={(e) => setSalaryForm({ ...salaryForm, work_days_plan: Number(e.target.value) })}
               />
             </div>
           </div>
           {salaryResult && (
-            <div className="mt-5 border-t border-white/[0.08] pt-5">
-              <h4 className="mb-3 text-sm font-bold text-white">
+            <div className="mt-5 border-t border-zinc-200/80 pt-5">
+              <h4 className="mb-3 text-sm font-bold text-on-surface">
                 Расчётный лист — {MONTHS[salaryResult.period_month]} {salaryResult.period_year}
               </h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -889,11 +889,11 @@ export default function EmployeesPage() {
                 <PR label="Бонус" value={fmt(salaryResult.bonus)} color="text-secondary" />
                 <PR label="Больничные" value={fmt(salaryResult.sick_pay)} />
                 <PR label="Отпускные" value={fmt(salaryResult.vacation_pay)} />
-                <div className="col-span-2 my-1 border-t border-white/[0.06]" />
+                <div className="col-span-2 my-1 border-t border-zinc-200/70" />
                 <PR label="Начислено" value={fmt(salaryResult.gross_salary)} bold />
                 <PR label="НДФЛ 13%" value={`−${fmt(salaryResult.income_tax)}`} color="text-error" />
                 <PR label="ФСЗН 1%" value={`−${fmt(salaryResult.fsszn_employee)}`} color="text-error" />
-                <div className="col-span-2 my-1 border-t-2 border-white/[0.1]" />
+                <div className="col-span-2 my-1 border-t-2 border-zinc-300/80" />
                 <PR label="К выдаче" value={`${fmt(salaryResult.net_salary)} BYN`} bold color="text-primary" />
                 <PR label="ФСЗН 34%" value={fmt(salaryResult.fsszn_employer)} color="text-tertiary" sub />
               </div>

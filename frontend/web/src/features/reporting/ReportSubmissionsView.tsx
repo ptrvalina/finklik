@@ -8,19 +8,19 @@ import AppModal from '../../components/ui/AppModal'
 export type ReportingAuthority = 'imns' | 'fsszn' | 'belgosstrakh' | 'belstat'
 
 const AUTHORITY_COLORS: Record<string, string> = {
-  fsszn: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  imns: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  belgosstrakh: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  belstat: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  fsszn: 'border-blue-200/90 bg-blue-50 text-blue-900',
+  imns: 'border-amber-200/90 bg-amber-50 text-amber-950',
+  belgosstrakh: 'border-emerald-200/90 bg-emerald-50 text-emerald-900',
+  belstat: 'border-violet-200/90 bg-violet-50 text-violet-900',
 }
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-surface-variant text-on-surface-variant',
-  pending_review: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  confirmed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  submitted: 'bg-tertiary/10 text-tertiary border-tertiary/20',
-  accepted: 'bg-secondary/10 text-secondary border-secondary/20',
-  rejected: 'bg-error/10 text-error border-error/20',
+  pending_review: 'border-amber-200/90 bg-amber-50 text-amber-950',
+  confirmed: 'border-blue-200/90 bg-blue-50 text-blue-900',
+  submitted: 'border-violet-200/90 bg-violet-50 text-violet-900',
+  accepted: 'border-emerald-200/90 bg-emerald-50 text-emerald-900',
+  rejected: 'border-red-200/90 bg-red-50 text-red-800',
 }
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -44,11 +44,11 @@ function ReportSubmissionPreview({ data }: { data: Record<string, unknown> | nul
         if (k === 'warnings') {
           if (!Array.isArray(v) || v.length === 0) return null
           return (
-            <div key={k} className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
-              <p className="mb-2 flex items-center gap-1 font-bold text-amber-200">
-                <Icon name="warning" className="text-base" /> Предупреждения
+            <div key={k} className="rounded-xl border border-amber-200/90 bg-amber-50 px-4 py-3 shadow-soft">
+              <p className="mb-2 flex items-center gap-1 font-bold text-amber-950">
+                <Icon name="warning" className="text-base text-amber-800" /> Предупреждения
               </p>
-              <ul className="list-disc space-y-1 pl-5 text-amber-100/95">
+              <ul className="list-disc space-y-1 pl-5 text-amber-900">
                 {(v as string[]).map((w, i) => (
                   <li key={i}>{w}</li>
                 ))}
@@ -292,7 +292,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                 </p>
                 <p className="mt-2 text-2xl font-bold text-on-surface">{count}</p>
                 <p className="text-[10px] text-on-surface-variant">отчётов</p>
-                {pending > 0 && <p className="mt-1 text-[10px] text-amber-400">{pending} на проверке</p>}
+                {pending > 0 && <p className="mt-1 text-[10px] font-semibold text-amber-800">{pending} на проверке</p>}
               </div>
             )
           })}
@@ -508,11 +508,11 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                 (createForm.authority === 'imns' && createForm.report_type === 'vat-declaration')
               if (!quarterFile) return null
               return (
-                <div className="flex gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-[11px] leading-snug text-amber-100/95">
-                  <Icon name="info" className="shrink-0 text-lg text-amber-200" />
+                <div className="flex gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2.5 text-[11px] leading-snug text-amber-950 shadow-soft">
+                  <Icon name="info" className="shrink-0 text-lg text-amber-800" />
                   <span>
-                    Выбран <strong className="text-amber-50">месяц</strong>: расчёт черновика отчёта идёт за этот месяц. Файлы НДС и ПУ-3 в разделе «Документы»
-                    формируются за <strong className="text-amber-50">весь квартал</strong>, в который попадает месяц — учитывайте при сверке.
+                    Выбран <strong className="text-amber-950">месяц</strong>: расчёт черновика отчёта идёт за этот месяц. Файлы НДС и ПУ-3 в разделе «Документы»
+                    формируются за <strong className="text-amber-950">весь квартал</strong>, в который попадает месяц — учитывайте при сверке.
                   </span>
                 </div>
               )

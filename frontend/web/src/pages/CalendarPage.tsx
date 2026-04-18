@@ -7,7 +7,12 @@ const MONTHS = ['Январь','Февраль','Март','Апрель','Ма�
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
 
 const EVENT_COLORS: Record<string, string> = {
-  tax: '#ff716c', deadline: '#ffaaf4', salary: '#00ffa3', report: '#81ecff', meeting: '#00d4ec', custom: '#a6abb9',
+  tax: '#dc2626',
+  deadline: '#c026d3',
+  salary: '#059669',
+  report: '#0d9488',
+  meeting: '#2563eb',
+  custom: '#52525b',
 }
 const EVENT_LABELS: Record<string, string> = {
   tax: 'Налог', deadline: 'Дедлайн', salary: 'Зарплата', report: 'Отчёт', meeting: 'Встреча', custom: 'Событие',
@@ -37,7 +42,7 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(today.getMonth())
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [newEvent, setNewEvent] = useState({ title: '', event_type: 'custom', color: '#a6abb9' })
+  const [newEvent, setNewEvent] = useState({ title: '', event_type: 'custom', color: EVENT_COLORS.custom })
   const qc = useQueryClient()
 
   const firstDay = new Date(year, month, 1)
@@ -63,7 +68,7 @@ export default function CalendarPage() {
       title: newEvent.title, event_date: selectedDate, event_type: newEvent.event_type,
       color: EVENT_COLORS[newEvent.event_type] || newEvent.color,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowAddModal(false); setNewEvent({ title: '', event_type: 'custom', color: '#a6abb9' }) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['calendar'] }); setShowAddModal(false); setNewEvent({ title: '', event_type: 'custom', color: EVENT_COLORS.custom }) },
   })
 
   function getEventsForDay(day: number): CalEvent[] {
@@ -79,7 +84,7 @@ export default function CalendarPage() {
     <div className="flex h-[calc(100vh-8rem)] max-w-7xl flex-col space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
             {MONTHS[month]} {year}
           </h1>
           <div className="flex w-fit items-center rounded-lg bg-surface-container-low p-1">
@@ -123,7 +128,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 flex flex-col bg-surface-container-low rounded-xl overflow-hidden shadow-2xl min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-card">
         {/* Days header */}
         <div className="grid grid-cols-7 bg-surface-container-high">
           {DAYS.map(d => (
@@ -150,8 +155,12 @@ export default function CalendarPage() {
                 </div>
                 <div className="space-y-0.5">
                   {events.slice(0, 2).map(ev => (
-                    <div key={ev.id} className="p-1 rounded-md border-l-2 text-[10px] font-bold truncate"
-                      style={{ borderLeftColor: ev.color, backgroundColor: ev.color + '15', color: ev.color }} title={ev.title}>
+                    <div
+                      key={ev.id}
+                      className="truncate rounded-md border-l-2 p-1 text-[10px] font-bold text-zinc-900"
+                      style={{ borderLeftColor: ev.color, backgroundColor: `${ev.color}18` }}
+                      title={ev.title}
+                    >
                       {ev.title}
                     </div>
                   ))}

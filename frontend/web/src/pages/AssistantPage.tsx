@@ -58,7 +58,7 @@ export default function AssistantPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-6">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Консультант</h1>
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Консультант</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Ориентиры по учёту, госпорталам (ИМНС, ФСЗН, Белстат, Белгосстрах), Pravo.by и справочным системам. Не заменяет бухгалтера и
           официальные разъяснения органов.
@@ -66,21 +66,21 @@ export default function AssistantPage() {
       </div>
 
       <div
-        className={`rounded-2xl border px-4 py-3 text-sm ${
+        className={`rounded-2xl border px-4 py-3 text-sm shadow-soft ${
           status?.llm_enabled
             ? orgIsolated
-              ? 'border-teal-500/30 bg-teal-500/5 text-zinc-300'
-              : 'border-secondary/25 bg-secondary/5 text-zinc-300'
-            : 'border-amber-500/25 bg-amber-500/5 text-amber-100/90'
+              ? 'border-primary/25 bg-primary/5 text-zinc-700'
+              : 'border-emerald-200/80 bg-emerald-50/80 text-zinc-700'
+            : 'border-amber-200/90 bg-amber-50 text-amber-950'
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
           <Icon
             name={status?.llm_enabled ? (orgIsolated ? 'shield_lock' : 'psychology') : 'info'}
             filled
-            className="text-lg text-amber-300/90"
+            className={`text-lg ${status?.llm_enabled ? (orgIsolated ? 'text-primary' : 'text-emerald-700') : 'text-amber-700'}`}
           />
-          <span className="font-bold text-white">
+          <span className="font-bold text-zinc-900">
             {status?.llm_enabled
               ? orgIsolated
                 ? `ИИ (изолированный ключ организации) · ${status.model ?? 'модель'}`
@@ -88,7 +88,7 @@ export default function AssistantPage() {
               : 'Демо-режим'}
           </span>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+        <p className="mt-2 text-xs leading-relaxed text-zinc-600">
           {status?.llm_enabled
             ? orgIsolated
               ? `${status.isolation_note ?? 'Ключ хранится зашифрованно только для вашей организации и не передаётся другим клиентам.'} Проверяйте критичные цифры у бухгалтера.`
@@ -97,7 +97,7 @@ export default function AssistantPage() {
         </p>
       </div>
 
-      <div className="flex min-h-[min(420px,50vh)] flex-1 flex-col rounded-2xl bg-[#12161f] ring-1 ring-white/[0.06] sm:min-h-[480px]">
+      <div className="flex min-h-[min(420px,50vh)] flex-1 flex-col rounded-2xl border border-zinc-200/90 bg-white shadow-card sm:min-h-[480px]">
         <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
           {messages.length === 0 && !chatMutation.isPending && (
             <div className="space-y-4">
@@ -108,16 +108,16 @@ export default function AssistantPage() {
                     key={s}
                     type="button"
                     onClick={() => send(s)}
-                    className="tap-highlight-none rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-left text-xs font-medium text-zinc-200 transition-colors hover:bg-white/[0.07]"
+                    className="tap-highlight-none rounded-xl border border-zinc-200/80 bg-zinc-50 px-3 py-2 text-left text-xs font-medium text-zinc-800 transition-colors hover:border-primary/30 hover:bg-primary/5"
                   >
                     {s}
                   </button>
                 ))}
               </div>
               {sourcesCatalog?.groups && sourcesCatalog.groups.length > 0 && (
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-3">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Первоисточники и порталы</p>
-                  <ul className="mt-2 space-y-1.5 text-[11px] text-zinc-400">
+                  <ul className="mt-2 space-y-1.5 text-[11px] text-zinc-600">
                     {sourcesCatalog.groups.flatMap((g) =>
                       (g.entries || []).map((e) => (
                         <li key={`${g.id}-${e.title}`}>
@@ -126,7 +126,7 @@ export default function AssistantPage() {
                               {e.title}
                             </a>
                           ) : (
-                            <span className="text-zinc-300">{e.title}</span>
+                            <span className="text-zinc-800">{e.title}</span>
                           )}
                           {e.note && <span className="text-zinc-600"> — {e.note}</span>}
                         </li>
@@ -143,17 +143,17 @@ export default function AssistantPage() {
               <div
                 className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed sm:max-w-[85%] ${
                   m.role === 'user'
-                    ? 'bg-primary/20 text-white ring-1 ring-primary/25'
-                    : 'bg-white/[0.06] text-zinc-200 ring-1 ring-white/[0.05]'
+                    ? 'bg-primary/12 text-zinc-900 ring-1 ring-primary/25 shadow-soft'
+                    : 'border border-zinc-200/80 bg-zinc-50 text-zinc-800 shadow-soft'
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{m.content}</p>
                 {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
-                  <div className="mt-3 border-t border-white/[0.08] pt-2">
+                  <div className="mt-3 border-t border-zinc-200/80 pt-2">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Источники-ориентиры</p>
                     <ul className="mt-1.5 space-y-1">
                       {m.sources.map((s) => (
-                        <li key={s.id || s.title || ''} className="text-[11px] text-zinc-400">
+                        <li key={s.id || s.title || ''} className="text-[11px] text-zinc-600">
                           {s.url ? (
                             <a
                               href={s.url}
@@ -164,7 +164,7 @@ export default function AssistantPage() {
                               {s.title}
                             </a>
                           ) : (
-                            <span className="text-zinc-300">{s.title}</span>
+                            <span className="text-zinc-800">{s.title}</span>
                           )}
                           {s.authority && s.authority !== 'general' && (
                             <span className="ml-1 text-zinc-600">({s.authority})</span>
@@ -180,7 +180,7 @@ export default function AssistantPage() {
 
           {chatMutation.isPending && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-zinc-400 ring-1 ring-white/[0.05]">
+              <div className="flex items-center gap-2 rounded-2xl border border-zinc-200/80 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 shadow-soft">
                 <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-primary" />
                 Думаю…
               </div>
@@ -196,10 +196,10 @@ export default function AssistantPage() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-white/[0.06] p-3 sm:p-4">
+        <div className="border-t border-zinc-100 bg-zinc-50/50 p-3 sm:p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <textarea
-              className="input min-h-[3rem] flex-1 resize-none rounded-xl border-white/[0.08] bg-[#0d1017] py-3 text-sm text-white placeholder:text-zinc-600"
+              className="input min-h-[3rem] flex-1 resize-none rounded-xl py-3 text-sm"
               rows={2}
               placeholder="Ваш вопрос…"
               value={input}

@@ -24,7 +24,7 @@ export default function AppModal({ title, onClose, children, wide, extraWide, fo
       role="presentation"
     >
       <div
-        className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-[#12161f] shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:rounded-2xl sm:ring-1 sm:ring-white/[0.08] ${
+        className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-white shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:rounded-2xl sm:border sm:border-zinc-200/90 sm:shadow-lift ${
           extraWide ? 'sm:max-w-3xl' : wide ? 'sm:max-w-lg' : 'sm:max-w-md'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -32,14 +32,14 @@ export default function AppModal({ title, onClose, children, wide, extraWide, fo
         aria-modal="true"
         aria-labelledby="app-modal-title"
       >
-        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3 sm:px-6 sm:py-4">
-          <h2 id="app-modal-title" className="min-w-0 flex-1 font-headline text-base font-bold text-white sm:text-lg">
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 id="app-modal-title" className="min-w-0 flex-1 font-headline text-base font-bold text-on-surface sm:text-lg">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="tap-highlight-none flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-white"
+            className="tap-highlight-none flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:border-zinc-300 hover:bg-zinc-100 hover:text-on-surface"
             aria-label="Закрыть"
           >
             <span className="material-symbols-outlined text-2xl">close</span>
@@ -49,7 +49,7 @@ export default function AppModal({ title, onClose, children, wide, extraWide, fo
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-4">{children}</div>
 
         {footer != null && (
-          <div className="flex-shrink-0 border-t border-white/[0.06] bg-[#12161f] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:rounded-b-2xl sm:px-6 sm:pb-4">
+          <div className="flex-shrink-0 border-t border-zinc-100 bg-zinc-50/80 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:rounded-b-2xl sm:px-6 sm:pb-4">
             {footer}
           </div>
         )}

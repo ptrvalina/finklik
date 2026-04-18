@@ -72,7 +72,7 @@ export default function OnecContourPage() {
     <div className="max-w-3xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Контур 1С</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Контур 1С</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Реестр организации в ФинКлик и состояние подключения к 1С.
           </p>
@@ -95,8 +95,8 @@ export default function OnecContourPage() {
       </div>
 
       {healthQuery.data && (
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
-          <span className="font-bold text-teal-300">Последняя проверка /onec/health:</span>{' '}
+        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/90 px-4 py-3 text-sm text-zinc-700 shadow-soft">
+          <span className="font-bold text-primary">Последняя проверка /onec/health:</span>{' '}
           {healthQuery.data.connected ? (
             <span className="text-secondary">связь есть</span>
           ) : (
@@ -123,19 +123,19 @@ export default function OnecContourPage() {
 
       {data && !isLoading && (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.06]">
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <span className={`rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${statusBadgeClass(data.status)}`}>
                 {statusLabel(data.status)}
               </span>
-              <code className="rounded-md bg-black/30 px-2 py-1 font-mono text-sm text-teal-200/90">{data.contour_key}</code>
+              <code className="rounded-md border border-zinc-200/80 bg-zinc-100 px-2 py-1 font-mono text-sm text-primary">{data.contour_key}</code>
             </div>
             <dl className="grid gap-3 text-sm">
-              <div className="flex justify-between gap-4 border-b border-white/[0.06] pb-2">
+              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
                 <dt className="text-zinc-500">Внешний tenant / ИБ</dt>
                 <dd className="text-right text-on-surface">{data.external_tenant_id || '—'}</dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-white/[0.06] pb-2">
+              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
                 <dt className="text-zinc-500">HTTP-подключение настроено</dt>
                 <dd className="text-right font-medium text-on-surface">
                   {data.connection_configured ? (
@@ -145,13 +145,13 @@ export default function OnecContourPage() {
                   )}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-white/[0.06] pb-2">
+              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
                 <dt className="text-zinc-500">Endpoint</dt>
                 <dd className="max-w-[min(100%,280px)] truncate text-right font-mono text-xs text-zinc-400">
                   {data.endpoint || '—'}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-white/[0.06] pb-2">
+              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
                 <dt className="text-zinc-500">Последний health (реестр)</dt>
                 <dd className="text-right text-on-surface">
                   {data.last_health_at

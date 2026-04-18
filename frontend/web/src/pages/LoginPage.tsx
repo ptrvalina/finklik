@@ -23,11 +23,11 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold text-cyan-400 font-headline tracking-tight">ФинКлик</h1>
+          <h1 className="text-3xl font-extrabold text-primary font-headline tracking-tight">ФинКлик</h1>
           <p className="text-on-surface-variant text-sm mt-2">БИЗНЕС В КАРМАНЕ</p>
         </div>
 
-        <div className="bg-surface-container-high border border-outline-variant/20 rounded-xl p-6 shadow-2xl">
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 shadow-card">
           <h2 className="text-lg font-bold font-headline text-on-surface mb-6">Войти в аккаунт</h2>
 
           {error && (

@@ -171,7 +171,7 @@ export default function ScannerPage() {
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Сканер документов</h1>
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Сканер документов</h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500">
           Загрузите чеки, накладные или счета. AI автоматически извлечёт данные и предложит создать операцию.
         </p>
@@ -180,7 +180,7 @@ export default function ScannerPage() {
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         <div className="col-span-12 lg:col-span-8">
           <div className="-mx-1 mb-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-            <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+            <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('upload')}
@@ -234,7 +234,7 @@ export default function ScannerPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6">
+            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Icon name="auto_awesome" filled className="text-primary" />
                 <div>
@@ -287,7 +287,7 @@ export default function ScannerPage() {
             const displayDoc = editDraft?.docType || scanResult.doc_type
             const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
             return (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-low ring-1 ring-white/[0.05]">
+            <div className="mt-6 overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-low border border-zinc-200/80 shadow-soft">
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
                   <Icon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />

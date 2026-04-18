@@ -97,7 +97,7 @@ export default function BankPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Банк</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Банк</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Мульти-банк, платежи и интеграция с 1С
             {onecStatus?.connected && <span className="ml-2 text-xs text-secondary">● 1С ({onecStatus.mode})</span>}
@@ -123,7 +123,7 @@ export default function BankPage() {
       )}
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
           {tabItems.map((t) => (
             <button
               key={t.key}
@@ -183,9 +183,9 @@ export default function BankPage() {
           </div>
 
           {/* Statements */}
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
             <div className="flex flex-col gap-1 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
-              <h3 className="font-headline text-base font-bold text-white sm:text-lg">Последние операции</h3>
+              <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
               <span className="text-xs text-zinc-500">{statementsData?.total || 0} всего</span>
             </div>
             {statementsLoading ? (
@@ -240,7 +240,7 @@ export default function BankPage() {
               {accounts.map(acc => (
                 <div
                   key={acc.id}
-                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 ring-1 ring-white/[0.04] sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
+                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 border border-zinc-200/70 shadow-soft sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
                   style={{ borderLeftColor: acc.color }}
                 >
                   <div className="flex items-start justify-between">
@@ -272,8 +272,8 @@ export default function BankPage() {
 
       {/* Payments */}
       {tab === 'payments' && (
-        <div className="w-full max-w-lg rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-8">
-          <h2 className="mb-6 font-headline text-lg font-bold text-white">Новый платёж</h2>
+        <div className="w-full max-w-lg rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-8">
+          <h2 className="mb-6 font-headline text-lg font-bold text-on-surface">Новый платёж</h2>
           <div className="space-y-4">
             <div>
               <label className="label">Получатель</label>
@@ -318,8 +318,8 @@ export default function BankPage() {
 
       {tab === 'reconciliation' && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
-            <h3 className="mb-1 font-headline text-base font-bold text-white">Сверка учёт ↔ выписка</h3>
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
+            <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Сверка учёт ↔ выписка</h3>
             <p className="mb-4 text-[11px] text-zinc-500">
               Обороты за период: весь учёт и отдельно операции с категорией <code className="text-teal-400">bank_import</code>.
             </p>
@@ -338,23 +338,23 @@ export default function BankPage() {
               {recLoading ? 'Считаем…' : 'Пересчитать'}
             </button>
             {recData && (
-              <div className="space-y-2 rounded-xl bg-black/20 p-4 font-mono text-xs text-zinc-300">
+              <div className="space-y-2 rounded-xl border border-zinc-200/80 bg-zinc-50 p-4 font-mono text-xs text-zinc-700">
                 <p>
                   Учёт: доход {fmt(recData.book?.total_income)} · расход {fmt(recData.book?.total_expense)} · чистый{' '}
-                  <span className="text-white">{fmt(recData.book?.net)}</span> ({recData.book?.transactions_count} оп.)
+                  <span className="font-semibold text-on-surface">{fmt(recData.book?.net)}</span> ({recData.book?.transactions_count} оп.)
                 </p>
                 <p>
                   Импорт банка: доход {fmt(recData.bank_import?.total_income)} · расход {fmt(recData.bank_import?.total_expense)} · чистый{' '}
-                  <span className="text-white">{fmt(recData.bank_import?.net)}</span> ({recData.bank_import?.lines_count} оп.)
+                  <span className="font-semibold text-on-surface">{fmt(recData.bank_import?.net)}</span> ({recData.bank_import?.lines_count} оп.)
                 </p>
-                <p className="text-amber-300/90">
+                <p className="font-medium text-amber-800">
                   Δ (учёт − импорт), BYN: {fmt(recData.delta_net_book_minus_bank_import)}
                 </p>
               </div>
             )}
           </div>
-          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
-            <h3 className="mb-1 font-headline text-base font-bold text-white">Импорт выписки (JSON)</h3>
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
+            <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Импорт выписки (JSON)</h3>
             <p className="mb-3 text-[11px] text-zinc-500">
               Массив строк: <code className="text-zinc-400">transaction_date</code>, <code className="text-zinc-400">amount</code>,{' '}
               <code className="text-zinc-400">direction</code> credit/debit, <code className="text-zinc-400">description</code>.
@@ -388,7 +388,7 @@ export default function BankPage() {
       {/* 1C */}
       {tab === '1c' && (
         <div className="space-y-6">
-          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <span className={`w-4 h-4 rounded-full ${onecStatus?.connected ? 'bg-secondary' : 'bg-error'}`} />
               <div>
@@ -414,7 +414,7 @@ export default function BankPage() {
             )}
           </div>
 
-          <div className="rounded-2xl bg-surface-container-low p-5 ring-1 ring-white/[0.05] sm:p-6">
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
             <h3 className="text-sm font-bold text-on-surface mb-4">Проверка контрагента по УНП</h3>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <input

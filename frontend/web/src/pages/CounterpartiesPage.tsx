@@ -74,7 +74,7 @@ export default function CounterpartiesPage() {
     <div className="max-w-7xl space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Контрагенты</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Контрагенты</h1>
           <p className="mt-1 text-sm text-zinc-500">Справочник организаций и ИП</p>
         </div>
         <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
@@ -94,12 +94,12 @@ export default function CounterpartiesPage() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-5">
+      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-5">
         <label className="label">Поиск по названию или УНП</label>
         <div className="relative">
           <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-zinc-500" />
           <input
-            className="input min-h-11 rounded-xl bg-white/[0.06] pl-10 ring-1 ring-white/[0.06]"
+            className="input min-h-11 rounded-xl pl-10"
             placeholder="Введите название или УНП..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -107,7 +107,7 @@ export default function CounterpartiesPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
         {isLoading ? (
           <div className="p-12 text-center text-sm text-zinc-500">Загружаем...</div>
         ) : items.length === 0 ? (
@@ -121,11 +121,11 @@ export default function CounterpartiesPage() {
               {items.map((cp: any) => (
                 <li key={cp.id} className="p-4">
                   <div className="flex gap-3">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
-                      <Icon name="corporate_fare" className="text-xl text-teal-300" />
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100">
+                      <Icon name="corporate_fare" className="text-xl text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-headline text-sm font-bold text-white">{cp.name}</p>
+                      <p className="font-headline text-sm font-bold text-on-surface">{cp.name}</p>
                       <p className="font-mono text-xs text-zinc-500">УНП {cp.unp}</p>
                       {cp.address && <p className="mt-1 text-xs text-zinc-500">{cp.address}</p>}
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-500">
@@ -137,7 +137,7 @@ export default function CounterpartiesPage() {
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl bg-white/[0.06] py-2.5 text-xs font-bold text-zinc-200"
+                      className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-zinc-50 py-2.5 text-xs font-bold text-zinc-700"
                       onClick={() => openEdit(cp)}
                     >
                       <Icon name="edit" className="text-lg" /> Изменить
@@ -235,7 +235,7 @@ export default function CounterpartiesPage() {
             <div>
               <label className="label">Название *</label>
               <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -243,7 +243,7 @@ export default function CounterpartiesPage() {
             <div>
               <label className="label">УНП (9 цифр) *</label>
               <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl font-mono"
                 maxLength={9}
                 value={form.unp}
                 onChange={(e) => setForm({ ...form, unp: e.target.value.replace(/\D/g, '').slice(0, 9) })}
@@ -253,7 +253,7 @@ export default function CounterpartiesPage() {
             <div>
               <label className="label">Адрес</label>
               <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
@@ -262,7 +262,7 @@ export default function CounterpartiesPage() {
               <div>
                 <label className="label">Телефон</label>
                 <input
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
@@ -271,7 +271,7 @@ export default function CounterpartiesPage() {
                 <label className="label">Email</label>
                 <input
                   type="email"
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
@@ -281,7 +281,7 @@ export default function CounterpartiesPage() {
               <div>
                 <label className="label">Счёт</label>
                 <input
-                  className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl font-mono"
                   value={form.bank_account}
                   onChange={(e) => setForm({ ...form, bank_account: e.target.value })}
                 />
@@ -289,7 +289,7 @@ export default function CounterpartiesPage() {
               <div>
                 <label className="label">Банк</label>
                 <input
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl"
                   value={form.bank_name}
                   onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
                 />
@@ -298,7 +298,7 @@ export default function CounterpartiesPage() {
             <div>
               <label className="label">Заметки</label>
               <textarea
-                className="input min-h-[80px] rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-[80px] rounded-xl"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />

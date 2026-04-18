@@ -64,13 +64,13 @@ export default function DashboardPage() {
   const daysLeft = deadline ? Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000) : null
 
   const quickLinks = [
-    { to: '/scanner', icon: 'document_scanner', label: 'Сканер', color: 'from-teal-400/20 to-cyan-600/10 text-teal-300' },
-    { to: '/documents', icon: 'description', label: 'Документы', color: 'from-violet-500/15 to-purple-600/10 text-violet-300' },
-    { to: '/currency', icon: 'currency_exchange', label: 'Курсы НБ', color: 'from-cyan-500/15 to-teal-600/10 text-cyan-300' },
-    { to: '/reporting', icon: 'assignment_turned_in', label: 'Отчётность', color: 'from-amber-500/15 to-orange-600/10 text-amber-300' },
-    { to: '/calendar', icon: 'calendar_today', label: 'Календарь', color: 'from-sky-500/15 to-blue-600/10 text-sky-300' },
-    { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-emerald-500/15 to-teal-600/10 text-emerald-300' },
-    { to: '/settings', icon: 'gavel', label: 'Законы', color: 'from-zinc-500/20 to-zinc-700/10 text-zinc-300' },
+    { to: '/scanner', icon: 'document_scanner', label: 'Сканер', color: 'from-teal-50 to-cyan-50 text-teal-800 ring-teal-100' },
+    { to: '/documents', icon: 'description', label: 'Документы', color: 'from-violet-50 to-purple-50 text-violet-900 ring-violet-100' },
+    { to: '/currency', icon: 'currency_exchange', label: 'Курсы НБ', color: 'from-cyan-50 to-sky-50 text-cyan-900 ring-cyan-100' },
+    { to: '/reporting', icon: 'assignment_turned_in', label: 'Отчётность', color: 'from-amber-50 to-orange-50 text-amber-950 ring-amber-100' },
+    { to: '/calendar', icon: 'calendar_today', label: 'Календарь', color: 'from-sky-50 to-blue-50 text-sky-900 ring-sky-100' },
+    { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-emerald-50 to-teal-50 text-emerald-900 ring-emerald-100' },
+    { to: '/settings', icon: 'gavel', label: 'Законы', color: 'from-zinc-100 to-zinc-50 text-zinc-800 ring-zinc-200' },
   ] as const
 
   return (
@@ -78,7 +78,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Главная</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Главная</h1>
           <p className="mt-1 text-sm text-zinc-500">УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -99,10 +99,10 @@ export default function DashboardPage() {
             <Link
               key={q.to}
               to={q.to}
-              className={`flex min-w-[4.75rem] flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br p-3 ring-1 ring-white/[0.06] ${q.color}`}
+              className={`flex min-w-[4.75rem] flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br p-3 shadow-soft ring-1 ${q.color}`}
             >
               <Icon name={q.icon} className="text-2xl opacity-90" />
-              <span className="text-center text-[10px] font-bold leading-tight text-white">{q.label}</span>
+              <span className="text-center text-[10px] font-bold leading-tight text-zinc-900">{q.label}</span>
             </Link>
           ))}
         </div>
@@ -139,13 +139,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {(
           [
-            { label: 'Доходы / мес', value: metrics?.income_current_month, icon: 'trending_up', accent: 'bg-teal-400', iconBg: 'bg-teal-400/15', iconClass: 'text-teal-300' },
-            { label: 'Расходы / мес', value: metrics?.expense_current_month, icon: 'trending_down', accent: 'bg-red-400', iconBg: 'bg-red-400/15', iconClass: 'text-red-300' },
-            { label: 'Баланс', value: metrics?.balance_current_month, icon: 'account_balance_wallet', accent: 'bg-emerald-400', iconBg: 'bg-emerald-400/15', iconClass: 'text-emerald-300' },
-            { label: 'В банке', value: metrics?.bank_balance, icon: 'credit_card', accent: 'bg-violet-400', iconBg: 'bg-violet-400/15', iconClass: 'text-violet-300' },
+            { label: 'Доходы / мес', value: metrics?.income_current_month, icon: 'trending_up', accent: 'bg-primary', iconBg: 'bg-primary/10', iconClass: 'text-primary' },
+            { label: 'Расходы / мес', value: metrics?.expense_current_month, icon: 'trending_down', accent: 'bg-red-500', iconBg: 'bg-red-50', iconClass: 'text-red-600' },
+            { label: 'Баланс', value: metrics?.balance_current_month, icon: 'account_balance_wallet', accent: 'bg-emerald-500', iconBg: 'bg-emerald-50', iconClass: 'text-emerald-700' },
+            { label: 'В банке', value: metrics?.bank_balance, icon: 'credit_card', accent: 'bg-violet-500', iconBg: 'bg-violet-50', iconClass: 'text-violet-700' },
           ] as const
         ).map((m) => (
-          <div key={m.label} className="metric-blade group rounded-2xl ring-1 ring-white/[0.05]">
+          <div key={m.label} className="metric-blade group rounded-2xl">
             <div className={`absolute bottom-0 left-0 top-0 w-1 ${m.accent} opacity-90`} />
             <div className="mb-3 flex items-start justify-between sm:mb-4">
               <span className="label !mb-0 text-[9px] sm:text-[10px]">{m.label}</span>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                 <Icon name={m.icon} className={`text-lg ${m.iconClass}`} />
               </div>
             </div>
-            <p className="font-headline text-lg font-extrabold text-white sm:text-2xl">
+            <p className="font-headline text-lg font-extrabold text-on-surface sm:text-2xl">
               {fmt(m.value)} <span className="text-xs font-normal text-zinc-500 sm:text-sm">BYN</span>
             </p>
           </div>
@@ -163,9 +163,9 @@ export default function DashboardPage() {
       {/* Bento Grid */}
       <div className="grid grid-cols-12 gap-6">
         {/* Chart */}
-        <div className="col-span-12 rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="col-span-12 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-4 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-headline text-base font-bold text-white sm:text-lg">Доходы и расходы</h3>
+            <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы</h3>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-primary" />
@@ -182,28 +182,29 @@ export default function DashboardPage() {
             <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#81ecff" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#81ecff" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff716c" stopOpacity={0.1} />
-                  <stop offset="95%" stopColor="#ff716c" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#dc2626" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{
-                  background: '#19202d',
-                  border: '1px solid #434854',
-                  borderRadius: 8,
+                  background: '#ffffff',
+                  border: '1px solid #e4e4e7',
+                  borderRadius: 12,
                   fontSize: 13,
-                  color: '#e4e8f7',
+                  color: '#18181b',
+                  boxShadow: '0 4px 24px -4px rgba(0,0,0,0.1)',
                 }}
                 formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]}
               />
-              <Area type="monotone" dataKey="income" name="Доходы" stroke="#81ecff" strokeWidth={2} fill="url(#gi)" />
-              <Area type="monotone" dataKey="expense" name="Расходы" stroke="#ff716c" strokeWidth={2} fill="url(#ge)" />
+              <Area type="monotone" dataKey="income" name="Доходы" stroke="#0d9488" strokeWidth={2} fill="url(#gi)" />
+              <Area type="monotone" dataKey="expense" name="Расходы" stroke="#dc2626" strokeWidth={2} fill="url(#ge)" />
             </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -211,7 +212,7 @@ export default function DashboardPage() {
 
         {/* Taxes sidebar */}
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
-          <div className="flex-1 rounded-2xl border border-outline-variant/10 bg-surface-container-high p-4 ring-1 ring-white/[0.04] sm:p-6">
+          <div className="flex-1 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-soft sm:p-6">
             <h3 className="label mb-6 flex items-center gap-2">
               <Icon name="calculate" className="text-primary text-lg" />
               Налоги к уплате
@@ -258,10 +259,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent transactions */}
-        <div className="col-span-12 overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
-          <div className="flex flex-col gap-2 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
-            <h3 className="font-headline text-base font-bold text-white sm:text-lg">Последние операции</h3>
-            <Link to="/transactions" className="text-sm font-bold text-teal-300 hover:underline">
+        <div className="col-span-12 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-soft">
+          <div className="flex flex-col gap-2 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
+            <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
+            <Link to="/transactions" className="text-sm font-bold text-primary hover:underline">
               Все операции
             </Link>
           </div>

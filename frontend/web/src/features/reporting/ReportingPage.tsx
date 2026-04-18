@@ -28,7 +28,7 @@ export default function ReportingPage() {
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
           {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Сдача отчётности'}
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
@@ -39,13 +39,13 @@ export default function ReportingPage() {
       </div>
 
       {!filter && (
-        <div className="flex flex-wrap gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-4">
+        <div className="flex flex-wrap gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-3 shadow-soft sm:p-4">
           <span className="w-full text-[10px] font-bold uppercase tracking-widest text-zinc-500 lg:hidden">Органы</span>
           {HUB_LINKS.map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="tap-highlight-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs font-bold text-zinc-200 transition-colors hover:border-teal-500/30 hover:bg-teal-500/10 hover:text-white"
+              className="tap-highlight-none rounded-lg border border-zinc-200/90 bg-white px-3 py-2 text-xs font-bold text-zinc-800 transition-colors hover:border-primary/35 hover:bg-primary/5 hover:text-primary"
             >
               {l.label}
             </Link>

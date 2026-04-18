@@ -62,7 +62,7 @@ export default function OnecSyncPage() {
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Синхронизация 1С</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Синхронизация 1С</h1>
           <p className="text-sm text-zinc-500">Очередь задач, статусы, ошибки и ручной retry</p>
         </div>
         <div className="w-full sm:w-56">
@@ -77,14 +77,14 @@ export default function OnecSyncPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {(['pending', 'running', 'retry', 'success', 'failed'] as const).map((s) => (
-          <div key={s} className="rounded-xl bg-surface-container-low p-4 ring-1 ring-white/[0.05]">
+          <div key={s} className="rounded-xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft">
             <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">{statusLabel(s)}</p>
-            <p className="mt-1 text-2xl font-extrabold text-white">{stats[s] || 0}</p>
+            <p className="mt-1 text-2xl font-extrabold text-on-surface">{stats[s] || 0}</p>
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-surface-container-low ring-1 ring-white/[0.05]">
+      <div className="overflow-hidden rounded-xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
         {isLoading ? (
           <div className="p-10 text-center text-sm text-zinc-500">Загрузка...</div>
         ) : jobs.length === 0 ? (

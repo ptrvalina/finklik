@@ -187,7 +187,7 @@ export default function TransactionsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Операции</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Операции</h1>
           <p className="mt-0.5 text-sm text-zinc-500">{total} операций</p>
         </div>
         <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
@@ -197,7 +197,7 @@ export default function TransactionsPage() {
 
       {/* Filter tabs — горизонтальный скролл на телефоне */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
           {[
             { key: 'all', label: 'Все' },
             { key: 'income', label: 'Доходы' },
@@ -225,7 +225,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Search & filters */}
-      <div className="grid grid-cols-1 gap-3 rounded-2xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:gap-4 sm:p-5 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:gap-4 sm:p-5 md:grid-cols-3">
         <div>
           <label className="label">Поиск</label>
           <div className="relative">
@@ -247,7 +247,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Список: карточки на мобиле, таблица с md */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low ring-1 ring-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 p-12 text-sm text-zinc-500">
             <Icon name="hourglass_empty" className="animate-spin" /> Загружаем...
@@ -269,12 +269,12 @@ export default function TransactionsPage() {
                   <li key={tx.id} className="p-4">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.06] ${meta.color}`}
+                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 ${meta.color}`}
                       >
                         <Icon name={meta.icon} filled className="text-xl" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-headline text-sm font-semibold text-white">{tx.description || meta.label}</p>
+                        <p className="font-headline text-sm font-semibold text-on-surface">{tx.description || meta.label}</p>
                         <p className="mt-0.5 text-xs text-zinc-500">{tx.transaction_date}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <span className={`text-[9px] font-bold uppercase rounded-md px-2 py-0.5 ${getSyncBadgeClass(tx)}`}>
@@ -288,7 +288,7 @@ export default function TransactionsPage() {
                       <div className="flex flex-shrink-0 flex-col items-end gap-2">
                         <p
                           className={`font-headline text-sm font-extrabold ${
-                            tx.type === 'income' ? 'text-emerald-300' : 'text-white'
+                            tx.type === 'income' ? 'text-emerald-700' : 'text-on-surface'
                           }`}
                         >
                           {tx.type === 'income' ? '+' : '−'}
@@ -298,7 +298,7 @@ export default function TransactionsPage() {
                         <div className="flex gap-1">
                           <button
                             type="button"
-                            className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] text-zinc-300"
+                            className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 text-zinc-600"
                             onClick={() => openEdit(tx)}
                             aria-label="Изменить"
                           >
@@ -318,7 +318,7 @@ export default function TransactionsPage() {
                           {syncJobByTx.get(tx.id)?.status === 'failed' ? (
                             <button
                               type="button"
-                              className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-300"
+                              className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg border border-amber-200/80 bg-amber-50 text-amber-800"
                               disabled={retrySyncMutation.isPending}
                               onClick={() => retrySyncMutation.mutate(syncJobByTx.get(tx.id).id)}
                               aria-label="Повторить синк"
@@ -389,7 +389,7 @@ export default function TransactionsPage() {
                             {syncJobByTx.get(tx.id)?.status === 'failed' ? (
                               <button
                                 type="button"
-                                className="btn-ghost !px-2 !py-1 !text-xs text-amber-400 hover:text-amber-300"
+                                className="btn-ghost !px-2 !py-1 !text-xs text-amber-800 hover:text-amber-950"
                                 disabled={retrySyncMutation.isPending}
                                 onClick={() => retrySyncMutation.mutate(syncJobByTx.get(tx.id).id)}
                                 title="Повторить синк в 1С"
@@ -489,7 +489,7 @@ export default function TransactionsPage() {
                     className={`tap-highlight-none flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition-all sm:py-2.5 sm:text-sm ${
                       form.type === t
                         ? m.badge
-                        : 'border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]'
+                        : 'border-zinc-200/90 text-zinc-600 hover:border-primary/25 hover:bg-primary/5'
                     }`}
                   >
                     <Icon name={m.icon} className="text-lg" /> {m.label}
@@ -504,7 +504,7 @@ export default function TransactionsPage() {
                 step="0.01"
                 min="0.01"
                 inputMode="decimal"
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 placeholder="0.00"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
@@ -514,7 +514,7 @@ export default function TransactionsPage() {
               <div>
                 <label className="label">Категория</label>
                 <select
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                  className="input min-h-11 rounded-xl"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                 >
@@ -529,7 +529,7 @@ export default function TransactionsPage() {
             <div>
               <label className="label">Описание</label>
               <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 placeholder="Оплата по договору №..."
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -539,7 +539,7 @@ export default function TransactionsPage() {
               <label className="label">Дата</label>
               <input
                 type="date"
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                className="input min-h-11 rounded-xl"
                 value={form.transaction_date}
                 onChange={(e) => setForm({ ...form, transaction_date: e.target.value })}
               />

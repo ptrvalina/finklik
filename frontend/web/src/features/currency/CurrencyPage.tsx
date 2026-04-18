@@ -83,28 +83,28 @@ export default function CurrencyPage() {
   return (
     <div className="max-w-5xl space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Курсы валют</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-          Официальные курсы <strong className="text-zinc-200">Национального банка Республики Беларусь</strong> — те же
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Курсы валют</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
+          Официальные курсы <strong className="text-zinc-900">Национального банка Республики Беларусь</strong> — те же
           данные, что использует бизнес и отчётность. Сервер ФинКлик периодически обновляет справочник; конвертация идёт
           через белорусский рубль (BYN) по правилам НБ.
         </p>
       </div>
 
       {ratesQuery.isError && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          <Icon name="wifi_off" className="mt-0.5 text-amber-300" />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200/90 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <Icon name="wifi_off" className="mt-0.5 text-amber-700" />
           <div>
             <p className="font-semibold">Не удалось загрузить курсы</p>
-            <p className="text-amber-200/80">Проверьте соединение с API или повторите позже.</p>
+            <p className="text-amber-800/90">Проверьте соединение с API или повторите позже.</p>
           </div>
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="lg:col-span-2 rounded-2xl border border-white/[0.08] bg-[#0f1219] p-5 ring-1 ring-white/[0.04]">
-          <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-white">
-            <Icon name="swap_horiz" className="text-teal-300" />
+        <section className="lg:col-span-2 rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-card">
+          <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
+            <Icon name="swap_horiz" className="text-primary" />
             Конвертер
           </h2>
           <p className="mt-1 text-xs text-zinc-500">Введите сумму и выберите валюты — пересчёт по курсу НБ на дату ниже.</p>
@@ -146,30 +146,30 @@ export default function CurrencyPage() {
           </div>
 
           {convertQuery.isError && (
-            <p className="mt-3 text-sm text-red-300">
+            <p className="mt-3 text-sm text-error">
               Не удалось пересчитать. Проверьте сумму и выбранные валюты.
             </p>
           )}
           {convertQuery.data && (
-            <div className="mt-5 rounded-xl bg-teal-500/10 px-4 py-3 ring-1 ring-teal-500/20">
-              <p className="text-xs font-medium uppercase tracking-wide text-teal-200/80">Результат</p>
-              <p className="mt-1 font-headline text-2xl font-bold text-white">
+            <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 shadow-soft">
+              <p className="text-xs font-medium uppercase tracking-wide text-primary">Результат</p>
+              <p className="mt-1 font-headline text-2xl font-bold text-on-surface">
                 {parseFloat(convertQuery.data.result).toLocaleString('ru-BY', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 4,
                 })}{' '}
-                <span className="text-lg text-teal-200">{convertQuery.data.to_currency}</span>
+                <span className="text-lg text-primary">{convertQuery.data.to_currency}</span>
               </p>
               {convertQuery.data.stale && (
-                <p className="mt-2 text-xs text-amber-200/90">Данные могли устареть — обновите страницу чуть позже.</p>
+                <p className="mt-2 text-xs text-amber-800/90">Данные могли устареть — обновите страницу чуть позже.</p>
               )}
             </div>
           )}
         </section>
 
-        <section className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-[#0f1219] p-5 ring-1 ring-white/[0.04]">
-          <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-white">
-            <Icon name="table_chart" className="text-violet-300" />
+        <section className="lg:col-span-3 rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-card">
+          <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
+            <Icon name="table_chart" className="text-tertiary" />
             Справочник курсов
           </h2>
           {ratesQuery.isLoading && (
@@ -183,7 +183,7 @@ export default function CurrencyPage() {
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
                 <span>
                   Дата курса:{' '}
-                  <strong className="text-zinc-300">{ratesQuery.data.rates_date}</strong>
+                  <strong className="text-zinc-800">{ratesQuery.data.rates_date}</strong>
                 </span>
                 <span>
                   Обновлено сервером:{' '}
@@ -198,19 +198,19 @@ export default function CurrencyPage() {
                   {highlighted.map((r) => (
                     <div
                       key={r.code}
-                      className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 ring-1 ring-white/[0.06]"
+                      className="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 shadow-soft"
                     >
-                      <span className="font-semibold text-white">{r.code}</span>
-                      <span className="text-sm text-zinc-400">
+                      <span className="font-semibold text-on-surface">{r.code}</span>
+                      <span className="text-sm text-zinc-600">
                         1 {r.code} = {fmtRate(r)} BYN
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg ring-1 ring-white/[0.06]">
+              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg border border-zinc-200/80 bg-white shadow-soft">
                 <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 bg-[#12151c] text-xs uppercase tracking-wide text-zinc-500">
+                  <thead className="sticky top-0 border-b border-zinc-200/80 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
                     <tr>
                       <th className="px-3 py-2">Код</th>
                       <th className="px-3 py-2">Валюта</th>
@@ -219,16 +219,16 @@ export default function CurrencyPage() {
                       <th className="px-3 py-2 text-right">1 ед. = BYN</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.04] text-zinc-300">
+                  <tbody className="divide-y divide-zinc-100 text-zinc-700">
                     {[...(ratesQuery.data.rates ?? [])]
                       .sort((a, b) => a.code.localeCompare(b.code))
                       .map((r) => (
-                        <tr key={r.code} className="hover:bg-white/[0.02]">
-                          <td className="px-3 py-2 font-mono font-semibold text-teal-200">{r.code}</td>
-                          <td className="px-3 py-2 text-zinc-400">{r.name}</td>
+                        <tr key={r.code} className="hover:bg-zinc-50/80">
+                          <td className="px-3 py-2 font-mono font-semibold text-primary">{r.code}</td>
+                          <td className="px-3 py-2 text-zinc-600">{r.name}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.scale}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.official_rate_byn}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-white">{fmtRate(r)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums font-medium text-on-surface">{fmtRate(r)}</td>
                         </tr>
                       ))}
                   </tbody>

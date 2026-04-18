@@ -39,12 +39,12 @@ export default function SettingsPage() {
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Настройки</h1>
+        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Настройки</h1>
         <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции 1С, команда и законодательство</p>
       </div>
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 ring-1 ring-white/[0.05] sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
           {([
             { key: 'profile' as Tab, label: 'Профиль', icon: 'business' },
             { key: 'integrations' as Tab, label: 'Интеграции', icon: 'integration_instructions' },
@@ -89,7 +89,7 @@ function ProfileSection() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+      <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
         <h3 className="text-sm font-bold text-on-surface mb-4">Профиль организации</h3>
         <div className="space-y-3">
           {rows.map(r => (
@@ -194,13 +194,13 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
           {message.text}
         </div>
       )}
-      <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+      <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
         <h3 className="mb-1 text-sm font-bold text-on-surface">1С: HTTP-сервис</h3>
         <p className="mb-4 text-[11px] text-on-surface-variant">
           Endpoint и токен для обмена с конфигурацией 1С (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
         </p>
         {cfg?.configured && (
-          <p className="mb-3 text-xs text-teal-300/90">
+          <p className="mb-3 text-xs text-primary">
             Сейчас: подключено · токен: {cfg.token_masked || '***'}
           </p>
         )}
@@ -244,7 +244,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       </div>
 
       {isOwner && (
-        <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+        <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
           <h3 className="mb-1 text-sm font-bold text-on-surface">ИИ-консультант: изолированный ключ (BYOK)</h3>
           <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
             Сохраните API-ключ вашего LLM-провайдера (OpenAI-совместимый Chat Completions) — он шифруется и привязан только к вашей
@@ -252,13 +252,15 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
             запроса к провайдеру. Если ключ не задан, может использоваться общий ключ платформы (если настроен на сервере API).
           </p>
           {llmStatus?.org_key_configured && (
-            <p className="mb-3 flex items-center gap-2 text-xs font-bold text-teal-300/90">
+            <p className="mb-3 flex items-center gap-2 text-xs font-bold text-primary">
               <Icon name="lock" className="text-base" filled />
               Ключ организации сохранён · источник в чате: «организация»
             </p>
           )}
           {!llmStatus?.org_key_configured && llmStatus?.key_source === 'platform' && (
-            <p className="mb-3 text-xs text-amber-200/90">Сейчас для ИИ используется платформенный ключ API (если задан у хостинга).</p>
+            <p className="mb-3 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Сейчас для ИИ используется платформенный ключ API (если задан у хостинга).
+            </p>
           )}
           <div className="space-y-3">
             <div>
@@ -301,7 +303,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               </button>
               <button
                 type="button"
-                className="btn-ghost min-h-11 border border-white/[0.08]"
+                className="btn-ghost min-h-11 border border-zinc-200/80"
                 disabled={!llmStatus?.org_key_configured || clearLlmMutation.isPending}
                 onClick={() => clearLlmMutation.mutate()}
               >
@@ -362,7 +364,7 @@ function BillingSection() {
         <div className="bg-surface-container-low rounded-xl p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
       ) : (
         <>
-          <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+          <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-on-surface">Текущий тариф</h3>
               <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
@@ -386,7 +388,7 @@ function BillingSection() {
           </div>
 
           {usage && currentPlan && (
-            <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+            <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
               <h3 className="text-sm font-bold text-on-surface mb-3">Использование</h3>
               <div className="space-y-2">
                 {([
@@ -512,7 +514,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-surface-container-low ring-1 ring-white/[0.05]">
+      <div className="overflow-hidden rounded-xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
         <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[640px]">
           <thead>

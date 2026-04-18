@@ -26,11 +26,12 @@ const CAT_COLORS: Record<string, string> = {
 }
 
 const tooltipStyle = {
-  background: '#19202d',
-  border: '1px solid #434854',
+  background: '#ffffff',
+  border: '1px solid #e4e4e7',
   borderRadius: 8,
   fontSize: 13,
-  color: '#e4e8f7',
+  color: '#18181b',
+  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.07)',
 }
 
 export default function AnalyticsPage() {
@@ -61,11 +62,11 @@ export default function AnalyticsPage() {
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Аналитика</h1>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Аналитика</h1>
           <p className="mt-1 text-sm text-zinc-500">Финансовые показатели за {year} год</p>
         </div>
         <div className="flex w-full justify-start sm:w-auto sm:justify-end">
-          <div className="flex rounded-md bg-surface-container-high p-1 ring-1 ring-white/[0.05]">
+          <div className="flex rounded-md border border-zinc-200/80 bg-surface-container-high p-1 shadow-soft">
             <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
               <Icon name="chevron_left" className="text-sm" />
             </button>
@@ -109,9 +110,9 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
-        <div className="col-span-12 rounded-xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="col-span-12 rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-6 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-headline text-base font-bold text-white sm:text-lg">Доходы и расходы по месяцам</h3>
+            <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы по месяцам</h3>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-primary" />
@@ -128,18 +129,18 @@ export default function AnalyticsPage() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-                <Bar dataKey="income" name="Доходы" fill="#81ecff" radius={[4, 4, 0, 0]} opacity={0.8} />
-                <Bar dataKey="expense" name="Расходы" fill="#ff716c" radius={[4, 4, 0, 0]} opacity={0.6} />
+                <Bar dataKey="income" name="Доходы" fill="#0d9488" radius={[4, 4, 0, 0]} opacity={0.85} />
+                <Bar dataKey="expense" name="Расходы" fill="#dc2626" radius={[4, 4, 0, 0]} opacity={0.75} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
 
         <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="flex-1 rounded-xl bg-surface-container-high p-4 ring-1 ring-white/[0.05] sm:p-6">
+          <div className="flex-1 rounded-xl border border-zinc-200/80 bg-surface-container-high p-4 shadow-soft sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <p className="text-sm text-on-surface-variant">Нет данных по расходам</p>
@@ -175,24 +176,24 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="col-span-12 overflow-hidden rounded-xl bg-surface-container-low ring-1 ring-white/[0.05]">
+        <div className="col-span-12 overflow-hidden rounded-xl border border-zinc-200/80 bg-surface-container-low shadow-soft">
           <CounterpartyTurnover />
         </div>
 
-        <div className="col-span-12 rounded-xl bg-surface-container-low p-4 ring-1 ring-white/[0.05] sm:p-6 lg:p-8">
-          <h3 className="mb-6 font-headline text-base font-bold text-white sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
+        <div className="col-span-12 rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6 lg:p-8">
+          <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#00ffa3" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#a6abb9' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-              <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#00ffa3" strokeWidth={2} fill="url(#gp)" />
+              <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#0d9488" strokeWidth={2} fill="url(#gp)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -213,7 +214,7 @@ function CounterpartyTurnover() {
   return (
     <>
       <div className="flex flex-col gap-2 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6 lg:px-8">
-        <h3 className="font-headline text-base font-bold text-white sm:text-lg">Обороты по контрагентам</h3>
+        <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Обороты по контрагентам</h3>
         <button type="button" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
           Подробнее
         </button>
