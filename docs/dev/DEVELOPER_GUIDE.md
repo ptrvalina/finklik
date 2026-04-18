@@ -80,7 +80,7 @@ make verify-like-ci      # Как job «Backend Tests» в CI: alembic heads + u
 
 **Архив на момент подачи:** после `POST …/submit` сохраняется `submission_snapshot_json`. **`GET /submissions/{id}?include_snapshot=true`** отдаёт поле **`submission_snapshot`**; в списке только флаг **`has_submission_snapshot`**.
 
-Задачи, требующие реальных API/ЭЦП/S3, собраны в [`BACKLOG_SPRINT18_DEFERRED.md`](BACKLOG_SPRINT18_DEFERRED.md) (перенос из спринтов 11–12 в планирование спринта 18).
+Задачи, требующие реальных API/ЭЦП/S3 и прочих внешних сервисов: [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md). Упорядоченный техбэклог без внешних зависимостей: [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md).
 
 ---
 

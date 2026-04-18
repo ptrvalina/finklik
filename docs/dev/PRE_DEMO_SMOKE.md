@@ -14,7 +14,7 @@ Alternative:
 python scripts/pre_demo_smoke.py
 ```
 
-The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
+The command writes summary to `artifacts/pre-demo-smoke-summary.md`. Automated backend checks include Alembic heads, `test_tax_calculator`, **`test_ocr_parse`**, and `test_metrics`; then the frontend production build.
 
 ## 1) Health and Readiness
 
