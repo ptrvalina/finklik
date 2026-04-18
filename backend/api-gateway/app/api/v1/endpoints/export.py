@@ -190,7 +190,6 @@ async def download_vat_declaration(
     db: AsyncSession = Depends(get_db),
 ):
     from app.services.tax_calculator import calculate_vat
-    from decimal import Decimal
 
     org_result = await db.execute(
         select(Organization).where(Organization.id == current_user.organization_id)
