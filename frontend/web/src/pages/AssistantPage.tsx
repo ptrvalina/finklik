@@ -33,6 +33,9 @@ export default function AssistantPage() {
     },
   })
 
+  const keySource = status?.key_source
+  const orgIsolated = keySource === 'organization'
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, chatMutation.isPending])
@@ -58,20 +61,32 @@ export default function AssistantPage() {
       <div
         className={`rounded-2xl border px-4 py-3 text-sm ${
           status?.llm_enabled
-            ? 'border-secondary/25 bg-secondary/5 text-zinc-300'
+            ? orgIsolated
+              ? 'border-teal-500/30 bg-teal-500/5 text-zinc-300'
+              : 'border-secondary/25 bg-secondary/5 text-zinc-300'
             : 'border-amber-500/25 bg-amber-500/5 text-amber-100/90'
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <Icon name={status?.llm_enabled ? 'psychology' : 'info'} filled className="text-lg text-amber-300/90" />
+          <Icon
+            name={status?.llm_enabled ? (orgIsolated ? 'shield_lock' : 'psychology') : 'info'}
+            filled
+            className="text-lg text-amber-300/90"
+          />
           <span className="font-bold text-white">
-            {status?.llm_enabled ? `ИИ: ${status.model ?? 'модель'}` : 'Демо-режим'}
+            {status?.llm_enabled
+              ? orgIsolated
+                ? `ИИ (изолированный ключ организации) · ${status.model ?? 'модель'}`
+                : `ИИ (платформа) · ${status.model ?? 'модель'}`
+              : 'Демо-режим'}
           </span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-zinc-400">
           {status?.llm_enabled
-            ? 'Ответы формируются нейросетью; проверяйте критичные цифры и нормы у специалиста.'
-            : 'Ключ OPENAI_API_KEY на сервере API не задан — используются готовые шаблонные ответы. Для «живого» ИИ добавьте ключ в окружение бэкенда.'}
+            ? orgIsolated
+              ? `${status.isolation_note ?? 'Ключ хранится зашифрованно только для вашей организации и не передаётся другим клиентам.'} Проверяйте критичные цифры у бухгалтера.`
+              : 'Ответы идут через платформенный ключ API. Для максимальной приватности владелец может задать свой ключ в «Настройки» → «Интеграции».'
+            : 'Нет ключа ИИ: задайте изолированный ключ организации («Настройки» → «Интеграции») или попросите администратора включить ключ на сервере API.'}
         </p>
       </div>
 

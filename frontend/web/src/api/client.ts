@@ -242,10 +242,25 @@ export const submissionsApi = {
 
 export type AssistantChatMessage = { role: 'user' | 'assistant'; content: string }
 
+export type AssistantLlmKeySource = 'none' | 'organization' | 'platform'
+
 export const assistantApi = {
-  status: () => api.get<{ llm_enabled: boolean; model: string | null }>('/assistant/status'),
+  status: () =>
+    api.get<{
+      llm_enabled: boolean
+      model: string | null
+      key_source: AssistantLlmKeySource
+      org_key_configured: boolean
+      isolation_note: string | null
+    }>('/assistant/status'),
   chat: (messages: AssistantChatMessage[]) =>
-    api.post<{ reply: string; mode: 'demo' | 'llm' }>('/assistant/chat', { messages }),
+    api.post<{ reply: string; mode: 'demo' | 'llm'; llm_key_source: AssistantLlmKeySource }>(
+      '/assistant/chat',
+      { messages },
+    ),
+  setOrganizationKey: (body: { api_key: string; base_url?: string | null; model?: string | null }) =>
+    api.post<{ ok: boolean; message?: string }>('/assistant/organization-key', body),
+  deleteOrganizationKey: () => api.delete<{ ok: boolean }>('/assistant/organization-key'),
 }
 
 export const billingApi = {

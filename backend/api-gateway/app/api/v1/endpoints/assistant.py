@@ -1,6 +1,10 @@
 """
 Консультационный чат (общие подсказки по учёту и продукту).
-Без ключа API — демо-ответы; с OPENAI_API_KEY — вызов OpenAI Chat Completions.
+
+Режимы LLM:
+- Ключ организации (BYOK): хранится зашифрованно в БД, используется только для запросов этой организации к провайдеру.
+- Платформенный OPENAI_API_KEY в окружении API — fallback, если у организации своего ключа нет.
+- Без ключей — демо-ответы.
 """
 
 from __future__ import annotations
@@ -11,22 +15,27 @@ import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models.user import User
+from app.models.user import Organization, User
+from app.services.org_llm_crypto import decrypt_org_llm_api_key, encrypt_org_llm_api_key
 
 log = structlog.get_logger()
 router = APIRouter(prefix="/assistant", tags=["assistant"])
 
-SYSTEM_PROMPT = """Ты — внутренний помощник веб-приложения «ФинКлик» для малого бизнеса в Беларуси.
-Отвечай по-русски, кратко и по делу. Помогай с бухгалтерским учётом на уровне общих ориентиров, навигации по функциям приложения,
-категориям операций, срокам отчётности в общих чертах.
+SYSTEM_PROMPT = """Ты — ИИ-ассистент веб-приложения «ФинКлик» для малого бизнеса в Беларуси.
+Твоя роль: напоминать о сроках и типовых шагах, ориентировать по разделам продукта, кратко объяснять практику взаимодействия с госорганами
+на уровне общих ориентиров (ИМНС, ФСЗН, Белстат, Белгосстрах), подсказывать перспективы развития дела в нейтральной форме
+(рост, риски, что уточнить у бухгалтера), не выдавая себя за официальный источник.
 
 Критически важно:
-- Ты НЕ юрист и НЕ налоговый консультант. Не выдавай ответы за официальную позицию ИМНС/ФСЗН и т.д.
-- Всегда при сложных или спорных вопросах советуй обратиться к бухгалтеру или в соответствующий орган.
-- Не запрашивай и не проси пользователя прислать персональные данные, пароли, полные реквизиты счетов.
+- Ты НЕ юрист и НЕ налоговый консультант. Не выдавай ответы за официальную позицию ИМНС/ФСЗН/Белстата/Белгосстраха.
+- Всегда при спорных вопросах советуй обратиться к бухгалтеру или в соответствующий орган и сверять с первоисточниками.
+- Не запрашивай и не проси пользователя прислать персональные данные, пароли, полные реквизиты счетов, API-ключи.
+- Отвечай по-русски, кратко и по делу.
 """
 
 MAX_MESSAGES = 24
@@ -49,6 +58,12 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(..., min_length=1, max_length=MAX_MESSAGES)
 
 
+class OrgLlmKeyBody(BaseModel):
+    api_key: str = Field(..., min_length=8, max_length=2048)
+    base_url: str | None = Field(None, max_length=512)
+    model: str | None = Field(None, max_length=128)
+
+
 def _mock_reply(user_text: str) -> str:
     t = user_text.lower().strip()
     if not t:
@@ -58,47 +73,50 @@ def _mock_reply(user_text: str) -> str:
         return (
             "По УСН в общих чертах: учёт доходов (и при необходимости расходов — зависит от варианта) ведётся в разделе «Операции»; "
             "сводка — в «Аналитике» и экспортах в «Документах». Точные ставки, льготы и сроки уточняйте у бухгалтера или на сайте МНС. "
-            "\n\nСейчас включён демо-режим без внешней нейросети. Для ответов на основе ИИ задайте переменную окружения OPENAI_API_KEY на сервере API."
+            "\n\nСейчас включён демо-режим без внешней нейросети. Для ИИ: владелец может задать изолированный ключ организации "
+            "в «Настройки» → «Интеграции», либо администратор платформы настроит общий ключ на сервере API."
         )
 
     if any(x in t for x in ("ндс", "vat", "декларац")):
         return (
             "НДС и декларации — чувствительная тема: сроки и формы зависят от режима и статуса плательщика. В приложении есть выгрузки и календарь как напоминание, "
-            "но итоговые решения — с бухгалтером.\n\nДемо-режим: для ИИ-ответов настройте OPENAI_API_KEY."
+            "но итоговые решения — с бухгалтером.\n\nДемо-режим: для ИИ подключите ключ организации (изолированно в настройках) или платформенный ключ на API."
         )
 
-    if any(x in t for x in ("фсзн", "взнос", "страхов")):
+    if any(x in t for x in ("фсзн", "взнос", "страхов", "белгосстрах", "белстат", "имнс", "мнс")):
         return (
-            "Взносы и отчётность во внебюджетные фонды требуют актуальных форм и сроков. В ФинКлике смотрите разделы «Налоги», «Календарь», «Настройки» → законодательство и подача отчётов. "
-            "Для персонального расчёта обратитесь к специалисту.\n\nДемо-режим — добавьте OPENAI_API_KEY для ответов нейросети."
+            "Взносы, отчётность во внебюджетные фонды и госорганы требуют актуальных форм и сроков. В ФинКлике смотрите «Сдача отчётности», календарь и раздел законодательства. "
+            "Для персонального расчёта обратитесь к специалисту.\n\nДемо-режим — для ответов нейросети настройте изолированный ключ ИИ организации или ключ платформы."
         )
 
     if any(x in t for x in ("сканер", "чек", "ocr", "документ")):
         return (
             "Раздел «Сканер»: загрузите PDF или изображение — сервис извлечёт текст и поля; затем можно создать операцию вручную после проверки. "
-            "Всегда сверяйте суммы и реквизиты с оригиналом.\n\nДемо-режим без ИИ в этом чате — при необходимости задайте OPENAI_API_KEY."
+            "Всегда сверяйте суммы и реквизиты с оригиналом.\n\nДемо-режим без ИИ в этом чате — подключите ключ в настройках интеграций (изолированно для вашей организации)."
         )
 
     if any(x in t for x in ("банк", "счёт", "счет", "платёж", "платеж")):
         return (
             "В разделе «Банк» привязываются счета, смотрится баланс и создаются платежи (в демо — заглушка банка). Выписки и операции также отражаются в «Операциях» после импорта или ввода.\n\n"
-            "Демо-режим чата: для ИИ подключите OPENAI_API_KEY."
+            "Демо-режим чата: для ИИ задайте изолированный ключ организации или платформенный ключ API."
+        )
+
+    if any(x in t for x in ("api", "ключ", "openai", "изолир")):
+        return (
+            "Ключ API к провайдеру ИИ можно сохранить **только для вашей организации**: он шифруется в базе, не показывается другим клиентам и не попадает в логи; "
+            "расшифровывается только на сервере на время запроса к LLM. Настройка: «Настройки» → «Интеграции» (только владелец). "
+            "Альтернатива — общий ключ платформы на стороне хостинга API (если ваш договор это предусматривает)."
         )
 
     return (
-        "Я могу кратко ориентировать по учёту в ФинКлике и по смыслу разделов приложения. "
+        "Я могу кратко ориентировать по учёту в ФинКлике, по смыслу разделов приложения и по типовой практике взаимодействия с органами. "
         "Юридически значимые и налоговые решения принимайте со специалистом.\n\n"
-        "Сейчас демо-режим (нет ключа OPENAI_API_KEY). После настройки ключа ответы будут генерироваться нейросетью с теми же ограничениями по дисклеймеру."
+        "Сейчас демо-режим: задайте изолированный ключ ИИ в настройках организации или подключите ИИ на уровне платформы."
     )
 
 
-async def _openai_chat(messages: list[dict]) -> str:
-    key = (settings.OPENAI_API_KEY or "").strip()
-    if not key:
-        raise HTTPException(503, detail="LLM не настроен")
-
-    base = (settings.OPENAI_BASE_URL or "https://api.openai.com/v1").rstrip("/")
-    model = settings.OPENAI_MODEL or "gpt-4o-mini"
+async def _openai_chat(messages: list[dict], *, api_key: str, base_url: str, model: str) -> str:
+    base = (base_url or "https://api.openai.com/v1").rstrip("/")
     url = f"{base}/chat/completions"
 
     payload = {
@@ -112,7 +130,7 @@ async def _openai_chat(messages: list[dict]) -> str:
         async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
             r = await client.post(
                 url,
-                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json=payload,
             )
     except httpx.RequestError as e:
@@ -142,14 +160,66 @@ def _sanitize_history(msgs: list[ChatMessage]) -> list[dict]:
     return out[-MAX_MESSAGES:]
 
 
+async def _resolve_llm_for_org(
+    db: AsyncSession,
+    organization_id: str | None,
+) -> tuple[str | None, str, str, str]:
+    """api_key (plain), base_url, model, key_source: organization | platform | none."""
+    default_base = (settings.OPENAI_BASE_URL or "https://api.openai.com/v1").rstrip("/")
+    default_model = settings.OPENAI_MODEL or "gpt-4o-mini"
+
+    if organization_id:
+        org = await db.get(Organization, organization_id)
+        if org and org.llm_api_key_encrypted:
+            try:
+                key = decrypt_org_llm_api_key(org.llm_api_key_encrypted)
+            except ValueError as e:
+                log.error("org_llm_decrypt_failed", organization_id=organization_id)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Сохранённый ключ ИИ не читается. Удалите его в настройках и введите снова.",
+                ) from e
+            base = (org.llm_base_url or "").strip().rstrip("/") or default_base
+            model = (org.llm_model or "").strip() or default_model
+            return key, base, model, "organization"
+
+    plat = (settings.OPENAI_API_KEY or "").strip()
+    if plat:
+        return plat, default_base, default_model, "platform"
+    return None, default_base, default_model, "none"
+
+
 @router.get("/status")
-async def assistant_status(_user: User = Depends(get_current_user)):
-    key = (settings.OPENAI_API_KEY or "").strip()
-    return {"llm_enabled": bool(key), "model": (settings.OPENAI_MODEL or "gpt-4o-mini") if key else None}
+async def assistant_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    api_key, _base, model, key_source = await _resolve_llm_for_org(db, current_user.organization_id)
+    org_configured = False
+    if current_user.organization_id:
+        org = await db.get(Organization, current_user.organization_id)
+        org_configured = bool(org and org.llm_api_key_encrypted)
+
+    return {
+        "llm_enabled": bool(api_key),
+        "model": model if api_key else None,
+        "key_source": key_source,
+        "org_key_configured": org_configured,
+        "isolation_note": (
+            "При ключе организации запросы к ИИ идут с вашим ключом; он хранится в зашифрованном виде, "
+            "не передаётся другим клиентам и не пишется в логи в открытом виде."
+            if org_configured
+            else None
+        ),
+    }
 
 
 @router.post("/chat")
-async def assistant_chat(body: ChatRequest, _user: User = Depends(get_current_user)):
+async def assistant_chat(
+    body: ChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     history = _sanitize_history(body.messages)
     if not history:
         raise HTTPException(400, detail="Нет текста сообщения")
@@ -158,12 +228,59 @@ async def assistant_chat(body: ChatRequest, _user: User = Depends(get_current_us
     if last["role"] != "user":
         raise HTTPException(400, detail="Последнее сообщение должно быть от пользователя")
 
-    key = (settings.OPENAI_API_KEY or "").strip()
-    if not key:
+    api_key, base, model, key_source = await _resolve_llm_for_org(db, current_user.organization_id)
+    if not api_key:
         reply = _mock_reply(last["content"])
-        return {"reply": reply, "mode": "demo"}
+        return {"reply": reply, "mode": "demo", "llm_key_source": "none"}
 
-    reply = await _openai_chat(history)
+    reply = await _openai_chat(history, api_key=api_key, base_url=base, model=model)
     if not reply:
         reply = "Не удалось сформулировать ответ. Переформулируйте вопрос или попробуйте позже."
-    return {"reply": reply, "mode": "llm"}
+    return {"reply": reply, "mode": "llm", "llm_key_source": key_source}
+
+
+@router.post("/organization-key")
+async def set_organization_llm_key(
+    body: OrgLlmKeyBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.role != "owner":
+        raise HTTPException(403, detail="Только владелец организации может сохранить ключ ИИ")
+    if not current_user.organization_id:
+        raise HTTPException(400, detail="У пользователя нет организации")
+
+    org = await db.get(Organization, current_user.organization_id)
+    if not org:
+        raise HTTPException(404, detail="Организация не найдена")
+
+    org.llm_api_key_encrypted = encrypt_org_llm_api_key(body.api_key)
+    bu = (body.base_url or "").strip()
+    org.llm_base_url = bu or None
+    mo = (body.model or "").strip()
+    org.llm_model = mo or None
+    await db.flush()
+    log.info("assistant_org_key_set", organization_id=org.id, user_id=current_user.id)
+    return {"ok": True, "message": "Ключ сохранён в зашифрованном виде только для вашей организации."}
+
+
+@router.delete("/organization-key")
+async def delete_organization_llm_key(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.role != "owner":
+        raise HTTPException(403, detail="Только владелец организации может удалить ключ ИИ")
+    if not current_user.organization_id:
+        raise HTTPException(400, detail="У пользователя нет организации")
+
+    org = await db.get(Organization, current_user.organization_id)
+    if not org:
+        raise HTTPException(404, detail="Организация не найдена")
+
+    org.llm_api_key_encrypted = None
+    org.llm_base_url = None
+    org.llm_model = None
+    await db.flush()
+    log.info("assistant_org_key_cleared", organization_id=org.id, user_id=current_user.id)
+    return {"ok": True}

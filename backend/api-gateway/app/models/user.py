@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -16,6 +16,11 @@ class Organization(Base):
     max_users: Mapped[int] = mapped_column(default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # BYOK ИИ: ключ провайдера (OpenAI-совместимый) в зашифрованном виде; не смешивается с другими организациями.
+    llm_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    llm_base_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    llm_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     users: Mapped[list["User"]] = relationship("User", back_populates="organization")
     transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="organization")

@@ -42,7 +42,8 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "ФинКлик <noreply@finklik.by>"
     FRONTEND_URL: str = "https://ptrvalina.github.io/finklik"
 
-    # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо-ответы в /assistant/chat
+    # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо, если у организации нет своего BYOK-ключа.
+    # Ключ организации (приоритетнее) хранится в БД в зашифрованном виде — см. /assistant/organization-key.
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = "gpt-4o-mini"

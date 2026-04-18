@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, billingApi, onecApi } from '../api/client'
+import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
@@ -67,7 +67,7 @@ export default function SettingsPage() {
       </div>
 
       {tab === 'profile' && <ProfileSection />}
-      {tab === 'integrations' && <IntegrationsSection />}
+      {tab === 'integrations' && <IntegrationsSection isOwner={user?.role === 'owner'} />}
       {tab === 'billing' && <BillingSection />}
       {tab === 'team' && <TeamSection isOwner={user?.role === 'owner'} />}
       {tab === 'regulatory' && <RegulatorySection />}
@@ -109,16 +109,51 @@ function ProfileSection() {
   )
 }
 
-function IntegrationsSection() {
+function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
   const qc = useQueryClient()
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [endpoint, setEndpoint] = useState('')
   const [token, setToken] = useState('')
   const [protocol, setProtocol] = useState('custom-http')
+  const [llmKey, setLlmKey] = useState('')
+  const [llmBase, setLlmBase] = useState('')
+  const [llmModel, setLlmModel] = useState('')
 
   const { data: cfg, isLoading } = useQuery({
     queryKey: ['onec-config'],
     queryFn: () => onecApi.getConfig().then((r) => r.data as any),
+  })
+
+  const { data: llmStatus } = useQuery({
+    queryKey: ['assistant-status'],
+    queryFn: () => assistantApi.status().then((r) => r.data),
+    enabled: isOwner,
+  })
+
+  const saveLlmMutation = useMutation({
+    mutationFn: () =>
+      assistantApi.setOrganizationKey({
+        api_key: llmKey.trim(),
+        base_url: llmBase.trim() || null,
+        model: llmModel.trim() || null,
+      }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['assistant-status'] })
+      setLlmKey('')
+      setMessage({ type: 'success', text: res.data.message || 'Ключ ИИ сохранён' })
+    },
+    onError: (e: any) =>
+      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения ключа ИИ' }),
+  })
+
+  const clearLlmMutation = useMutation({
+    mutationFn: () => assistantApi.deleteOrganizationKey(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['assistant-status'] })
+      setMessage({ type: 'success', text: 'Ключ ИИ организации удалён' })
+    },
+    onError: (e: any) =>
+      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка' }),
   })
 
   const saveMutation = useMutation({
@@ -207,6 +242,76 @@ function IntegrationsSection() {
           </button>
         </div>
       </div>
+
+      {isOwner && (
+        <div className="rounded-xl bg-surface-container-low p-5 ring-1 ring-white/[0.05]">
+          <h3 className="mb-1 text-sm font-bold text-on-surface">ИИ-консультант: изолированный ключ (BYOK)</h3>
+          <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
+            Сохраните API-ключ вашего LLM-провайдера (OpenAI-совместимый Chat Completions) — он шифруется и привязан только к вашей
+            организации: другие клиенты ФинКлика его не видят, в логах он не хранится открытым текстом, расшифровка только на время
+            запроса к провайдеру. Если ключ не задан, может использоваться общий ключ платформы (если настроен на сервере API).
+          </p>
+          {llmStatus?.org_key_configured && (
+            <p className="mb-3 flex items-center gap-2 text-xs font-bold text-teal-300/90">
+              <Icon name="lock" className="text-base" filled />
+              Ключ организации сохранён · источник в чате: «организация»
+            </p>
+          )}
+          {!llmStatus?.org_key_configured && llmStatus?.key_source === 'platform' && (
+            <p className="mb-3 text-xs text-amber-200/90">Сейчас для ИИ используется платформенный ключ API (если задан у хостинга).</p>
+          )}
+          <div className="space-y-3">
+            <div>
+              <label className="label">API-ключ провайдера</label>
+              <input
+                type="password"
+                className="input min-h-11 w-full rounded-xl font-mono text-sm"
+                value={llmKey}
+                onChange={(e) => setLlmKey(e.target.value)}
+                placeholder="sk-… или ключ совместимого API"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className="label">Base URL (необязательно)</label>
+              <input
+                className="input min-h-11 w-full rounded-xl font-mono text-sm"
+                value={llmBase}
+                onChange={(e) => setLlmBase(e.target.value)}
+                placeholder="По умолчанию https://api.openai.com/v1"
+              />
+            </div>
+            <div>
+              <label className="label">Модель (необязательно)</label>
+              <input
+                className="input min-h-11 w-full rounded-xl font-mono text-sm"
+                value={llmModel}
+                onChange={(e) => setLlmModel(e.target.value)}
+                placeholder="Например gpt-4o-mini"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn-primary min-h-11"
+                disabled={llmKey.trim().length < 8 || saveLlmMutation.isPending}
+                onClick={() => saveLlmMutation.mutate()}
+              >
+                {saveLlmMutation.isPending ? 'Сохраняем…' : 'Сохранить ключ'}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost min-h-11 border border-white/[0.08]"
+                disabled={!llmStatus?.org_key_configured || clearLlmMutation.isPending}
+                onClick={() => clearLlmMutation.mutate()}
+              >
+                Удалить ключ организации
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <p className="text-[11px] text-zinc-600">
         Реестр контура и health: раздел «Контур 1С» в меню. Очередь синхронизации — «Синхронизация 1С».
       </p>
