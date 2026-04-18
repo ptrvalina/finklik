@@ -71,11 +71,32 @@ def _parse_row(raw: dict[str, Any]) -> NbrbCurrencyRow:
 
 
 async def fetch_nbrb_rates() -> NbrbRatesSnapshot:
-    """HTTP-запрос к API НБ РБ и сбор снимка."""
-    async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
-        r = await client.get(NBRB_RATES_URL)
-        r.raise_for_status()
-        data = r.json()
+    """HTTP-запрос к API НБ РБ и сбор снимка. Несколько попыток — из облака CI до nbrb.by часты таймауты."""
+    # connect/read раздельно: медленный TLS/маршрут до BY — не обрывать слишком рано
+    timeout = httpx.Timeout(60.0, connect=35.0)
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "FinKlik/1.0 (+https://github.com/ptrvalina/finklik; NBRB exrates)",
+    }
+    data: Any = None
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                r = await client.get(NBRB_RATES_URL, headers=headers)
+                r.raise_for_status()
+                data = r.json()
+            break
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPStatusError) as exc:
+            log.warning(
+                "nbrb_fetch_attempt_failed",
+                attempt=attempt + 1,
+                error=str(exc) or repr(exc),
+                exc_type=type(exc).__name__,
+            )
+            if attempt >= 2:
+                raise
+            await asyncio.sleep(2.0 * (attempt + 1))
+
     if not isinstance(data, list):
         raise ValueError("unexpected_nbrb_payload")
 

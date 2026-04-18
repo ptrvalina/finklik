@@ -70,8 +70,10 @@ jobs:
             tests/integration/test_buyer_smoke.py::test_buyer_demo_invoice_payment_smoke \
             -v --tb=short
 
+  # Живой HTTPS к www.nbrb.by: из GitHub Actions бывают таймауты/маршрутизация — не блокируем весь CI.
   nbrb-fx-smoke:
     name: NBRB FX Smoke
+    continue-on-error: true
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: "sqlite+aiosqlite:///:memory:"
