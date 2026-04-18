@@ -19,7 +19,7 @@ This runbook describes how to maintain tax rules configuration for production ta
    - `vat_rate`
    - `fsszn_employer`
    - `fsszn_employee`
-4. Optional informational fields (ignored by the parser) may include `vat_rates_applicable` (e.g. `10%,20%,25%`).
+4. Optional informational fields (ignored by the parser) may include `vat_rates_applicable` (e.g. `0%,10%,20%`).
 5. Save file in valid JSON format (UTF-8).
 6. Run local validation via API:
    - call `GET /api/v1/tax/rules/validate` as owner

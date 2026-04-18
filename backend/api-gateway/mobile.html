@@ -85,7 +85,7 @@
             if(taxes) {
                 document.getElementById('taxes').innerHTML = `
                     <p>📊 УСН 6%: ${taxes.usn?.toLocaleString()} ₽</p>
-                    <p>📊 НДС (10/20/25%): ${taxes.vat?.toLocaleString()} ₽</p>
+                    <p>📊 НДС (0/10/20%): ${taxes.vat?.toLocaleString()} ₽</p>
                     <p>📊 ФСЗН 34%: ${taxes.fszn?.toLocaleString()} ₽</p>
                     <p><strong>💰 Итого: ${taxes.total?.toLocaleString()} ₽</strong></p>
                 `;

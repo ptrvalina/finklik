@@ -219,7 +219,7 @@ export default function DashboardPage() {
             <div className="space-y-5">
               {[
                 { name: 'УСН 6%', amount: metrics?.tax_usn_quarter ?? 0, due: true },
-                { name: 'НДС (10/20/25%)', amount: metrics?.tax_vat_month ?? 0, due: true },
+                { name: 'НДС (0/10/20%)', amount: metrics?.tax_vat_month ?? 0, due: true },
                 { name: 'ФСЗН 34%', amount: metrics?.tax_fsszn_quarter ?? 0, due: false },
               ].map((tax) => (
                 <div key={tax.name}>
