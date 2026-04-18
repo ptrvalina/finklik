@@ -78,6 +78,10 @@ make verify-like-ci      # Как job «Backend Tests» в CI: alembic heads + u
 
 Отклонённые порталом заявки можно вернуть в черновик: **`POST /submissions/{id}/reject`** в статусе **`rejected`** (сбрасываются `submission_ref` и `submitted_at`).
 
+**Архив на момент подачи:** после `POST …/submit` сохраняется `submission_snapshot_json`. **`GET /submissions/{id}?include_snapshot=true`** отдаёт поле **`submission_snapshot`**; в списке только флаг **`has_submission_snapshot`**.
+
+Задачи, требующие реальных API/ЭЦП/S3, собраны в [`BACKLOG_SPRINT18_DEFERRED.md`](BACKLOG_SPRINT18_DEFERRED.md) (перенос из спринтов 11–12 в планирование спринта 18).
+
 ---
 
 ## Версии Python (backend)

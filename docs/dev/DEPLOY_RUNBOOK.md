@@ -40,8 +40,9 @@ python -m alembic current
 | `add_org_columns` | `20260416_add_org_columns.py` | Колонки организаций (legal_form, tax_regime, …) |
 | `sprint10_scanned_documents` | `20260417_scanned_documents.py` | Таблица сканов OCR |
 | `sprint12_regulatory_reporting` | `20260418_regulatory_reporting_tables.py` | Регламентные обновления и `report_submissions` |
+| `submission_archive_snapshot` | `20260419_report_submission_snapshot.py` | Колонка `submission_snapshot_json` (архив на момент подачи) |
 
-Head репозитория: **`sprint12_regulatory_reporting`**.
+Head репозитория: **`submission_archive_snapshot`**.
 
 ## 3. После выката
 

@@ -54,6 +54,28 @@ def _mock_portal_accepts(submission_id: str, reject_rate: float) -> bool:
     return bucket >= rr
 
 
+def _build_submission_snapshot_json(
+    submission: ReportSubmission,
+    *,
+    settings,
+    portal_outcome: str,
+    report_payload,
+) -> str:
+    body = {
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "submission_portal_mode": settings.SUBMISSION_PORTAL_MODE,
+        "portal_outcome": portal_outcome,
+        "submission_ref": submission.submission_ref,
+        "authority": submission.authority,
+        "report_type": submission.report_type,
+        "report_period": submission.report_period,
+        "report_data": report_payload,
+        "final_status": submission.status,
+        "rejection_reason": submission.rejection_reason,
+    }
+    return json.dumps(body, ensure_ascii=False, default=str)
+
+
 def _parse_report_period(period: str) -> tuple[date, date, dict]:
     m = _PERIOD_RE.match(period)
     if not m:
@@ -441,6 +463,29 @@ async def list_submissions(
     }
 
 
+@router.get("/{submission_id}")
+async def get_submission(
+    submission_id: str,
+    include_snapshot: bool = Query(
+        False,
+        description="Включить submission_snapshot (архив данных на момент подачи в портал).",
+    ),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Одна заявка; для accepted/rejected можно запросить архивный снимок."""
+    result = await db.execute(
+        select(ReportSubmission).where(
+            ReportSubmission.id == submission_id,
+            ReportSubmission.organization_id == current_user.organization_id,
+        )
+    )
+    submission = result.scalar_one_or_none()
+    if not submission:
+        raise HTTPException(404, "Отчёт не найден")
+    return _serialize(submission, include_snapshot=include_snapshot)
+
+
 @router.post("")
 async def create_submission(
     body: CreateSubmissionRequest,
@@ -592,6 +637,12 @@ async def submit_report(
     if portal_accepts:
         submission.status = "accepted"
         submission.rejection_reason = None
+        submission.submission_snapshot_json = _build_submission_snapshot_json(
+            submission,
+            settings=settings,
+            portal_outcome="accepted",
+            report_payload=report_payload,
+        )
         await db.flush()
         msg = (
             f"Отчёт принят {auth_label}. "
@@ -622,6 +673,12 @@ async def submit_report(
     submission.rejection_reason = external_reason or (
         "Мок портала: отчёт не принят (валидация). "
         "Настройка MOCK_SUBMISSION_REJECT_RATE или portal_sim=reject (DEBUG)."
+    )
+    submission.submission_snapshot_json = _build_submission_snapshot_json(
+        submission,
+        settings=settings,
+        portal_outcome="rejected",
+        report_payload=report_payload,
     )
     await db.flush()
     msg = (
@@ -685,9 +742,11 @@ async def reject_submission(
     return _serialize(submission)
 
 
-def _serialize(s: ReportSubmission) -> dict:
+def _serialize(s: ReportSubmission, *, include_snapshot: bool = False) -> dict:
     authority_types = REPORT_TYPES.get(s.authority, {})
-    return {
+    snap_raw = getattr(s, "submission_snapshot_json", None)
+    has_snap = bool(snap_raw)
+    out: dict = {
         "id": s.id,
         "authority": s.authority,
         "authority_name": _authority_name(s.authority),
@@ -702,7 +761,11 @@ def _serialize(s: ReportSubmission) -> dict:
         "submission_ref": s.submission_ref,
         "rejection_reason": s.rejection_reason,
         "created_at": s.created_at.isoformat(),
+        "has_submission_snapshot": has_snap,
     }
+    if include_snapshot and snap_raw:
+        out["submission_snapshot"] = json.loads(snap_raw)
+    return out
 
 
 def _authority_name(code: str) -> str:

@@ -145,3 +145,30 @@ async def test_submit_portal_sim_ignored_when_not_debug(client: AsyncClient, aut
     body = r.json()
     assert body["status"] == "accepted"
     assert body["portal_outcome"] == "accepted"
+
+
+@pytest.mark.asyncio
+async def test_submission_get_include_snapshot_after_submit(
+    client: AsyncClient, auth_headers: dict, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.report_submission.get_settings",
+        lambda: _stub_submission_settings(DEBUG=True, MOCK_SUBMISSION_REJECT_RATE=0.0),
+    )
+    sid = await _create_confirmed_submission(client, auth_headers)
+    sub = await client.post(
+        f"/api/v1/submissions/{sid}/submit",
+        params={"portal_sim": "accept"},
+        headers=auth_headers,
+    )
+    assert sub.status_code == 200, sub.text
+    r = await client.get(
+        f"/api/v1/submissions/{sid}",
+        params={"include_snapshot": "true"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data.get("has_submission_snapshot") is True
+    assert "submission_snapshot" in data
+    assert data["submission_snapshot"].get("portal_outcome") == "accepted"

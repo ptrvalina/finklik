@@ -206,6 +206,8 @@ export const regulatoryApi = {
 export const submissionsApi = {
   list: (params?: { authority?: string; status?: string }) =>
     api.get('/submissions', { params }),
+  get: (id: string, params?: { include_snapshot?: boolean }) =>
+    api.get(`/submissions/${id}`, { params }),
   getReportTypes: () => api.get('/submissions/report-types'),
   create: (data: { authority: string; report_type: string; report_period: string }) =>
     api.post('/submissions', data),

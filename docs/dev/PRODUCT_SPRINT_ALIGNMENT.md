@@ -6,12 +6,12 @@
 
 | Продукт (scaling-plan) | Смысл | Состояние в репозитории |
 |------------------------|--------|-------------------------|
-| **Спринт 11.** Регламентированные отчёты | Реальные форматы, заполнение из учёта, предпросмотр, валидация, версии форм | Частично: экспорт [`export.py`](../../backend/api-gateway/app/api/v1/endpoints/export.py) (`tax-report.txt`, `vat-declaration.txt`, `fsszn-pu3.txt`, PDF), ПУ-3: единая агрегация зарплаты [`pu3_aggregation.py`](../../backend/api-gateway/app/services/pu3_aggregation.py) для экспорта и черновика подачи; калькулятор [`tax_calculator.py`](../../backend/api-gateway/app/services/tax_calculator.py). Нет полноценных XML/официальных схем и версионирования нормативки. |
-| **Спринт 12.** Госпорталы | Интеграция с порталами, ЭЦП, статусы, архив | Частично: мок-пайплайн [`report_submission.py`](../../backend/api-gateway/app/api/v1/endpoints/report_submission.py), черновик заполняется из учёта (`report_data.source`: `ledger`), UI **Настройки → Подача отчётов** [`SettingsPage.tsx`](../../frontend/web/src/pages/SettingsPage.tsx). Реальных API порталов и ЭЦП нет. |
+| **Спринт 11.** Регламентированные отчёты | Реальные форматы, заполнение из учёта, предпросмотр, валидация, версии форм | **Без внешних API сделано:** экспорт [`export.py`](../../backend/api-gateway/app/api/v1/endpoints/export.py), ПУ-3 через [`pu3_aggregation.py`](../../backend/api-gateway/app/services/pu3_aggregation.py), калькулятор [`tax_calculator.py`](../../backend/api-gateway/app/services/tax_calculator.py), черновики подачи из учёта. **В бэклог спринта 18:** XML/официальные схемы, валидация по схемам, версионирование нормативки, расширенное редактирование — [`BACKLOG_SPRINT18_DEFERRED.md`](BACKLOG_SPRINT18_DEFERRED.md). |
+| **Спринт 12.** Госпорталы | Интеграция с порталами, ЭЦП, статусы, архив | **Без реальных порталов сделано:** пайплайн [`report_submission.py`](../../backend/api-gateway/app/api/v1/endpoints/report_submission.py), mock/http-адаптер, WS+email, UI [`SettingsPage.tsx`](../../frontend/web/src/pages/SettingsPage.tsx), **архивный снимок** на submit + `GET /submissions/{id}`. **В бэклог спринта 18:** реальные API, ЭЦП, очередь, S3-квитанции, UI для WS — [`BACKLOG_SPRINT18_DEFERRED.md`](BACKLOG_SPRINT18_DEFERRED.md). |
 
 ## Инфраструктура для продакшена
 
-После добавления миграции `sprint12_regulatory_reporting` на целевой БД нужно выполнить **`alembic upgrade head`**, иначе на Postgres отсутствуют таблицы `regulatory_updates`, `regulatory_notifications`, `report_submissions`.
+После миграций на целевой БД выполнить **`alembic upgrade head`** (в т.ч. `submission_archive_snapshot` для колонки `submission_snapshot_json`).
 
 ## Фактический релиз «Sprint 11» в нотах
 

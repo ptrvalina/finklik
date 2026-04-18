@@ -44,12 +44,13 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
 
 ## 3c) Regulatory & report submissions (roadmap sprints 11–12 slice)
 
-1. Confirm migration `sprint12_regulatory_reporting` is applied (tables `regulatory_updates`, `report_submissions` exist) — see `docs/dev/PRODUCT_SPRINT_ALIGNMENT.md` and `docs/dev/DEPLOY_RUNBOOK.md`.
+1. Confirm migrations through `submission_archive_snapshot` are applied (`regulatory_updates`, `report_submissions`, column `submission_snapshot_json`) — see `docs/dev/DEPLOY_RUNBOOK.md`.
 2. **Settings → Регламентные обновления**: list loads, optional seed updates on first call.
 3. **Settings → Подача отчётов**: create a mock report (e.g. ФСЗН / ПУ-3), confirm, submit — success message with reference. Optional: pick a **month** period (`YYYY-M01`…`M12`); for **ПУ-3** / **НДС** the form shows a notice that export files in «Документы» are **quarter**-scoped.
 4. **Mock portal outcomes**: with API **`DEBUG=true`**, use dev buttons **accept** / **reject** next to **Отправить** (or query `portal_sim`) — red toast on reject; **В черновик** from **rejected** returns to draft. With **`DEBUG=false`**, `portal_sim` is ignored (see `MOCK_SUBMISSION_REJECT_RATE`).
 5. Optional: WebSocket **`report_status`** after submit (same tab / another client); email only if **`EMAIL_API_KEY`** is set in API env.
 6. In **Просмотр** for a submission: optional **Скачать файл** buttons (same exports as **Документы**) load without error for ИМНС УСН/НДС or ФСЗН ПУ-3 when applicable.
+7. After **Отправить**, API stores an archive snapshot: optional `GET /api/v1/submissions/{id}?include_snapshot=true` returns `submission_snapshot` (or use `has_submission_snapshot` in list).
 
 ## 4) Backup Branches
 

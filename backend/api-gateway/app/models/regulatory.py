@@ -54,6 +54,8 @@ class ReportSubmission(Base):
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     submission_ref: Mapped[str | None] = mapped_column(String(100), nullable=True)
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Снимок report_data + метаданные на момент POST /submit (архив без внешнего API).
+    submission_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
