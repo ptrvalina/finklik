@@ -339,6 +339,7 @@ def parse_total_amount_from_text(text: str) -> float:
     """
     Извлекает итоговую сумму из текста чека/накладной.
     Поддерживает «44 500», «1 234,56», «44500», «500» после маркеров «Итого» и т.п.
+    Учитывает перенос строки после «Итого:» и формулировки «на сумму … руб.».
     """
     t = text.replace("\u00a0", " ")
     # 1) Дробная часть (1–2 знака): запятая или точка
@@ -357,11 +358,38 @@ def parse_total_amount_from_text(text: str) -> float:
                 return v
         except ValueError:
             pass
+    # 2b) «Итого:» на одной строке, сумма на следующей (OCR часто рвёт строку)
+    m = re.search(
+        _MONEY_LINE + r"\s*:\s*\r?\n\s*(\d{1,3}(?:[\s\xa0\u202f]\d{3})*)(?![\d.,])",
+        t,
+        re.IGNORECASE,
+    )
+    if m:
+        try:
+            v = float(_norm_money_token(m.group(1)))
+            if v > 0:
+                return v
+        except ValueError:
+            pass
     # 3) Крупное целое без пробелов (44500)
     m = re.search(_MONEY_LINE + r"[:\s]*(\d{4,})(?![\d.,])", t, re.IGNORECASE)
     if m:
         try:
             return float(m.group(1))
+        except ValueError:
+            pass
+    # 3b) «Всего … на сумму 44 500 руб.»
+    m = re.search(
+        r"на\s+сумму\s+([\d\s\xa0\u202f]+(?:[.,]\d{1,2})?)(?:\s*(?:руб|BYN|бел|коп)|\s*$|\s*\n)",
+        t,
+        re.IGNORECASE,
+    )
+    if m:
+        try:
+            raw = _norm_money_token(m.group(1))
+            v = float(raw)
+            if v > 0:
+                return v
         except ValueError:
             pass
     # 4) Общее «Сумма» в конце строки (слабее, чем итого)
@@ -374,6 +402,26 @@ def parse_total_amount_from_text(text: str) -> float:
         except ValueError:
             pass
     return 0.0
+
+
+def parse_counterparty_from_text(text: str) -> str:
+    """Название организации из типовых строк чека/счёта (РБ/РФ)."""
+    t = text.replace("\u00a0", " ")
+    m = re.search(r"Наименование\s+организации[\s:]+(.+?)(?:\n|$)", t, re.IGNORECASE | re.MULTILINE)
+    if m:
+        line = m.group(1).strip()
+        line = re.sub(r'^[\"\'«»]+|[\"\'«»]+$', "", line)
+        if line:
+            return line[:300]
+    m = re.search(r"(ООО|ОАО|ЗАО|АО|ИП|ЧУП|ЧТУП|ПАО)\s+[«\"]([^»\"]+)[»\"]", t)
+    if m:
+        return f"{m.group(1)} «{m.group(2)}»"[:300]
+    m = re.search(r"(?:Поставщик|Продавец|Исполнитель)[:\s]+(.+?)(?:\n|$)", t, re.IGNORECASE | re.MULTILINE)
+    if m:
+        line = m.group(1).strip()[:300]
+        if line and not re.match(r"^\d", line):
+            return line
+    return ""
 
 
 def parse_vat_amount_from_text(text: str) -> float:
@@ -420,7 +468,7 @@ def _extract_generic(text: str, doc_type: str) -> dict:
     amount = parse_total_amount_from_text(text)
     vat = parse_vat_amount_from_text(text)
     doc_date = date.today().isoformat()
-    description = ""
+    counterparty = parse_counterparty_from_text(text)
 
     date_match = re.search(r'(\d{2}[./]\d{2}[./]\d{4})', text)
     if date_match:
@@ -430,8 +478,8 @@ def _extract_generic(text: str, doc_type: str) -> dict:
         except IndexError:
             pass
 
-    first_line = text.strip().split('\n')[0][:100] if text.strip() else "Документ"
-    description = first_line
+    first_line = text.strip().split("\n")[0][:100] if text.strip() else "Документ"
+    description = (counterparty or first_line)[:500]
 
     confidence = 30
     if amount > 0:
@@ -440,6 +488,8 @@ def _extract_generic(text: str, doc_type: str) -> dict:
         confidence += 15
     if date_match:
         confidence += 15
+    if counterparty:
+        confidence += 10
 
     return {
         "doc_type": doc_type,
@@ -451,6 +501,7 @@ def _extract_generic(text: str, doc_type: str) -> dict:
             "vat_amount": vat,
             "description": description,
             "transaction_date": doc_date,
+            "counterparty_name": counterparty or None,
         },
         "warnings": [] if amount > 0 else ["Не удалось извлечь сумму из текста"],
     }

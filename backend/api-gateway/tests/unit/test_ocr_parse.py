@@ -1,5 +1,10 @@
 """Разбор сумм из OCR-текста чеков (без интеграции с API)."""
-from app.services.ocr_service import parse_total_amount_from_text, parse_vat_amount_from_text, _extract_generic
+from app.services.ocr_service import (
+    parse_counterparty_from_text,
+    parse_total_amount_from_text,
+    parse_vat_amount_from_text,
+    _extract_generic,
+)
 
 
 def test_parse_total_integer_with_spaces():
@@ -34,3 +39,21 @@ def test_extract_generic_receipt_warning_cleared():
     out = _extract_generic(text, "receipt")
     assert out["parsed"]["amount"] == 44500.0
     assert "Не удалось извлечь сумму" not in " ".join(out.get("warnings", []))
+
+
+def test_parse_total_multiline_after_ito():
+    text = "Товарный чек\nИтого:\n44 500\n"
+    assert parse_total_amount_from_text(text) == 44500.0
+
+
+def test_parse_total_na_summu_rub():
+    text = "Всего на сумму 44 500 руб. 00 коп.\n"
+    assert parse_total_amount_from_text(text) == 44500.0
+
+
+def test_parse_counterparty_org_name():
+    text = 'Наименование организации: ООО «Ромашка»\nИтого: 100\n'
+    assert "Ромашка" in parse_counterparty_from_text(text)
+    out = _extract_generic(text, "receipt")
+    assert out["parsed"].get("counterparty_name")
+    assert "Ромашка" in (out["parsed"].get("counterparty_name") or "")

@@ -1,7 +1,6 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi, dashboardApi } from '../api/client'
-import AppModal from '../components/ui/AppModal'
 import { formatApiDetail } from '../utils/apiError'
 
 function clientErrorText(err: unknown): string {
@@ -27,6 +26,16 @@ type HistoryItem = {
   parsed: ParsedData; transaction_id: string | null; created_at: string
 }
 
+type EditDraft = {
+  docType: string
+  counterparty: string
+  transactionDate: string
+  amount: string
+  vatAmount: string
+  txType: string
+  description: string
+}
+
 const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> = {
   receipt: { label: 'Чек', icon: 'receipt', color: 'text-secondary' },
   ttn: { label: 'ТТН', icon: 'local_shipping', color: 'text-primary' },
@@ -49,8 +58,9 @@ export default function ScannerPage() {
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
-  const [showCreateTx, setShowCreateTx] = useState(false)
-  const [txForm, setTxForm] = useState({ type: 'expense', amount: '', description: '', date: '' })
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
+  const lastScanIdRef = useRef<string | null>(null)
+  const [amountError, setAmountError] = useState<string | null>(null)
   const [txSaved, setTxSaved] = useState(false)
   const [activeTab, setActiveTab] = useState<'upload' | 'text'>('upload')
   const [textInput, setTextInput] = useState('')
@@ -64,7 +74,8 @@ export default function ScannerPage() {
   const uploadMutation = useMutation({
     mutationFn: (file: File) => scannerApi.upload(file),
     onSuccess: (res) => {
-      setScanResult(res.data); setShowCreateTx(false); setTxSaved(false)
+      setScanResult(res.data)
+      setTxSaved(false)
       qc.invalidateQueries({ queryKey: ['scanner-history'] })
     },
   })
@@ -72,7 +83,8 @@ export default function ScannerPage() {
   const createTxMutation = useMutation({
     mutationFn: (data: any) => dashboardApi.createTransaction(data),
     onSuccess: () => {
-      setTxSaved(true); setShowCreateTx(false)
+      setTxSaved(true)
+      setAmountError(null)
       qc.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
@@ -86,15 +98,37 @@ export default function ScannerPage() {
     mutationFn: () => scannerApi.parseText(textInput, textDocType || undefined),
     onSuccess: (res) => {
       setScanResult(res.data)
-      setShowCreateTx(false)
       setTxSaved(false)
       setPreview(null)
       qc.invalidateQueries({ queryKey: ['scanner-history'] })
     },
   })
 
+  useEffect(() => {
+    if (!scanResult?.id) {
+      setEditDraft(null)
+      lastScanIdRef.current = null
+      return
+    }
+    if (lastScanIdRef.current === scanResult.id) return
+    lastScanIdRef.current = scanResult.id
+    const p = scanResult.parsed
+    const d0 = (p.transaction_date?.slice(0, 10) || new Date().toISOString().slice(0, 10))
+    setEditDraft({
+      docType: scanResult.doc_type || 'unknown',
+      counterparty: p.counterparty_name || '',
+      transactionDate: d0,
+      amount: p.amount != null && Number(p.amount) > 0 ? String(p.amount) : '',
+      vatAmount: p.vat_amount != null && Number(p.vat_amount) > 0 ? String(p.vat_amount) : '',
+      txType: p.type || 'expense',
+      description: p.description || '',
+    })
+    setAmountError(null)
+    setTxSaved(false)
+  }, [scanResult])
+
   const handleFile = useCallback((file: File) => {
-    setPreview(null); setScanResult(null); setShowCreateTx(false); setTxSaved(false)
+    setPreview(null); setScanResult(null); setTxSaved(false)
     if (file.type.startsWith('image/')) {
       const reader = new FileReader()
       reader.onload = (e) => setPreview(e.target?.result as string)
@@ -109,15 +143,29 @@ export default function ScannerPage() {
     if (file) handleFile(file)
   }, [handleFile])
 
-  function openCreateTx() {
-    if (!scanResult?.parsed) return
-    const p = scanResult.parsed
-    setTxForm({ type: p.type || 'expense', amount: String(p.amount || ''), description: p.description || '', date: p.transaction_date || new Date().toISOString().slice(0, 10) })
-    setShowCreateTx(true)
-  }
-
-  function submitTx() {
-    createTxMutation.mutate({ type: txForm.type, amount: parseFloat(txForm.amount) || 0, description: txForm.description, transaction_date: txForm.date })
+  function submitTxFromDraft() {
+    if (!editDraft || !scanResult) return
+    const raw = editDraft.amount.replace(/\s/g, '').replace(',', '.')
+    const amt = parseFloat(raw) || 0
+    if (amt <= 0) {
+      setAmountError('Укажите сумму больше 0')
+      return
+    }
+    setAmountError(null)
+    const vatRaw = editDraft.vatAmount.replace(/\s/g, '').replace(',', '.')
+    const vat = parseFloat(vatRaw) || 0
+    const label = DOC_ICONS[editDraft.docType]?.label || 'Документ'
+    const cp = editDraft.counterparty.trim()
+    const desc =
+      editDraft.description.trim()
+      || (cp ? `${label}: ${cp}` : `${label} (${scanResult.filename})`)
+    createTxMutation.mutate({
+      type: editDraft.txType,
+      amount: amt,
+      vat_amount: vat,
+      description: desc,
+      transaction_date: editDraft.transactionDate,
+    })
   }
 
   return (
@@ -235,13 +283,16 @@ export default function ScannerPage() {
           )}
 
           {/* Scan result */}
-          {scanResult && (
+          {scanResult && (() => {
+            const displayDoc = editDraft?.docType || scanResult.doc_type
+            const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
+            return (
             <div className="mt-6 overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-low ring-1 ring-white/[0.05]">
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
-                  <Icon name={DOC_ICONS[scanResult.doc_type]?.icon || 'description'} filled className={`text-2xl ${DOC_ICONS[scanResult.doc_type]?.color}`} />
+                  <Icon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
                   <div>
-                    <h3 className="font-bold text-on-surface">{DOC_ICONS[scanResult.doc_type]?.label || 'Документ'} распознан</h3>
+                    <h3 className="font-bold text-on-surface">{dmeta.label} распознан</h3>
                     <p className="text-xs text-on-surface-variant">{scanResult.filename}</p>
                   </div>
                 </div>
@@ -273,15 +324,102 @@ export default function ScannerPage() {
                   )}
                 </div>
                 <div className="space-y-4 p-4 sm:p-6">
-                  <h4 className="label">Распознанные данные</h4>
-                  <div className="space-y-3">
-                    {scanResult.parsed.counterparty_name && <Field label="Контрагент" value={scanResult.parsed.counterparty_name} />}
-                    {scanResult.parsed.doc_number && <Field label="Номер" value={scanResult.parsed.doc_number} />}
-                    {scanResult.parsed.transaction_date && <Field label="Дата" value={scanResult.parsed.transaction_date} />}
-                    {scanResult.parsed.amount != null && <Field label="Сумма" value={`${scanResult.parsed.amount.toFixed(2)} BYN`} highlight />}
-                    {scanResult.parsed.vat_amount != null && <Field label="НДС" value={`${scanResult.parsed.vat_amount.toFixed(2)} BYN`} />}
-                    {scanResult.parsed.items_count != null && <Field label="Позиций" value={String(scanResult.parsed.items_count)} />}
+                  <div>
+                    <h4 className="label">Данные для операции</h4>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      Проверьте распознавание и при необходимости исправьте поля перед созданием операции.
+                    </p>
                   </div>
+                  {editDraft && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="label">Вид документа</label>
+                        <select
+                          className="input min-h-11 w-full rounded-xl"
+                          value={editDraft.docType}
+                          onChange={(e) => setEditDraft((d) => d && { ...d, docType: e.target.value })}
+                        >
+                          {Object.entries(DOC_ICONS).map(([k, v]) => (
+                            <option key={k} value={k}>{v.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">Контрагент</label>
+                        <input
+                          className="input min-h-11 w-full rounded-xl"
+                          value={editDraft.counterparty}
+                          onChange={(e) => setEditDraft((d) => d && { ...d, counterparty: e.target.value })}
+                          placeholder="Название организации или ИП"
+                        />
+                      </div>
+                      {scanResult.parsed.doc_number && (
+                        <p className="text-xs text-on-surface-variant">Номер в документе: {scanResult.parsed.doc_number}</p>
+                      )}
+                      <div>
+                        <label className="label">Дата операции</label>
+                        <input
+                          type="date"
+                          className="input min-h-11 w-full rounded-xl"
+                          value={editDraft.transactionDate}
+                          onChange={(e) => setEditDraft((d) => d && { ...d, transactionDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="label">Сумма, BYN</label>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className="input min-h-11 w-full rounded-xl"
+                            value={editDraft.amount}
+                            onChange={(e) => {
+                              setEditDraft((d) => d && { ...d, amount: e.target.value })
+                              setAmountError(null)
+                            }}
+                            placeholder="Например 44500 или 44 500"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">НДС, BYN</label>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className="input min-h-11 w-full rounded-xl"
+                            value={editDraft.vatAmount}
+                            onChange={(e) => setEditDraft((d) => d && { ...d, vatAmount: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="label">Тип операции</label>
+                        <select
+                          className="input min-h-11 w-full rounded-xl"
+                          value={editDraft.txType}
+                          onChange={(e) => setEditDraft((d) => d && { ...d, txType: e.target.value })}
+                        >
+                          <option value="expense">Расход</option>
+                          <option value="income">Доход</option>
+                          <option value="refund">Возврат</option>
+                          <option value="writeoff">Списание</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">Описание в операции</label>
+                        <textarea
+                          className="input min-h-[72px] w-full rounded-xl text-sm"
+                          value={editDraft.description}
+                          onChange={(e) => setEditDraft((d) => d && { ...d, description: e.target.value })}
+                          placeholder="Необязательно; если пусто — подставятся вид документа и контрагент"
+                        />
+                      </div>
+                      {amountError && <p className="text-sm text-error">{amountError}</p>}
+                    </div>
+                  )}
+                  {scanResult.parsed.items_count != null && (
+                    <p className="text-xs text-on-surface-variant">Позиций в документе: {scanResult.parsed.items_count}</p>
+                  )}
                   {scanResult.warnings && scanResult.warnings.length > 0 && (
                     <div className="bg-tertiary/5 border border-tertiary/20 rounded-lg p-3 space-y-1">
                       <p className="text-[10px] text-tertiary font-bold uppercase tracking-wider">Предупреждения</p>
@@ -291,8 +429,13 @@ export default function ScannerPage() {
                     </div>
                   )}
                   {!txSaved ? (
-                    <button type="button" onClick={openCreateTx} className="btn-primary mt-4 min-h-12 w-full">
-                      <Icon name="add" /> Создать операцию
+                    <button
+                      type="button"
+                      onClick={submitTxFromDraft}
+                      className="btn-primary mt-2 min-h-12 w-full"
+                      disabled={!editDraft || createTxMutation.isPending}
+                    >
+                      <Icon name="add" /> {createTxMutation.isPending ? 'Сохраняем...' : 'Создать операцию'}
                     </button>
                   ) : (
                     <div className="mt-4 bg-secondary/10 text-secondary border border-secondary/20 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
@@ -302,7 +445,8 @@ export default function ScannerPage() {
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Sidebar */}
@@ -348,7 +492,9 @@ export default function ScannerPage() {
                         <Icon name={t.icon} className={`${t.color} group-hover:text-primary transition-colors`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate text-on-surface">{item.parsed?.description || item.filename}</p>
+                        <p className="text-sm font-medium truncate text-on-surface">
+                          {item.parsed?.counterparty_name || item.parsed?.description || item.filename}
+                        </p>
                         <p className="text-[10px] text-on-surface-variant">
                           {new Date(item.created_at).toLocaleDateString('ru-RU')}
                           {item.parsed?.amount != null && ` · ${item.parsed.amount.toFixed(2)} BYN`}
@@ -401,75 +547,6 @@ export default function ScannerPage() {
         ))}
       </div>
 
-      {showCreateTx && (
-        <AppModal
-          title="Создать операцию"
-          onClose={() => setShowCreateTx(false)}
-          footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowCreateTx(false)}>
-                Отмена
-              </button>
-              <button type="button" className="btn-primary min-h-12 flex-1" disabled={createTxMutation.isPending} onClick={submitTx}>
-                {createTxMutation.isPending ? 'Сохраняем...' : 'Сохранить'}
-              </button>
-            </div>
-          }
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="label">Тип</label>
-              <select
-                value={txForm.type}
-                onChange={(e) => setTxForm((f) => ({ ...f, type: e.target.value }))}
-                className="input min-h-11 rounded-xl"
-              >
-                <option value="income">Доход</option>
-                <option value="expense">Расход</option>
-                <option value="refund">Возврат</option>
-                <option value="writeoff">Списание</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">Сумма, BYN</label>
-              <input
-                type="number"
-                step="0.01"
-                inputMode="decimal"
-                value={txForm.amount}
-                onChange={(e) => setTxForm((f) => ({ ...f, amount: e.target.value }))}
-                className="input min-h-11 rounded-xl"
-              />
-            </div>
-            <div>
-              <label className="label">Описание</label>
-              <input
-                value={txForm.description}
-                onChange={(e) => setTxForm((f) => ({ ...f, description: e.target.value }))}
-                className="input min-h-11 rounded-xl"
-              />
-            </div>
-            <div>
-              <label className="label">Дата</label>
-              <input
-                type="date"
-                value={txForm.date}
-                onChange={(e) => setTxForm((f) => ({ ...f, date: e.target.value }))}
-                className="input min-h-11 rounded-xl"
-              />
-            </div>
-          </div>
-        </AppModal>
-      )}
-    </div>
-  )
-}
-
-function Field({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-on-surface-variant">{label}</span>
-      <span className={`text-sm font-medium ${highlight ? 'text-primary text-base font-bold' : 'text-on-surface'}`}>{value}</span>
     </div>
   )
 }
