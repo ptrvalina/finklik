@@ -22,6 +22,12 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import Organization, User
 from app.services.org_llm_crypto import decrypt_org_llm_api_key, encrypt_org_llm_api_key
+from app.services.assistant_knowledge import (
+    append_demo_sources_footer,
+    format_sources_for_api,
+    get_sources_catalog,
+    retrieve_for_query,
+)
 
 log = structlog.get_logger()
 router = APIRouter(prefix="/assistant", tags=["assistant"])
@@ -31,12 +37,18 @@ SYSTEM_PROMPT = """Ты — ИИ-ассистент веб-приложения 
 на уровне общих ориентиров (ИМНС, ФСЗН, Белстат, Белгосстрах), подсказывать перспективы развития дела в нейтральной форме
 (рост, риски, что уточнить у бухгалтера), не выдавая себя за официальный источник.
 
+Ориентиры по источникам: официальные тексты НПА — на Pravo.by; разъяснения и сервисы — на порталах ИМНС, ФСЗН, Белстата, Белгосстраха;
+справочно-правовые системы (Нормотека, Эталон-Онлайн и аналоги) — вспомогательные, договор с поставщиком на стороне клиента;
+методические журналы (в т.ч. «Главбух») — не заменяют законодательство РБ.
+
 Критически важно:
 - Ты НЕ юрист и НЕ налоговый консультант. Не выдавай ответы за официальную позицию ИМНС/ФСЗН/Белстата/Белгосстраха.
 - Всегда при спорных вопросах советуй обратиться к бухгалтеру или в соответствующий орган и сверять с первоисточниками.
 - Не запрашивай и не проси пользователя прислать персональные данные, пароли, полные реквизиты счетов, API-ключи.
-- Отвечай по-русски, кратко и по делу.
+- Отвечай по-русски, кратко и по делу. Если ниже дан справочный контекст с id [kb-…], можешь ссылаться на него в тексте.
 """
+
+RAG_MAX_CHARS = 12000
 
 MAX_MESSAGES = 24
 MAX_CONTENT_LEN = 6000
@@ -115,13 +127,31 @@ def _mock_reply(user_text: str) -> str:
     )
 
 
-async def _openai_chat(messages: list[dict], *, api_key: str, base_url: str, model: str) -> str:
+def _build_system_prompt_with_rag(rag_block: str | None) -> str:
+    if not rag_block:
+        return SYSTEM_PROMPT
+    block = rag_block[:RAG_MAX_CHARS]
+    return (
+        SYSTEM_PROMPT
+        + "\n\n---\nСправочный контекст (внутренняя база ФинКлик, не полный текст законов):\n\n"
+        + block
+    )
+
+
+async def _openai_chat(
+    messages: list[dict],
+    *,
+    api_key: str,
+    base_url: str,
+    model: str,
+    system_prompt: str,
+) -> str:
     base = (base_url or "https://api.openai.com/v1").rstrip("/")
     url = f"{base}/chat/completions"
 
     payload = {
         "model": model,
-        "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *messages],
+        "messages": [{"role": "system", "content": system_prompt}, *messages],
         "temperature": 0.35,
         "max_tokens": 1200,
     }
@@ -189,6 +219,15 @@ async def _resolve_llm_for_org(
     return None, default_base, default_model, "none"
 
 
+@router.get("/sources")
+async def assistant_sources_catalog(_user: User = Depends(get_current_user)):
+    """Каталог ориентиров: госпорталы, Pravo.by, типы СПС — для UI и прозрачности."""
+    data = get_sources_catalog()
+    if not data:
+        return {"version": 1, "groups": []}
+    return data
+
+
 @router.get("/status")
 async def assistant_status(
     current_user: User = Depends(get_current_user),
@@ -228,15 +267,37 @@ async def assistant_chat(
     if last["role"] != "user":
         raise HTTPException(400, detail="Последнее сообщение должно быть от пользователя")
 
+    retrieved_chunks, rag_block = retrieve_for_query(last["content"], limit=6)
+    sources = format_sources_for_api(retrieved_chunks)
+
     api_key, base, model, key_source = await _resolve_llm_for_org(db, current_user.organization_id)
     if not api_key:
-        reply = _mock_reply(last["content"])
-        return {"reply": reply, "mode": "demo", "llm_key_source": "none"}
+        reply = _mock_reply(last["content"]) + append_demo_sources_footer(last["content"])
+        return {
+            "reply": reply,
+            "mode": "demo",
+            "llm_key_source": "none",
+            "sources": sources,
+            "rag": True,
+        }
 
-    reply = await _openai_chat(history, api_key=api_key, base_url=base, model=model)
+    system_prompt = _build_system_prompt_with_rag(rag_block or None)
+    reply = await _openai_chat(
+        history,
+        api_key=api_key,
+        base_url=base,
+        model=model,
+        system_prompt=system_prompt,
+    )
     if not reply:
         reply = "Не удалось сформулировать ответ. Переформулируйте вопрос или попробуйте позже."
-    return {"reply": reply, "mode": "llm", "llm_key_source": key_source}
+    return {
+        "reply": reply,
+        "mode": "llm",
+        "llm_key_source": key_source,
+        "sources": sources,
+        "rag": bool(rag_block),
+    }
 
 
 @router.post("/organization-key")

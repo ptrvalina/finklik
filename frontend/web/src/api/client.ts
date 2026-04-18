@@ -240,7 +240,15 @@ export const submissionsApi = {
     api.post(`/submissions/${id}/reject`, null, { params: { reason } }),
 }
 
-export type AssistantChatMessage = { role: 'user' | 'assistant'; content: string }
+export type AssistantSource = {
+  id: string | null
+  title: string | null
+  url: string | null
+  authority?: string
+  kinds?: string[]
+}
+
+export type AssistantChatMessage = { role: 'user' | 'assistant'; content: string; sources?: AssistantSource[] }
 
 export type AssistantLlmKeySource = 'none' | 'organization' | 'platform'
 
@@ -253,11 +261,18 @@ export const assistantApi = {
       org_key_configured: boolean
       isolation_note: string | null
     }>('/assistant/status'),
-  chat: (messages: AssistantChatMessage[]) =>
-    api.post<{ reply: string; mode: 'demo' | 'llm'; llm_key_source: AssistantLlmKeySource }>(
-      '/assistant/chat',
-      { messages },
+  sourcesCatalog: () =>
+    api.get<{ version?: number; groups?: Array<{ id: string; title: string; entries: Array<{ title: string; url: string | null; note?: string }> }> }>(
+      '/assistant/sources',
     ),
+  chat: (messages: AssistantChatMessage[]) =>
+    api.post<{
+      reply: string
+      mode: 'demo' | 'llm'
+      llm_key_source: AssistantLlmKeySource
+      sources?: AssistantSource[]
+      rag?: boolean
+    }>('/assistant/chat', { messages }),
   setOrganizationKey: (body: { api_key: string; base_url?: string | null; model?: string | null }) =>
     api.post<{ ok: boolean; message?: string }>('/assistant/organization-key', body),
   deleteOrganizationKey: () => api.delete<{ ok: boolean }>('/assistant/organization-key'),

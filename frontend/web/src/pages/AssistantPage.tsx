@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { assistantApi, type AssistantChatMessage } from '../api/client'
+import { assistantApi, type AssistantChatMessage, type AssistantSource } from '../api/client'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -26,10 +26,16 @@ export default function AssistantPage() {
     queryFn: () => assistantApi.status().then((r) => r.data),
   })
 
+  const { data: sourcesCatalog } = useQuery({
+    queryKey: ['assistant-sources-catalog'],
+    queryFn: () => assistantApi.sourcesCatalog().then((r) => r.data),
+  })
+
   const chatMutation = useMutation({
     mutationFn: (msgs: AssistantChatMessage[]) => assistantApi.chat(msgs).then((r) => r.data),
     onSuccess: (data, vars) => {
-      setMessages([...vars, { role: 'assistant', content: data.reply }])
+      const src = data.sources as AssistantSource[] | undefined
+      setMessages([...vars, { role: 'assistant', content: data.reply, sources: src }])
     },
   })
 
@@ -54,7 +60,8 @@ export default function AssistantPage() {
       <div>
         <h1 className="font-headline text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Консультант</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Общие подсказки по учёту и разделам ФинКлика. Не заменяет бухгалтера и официальные разъяснения органов.
+          Ориентиры по учёту, госпорталам (ИМНС, ФСЗН, Белстат, Белгосстрах), Pravo.by и справочным системам. Не заменяет бухгалтера и
+          официальные разъяснения органов.
         </p>
       </div>
 
@@ -107,6 +114,27 @@ export default function AssistantPage() {
                   </button>
                 ))}
               </div>
+              {sourcesCatalog?.groups && sourcesCatalog.groups.length > 0 && (
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Первоисточники и порталы</p>
+                  <ul className="mt-2 space-y-1.5 text-[11px] text-zinc-400">
+                    {sourcesCatalog.groups.flatMap((g) =>
+                      (g.entries || []).map((e) => (
+                        <li key={`${g.id}-${e.title}`}>
+                          {e.url ? (
+                            <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {e.title}
+                            </a>
+                          ) : (
+                            <span className="text-zinc-300">{e.title}</span>
+                          )}
+                          {e.note && <span className="text-zinc-600"> — {e.note}</span>}
+                        </li>
+                      )),
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -120,6 +148,32 @@ export default function AssistantPage() {
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
+                  <div className="mt-3 border-t border-white/[0.08] pt-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Источники-ориентиры</p>
+                    <ul className="mt-1.5 space-y-1">
+                      {m.sources.map((s) => (
+                        <li key={s.id || s.title || ''} className="text-[11px] text-zinc-400">
+                          {s.url ? (
+                            <a
+                              href={s.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {s.title}
+                            </a>
+                          ) : (
+                            <span className="text-zinc-300">{s.title}</span>
+                          )}
+                          {s.authority && s.authority !== 'general' && (
+                            <span className="ml-1 text-zinc-600">({s.authority})</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           ))}
