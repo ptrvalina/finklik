@@ -147,34 +147,20 @@ export default function Layout() {
           </nav>
         </div>
 
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="flex justify-center border-t border-white/[0.06] p-3">
           <NavLink
             to="/assistant"
+            title="Консультант"
+            aria-label="Консультант"
             className={({ isActive }) =>
-              `tap-highlight-none flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-center transition-colors ${
+              `tap-highlight-none flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-white/[0.06] transition-colors ${
                 isActive
-                  ? 'bg-teal-500/15 ring-1 ring-teal-500/35'
-                  : 'bg-white/[0.03] ring-1 ring-white/[0.06] hover:bg-white/[0.06]'
+                  ? 'bg-violet-500/15 text-teal-200 ring-violet-500/30'
+                  : 'bg-white/[0.05] text-zinc-300 hover:bg-white/[0.08]'
               }`
             }
-            aria-label="Консультант"
           >
-            {({ isActive }) => (
-              <>
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
-                    isActive
-                      ? 'bg-gradient-to-br from-violet-500/30 to-cyan-600/25 text-teal-200'
-                      : 'bg-gradient-to-br from-violet-500/15 to-cyan-600/15 text-zinc-300'
-                  }`}
-                >
-                  <Icon name="smart_toy" filled={isActive} className="text-[28px]" />
-                </div>
-                <span className={`text-[11px] font-bold leading-tight ${isActive ? 'text-teal-200' : 'text-zinc-400'}`}>
-                  Консультант
-                </span>
-              </>
-            )}
+            {({ isActive }) => <Icon name="smart_toy" filled={isActive} className="text-[20px]" />}
           </NavLink>
         </div>
       </aside>
@@ -196,20 +182,17 @@ export default function Layout() {
             <NavLink
               to="/scanner"
               end
+              title="Сканировать"
+              aria-label="Сканировать"
               className={({ isActive }) =>
-                `tap-highlight-none flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 transition-colors sm:min-h-11 sm:px-4 ${
+                `tap-highlight-none flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-white/[0.06] transition-colors sm:h-10 sm:w-10 ${
                   isActive
-                    ? 'border-teal-500/35 bg-teal-500/10 text-teal-200 ring-1 ring-teal-500/20'
-                    : 'border-white/[0.08] bg-white/[0.04] text-zinc-200 hover:bg-white/[0.07]'
+                    ? 'bg-teal-500/15 text-teal-200 ring-teal-500/35'
+                    : 'bg-white/[0.05] text-zinc-300 hover:bg-white/[0.08] hover:text-zinc-100'
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <Icon name="document_scanner" filled={isActive} className="shrink-0 text-[22px] sm:text-2xl" />
-                  <span className="truncate text-sm font-bold tracking-tight">Сканер</span>
-                </>
-              )}
+              {({ isActive }) => <Icon name="document_scanner" filled={isActive} className="text-[20px] sm:text-[22px]" />}
             </NavLink>
           </div>
 
