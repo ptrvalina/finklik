@@ -50,7 +50,7 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
 4. **Mock portal outcomes**: with API **`DEBUG=true`**, use dev buttons **accept** / **reject** next to **Отправить** (or query `portal_sim`) — red toast on reject; **В черновик** from **rejected** returns to draft. With **`DEBUG=false`**, `portal_sim` is ignored (see `MOCK_SUBMISSION_REJECT_RATE`).
 5. Optional: WebSocket **`report_status`** after submit (same tab / another client); email only if **`EMAIL_API_KEY`** is set in API env.
 6. In **Просмотр** for a submission: optional **Скачать файл** buttons (same exports as **Документы**) load without error for ИМНС УСН/НДС or ФСЗН ПУ-3 when applicable.
-7. After **Отправить**, API stores an archive snapshot: optional `GET /api/v1/submissions/{id}?include_snapshot=true` returns `submission_snapshot` (or use `has_submission_snapshot` in list).
+7. After **Отправить**, API stores an archive snapshot. In **Просмотр** for **accepted/rejected** with `has_submission_snapshot`, the UI loads the archive and shows export + preview; optional raw check: `GET /api/v1/submissions/{id}?include_snapshot=true`.
 
 ## 4) Backup Branches
 

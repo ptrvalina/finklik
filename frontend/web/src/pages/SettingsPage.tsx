@@ -800,6 +800,17 @@ function SubmissionsSection() {
     queryFn: () => submissionsApi.getReportTypes().then(r => r.data),
   })
 
+  const snapshotEnabled =
+    !!previewData?.id &&
+    (previewData.status === 'accepted' || previewData.status === 'rejected') &&
+    !!previewData.has_submission_snapshot
+
+  const snapshotQuery = useQuery({
+    queryKey: ['submission-snapshot', previewData?.id],
+    queryFn: () => submissionsApi.get(previewData!.id, { include_snapshot: true }).then(r => r.data),
+    enabled: snapshotEnabled,
+  })
+
   const createMutation = useMutation({
     mutationFn: () => submissionsApi.create(createForm),
     onSuccess: (res) => {
@@ -1137,39 +1148,102 @@ function SubmissionsSection() {
               report_period: previewData.report_period,
               report_data: previewData.report_data,
             })
+            const snap = snapshotQuery.data?.submission_snapshot
+            const snapReport = snap?.report_data
+            const exportArchive =
+              snapReport
+                ? buildSubmissionExportActions({
+                    authority: previewData.authority,
+                    report_type: previewData.report_type,
+                    report_period: previewData.report_period,
+                    report_data: snapReport,
+                  })
+                : []
+
+            function renderExportBlock(
+              actions: ReturnType<typeof buildSubmissionExportActions>,
+              title: string,
+              keyPrefix: 'cur' | 'arc',
+            ) {
+              if (actions.length === 0) return null
+              return (
+                <div className="rounded-xl border border-outline-variant/20 bg-surface-container-high p-4">
+                  <p className="mb-3 text-xs font-bold text-on-surface">{title}</p>
+                  <div className="flex flex-wrap gap-3">
+                    {actions.map((ex) => (
+                      <div key={`${keyPrefix}-${ex.key}`} className="flex min-w-[140px] flex-col gap-1">
+                        <button
+                          type="button"
+                          className="btn-secondary !py-2 !text-xs"
+                          disabled={exportLoading !== null}
+                          onClick={async () => {
+                            try {
+                              setExportLoading(`${keyPrefix}:${ex.key}`)
+                              await ex.run()
+                              flash('success', 'Файл сохранён')
+                            } catch (e: any) {
+                              flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка скачивания')
+                            } finally {
+                              setExportLoading(null)
+                            }
+                          }}
+                        >
+                          {exportLoading === `${keyPrefix}:${ex.key}` ? 'Скачивание…' : ex.label}
+                        </button>
+                        {ex.hint && <span className="text-[10px] leading-snug text-on-surface-variant">{ex.hint}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div className="space-y-4">
-                {exportActions.length > 0 && (
-                  <div className="rounded-xl border border-outline-variant/20 bg-surface-container-high p-4">
-                    <p className="mb-3 text-xs font-bold text-on-surface">Скачать файл (те же данные, что в разделе «Документы»)</p>
-                    <div className="flex flex-wrap gap-3">
-                      {exportActions.map((ex) => (
-                        <div key={ex.key} className="flex min-w-[140px] flex-col gap-1">
-                          <button
-                            type="button"
-                            className="btn-secondary !py-2 !text-xs"
-                            disabled={exportLoading !== null}
-                            onClick={async () => {
-                              try {
-                                setExportLoading(ex.key)
-                                await ex.run()
-                                flash('success', 'Файл сохранён')
-                              } catch (e: any) {
-                                flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка скачивания')
-                              } finally {
-                                setExportLoading(null)
-                              }
-                            }}
-                          >
-                            {exportLoading === ex.key ? 'Скачивание…' : ex.label}
-                          </button>
-                          {ex.hint && <span className="text-[10px] leading-snug text-on-surface-variant">{ex.hint}</span>}
+                {renderExportBlock(
+                  exportActions,
+                  'Скачать файл (текущие данные заявки, как в «Документы»)',
+                  'cur',
+                )}
+                {snapshotEnabled && (
+                  <div className="rounded-xl border border-secondary/25 bg-secondary/5 p-4">
+                    <p className="mb-1 text-xs font-bold text-secondary flex items-center gap-2">
+                      <Icon name="archive" className="text-base" /> Архив на момент отправки в портал
+                    </p>
+                    {snapshotQuery.isLoading && (
+                      <p className="text-xs text-on-surface-variant">Загрузка архива…</p>
+                    )}
+                    {snapshotQuery.isError && (
+                      <p className="text-xs text-error">Не удалось загрузить архив. Попробуйте закрыть и открыть снова.</p>
+                    )}
+                    {snapshotQuery.isSuccess && !snap && (
+                      <p className="text-xs text-on-surface-variant">Снимок не сохранён (например, заявка до миграции).</p>
+                    )}
+                    {snap && (
+                      <>
+                        <p className="text-[10px] text-on-surface-variant mb-3">
+                          {snap.captured_at
+                            ? new Date(snap.captured_at).toLocaleString('ru-BY', { dateStyle: 'short', timeStyle: 'short' })
+                            : ''}
+                          {snap.portal_outcome ? ` · исход: ${snap.portal_outcome}` : ''}
+                          {snap.submission_ref ? ` · реф. ${snap.submission_ref}` : ''}
+                        </p>
+                        {renderExportBlock(
+                          exportArchive,
+                          'Скачать файл по данным из архива (как при подаче)',
+                          'arc',
+                        )}
+                        <div className="rounded-lg bg-surface-container-low p-4 mt-2">
+                          <ReportSubmissionPreview data={snapReport} />
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    )}
                   </div>
                 )}
                 <div className="rounded-lg bg-surface-container-low p-4">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">
+                    {snapshotEnabled ? 'Текущие данные в заявке' : 'Данные отчёта'}
+                  </p>
                   <ReportSubmissionPreview data={previewData.report_data} />
                 </div>
               </div>

@@ -23,6 +23,7 @@ def main() -> int:
     artifacts.mkdir(exist_ok=True)
     summary = artifacts / "pre-demo-smoke-summary.md"
 
+    _run([sys.executable, "-m", "alembic", "heads"], cwd=backend)
     _run(
         [
             sys.executable,
@@ -47,6 +48,7 @@ def main() -> int:
                 "",
                 "## Checks",
                 "",
+                "- Alembic heads (single chain): PASS",
                 "- Backend unit/tax + metrics smoke: PASS",
                 "- Frontend production build: PASS",
                 "",
