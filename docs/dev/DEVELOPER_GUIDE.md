@@ -66,9 +66,11 @@ make clean        # Полная очистка
 
 ## Версии Python (backend)
 
-- Рекомендуется: `Python 3.11` (CI baseline).
+- Рекомендуется: `Python 3.11` (CI baseline). В корне репозитория файл `.python-version` содержит `3.11` (pyenv / asdf).
 - Поддерживаемо: `Python 3.12` (после локальной проверки).
 - Не рекомендуется для локальных интеграционных тестов: `Python 3.14` (известная несовместимость `passlib`/`bcrypt`).
+
+Деплой API и порядок миграций: [`DEPLOY_RUNBOOK.md`](DEPLOY_RUNBOOK.md).
 
 ### Troubleshooting: `passlib` / `bcrypt` на Python 3.14
 

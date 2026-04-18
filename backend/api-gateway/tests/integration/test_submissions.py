@@ -1,6 +1,13 @@
 """Submissions: report draft data is built from ledger / salary when possible."""
+import sys
+
 import pytest
 from httpx import AsyncClient
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason="Auth stack (bcrypt/passlib) unreliable on Python 3.14+ — use 3.11 locally (DEVELOPER_GUIDE); CI uses 3.11.",
+)
 
 
 @pytest.mark.asyncio

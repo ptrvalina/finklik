@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamApi, regulatoryApi, submissionsApi, billingApi, onecApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
+import { buildSubmissionExportActions } from '../utils/submissionExport'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
 
@@ -787,6 +788,7 @@ function SubmissionsSection() {
   const [createForm, setCreateForm] = useState({ authority: 'fsszn', report_type: 'pu-3', report_period: `${new Date().getFullYear()}-Q1` })
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [previewData, setPreviewData] = useState<any>(null)
+  const [exportLoading, setExportLoading] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['submissions'],
@@ -896,11 +898,13 @@ function SubmissionsSection() {
                   {s.rejection_reason && <p className="text-xs text-error mt-1">Причина: {s.rejection_reason}</p>}
                 </div>
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                  {(s.status === 'pending_review' || s.status === 'confirmed' || s.status === 'accepted') && (
+                    <button type="button" onClick={() => setPreviewData(s)} className="btn-ghost !text-xs">
+                      <Icon name="visibility" className="text-sm" /> Просмотр
+                    </button>
+                  )}
                   {s.status === 'pending_review' && (
                     <>
-                      <button type="button" onClick={() => setPreviewData(s)} className="btn-ghost !text-xs">
-                        <Icon name="visibility" className="text-sm" /> Просмотр
-                      </button>
                       <button type="button" onClick={() => confirmMutation.mutate(s.id)} className="btn-primary !text-xs !py-1.5" disabled={confirmMutation.isPending}>
                         <Icon name="check" className="text-sm" /> Подтвердить
                       </button>
@@ -1019,9 +1023,51 @@ function SubmissionsSection() {
             )
           }
         >
-          <div className="rounded-lg bg-surface-container-low p-4">
-            <ReportSubmissionPreview data={previewData.report_data} />
-          </div>
+          {(() => {
+            const exportActions = buildSubmissionExportActions({
+              authority: previewData.authority,
+              report_type: previewData.report_type,
+              report_period: previewData.report_period,
+              report_data: previewData.report_data,
+            })
+            return (
+              <div className="space-y-4">
+                {exportActions.length > 0 && (
+                  <div className="rounded-xl border border-outline-variant/20 bg-surface-container-high p-4">
+                    <p className="mb-3 text-xs font-bold text-on-surface">Скачать файл (те же данные, что в разделе «Документы»)</p>
+                    <div className="flex flex-wrap gap-3">
+                      {exportActions.map((ex) => (
+                        <div key={ex.key} className="flex min-w-[140px] flex-col gap-1">
+                          <button
+                            type="button"
+                            className="btn-secondary !py-2 !text-xs"
+                            disabled={exportLoading !== null}
+                            onClick={async () => {
+                              try {
+                                setExportLoading(ex.key)
+                                await ex.run()
+                                flash('success', 'Файл сохранён')
+                              } catch (e: any) {
+                                flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка скачивания')
+                              } finally {
+                                setExportLoading(null)
+                              }
+                            }}
+                          >
+                            {exportLoading === ex.key ? 'Скачивание…' : ex.label}
+                          </button>
+                          {ex.hint && <span className="text-[10px] leading-snug text-on-surface-variant">{ex.hint}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-lg bg-surface-container-low p-4">
+                  <ReportSubmissionPreview data={previewData.report_data} />
+                </div>
+              </div>
+            )
+          })()}
         </AppModal>
       )}
     </div>
