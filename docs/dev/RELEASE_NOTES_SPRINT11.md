@@ -34,6 +34,11 @@
 - Сканер: загрузка JPG/PDF, вкладка «Текст», список истории.
 - Индикатор «Онлайн» в шапке при валидном `wss` к API.
 
+## Инструменты разработки (после v0.2.0)
+
+- Локальный набор как в CI: `make verify-like-ci` или `python scripts/verify_like_ci.py`; зависимости линта/полного pytest: `pip install -r backend/api-gateway/requirements-dev.txt`.
+- Документы: [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md) (закрытый техбэклог без внешних API), [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md) (отложено до госAPI/ЭЦП и т.д.).
+
 ## Совместимость
 
 - Локальные интеграционные тесты backend: рекомендуется **Python 3.11** (см. Sprint 10 release notes по 3.14 / bcrypt).

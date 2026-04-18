@@ -108,11 +108,13 @@ jobs:
       - name: Backend unit tests
         run: python -m pytest tests/unit/ -v --tb=short
 
-      - name: Backend integration smoke
-        run: python -m pytest tests/integration/test_metrics.py -v --tb=short
-
-      - name: Backend integration submissions
-        run: python -m pytest tests/integration/test_submissions.py -v --tb=short
+      - name: Backend integration (metrics, submissions, scanner)
+        run: |
+          python -m pytest \
+            tests/integration/test_metrics.py \
+            tests/integration/test_submissions.py \
+            tests/integration/test_scanner.py \
+            -v --tb=short
 
   backend-lint:
     name: Backend Lint

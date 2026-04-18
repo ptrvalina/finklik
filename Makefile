@@ -48,8 +48,11 @@ alembic-heads: ## Показать head-ревизии Alembic (api-gateway)
 verify-pre-release: ## Alembic heads + unit tests (api-gateway)
 	cd backend/api-gateway && $(PYTHON) -m alembic heads && $(PYTHON) -m pytest tests/unit/ -q --tb=no
 
-verify-like-ci: ## Как job backend-tests в .github/workflows/ci.yml (локально нужен Python 3.11 для полного прогона)
-	cd backend/api-gateway && $(PYTHON) -m alembic heads && $(PYTHON) -m pytest tests/unit/ -v --tb=short && $(PYTHON) -m pytest tests/integration/test_metrics.py tests/integration/test_submissions.py -v --tb=short
+verify-like-ci: ## Как job backend-tests в .github/workflows/ci.yml (рекомендуется Python 3.11 + pip install -r requirements-dev.txt)
+	cd backend/api-gateway && $(PYTHON) -m alembic heads && $(PYTHON) -m pytest tests/unit/ -v --tb=short && $(PYTHON) -m pytest tests/integration/test_metrics.py tests/integration/test_submissions.py tests/integration/test_scanner.py -v --tb=short
+
+verify-like-ci-script: ## Тот же набор через scripts/verify_like_ci.py (автовыбор .venv311 при наличии)
+	@$(PYTHON) scripts/verify_like_ci.py
 
 seed: ## Загрузить тестовые данные
 	@echo "🌱 Загружаем тестовые данные..."

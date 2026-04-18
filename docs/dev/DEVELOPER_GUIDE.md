@@ -18,6 +18,19 @@ make dev
 
 ---
 
+## Навигация по документации
+
+| Документ | Назначение |
+|----------|------------|
+| [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md) | Теххвосты без внешних API (чеклист). |
+| [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md) | Задачи до появления госAPI, ЭЦП, договоров с банком и т.д. |
+| [`PRODUCT_SPRINT_ALIGNMENT.md`](PRODUCT_SPRINT_ALIGNMENT.md) | Соответствие продуктовых спринтов и фактических релизов. |
+| [`PRE_DEMO_SMOKE.md`](PRE_DEMO_SMOKE.md) | Ручной чеклист перед демо. |
+| [`DEPLOY_RUNBOOK.md`](DEPLOY_RUNBOOK.md) | Миграции и деплой API. |
+| [`../pilot/scaling-plan.md`](../pilot/scaling-plan.md) | Долгая дорожная карта (спринты 4–18). |
+
+---
+
 ## Структура проекта
 
 ```
@@ -62,8 +75,11 @@ make seed         # Загрузить тестовые данные (10 орг)
 make logs SVC=backend   # Логи конкретного сервиса
 make clean        # Полная очистка
 make verify-pre-release  # Alembic heads + unit tests (api-gateway); на Unix также: `bash scripts/verify_pre_release.sh`
-make verify-like-ci      # Как job «Backend Tests» в CI: alembic heads + unit + integration (metrics + submissions)
+make verify-like-ci      # Как job «Backend Tests» в CI: alembic + unit + integration (metrics, submissions, scanner)
+make verify-like-ci-script  # То же через `python scripts/verify_like_ci.py` (подхватывает `backend/api-gateway/.venv311` при наличии)
 ```
+
+Зависимости для полного локального прогона (flake8 + pytest как в CI): в каталоге `backend/api-gateway` выполните `pip install -r requirements.txt -r requirements-dev.txt` (см. [`requirements-dev.txt`](../../backend/api-gateway/requirements-dev.txt)).
 
 ### Мок-портал подачи отчётов
 
