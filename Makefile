@@ -1,6 +1,11 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke alembic-heads
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke alembic-heads verify-pre-release verify-like-ci
 
-PYTHON = python3
+# Windows Store / Git Bash: часто есть только `python`; CI/Linux обычно — `python3`.
+ifeq ($(OS),Windows_NT)
+PYTHON ?= python
+else
+PYTHON ?= python3
+endif
 COMPOSE = docker compose -f infrastructure/docker/docker-compose.dev.yml
 
 help: ## Показать все команды
@@ -39,6 +44,12 @@ migrate: ## Применить миграции БД
 
 alembic-heads: ## Показать head-ревизии Alembic (api-gateway)
 	cd backend/api-gateway && $(PYTHON) -m alembic heads
+
+verify-pre-release: ## Alembic heads + unit tests (api-gateway)
+	cd backend/api-gateway && $(PYTHON) -m alembic heads && $(PYTHON) -m pytest tests/unit/ -q --tb=no
+
+verify-like-ci: ## Как job backend-tests в .github/workflows/ci.yml (локально нужен Python 3.11 для полного прогона)
+	cd backend/api-gateway && $(PYTHON) -m alembic heads && $(PYTHON) -m pytest tests/unit/ -v --tb=short && $(PYTHON) -m pytest tests/integration/test_metrics.py tests/integration/test_submissions.py -v --tb=short
 
 seed: ## Загрузить тестовые данные
 	@echo "🌱 Загружаем тестовые данные..."

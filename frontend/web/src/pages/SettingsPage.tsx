@@ -817,13 +817,27 @@ function SubmissionsSection() {
   })
 
   const submitMutation = useMutation({
-    mutationFn: (id: string) => submissionsApi.submit(id),
-    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['submissions'] }); flash('success', res.data.message || 'Отчёт отправлен') },
+    mutationFn: (payload: { id: string; portal_sim?: 'accept' | 'reject' }) =>
+      submissionsApi.submit(payload.id, payload.portal_sim ? { portal_sim: payload.portal_sim } : undefined),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['submissions'] })
+      const rejected = res.data?.status === 'rejected'
+      flash(
+        rejected ? 'error' : 'success',
+        res.data?.message || (rejected ? 'Портал отклонил отчёт' : 'Отчёт отправлен'),
+      )
+    },
+    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка отправки'),
   })
 
   const rejectMutation = useMutation({
-    mutationFn: (id: string) => submissionsApi.reject(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['submissions'] }); flash('success', 'Отчёт отклонён') },
+    mutationFn: (args: { id: string; reason?: string; returnToDraftFromRejected?: boolean }) =>
+      submissionsApi.reject(args.id, args.reason),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ['submissions'] })
+      flash('success', vars.returnToDraftFromRejected ? 'Отчёт снова в черновике' : 'Отчёт отклонён')
+    },
+    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка'),
   })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 6000) }
@@ -898,9 +912,19 @@ function SubmissionsSection() {
                   {s.rejection_reason && <p className="text-xs text-error mt-1">Причина: {s.rejection_reason}</p>}
                 </div>
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                  {(s.status === 'pending_review' || s.status === 'confirmed' || s.status === 'accepted') && (
+                  {(s.status === 'pending_review' || s.status === 'confirmed' || s.status === 'accepted' || s.status === 'rejected') && (
                     <button type="button" onClick={() => setPreviewData(s)} className="btn-ghost !text-xs">
                       <Icon name="visibility" className="text-sm" /> Просмотр
+                    </button>
+                  )}
+                  {s.status === 'rejected' && (
+                    <button
+                      type="button"
+                      onClick={() => rejectMutation.mutate({ id: s.id, returnToDraftFromRejected: true })}
+                      className="btn-secondary !text-xs !py-1.5"
+                      disabled={rejectMutation.isPending}
+                    >
+                      <Icon name="edit_note" className="text-sm" /> В черновик
                     </button>
                   )}
                   {s.status === 'pending_review' && (
@@ -908,15 +932,39 @@ function SubmissionsSection() {
                       <button type="button" onClick={() => confirmMutation.mutate(s.id)} className="btn-primary !text-xs !py-1.5" disabled={confirmMutation.isPending}>
                         <Icon name="check" className="text-sm" /> Подтвердить
                       </button>
-                      <button type="button" onClick={() => rejectMutation.mutate(s.id)} className="btn-ghost !text-xs text-error" disabled={rejectMutation.isPending}>
+                      <button type="button" onClick={() => rejectMutation.mutate({ id: s.id })} className="btn-ghost !text-xs text-error" disabled={rejectMutation.isPending}>
                         <Icon name="close" className="text-sm" />
                       </button>
                     </>
                   )}
                   {s.status === 'confirmed' && (
-                    <button type="button" onClick={() => submitMutation.mutate(s.id)} className="btn-primary !text-xs !py-1.5" disabled={submitMutation.isPending}>
-                      <Icon name="send" className="text-sm" /> Отправить
-                    </button>
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                      {import.meta.env.DEV && (
+                        <div className="flex gap-1 rounded-lg border border-outline-variant/30 bg-surface-container-high px-1 py-0.5">
+                          <button
+                            type="button"
+                            title="DEV: мок-портал примет (DEBUG на API)"
+                            onClick={() => submitMutation.mutate({ id: s.id, portal_sim: 'accept' })}
+                            className="btn-ghost !px-2 !py-1 !text-[10px] text-secondary"
+                            disabled={submitMutation.isPending}
+                          >
+                            accept
+                          </button>
+                          <button
+                            type="button"
+                            title="DEV: мок-портал отклонит (DEBUG на API)"
+                            onClick={() => submitMutation.mutate({ id: s.id, portal_sim: 'reject' })}
+                            className="btn-ghost !px-2 !py-1 !text-[10px] text-error"
+                            disabled={submitMutation.isPending}
+                          >
+                            reject
+                          </button>
+                        </div>
+                      )}
+                      <button type="button" onClick={() => submitMutation.mutate({ id: s.id })} className="btn-primary !text-xs !py-1.5" disabled={submitMutation.isPending}>
+                        <Icon name="send" className="text-sm" /> Отправить
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1041,7 +1089,7 @@ function SubmissionsSection() {
                   type="button"
                   className="btn-ghost min-h-12 flex-1 text-error"
                   onClick={() => {
-                    rejectMutation.mutate(previewData.id)
+                    rejectMutation.mutate({ id: previewData.id })
                     setPreviewData(null)
                   }}
                 >
@@ -1056,6 +1104,23 @@ function SubmissionsSection() {
                   }}
                 >
                   Подтвердить
+                </button>
+              </div>
+            ) : previewData.status === 'rejected' ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  onClick={() => {
+                    rejectMutation.mutate({ id: previewData.id, returnToDraftFromRejected: true })
+                    setPreviewData(null)
+                  }}
+                  disabled={rejectMutation.isPending}
+                >
+                  В черновик
+                </button>
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setPreviewData(null)}>
+                  Закрыть
                 </button>
               </div>
             ) : (

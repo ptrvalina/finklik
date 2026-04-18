@@ -1,7 +1,13 @@
 """Unit tests for security module."""
+import sys
+
 import pytest
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason="bcrypt/passlib unstable on Python 3.14+ — CI uses 3.11 (DEVELOPER_GUIDE).",
+)
 class TestPasswordHashing:
     def test_hash_and_verify(self):
         from app.core.security import hash_password, verify_password

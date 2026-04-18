@@ -3,23 +3,27 @@
 Workflow:
   1. System generates report (draft)
   2. Client reviews and confirms (confirmed)
-  3. System submits to authority (submitted → accepted/rejected)
+  3. System submits to authority (mock portal → accepted or rejected)
 
 Report payloads are filled from the ledger (transactions, salary) where possible;
 portal submission remains mocked until real APIs exist.
 """
 import calendar
+import hashlib
 import json
 import re
 import secrets
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import structlog
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.employee import Employee, SalaryRecord
@@ -28,11 +32,26 @@ from app.models.transaction import Transaction
 from app.models.user import Organization, User
 from app.security import get_encryptor
 from app.services.pu3_aggregation import build_pu3_aggregates
+from app.services.submission_notifications import notify_submission_portal_result
+from app.services.submission_portal import submit_to_http_portal
 from app.services.tax_calculator import calculate_fsszn, calculate_usn, calculate_vat, get_tax_rules_for_year
 
 router = APIRouter(prefix="/submissions", tags=["report-submissions"])
+log = structlog.get_logger()
 
 _PERIOD_RE = re.compile(r"^(\d{4})-(Q([1-4])|M(0[1-9]|1[0-2]))$")
+
+
+def _mock_portal_accepts(submission_id: str, reject_rate: float) -> bool:
+    """True if mock portal accepts. Deterministic from UUID and reject_rate in [0, 1]."""
+    rr = max(0.0, min(1.0, float(reject_rate)))
+    if rr <= 0.0:
+        return True
+    if rr >= 1.0:
+        return False
+    h = int(hashlib.sha256(submission_id.encode()).hexdigest(), 16)
+    bucket = (h % 10_000) / 10_000.0
+    return bucket >= rr
 
 
 def _parse_report_period(period: str) -> tuple[date, date, dict]:
@@ -496,10 +515,15 @@ async def confirm_submission(
 @router.post("/{submission_id}/submit")
 async def submit_report(
     submission_id: str,
+    background_tasks: BackgroundTasks,
+    portal_sim: Literal["accept", "reject"] | None = Query(
+        None,
+        description="Принудительный исход мок-портала; только при DEBUG=true.",
+    ),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Submit confirmed report to the authority (mock)."""
+    """Submit confirmed report to the authority (mock portal, HTTP adapter, or DEBUG override)."""
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
@@ -513,19 +537,118 @@ async def submit_report(
     if submission.status != "confirmed":
         raise HTTPException(400, "Отчёт должен быть подтверждён перед отправкой")
 
-    submission.status = "submitted"
+    org_row = await db.execute(
+        select(Organization).where(Organization.id == current_user.organization_id)
+    )
+    org = org_row.scalar_one_or_none()
+    org_name = org.name if org else ""
+
+    settings = get_settings()
+    sim = portal_sim if (portal_sim is not None and settings.DEBUG) else None
+
     submission.submitted_at = datetime.now(timezone.utc)
     submission.submission_ref = f"REF-{secrets.token_hex(6).upper()}"
-    await db.flush()
 
-    submission.status = "accepted"
-    await db.flush()
+    report_payload = json.loads(submission.report_data_json) if submission.report_data_json else None
 
-    return {
+    portal_accepts: bool
+    external_reason: str | None = None
+
+    if sim == "reject":
+        portal_accepts = False
+    elif sim == "accept":
+        portal_accepts = True
+    elif settings.SUBMISSION_PORTAL_MODE == "http":
+        if not settings.SUBMISSION_PORTAL_BASE_URL.strip():
+            raise HTTPException(
+                status_code=503,
+                detail="SUBMISSION_PORTAL_BASE_URL не задан при SUBMISSION_PORTAL_MODE=http",
+            )
+        try:
+            http_res = await submit_to_http_portal(
+                settings,
+                submission_id=submission.id,
+                organization_id=submission.organization_id,
+                authority=submission.authority,
+                report_type=submission.report_type,
+                report_period=submission.report_period,
+                local_reference=submission.submission_ref,
+                report_data=report_payload,
+            )
+            portal_accepts = http_res.accepted
+            if http_res.portal_reference:
+                submission.submission_ref = http_res.portal_reference
+            external_reason = http_res.reason
+        except HTTPException:
+            raise
+        except Exception as exc:
+            log.exception("submission_portal.http_failed", submission_id=submission.id)
+            raise HTTPException(status_code=502, detail=f"Портал недоступен: {exc}") from exc
+    else:
+        portal_accepts = _mock_portal_accepts(submission_id, settings.MOCK_SUBMISSION_REJECT_RATE)
+
+    auth_label = _authority_name(submission.authority)
+
+    if portal_accepts:
+        submission.status = "accepted"
+        submission.rejection_reason = None
+        await db.flush()
+        msg = (
+            f"Отчёт принят {auth_label}. "
+            f"Референс: {submission.submission_ref}"
+        )
+        out = {
+            **_serialize(submission),
+            "portal_outcome": "accepted",
+            "message": msg,
+        }
+        background_tasks.add_task(
+            notify_submission_portal_result,
+            org_id=str(current_user.organization_id),
+            user_email=current_user.email,
+            org_name=org_name,
+            authority_label=auth_label,
+            report_period=submission.report_period,
+            submission_id=submission.id,
+            status=submission.status,
+            submission_ref=submission.submission_ref,
+            rejection_reason=None,
+            portal_outcome="accepted",
+            summary_message=msg,
+        )
+        return out
+
+    submission.status = "rejected"
+    submission.rejection_reason = external_reason or (
+        "Мок портала: отчёт не принят (валидация). "
+        "Настройка MOCK_SUBMISSION_REJECT_RATE или portal_sim=reject (DEBUG)."
+    )
+    await db.flush()
+    msg = (
+        f"{auth_label} отклонил отчёт. "
+        f"Референс: {submission.submission_ref}. "
+        "Верните в черновик или создайте новую заявку."
+    )
+    out = {
         **_serialize(submission),
-        "message": f"Отчёт успешно подан в {_authority_name(submission.authority)}. "
-                   f"Референс: {submission.submission_ref}",
+        "portal_outcome": "rejected",
+        "message": msg,
     }
+    background_tasks.add_task(
+        notify_submission_portal_result,
+        org_id=str(current_user.organization_id),
+        user_email=current_user.email,
+        org_name=org_name,
+        authority_label=auth_label,
+        report_period=submission.report_period,
+        submission_id=submission.id,
+        status=submission.status,
+        submission_ref=submission.submission_ref,
+        rejection_reason=submission.rejection_reason,
+        portal_outcome="rejected",
+        summary_message=msg,
+    )
+    return out
 
 
 @router.post("/{submission_id}/reject")
@@ -546,8 +669,12 @@ async def reject_submission(
     if not submission:
         raise HTTPException(404, "Отчёт не найден")
 
-    if submission.status not in ("pending_review", "confirmed"):
+    if submission.status not in ("pending_review", "confirmed", "rejected"):
         raise HTTPException(400, "Невозможно отклонить отчёт в текущем статусе")
+
+    if submission.status == "rejected":
+        submission.submission_ref = None
+        submission.submitted_at = None
 
     submission.status = "draft"
     submission.rejection_reason = reason

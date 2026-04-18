@@ -19,7 +19,7 @@ async def websocket_endpoint(
     События от сервера:
       {"event": "tax_deadline", "data": {"tax": "УСН", "days_left": 7, "amount": 375.00}}
       {"event": "bank_update",  "data": {"balance": 15000.00, "change": -500.00}}
-      {"event": "report_status","data": {"report_id": "...", "status": "sent"}}
+      {"event": "report_status","data": {"submission_id": "...","status":"accepted","portal_outcome":"accepted","submission_ref":"REF-…","authority_label":"ИМНС","report_period":"2026-Q1","message":"…"}}
       {"event": "sync_complete","data": {"synced": 12, "errors": 0}}
 
     Пинг/понг: клиент отправляет {"type":"ping"}, сервер отвечает {"type":"pong"}

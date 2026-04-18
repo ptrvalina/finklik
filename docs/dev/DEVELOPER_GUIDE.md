@@ -61,7 +61,22 @@ make lint         # Проверка кода
 make seed         # Загрузить тестовые данные (10 орг)
 make logs SVC=backend   # Логи конкретного сервиса
 make clean        # Полная очистка
+make verify-pre-release  # Alembic heads + unit tests (api-gateway); на Unix также: `bash scripts/verify_pre_release.sh`
+make verify-like-ci      # Как job «Backend Tests» в CI: alembic heads + unit + integration (metrics + submissions)
 ```
+
+### Мок-портал подачи отчётов
+
+`POST /submissions/{id}/submit` возвращает статус **`accepted`** или **`rejected`**.
+
+- **`SUBMISSION_PORTAL_MODE=mock`** (по умолчанию): исход **детерминирован** по `submission_id` и **`MOCK_SUBMISSION_REJECT_RATE`** (0–1).
+- **`SUBMISSION_PORTAL_MODE=http`**: запрос **`POST {SUBMISSION_PORTAL_BASE_URL}/submit`** с телом `{ submission_id, organization_id, authority, report_type, report_period, local_reference, report_data }`. Ответ **2xx**, JSON: **`accepted`** (bool), опционально **`portal_reference`**, **`reason`** при отказе. Реализация: `app/services/submission_portal.py`. Ошибки сети после ретраев → **502**; не задан `SUBMISSION_PORTAL_BASE_URL` → **503**.
+
+После подачи: событие WebSocket **`report_status`** и письмо на email пользователя (если задан **`EMAIL_API_KEY`**).
+
+При **`DEBUG=true`** можно принудительно задать исход query-параметром **`portal_sim=accept`** или **`portal_sim=reject`** (удобно для демо и ручных проверок). На фронте в dev-сборке рядом с «Отправить» показываются кнопки, которые передают этот параметр.
+
+Отклонённые порталом заявки можно вернуть в черновик: **`POST /submissions/{id}/reject`** в статусе **`rejected`** (сбрасываются `submission_ref` и `submitted_at`).
 
 ---
 
@@ -157,7 +172,12 @@ cat backend/api-gateway/.env | grep JWT
 | `JWT_SECRET_KEY` | генерируется | Секрет для JWT |
 | `MOCK_BANK_URL` | `http://localhost:8001` | URL mock банка |
 | `ONEC_MOCK_URL` | `http://localhost:8002` | URL mock 1С |
-| `DEBUG` | `true` | Режим отладки |
+| `MOCK_SUBMISSION_REJECT_RATE` | `0.0`–`1.0` | Доля «отказов» мок-портала при подаче отчёта (детерминировано по id) |
+| `SUBMISSION_PORTAL_MODE` | `mock` | `mock` — логика в API; `http` — вызов адаптера по `SUBMISSION_PORTAL_BASE_URL` |
+| `SUBMISSION_PORTAL_BASE_URL` | пусто | Базовый URL HTTP-адаптера портала (обязателен при `mode=http`) |
+| `SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC` | `30` | Таймаут HTTP |
+| `SUBMISSION_PORTAL_HTTP_RETRIES` | `2` | Повторы при 5xx / обрыве |
+| `DEBUG` | `true` | Режим отладки (`portal_sim` на submit только при `true`) |
 
 ---
 

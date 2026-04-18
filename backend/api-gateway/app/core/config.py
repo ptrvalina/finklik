@@ -1,6 +1,8 @@
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Literal
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -51,6 +53,15 @@ class Settings(BaseSettings):
     PROVISION_WEBHOOK_SECRET: str = ""
     # Webhook подтверждения оплаты счёта. Пусто = POST /primary-documents/webhooks/payment отключён (404).
     PAYMENT_WEBHOOK_SECRET: str = ""
+
+    # Мок ответа «портала» при POST /submissions/{id}/submit: доля отказов [0,1], детерминированно по id заявки.
+    MOCK_SUBMISSION_REJECT_RATE: float = Field(default=0.0, ge=0.0, le=1.0)
+
+    # Режим подачи: mock — логика в API; http — POST на SUBMISSION_PORTAL_BASE_URL/submit (см. submission_portal.py).
+    SUBMISSION_PORTAL_MODE: Literal["mock", "http"] = "mock"
+    SUBMISSION_PORTAL_BASE_URL: str = ""
+    SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC: float = 30.0
+    SUBMISSION_PORTAL_HTTP_RETRIES: int = 2
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

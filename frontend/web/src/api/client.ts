@@ -210,7 +210,8 @@ export const submissionsApi = {
   create: (data: { authority: string; report_type: string; report_period: string }) =>
     api.post('/submissions', data),
   confirm: (id: string) => api.post(`/submissions/${id}/confirm`),
-  submit: (id: string) => api.post(`/submissions/${id}/submit`),
+  submit: (id: string, opts?: { portal_sim?: 'accept' | 'reject' }) =>
+    api.post(`/submissions/${id}/submit`, null, { params: opts }),
   reject: (id: string, reason?: string) =>
     api.post(`/submissions/${id}/reject`, null, { params: { reason } }),
 }

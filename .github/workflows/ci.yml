@@ -90,6 +90,8 @@ jobs:
           cache: "pip"
           cache-dependency-path: backend/api-gateway/requirements.txt
 
+      # Локальный аналог: `make verify-like-ci` из корня репо (те же шаги, см. Makefile).
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
