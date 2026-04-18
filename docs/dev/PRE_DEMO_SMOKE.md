@@ -46,7 +46,7 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`.
 
 1. Confirm migration `sprint12_regulatory_reporting` is applied (tables `regulatory_updates`, `report_submissions` exist) — see `docs/dev/PRODUCT_SPRINT_ALIGNMENT.md` and `docs/dev/DEPLOY_RUNBOOK.md`.
 2. **Settings → Регламентные обновления**: list loads, optional seed updates on first call.
-3. **Settings → Подача отчётов**: create a mock report (e.g. ФСЗН / ПУ-3), confirm, submit — success message with reference. Optional: pick a **month** period (`YYYY-M01`…`M12`) in the period dropdown, not only a quarter.
+3. **Settings → Подача отчётов**: create a mock report (e.g. ФСЗН / ПУ-3), confirm, submit — success message with reference. Optional: pick a **month** period (`YYYY-M01`…`M12`); for **ПУ-3** / **НДС** the form shows a notice that export files in «Документы» are **quarter**-scoped.
 4. In **Просмотр** for a submission: optional **Скачать файл** buttons (same exports as **Документы**) load without error for ИМНС УСН/НДС or ФСЗН ПУ-3 when applicable.
 
 ## 4) Backup Branches

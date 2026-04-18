@@ -56,3 +56,14 @@ Head репозитория: **`sprint12_regulatory_reporting`**.
 ## 5. Локальная разработка
 
 Рекомендуемый Python для backend: **3.11** (см. [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md)). Файл [`.python-version`](../../.python-version) в корне репозитория задаёт **3.11** для pyenv/asdf.
+
+## 6. PDF white-label для sales (опционально)
+
+После правок маркетингового текста в [`docs/sales/_gen_pdf.py`](../sales/_gen_pdf.py) можно пересобрать PDF для рассылки:
+
+```bash
+pip install reportlab
+python docs/sales/_gen_pdf.py
+```
+
+Результат: `docs/sales/ФинКлик_WhiteLabel_Банки.pdf` (рядом со скриптом). Не входит в CI; выполняйте локально при обновлении слайдов.

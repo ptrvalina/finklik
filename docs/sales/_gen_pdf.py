@@ -1,4 +1,13 @@
-"""Generate bank white-label pitch PDF."""
+"""Generate bank white-label pitch PDF (ReportLab).
+
+Run from repository root::
+
+    pip install reportlab
+    python docs/sales/_gen_pdf.py
+
+Writes ``docs/sales/ФинКлик_WhiteLabel_Банки.pdf``. Uses Windows fonts when available;
+falls back to Helvetica.
+"""
 import os
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm, cm
@@ -162,7 +171,7 @@ def slide_solution(c):
     modules = [
         ("📊", "Финансовый учёт", ["Доходы, расходы, возвраты", "10 категорий расходов", "Импорт CSV / выписок", "Экспорт PDF, CSV, TXT"], ACCENT),
         ("🏦", "Интеграция с банком", ["Автозагрузка выписок API", "Баланс в реальном времени", "Платежи из учёта", "Мульти-банк"], GREEN),
-        ("📋", "Налоги и отчётность", ["УСН 3%/5%, НДС, ФСЗН", "Декларации НДС, ПУ-3", "Календарь дедлайнов", "Автоподача отчётов"], ORANGE),
+        ("📋", "Налоги и отчётность", ["УСН 3%/5%, НДС, ФСЗН", "НДС, ПУ-3 из учёта", "Дедлайны и напоминания", "Подтверждение и выгрузки"], ORANGE),
         ("🤖", "AI-модуль", ["OCR чеков, ТТН, актов", "Извлечение реквизитов", "ИИ-консультант", "Точность ТТН >90%"], HexColor("#6c5ce7")),
         ("👥", "Кадры и зарплата", ["Реестр сотрудников", "Расчёт зарплаты", "Шифрование ПДн AES-256", "Зарплатные ведомости"], RED),
         ("📡", "Мониторинг законов", ["ИМНС, ФСЗН, Белгосстрах", "Новые формы и ставки", "Push-уведомления", "Фильтрация"], ACCENT),

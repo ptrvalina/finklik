@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamApi, regulatoryApi, submissionsApi, billingApi, onecApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
-import { buildSubmissionExportActions } from '../utils/submissionExport'
+import { buildSubmissionExportActions, parseReportPeriod } from '../utils/submissionExport'
 import { useAuthStore } from '../store/authStore'
 import AppModal from '../components/ui/AppModal'
 
@@ -1008,6 +1008,23 @@ function SubmissionsSection() {
                 })}
               </select>
             </div>
+            {(() => {
+              const parsed = parseReportPeriod(createForm.report_period)
+              if (!parsed || parsed.kind !== 'month') return null
+              const quarterFile =
+                (createForm.authority === 'fsszn' && createForm.report_type === 'pu-3') ||
+                (createForm.authority === 'imns' && createForm.report_type === 'vat-declaration')
+              if (!quarterFile) return null
+              return (
+                <div className="flex gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-[11px] leading-snug text-amber-100/95">
+                  <Icon name="info" className="shrink-0 text-lg text-amber-200" />
+                  <span>
+                    Выбран <strong className="text-amber-50">месяц</strong>: расчёт черновика отчёта идёт за этот месяц. Файлы НДС и ПУ-3 в разделе «Документы»
+                    формируются за <strong className="text-amber-50">весь квартал</strong>, в который попадает месяц — учитывайте при сверке.
+                  </span>
+                </div>
+              )
+            })()}
           </div>
         </AppModal>
       )}
