@@ -269,6 +269,43 @@ export const documentsApi = {
     api.get('/export/financial-report.pdf', { params: { date_from, date_to }, responseType: 'blob' }),
 }
 
+/** Официальные курсы НБ РБ (без отдельной авторизации; те же CORS, что и у API). */
+export type NbrbRateRow = {
+  code: string
+  name: string
+  scale: number
+  official_rate_byn: string
+  byn_per_unit: string
+  rates_date: string
+}
+
+export type NbrbRatesPayload = {
+  source: string
+  source_url: string
+  rates_date: string
+  fetched_at: string
+  stale: boolean
+  refresh_interval_sec: number | null
+  rates: NbrbRateRow[]
+}
+
+export type NbrbConvertPayload = {
+  amount: string
+  from_currency: string
+  to_currency: string
+  result: string
+  rates_date: string
+  fetched_at: string
+  stale: boolean
+}
+
+export const fxApi = {
+  nbrbStatus: () => api.get('/fx/nbrb/status'),
+  nbrbRates: () => api.get<NbrbRatesPayload>('/fx/nbrb/rates'),
+  nbrbConvert: (params: { amount: string; from: string; to: string }) =>
+    api.get<NbrbConvertPayload>('/fx/nbrb/convert', { params }),
+}
+
 export const primaryDocumentsApi = {
   list: (params?: { doc_type?: string; status?: string }) => api.get('/primary-documents', { params }),
   nextNumber: (doc_type: string) =>

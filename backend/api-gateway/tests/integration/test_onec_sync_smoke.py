@@ -7,7 +7,9 @@ from app.services.onec_sync_service import process_onec_sync_jobs_once
 
 
 @pytest.mark.asyncio
-async def test_onec_sync_queue_worker_smoke(client: AsyncClient, auth_headers: dict):
+async def test_onec_sync_queue_worker_smoke(
+    client: AsyncClient, auth_headers: dict, onec_worker_uses_test_db
+):
     tx_resp = await client.post(
         "/api/v1/transactions",
         json={

@@ -11,7 +11,34 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 const MONTHS = ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 
-type Employee = { id: string; full_name: string; identification_number?: string | null; position: string; salary: number; hire_date: string; fire_date: string | null; is_active: boolean; has_children: number }
+type IdDocType = '' | 'passport' | 'residence_permit' | 'refugee_certificate' | 'other'
+
+type IdentityDocument = {
+  series?: string | null
+  number: string
+  issued_by: string
+  issued_date: string
+  expiry_date?: string | null
+}
+
+type Employee = {
+  id: string
+  full_name: string
+  identification_number?: string | null
+  position: string
+  salary: number
+  hire_date: string
+  fire_date: string | null
+  is_active: boolean
+  has_children: number
+  disability_group?: number | null
+  is_pensioner?: boolean
+  citizenship?: string | null
+  work_hours_per_day?: number | string | null
+  work_hours_per_week?: number | string | null
+  id_document_type?: string | null
+  id_document?: IdentityDocument | null
+}
 type SalaryRecord = { id: string; employee_id: string; period_year: number; period_month: number; base_salary: number; bonus: number; sick_pay: number; vacation_pay: number; gross_salary: number; income_tax: number; fsszn_employee: number; net_salary: number; fsszn_employer: number; status: string }
 type Tab = 'active' | 'fired' | 'payroll'
 
@@ -31,24 +58,143 @@ export default function EmployeesPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
-  const [form, setForm] = useState({ full_name: '', identification_number: '', position: '', salary: '', hire_date: today, has_children: 0, is_disabled: false })
+  const [form, setForm] = useState({
+    full_name: '',
+    identification_number: '',
+    position: '',
+    salary: '',
+    hire_date: today,
+    has_children: 0,
+    disability_group: '' as '' | '1' | '2' | '3',
+    is_pensioner: false,
+    citizenship: '',
+    work_hours_per_day: '',
+    work_hours_per_week: '',
+    id_document_type: '' as IdDocType,
+    id_doc_series: '',
+    id_doc_number: '',
+    id_doc_issued_by: '',
+    id_doc_issued_date: '',
+    id_doc_expiry_date: '',
+  })
   const [salaryForm, setSalaryForm] = useState({ period_year: new Date().getFullYear(), period_month: new Date().getMonth() + 1, bonus: 0, sick_days: 0, vacation_days: 0, work_days_plan: 21 })
 
   const activeOnly = tab === 'active'
   const { data, isLoading, isError } = useQuery({ queryKey: ['employees', activeOnly], queryFn: () => employeesApi.list({ active_only: activeOnly }).then(r => r.data) })
   const { data: payrollData, isLoading: payrollLoading } = useQuery({ queryKey: ['payroll', payrollYear, payrollMonth], queryFn: () => employeesApi.listSalary({ year: payrollYear, month: payrollMonth }).then(r => r.data), enabled: tab === 'payroll' })
 
-  const createMutation = useMutation({ mutationFn: () => employeesApi.create({ ...form, salary: Number(form.salary) }), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); closeModal(); flash('success', 'Сотрудник добавлен') }, onError: () => flash('error', 'Ошибка') })
+  const createMutation = useMutation({
+    mutationFn: (payload: any) => employeesApi.create(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['employees'] })
+      closeModal()
+      flash('success', 'Сотрудник добавлен')
+    },
+    onError: () => flash('error', 'Ошибка'),
+  })
   const updateMutation = useMutation({ mutationFn: (d: { id: string; body: any }) => employeesApi.update(d.id, d.body), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); closeModal(); flash('success', 'Обновлено') }, onError: () => flash('error', 'Ошибка') })
   const fireMutation = useMutation({ mutationFn: (d: { id: string; fire_date: string }) => employeesApi.fire(d.id, d.fire_date), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setShowFireConfirm(null); flash('success', 'Уволен') }, onError: () => flash('error', 'Ошибка') })
   const salaryMutation = useMutation({ mutationFn: () => employeesApi.calculateSalary({ employee_id: selectedEmployee!.id, ...salaryForm }), onSuccess: (res) => { setSalaryResult(res.data); qc.invalidateQueries({ queryKey: ['payroll'] }); flash('success', 'Рассчитано') }, onError: () => flash('error', 'Ошибка расчёта') })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }
-  function resetForm() { setForm({ full_name: '', identification_number: '', position: '', salary: '', hire_date: today, has_children: 0, is_disabled: false }) }
+  function resetForm() {
+    setForm({
+      full_name: '',
+      identification_number: '',
+      position: '',
+      salary: '',
+      hire_date: today,
+      has_children: 0,
+      disability_group: '',
+      is_pensioner: false,
+      citizenship: '',
+      work_hours_per_day: '',
+      work_hours_per_week: '',
+      id_document_type: '',
+      id_doc_series: '',
+      id_doc_number: '',
+      id_doc_issued_by: '',
+      id_doc_issued_date: '',
+      id_doc_expiry_date: '',
+    })
+  }
   function closeModal() { setShowModal(false); setEditingEmployee(null); resetForm() }
-  function openEdit(emp: Employee) { setEditingEmployee(emp); setForm({ full_name: emp.full_name, identification_number: emp.identification_number || '', position: emp.position, salary: String(emp.salary), hire_date: emp.hire_date, has_children: emp.has_children, is_disabled: false }); setShowModal(true) }
+  function openEdit(emp: Employee) {
+    setEditingEmployee(emp)
+    const dg = emp.disability_group
+    setForm({
+      full_name: emp.full_name,
+      identification_number: emp.identification_number || '',
+      position: emp.position,
+      salary: String(emp.salary),
+      hire_date: emp.hire_date,
+      has_children: emp.has_children,
+      disability_group: dg === 1 || dg === 2 || dg === 3 ? String(dg) as '1' | '2' | '3' : '',
+      is_pensioner: !!emp.is_pensioner,
+      citizenship: emp.citizenship || '',
+      work_hours_per_day: emp.work_hours_per_day != null && emp.work_hours_per_day !== '' ? String(emp.work_hours_per_day) : '',
+      work_hours_per_week: emp.work_hours_per_week != null && emp.work_hours_per_week !== '' ? String(emp.work_hours_per_week) : '',
+      id_document_type: (emp.id_document_type || '') as IdDocType,
+      id_doc_series: emp.id_document?.series || '',
+      id_doc_number: emp.id_document?.number || '',
+      id_doc_issued_by: emp.id_document?.issued_by || '',
+      id_doc_issued_date: emp.id_document?.issued_date?.slice(0, 10) || '',
+      id_doc_expiry_date: emp.id_document?.expiry_date?.slice(0, 10) || '',
+    })
+    setShowModal(true)
+  }
   function openSalary(emp: Employee) { setSelectedEmployee(emp); setSalaryResult(null); setSalaryForm({ ...salaryForm, period_year: payrollYear, period_month: payrollMonth }); setShowSalaryModal(true) }
-  function handleSave() { editingEmployee ? updateMutation.mutate({ id: editingEmployee.id, body: { position: form.position, salary: Number(form.salary), identification_number: form.identification_number || null, has_children: form.has_children, is_disabled: form.is_disabled } }) : createMutation.mutate() }
+  function buildPayload(forEdit: boolean) {
+    const disability_group =
+      form.disability_group === '' ? null : (Number(form.disability_group) as 1 | 2 | 3)
+    const work_hours_per_day =
+      form.work_hours_per_day === '' ? null : Number(form.work_hours_per_day)
+    const work_hours_per_week =
+      form.work_hours_per_week === '' ? null : Number(form.work_hours_per_week)
+    const base: Record<string, unknown> = {
+      identification_number: form.identification_number || null,
+      position: form.position,
+      salary: Number(form.salary),
+      has_children: form.has_children,
+      disability_group,
+      is_pensioner: form.is_pensioner,
+      citizenship: form.citizenship.trim() || null,
+      work_hours_per_day: Number.isFinite(work_hours_per_day as number) ? work_hours_per_day : null,
+      work_hours_per_week: Number.isFinite(work_hours_per_week as number) ? work_hours_per_week : null,
+    }
+    if (form.id_document_type) {
+      base.id_document_type = form.id_document_type
+      base.id_document = {
+        series: form.id_doc_series.trim() || null,
+        number: form.id_doc_number.trim(),
+        issued_by: form.id_doc_issued_by.trim(),
+        issued_date: form.id_doc_issued_date,
+        expiry_date: form.id_doc_expiry_date.trim() ? form.id_doc_expiry_date : null,
+      }
+    } else if (forEdit) {
+      base.id_document_type = null
+      base.id_document = null
+    }
+    return base
+  }
+
+  function handleSave() {
+    if (form.id_document_type) {
+      if (!form.id_doc_number.trim() || !form.id_doc_issued_by.trim() || !form.id_doc_issued_date) {
+        flash('error', 'Заполните номер, кем выдан и дату выдачи документа')
+        return
+      }
+    }
+    if (editingEmployee) {
+      updateMutation.mutate({ id: editingEmployee.id, body: buildPayload(true) })
+    } else {
+      createMutation.mutate({
+        full_name: form.full_name,
+        hire_date: form.hire_date,
+        ...buildPayload(false),
+      })
+    }
+  }
 
   const employees: Employee[] = data ?? []
   const filtered = employees.filter(emp => {
@@ -276,6 +422,16 @@ export default function EmployeesPage() {
                                 детей: {emp.has_children}
                               </span>
                             )}
+                            {emp.disability_group != null && (
+                              <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold text-amber-200">
+                                инв. {emp.disability_group} гр.
+                              </span>
+                            )}
+                            {emp.is_pensioner && (
+                              <span className="rounded-md border border-zinc-500/30 bg-zinc-500/10 px-2 py-0.5 text-[9px] font-bold text-zinc-300">
+                                пенсионер
+                              </span>
+                            )}
                             {!emp.is_active && <span className="text-[10px] font-bold text-red-400">Уволен</span>}
                           </div>
                         </div>
@@ -409,7 +565,8 @@ export default function EmployeesPage() {
 
       {showModal && (
         <AppModal
-          title={editingEmployee ? 'Редактировать' : 'Новый сотрудник'}
+          title={editingEmployee ? 'Редактировать сотрудника' : 'Новый сотрудник'}
+          extraWide
           onClose={closeModal}
           footer={
             <div className="flex gap-3">
@@ -427,76 +584,210 @@ export default function EmployeesPage() {
             </div>
           }
         >
-          <div className="space-y-4">
-            <div>
-              <label className="label">ФИО</label>
-              <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                disabled={!!editingEmployee}
-              />
-            </div>
-            <div>
-              <label className="label">Идентификационный номер</label>
-              <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
-                placeholder="1234567A001PB0"
-                maxLength={14}
-                value={form.identification_number}
-                onChange={(e) => setForm({ ...form, identification_number: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Должность</label>
-              <input
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
-                value={form.position}
-                onChange={(e) => setForm({ ...form, position: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Оклад (BYN)</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
-                value={form.salary}
-                onChange={(e) => setForm({ ...form, salary: e.target.value })}
-              />
-            </div>
-            {!editingEmployee && (
-              <div>
-                <label className="label">Дата найма</label>
-                <input
-                  type="date"
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
-                  value={form.hire_date}
-                  onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
-                />
+          <div className="space-y-6">
+            <section>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">Основное</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="label">ФИО</label>
+                  <input
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    disabled={!!editingEmployee}
+                  />
+                </div>
+                <div>
+                  <label className="label">Идентификационный номер (личный)</label>
+                  <input
+                    className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                    placeholder="1234567A001PB0"
+                    maxLength={14}
+                    value={form.identification_number}
+                    onChange={(e) => setForm({ ...form, identification_number: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Гражданство</label>
+                  <input
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    placeholder="например, Республика Беларусь"
+                    value={form.citizenship}
+                    onChange={(e) => setForm({ ...form, citizenship: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="label">Должность</label>
+                  <input
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.position}
+                    onChange={(e) => setForm({ ...form, position: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Оклад (BYN)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.salary}
+                    onChange={(e) => setForm({ ...form, salary: e.target.value })}
+                  />
+                </div>
+                {!editingEmployee && (
+                  <div>
+                    <label className="label">Дата найма</label>
+                    <input
+                      type="date"
+                      className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                      value={form.hire_date}
+                      onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="label">Часов в день (ставка)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.25"
+                    min={0}
+                    max={24}
+                    placeholder="8"
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.work_hours_per_day}
+                    onChange={(e) => setForm({ ...form, work_hours_per_day: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Часов в неделю</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.5"
+                    min={0}
+                    max={168}
+                    placeholder="40"
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.work_hours_per_week}
+                    onChange={(e) => setForm({ ...form, work_hours_per_week: e.target.value })}
+                  />
+                </div>
               </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">Детей</label>
-                <input
-                  type="number"
-                  min={0}
-                  className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
-                  value={form.has_children}
-                  onChange={(e) => setForm({ ...form, has_children: Number(e.target.value) })}
-                />
+            </section>
+
+            <section>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                Документ, удостоверяющий личность
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="label">Вид документа</label>
+                  <select
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.id_document_type}
+                    onChange={(e) =>
+                      setForm({ ...form, id_document_type: e.target.value as IdDocType })
+                    }
+                  >
+                    <option value="">— не указано —</option>
+                    <option value="passport">Паспорт</option>
+                    <option value="residence_permit">Вид на жительство</option>
+                    <option value="refugee_certificate">Удостоверение беженца</option>
+                    <option value="other">Иной документ</option>
+                  </select>
+                </div>
+                {form.id_document_type ? (
+                  <>
+                    <div>
+                      <label className="label">Серия</label>
+                      <input
+                        className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                        value={form.id_doc_series}
+                        onChange={(e) => setForm({ ...form, id_doc_series: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Номер</label>
+                      <input
+                        className="input min-h-11 rounded-xl bg-white/[0.06] font-mono ring-1 ring-white/[0.06]"
+                        value={form.id_doc_number}
+                        onChange={(e) => setForm({ ...form, id_doc_number: e.target.value })}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="label">Кем выдан</label>
+                      <input
+                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        value={form.id_doc_issued_by}
+                        onChange={(e) => setForm({ ...form, id_doc_issued_by: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Дата выдачи</label>
+                      <input
+                        type="date"
+                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        value={form.id_doc_issued_date}
+                        onChange={(e) => setForm({ ...form, id_doc_issued_date: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Срок действия (если есть)</label>
+                      <input
+                        type="date"
+                        className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                        value={form.id_doc_expiry_date}
+                        onChange={(e) => setForm({ ...form, id_doc_expiry_date: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : null}
               </div>
-              <label className="mt-7 flex items-center gap-2 text-sm text-zinc-500">
-                <input
-                  type="checkbox"
-                  checked={form.is_disabled}
-                  onChange={(e) => setForm({ ...form, is_disabled: e.target.checked })}
-                  className="rounded"
-                />{' '}
-                Инвалидность
-              </label>
-            </div>
+            </section>
+
+            <section>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">Льготы и вычеты</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Детей (для вычета)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.has_children}
+                    onChange={(e) => setForm({ ...form, has_children: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Инвалидность (группа)</label>
+                  <select
+                    className="input min-h-11 rounded-xl bg-white/[0.06] ring-1 ring-white/[0.06]"
+                    value={form.disability_group}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        disability_group: e.target.value as '' | '1' | '2' | '3',
+                      })
+                    }
+                  >
+                    <option value="">Нет</option>
+                    <option value="1">I группа</option>
+                    <option value="2">II группа</option>
+                    <option value="3">III группа</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-3 text-sm text-zinc-300 ring-1 ring-white/[0.06] sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={form.is_pensioner}
+                    onChange={(e) => setForm({ ...form, is_pensioner: e.target.checked })}
+                    className="rounded"
+                  />
+                  Пенсионер (на учёте как получатель пенсии)
+                </label>
+              </div>
+            </section>
           </div>
         </AppModal>
       )}

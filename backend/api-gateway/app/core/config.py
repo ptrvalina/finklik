@@ -63,6 +63,14 @@ class Settings(BaseSettings):
     SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC: float = 30.0
     SUBMISSION_PORTAL_HTTP_RETRIES: int = 2
 
+    # Курсы валют НБ РБ (фоновое обновление в API-процессе)
+    NBRB_FX_REFRESH_SECONDS: int = Field(
+        default=3600,
+        ge=0,
+        description="Интервал опроса www.nbrb.by (сек); 0 — без фонового цикла, только по запросу",
+    )
+    NBRB_FX_ENABLED: bool = True
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def database_url_use_asyncpg(cls, v: object) -> object:

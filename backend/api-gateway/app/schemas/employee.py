@@ -1,9 +1,29 @@
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 from decimal import Decimal
 from datetime import date, datetime
 
 
 # ── Сотрудники ────────────────────────────────────────────────────────────────
+
+class IdentityDocumentPayload(BaseModel):
+    """Реквизиты документа, удостоверяющего личность (хранятся зашифрованно)."""
+
+    series: str | None = Field(None, max_length=32)
+    number: str = Field(min_length=1, max_length=64)
+    issued_by: str = Field(min_length=1, max_length=500)
+    issued_date: date
+    expiry_date: date | None = None
+
+
+class IdentityDocumentOut(BaseModel):
+    series: str | None = None
+    number: str
+    issued_by: str
+    issued_date: date
+    expiry_date: date | None = None
+
 
 class EmployeeCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
@@ -12,7 +32,32 @@ class EmployeeCreate(BaseModel):
     salary: Decimal = Field(gt=0)
     hire_date: date
     has_children: int = Field(default=0, ge=0)
-    is_disabled: bool = False
+    disability_group: Literal[1, 2, 3] | None = None
+    is_pensioner: bool = False
+    citizenship: str | None = Field(None, max_length=255)
+    work_hours_per_day: Decimal | None = Field(None, ge=0, le=24)
+    work_hours_per_week: Decimal | None = Field(None, ge=0, le=168)
+    id_document_type: str | None = Field(
+        None,
+        max_length=40,
+        description="passport | residence_permit | refugee_certificate | other",
+    )
+    id_document: IdentityDocumentPayload | None = None
+
+    @field_validator("id_document_type")
+    @classmethod
+    def normalize_doc_type(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        return v.strip().lower()
+
+    @model_validator(mode="after")
+    def document_fields(self):
+        if self.id_document_type and not self.id_document:
+            raise ValueError("Заполните реквизиты документа или уберите вид документа")
+        if self.id_document and not self.id_document_type:
+            raise ValueError("Укажите вид документа, удостоверяющего личность")
+        return self
 
 
 class EmployeeUpdate(BaseModel):
@@ -20,8 +65,21 @@ class EmployeeUpdate(BaseModel):
     salary: Decimal | None = None
     identification_number: str | None = None
     has_children: int | None = None
-    is_disabled: bool | None = None
+    disability_group: Literal[1, 2, 3] | None = None
+    is_pensioner: bool | None = None
+    citizenship: str | None = None
+    work_hours_per_day: Decimal | None = Field(None, ge=0, le=24)
+    work_hours_per_week: Decimal | None = Field(None, ge=0, le=168)
+    id_document_type: str | None = Field(None, max_length=40)
+    id_document: IdentityDocumentPayload | None = None
     fire_date: date | None = None
+
+    @field_validator("id_document_type")
+    @classmethod
+    def normalize_doc_type(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        return v.strip().lower()
 
 
 class EmployeeResponse(BaseModel):
@@ -34,6 +92,13 @@ class EmployeeResponse(BaseModel):
     fire_date: date | None
     is_active: bool
     has_children: int
+    disability_group: int | None = None
+    is_pensioner: bool = False
+    citizenship: str | None = None
+    work_hours_per_day: Decimal | None = None
+    work_hours_per_week: Decimal | None = None
+    id_document_type: str | None = None
+    id_document: IdentityDocumentOut | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

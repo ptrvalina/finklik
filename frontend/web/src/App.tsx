@@ -16,6 +16,7 @@ import ScannerPage from './pages/ScannerPage'
 import OnecSyncPage from './pages/OnecSyncPage'
 import OnecContourPage from './pages/OnecContourPage'
 import SettingsPage from './pages/SettingsPage'
+import CurrencyPage from './features/currency/CurrencyPage'
 import AssistantPage from './pages/AssistantPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
 import Layout from './components/layout/Layout'
@@ -63,6 +64,7 @@ function AppRoutes() {
           <Route path="taxes" element={<TaxesPage />} />
           <Route path="documents" element={<DocumentsPage />} />
           <Route path="bank" element={<BankPage />} />
+          <Route path="currency" element={<CurrencyPage />} />
           <Route path="counterparties" element={<CounterpartiesPage />} />
           <Route path="onec-contour" element={<OnecContourPage />} />
           <Route path="onec-sync" element={<OnecSyncPage />} />

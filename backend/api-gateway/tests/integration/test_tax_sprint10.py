@@ -1,5 +1,6 @@
 """Sprint 10: production tax calculator details."""
 
+from decimal import Decimal
 from pathlib import Path
 import pytest
 from httpx import AsyncClient
@@ -50,7 +51,8 @@ async def test_tax_calculation_returns_breakdown_and_deadlines(client: AsyncClie
     assert data.get("regulatory_version")
     assert data.get("regulatory_year") in (2024, 2025, 2026)
     # If VAT is included by effective regime/flag, VAT deadline should be present.
-    if data.get("vat_to_pay", 0) >= 0:
+    vat_to_pay = Decimal(str(data.get("vat_to_pay", 0)))
+    if vat_to_pay >= 0:
         assert "vat_deadline" in data
 
 
@@ -73,7 +75,7 @@ async def test_tax_calculation_respects_org_regime_and_warns(client: AsyncClient
     assert r.status_code == 200
     data = r.json()
     assert data["tax_regime"] == "usn_5"
-    assert data["vat_to_pay"] == 0
+    assert Decimal(str(data["vat_to_pay"])) == 0
     assumptions = data.get("assumptions") or []
     assert any("проигнорирован" in str(a) for a in assumptions)
     assert data.get("regulatory_version")

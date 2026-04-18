@@ -13,6 +13,27 @@ make dev                    # Docker: API, фронт, mock-банк, mock-1С
 
 Подробнее: [`docs/dev/DEVELOPER_GUIDE.md`](docs/dev/DEVELOPER_GUIDE.md).
 
+### Переменные окружения API (`backend/api-gateway`)
+
+Задаются в `.env` в корне репозитория (см. `scripts/bootstrap.sh`) или в окружении процесса. Основные:
+
+| Переменная | Назначение |
+|------------|------------|
+| `DATABASE_URL` | Async SQLAlchemy URL (по умолчанию SQLite `sqlite+aiosqlite:///./finklik.db`) |
+| `DEBUG` | Режим отладки; для исходящих URL влияет на проверки (например http vs https) |
+| `JWT_SECRET_KEY`, `JWT_REFRESH_SECRET_KEY` | Подпись access/refresh токенов |
+| `REDIS_URL` | Кэш (при недоступности Redis кэш отключается) |
+| `CORS_ORIGINS` | Список origin для CORS |
+| `MOCK_BANK_URL`, `ONEC_MOCK_URL` | URL мок-сервисов в dev |
+| `EMAIL_API_KEY`, `EMAIL_FROM`, `FRONTEND_URL` | Почта и ссылки в письмах |
+| `OPENAI_API_KEY` | Чат-ассистент (пусто — демо-ответы) |
+| `PAYMENT_WEBHOOK_SECRET` | Секрет вебхука оплаты счёта (`X-Payment-Webhook-Secret`) |
+| `PROVISION_ADMIN_TOKEN`, `PROVISION_WEBHOOK_SECRET` | Админ- и вебхук-провижин 1С |
+| `SUBMISSION_PORTAL_MODE`, `SUBMISSION_PORTAL_BASE_URL` | Режим подачи отчётов: `mock` или `http` |
+| `NBRB_FX_ENABLED`, `NBRB_FX_REFRESH_SECONDS` | Курсы НБ РБ: фоновое обновление (0 — только по запросу) |
+
+Полный список полей — класс `Settings` в `backend/api-gateway/app/core/config.py`.
+
 ## Проверки перед коммитом / релизом
 
 ```bash
@@ -42,4 +63,4 @@ make verify-like-ci
 
 - `backend/api-gateway` — FastAPI, Alembic, тесты в `tests/`.
 - `frontend/web` — React (Vite), v0.2.0.
-- `.github/workflows` — CI (тесты, линт, сборка фронта, GitHub Pages).
+- `.github/workflows` — CI (тесты, линт, сборка фронта, smoke курсов НБ РБ, GitHub Pages).

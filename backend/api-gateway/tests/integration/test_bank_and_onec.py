@@ -101,7 +101,8 @@ async def test_onec_config_upsert(client: AsyncClient, auth_headers: dict):
     resp = await client.put(
         "/api/v1/onec/config",
         json={
-            "endpoint": "https://onec.example.com",
+            # example.com стабильно резолвится в публичный IP (проверка SSRF в _validate_onec_endpoint).
+            "endpoint": "https://example.com",
             "token": "super_secure_token_123",
             "protocol": "odata",
         },
@@ -115,7 +116,7 @@ async def test_onec_config_upsert(client: AsyncClient, auth_headers: dict):
     cfg = get_resp.json()
     assert cfg["configured"] is True
     assert cfg["protocol"] == "odata"
-    assert cfg["endpoint"] == "https://onec.example.com/"
+    assert cfg["endpoint"] == "https://example.com/"
 
 
 @pytest.mark.asyncio

@@ -31,9 +31,11 @@ from app.api.v1.endpoints.report_submission import router as submission_router
 from app.api.v1.endpoints.assistant import router as assistant_router
 from app.api.v1.endpoints.billing import router as billing_router
 from app.api.v1.endpoints.primary_documents import router as primary_documents_router
+from app.api.v1.endpoints.fx_nbrb import router as fx_nbrb_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
+from app.services.nbrb_fx_service import start_nbrb_background_loop, stop_nbrb_background_loop
 from prometheus_fastapi_instrumentator import Instrumentator
 
 structlog.configure(
@@ -66,6 +68,9 @@ USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
 async def lifespan(application: FastAPI):
     log.info("startup", service="api-gateway", version=settings.APP_VERSION)
     sync_poller_task: asyncio.Task | None = None
+    nbrb_task = start_nbrb_background_loop()
+    if nbrb_task:
+        log.info("nbrb_fx_background_started", interval_sec=settings.NBRB_FX_REFRESH_SECONDS)
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
         try:
@@ -88,6 +93,7 @@ async def lifespan(application: FastAPI):
             log.warning("db_startup_retry", attempt=attempt, error=str(exc))
             await asyncio.sleep(2)
     yield
+    await stop_nbrb_background_loop()
     if sync_poller_task:
         sync_poller_task.cancel()
         try:
@@ -183,6 +189,7 @@ app.include_router(submission_router, prefix="/api/v1")
 app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(primary_documents_router, prefix="/api/v1")
+app.include_router(fx_nbrb_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

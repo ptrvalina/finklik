@@ -3,6 +3,8 @@
 Локальный аналог job «Backend Tests» в .github/workflows/ci.yml:
 alembic heads → unit → integration (metrics, submissions, scanner).
 
+Отдельно в CI: job «NBRB FX Smoke» — tests/integration/test_fx_nbrb_live.py (исходящий HTTPS к www.nbrb.by).
+
 Выбор интерпретатора:
   1) backend/api-gateway/.venv311/ (Windows/Linux)
   2) переменная окружения PYTHON_EXE

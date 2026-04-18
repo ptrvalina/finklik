@@ -24,7 +24,18 @@ class Employee(Base):
 
     # Налоговые данные
     has_children: Mapped[int] = mapped_column(Integer, default=0)  # Кол-во детей (вычет)
-    is_disabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Инвалидность: NULL — нет; 1 / 2 / 3 — группа (для учёта и отчётности)
+    disability_group: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_pensioner: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    citizenship: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Норма рабочего времени (ставка)
+    work_hours_per_day: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    work_hours_per_week: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
+
+    # Документ, удостоверяющий личность: тип в открытом виде; реквизиты — в JSON зашифрованы
+    id_document_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    id_document_payload_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

@@ -578,6 +578,8 @@ async def payment_webhook(
                     },
                 )
                 await db.flush()
+                # Сохранить событие до raise: иначе get_db откатит сессию при HTTPException.
+                await db.commit()
             raise
     elif body.status == "pending":
         if doc.status == "draft":

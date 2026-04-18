@@ -6,6 +6,8 @@ type AppModalProps = {
   children: ReactNode
   /** Шире на планшете+ */
   wide?: boolean
+  /** Очень широкая (формы с несколькими секциями) */
+  extraWide?: boolean
   /** Липкая панель снизу (кнопки) — удобно на мобиле */
   footer?: ReactNode
 }
@@ -14,7 +16,7 @@ type AppModalProps = {
  * Модалка: на мобиле — почти на весь экран с safe-area;
  * с sm — классическое окно по центру.
  */
-export default function AppModal({ title, onClose, children, wide, footer }: AppModalProps) {
+export default function AppModal({ title, onClose, children, wide, extraWide, footer }: AppModalProps) {
   return (
     <div
       className="fixed inset-0 z-[90] flex items-stretch justify-center bg-black/65 backdrop-blur-sm sm:items-center sm:p-4"
@@ -23,7 +25,7 @@ export default function AppModal({ title, onClose, children, wide, footer }: App
     >
       <div
         className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-[#12161f] shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:rounded-2xl sm:ring-1 sm:ring-white/[0.08] ${
-          wide ? 'sm:max-w-lg' : 'sm:max-w-md'
+          extraWide ? 'sm:max-w-3xl' : wide ? 'sm:max-w-lg' : 'sm:max-w-md'
         }`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"

@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const quickLinks = [
     { to: '/scanner', icon: 'document_scanner', label: 'Сканер', color: 'from-teal-400/20 to-cyan-600/10 text-teal-300' },
     { to: '/documents', icon: 'description', label: 'Документы', color: 'from-violet-500/15 to-purple-600/10 text-violet-300' },
+    { to: '/currency', icon: 'currency_exchange', label: 'Курсы НБ', color: 'from-cyan-500/15 to-teal-600/10 text-cyan-300' },
     { to: '/taxes', icon: 'account_balance', label: 'Налоги', color: 'from-amber-500/15 to-orange-600/10 text-amber-300' },
     { to: '/calendar', icon: 'calendar_today', label: 'Календарь', color: 'from-sky-500/15 to-blue-600/10 text-sky-300' },
     { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-emerald-500/15 to-teal-600/10 text-emerald-300' },

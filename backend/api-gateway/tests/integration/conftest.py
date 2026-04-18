@@ -1,6 +1,7 @@
 """Фикстуры API: загружаются только для tests/integration/."""
 import time
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -47,6 +48,14 @@ async def client():
 async def db_session():
     async with TestSessionLocal() as session:
         yield session
+
+
+@pytest.fixture
+def onec_worker_uses_test_db(monkeypatch):
+    """process_onec_sync_jobs_once использует AsyncSessionLocal из database.py; в тестах — тот же in-memory SQLite."""
+    import app.services.onec_sync_service as onec_sync_service
+
+    monkeypatch.setattr(onec_sync_service, "AsyncSessionLocal", TestSessionLocal)
 
 
 @pytest_asyncio.fixture

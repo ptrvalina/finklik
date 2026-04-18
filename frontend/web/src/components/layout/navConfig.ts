@@ -16,6 +16,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/taxes', label: 'Налоги', icon: 'account_balance', description: 'УСН, взносы' },
   { to: '/documents', label: 'Документы', icon: 'description', description: 'Первичка и экспорт отчётов' },
   { to: '/bank', label: 'Банк', icon: 'credit_card', description: 'Счета и платежи' },
+  { to: '/currency', label: 'Курсы валют', icon: 'currency_exchange', description: 'НБ РБ и конвертер' },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', description: 'Клиенты и поставщики' },
   { to: '/onec-contour', label: 'Контур 1С', icon: 'hub', description: 'Реестр контура и health' },
   { to: '/onec-sync', label: 'Синхронизация 1С', icon: 'sync_alt', description: 'Очередь синхронизации и ошибки' },
