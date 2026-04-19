@@ -72,7 +72,7 @@ export default function OnecContourPage() {
     <div className="max-w-3xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Контур 1С</h1>
+          <h1 className="page-heading">Контур 1С</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Реестр организации в ФинКлик и состояние подключения к 1С.
           </p>

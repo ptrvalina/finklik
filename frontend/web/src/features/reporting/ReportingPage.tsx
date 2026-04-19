@@ -28,7 +28,7 @@ export default function ReportingPage() {
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
+        <h1 className="page-heading">
           {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Сдача отчётности'}
         </h1>
         <p className="mt-1 text-sm text-zinc-500">

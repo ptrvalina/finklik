@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Аналитика</h1>
+          <h1 className="page-heading">Аналитика</h1>
           <p className="mt-1 text-sm text-zinc-500">Финансовые показатели за {year} год</p>
         </div>
         <div className="flex w-full justify-start sm:w-auto sm:justify-end">

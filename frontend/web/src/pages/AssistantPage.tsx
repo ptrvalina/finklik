@@ -58,7 +58,7 @@ export default function AssistantPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-6">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Консультант</h1>
+        <h1 className="page-heading">Консультант</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Ориентиры по учёту, госпорталам (ИМНС, ФСЗН, Белстат, Белгосстрах), Pravo.by и справочным системам. Не заменяет бухгалтера и
           официальные разъяснения органов.

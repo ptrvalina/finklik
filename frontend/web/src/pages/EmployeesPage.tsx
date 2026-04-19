@@ -209,7 +209,7 @@ export default function EmployeesPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Сотрудники</h1>
+          <h1 className="page-heading">Сотрудники</h1>
           <p className="mt-1 text-sm text-zinc-500">Команда, зарплаты и кадровый учёт</p>
         </div>
         <button

@@ -97,7 +97,7 @@ export default function BankPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Банк</h1>
+          <h1 className="page-heading">Банк</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Мульти-банк, платежи и интеграция с 1С
             {onecStatus?.connected && <span className="ml-2 text-xs text-secondary">● 1С ({onecStatus.mode})</span>}

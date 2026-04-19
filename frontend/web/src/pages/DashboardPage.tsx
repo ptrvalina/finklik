@@ -78,8 +78,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Главная</h1>
-          <p className="mt-1 text-sm text-zinc-500">УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}</p>
+          <h1 className="page-heading">Главная</h1>
+          <p className="mt-1.5 text-sm text-on-surface-variant">
+            УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3">
           <Link to="/documents" className="btn-secondary !py-2.5 text-sm">

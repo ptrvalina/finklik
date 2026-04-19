@@ -65,24 +65,26 @@ export default function Layout() {
 
   return (
     <div className="flex h-[100dvh] bg-canvas text-on-surface font-body antialiased">
-      {/* Desktop sidebar — светлый премиум-контур */}
-      <aside className="hidden h-full w-[260px] flex-shrink-0 flex-col border-r border-zinc-200/90 bg-surface-container-low/80 backdrop-blur-sm dark:border-zinc-800/90 lg:flex">
-        <div className="px-5 pt-8 pb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/12 to-primary-container/20 ring-1 ring-primary/20 shadow-soft">
-              <Icon name="account_balance" className="text-xl text-primary" filled />
+      {/* Desktop sidebar */}
+      <aside className="hidden h-full w-[272px] flex-shrink-0 flex-col border-r border-outline/50 bg-gradient-to-b from-surface via-surface to-surface-container-low/90 shadow-[4px_0_24px_-12px_rgb(15_23_42/0.06)] backdrop-blur-sm dark:border-zinc-800/60 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/95 dark:shadow-[4px_0_32px_-8px_rgb(0_0_0/0.45)] lg:flex">
+        <div className="px-6 pt-9 pb-7">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/18 via-primary/10 to-primary/5 shadow-card ring-1 ring-primary/15 dark:from-primary/25 dark:via-primary/15 dark:ring-primary/25">
+              <Icon name="account_balance" className="text-[22px] text-primary" filled />
             </div>
             <div className="min-w-0">
-              <h1 className="font-headline text-lg font-bold tracking-tight text-on-surface">ФинКлик</h1>
-              <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-on-surface" style={{ letterSpacing: '-0.03em' }}>
+                ФинКлик
+              </h1>
+              <p className="truncate text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
                 {user?.org_name || 'Организация'}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-          <nav className="space-y-0.5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">
+          <nav className="space-y-1">
           {ALL_NAV_ITEMS.map((item) => {
             const { to, label, icon, end, flyout } = item
             const active =
@@ -93,10 +95,10 @@ export default function Layout() {
                 <div key={to} className="group relative">
                   <NavLink
                     to={to}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
                       active
-                        ? 'bg-surface text-primary shadow-soft ring-1 ring-zinc-200/90 dark:ring-zinc-700/80'
-                        : 'text-zinc-600 hover:bg-surface/90 hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
+                        ? 'bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-transparent text-primary shadow-xs ring-1 ring-primary/15 dark:from-primary/15 dark:via-primary/10 dark:ring-primary/25'
+                        : 'text-on-surface-variant hover:bg-surface-container-high/80 hover:text-on-surface'
                     }`}
                   >
                     <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
@@ -107,7 +109,7 @@ export default function Layout() {
                     />
                   </NavLink>
                   <div
-                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1 rounded-xl border border-zinc-200/90 bg-surface py-1.5 opacity-0 shadow-lift ring-1 ring-zinc-100 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-zinc-700/80 dark:ring-zinc-800"
+                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-outline/90 bg-surface/95 py-1.5 opacity-0 shadow-lift backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-zinc-700/80 dark:bg-zinc-900/95"
                     role="menu"
                     aria-label={`${label}: подразделы`}
                   >
@@ -135,10 +137,10 @@ export default function Layout() {
                 key={to}
                 to={to}
                 end={end}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
                   active
-                    ? 'bg-surface text-primary shadow-soft ring-1 ring-zinc-200/90 dark:ring-zinc-700/80'
-                    : 'text-zinc-600 hover:bg-surface/90 hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
+                    ? 'bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-transparent text-primary shadow-xs ring-1 ring-primary/15 dark:from-primary/15 dark:via-primary/10 dark:ring-primary/25'
+                    : 'text-on-surface-variant hover:bg-surface-container-high/80 hover:text-on-surface'
                 }`}
               >
                 <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
@@ -150,7 +152,7 @@ export default function Layout() {
           </nav>
         </div>
 
-        <div className="flex justify-center border-t border-zinc-200/80 p-3 dark:border-zinc-800/80">
+        <div className="flex justify-center border-t border-outline/50 p-4 dark:border-zinc-800/80">
           <NavLink
             to="/assistant"
             title="Консультант"
@@ -170,7 +172,7 @@ export default function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-zinc-200/90 bg-surface/90 px-3 backdrop-blur-md dark:border-zinc-800/90 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/40 bg-surface/80 px-3 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/70 dark:border-white/[0.06] dark:bg-zinc-950/80 dark:supports-[backdrop-filter]:bg-zinc-950/70 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container-low ring-1 ring-zinc-200/80 shadow-soft dark:ring-zinc-700/80">
@@ -200,12 +202,12 @@ export default function Layout() {
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
-            <div className="hidden items-center gap-1.5 rounded-full border border-zinc-200/80 bg-surface-container-low px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:border-zinc-700/80 dark:text-zinc-400 sm:flex">
-              <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-50/90 px-3 py-1.5 text-[11px] font-semibold text-emerald-900 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-100 sm:flex">
+              <span className={`h-2 w-2 rounded-full shadow-[0_0_0_3px_rgb(16_185_129/0.25)] ${connected ? 'bg-emerald-500' : 'bg-zinc-400 shadow-none'}`} />
               {connected ? 'Онлайн' : 'Офлайн'}
             </div>
-            {/* Колокольчик + тема — одна плашка вверху справа */}
-            <div className="flex items-center gap-0.5 rounded-xl border border-zinc-200/90 bg-surface-container-low p-1 shadow-soft dark:border-zinc-700/80 sm:gap-1 sm:p-1.5">
+            {/* Колокольчик + тема */}
+            <div className="flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-zinc-700/70 dark:bg-zinc-900/90 sm:gap-1 sm:p-1.5">
               <button
                 type="button"
                 className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400"
@@ -216,7 +218,7 @@ export default function Layout() {
                   <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-zinc-800 sm:right-1.5 sm:top-1.5" />
                 )}
               </button>
-              <span className="hidden h-6 w-px bg-zinc-200 dark:bg-zinc-600 sm:block" aria-hidden />
+              <span className="hidden h-6 w-px bg-outline/90 dark:bg-zinc-600 sm:block" aria-hidden />
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -242,14 +244,14 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={() => setUserOpen((v) => !v)}
-                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-on-primary shadow-soft ring-1 ring-primary/20 sm:h-11 sm:w-11"
+                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-on-primary shadow-glow ring-1 ring-white/20 sm:h-11 sm:w-11 dark:ring-primary/30"
                 aria-expanded={userOpen}
                 aria-haspopup="true"
               >
                 {(user?.full_name || '?').slice(0, 1).toUpperCase()}
               </button>
               {userOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-zinc-200/90 bg-surface py-2 shadow-lift ring-1 ring-zinc-100 dark:border-zinc-700/80 dark:ring-zinc-800">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-outline/90 bg-surface/98 py-2 shadow-lift backdrop-blur-xl dark:border-zinc-700/80 dark:bg-zinc-900/98">
                   <div className="border-b border-zinc-100 px-3 pb-2 dark:border-zinc-800">
                     <p className="truncate text-sm font-semibold text-on-surface">{user?.full_name}</p>
                     <p className="truncate text-xs text-zinc-500">{user?.email}</p>
@@ -257,7 +259,7 @@ export default function Layout() {
                   </div>
                   <Link
                     to="/settings"
-                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-zinc-800/80"
                     onClick={() => setUserOpen(false)}
                   >
                     <Icon name="settings" className="text-lg" />
@@ -324,8 +326,8 @@ export default function Layout() {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-surface-container-low/50">
-          <div className="mx-auto max-w-[1600px] px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:px-8 lg:py-8 lg:pb-8">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/40 via-canvas to-canvas dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950">
+          <div className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 sm:py-7 lg:px-10 lg:py-9 lg:pb-10">
             <Outlet />
           </div>
         </main>
@@ -333,7 +335,7 @@ export default function Layout() {
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-zinc-200/90 bg-surface/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] dark:border-zinc-800/90 lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/50 bg-surface/90 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-8px_32px_-12px_rgb(15_23_42/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-zinc-950/90 dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.5)] lg:hidden"
         aria-label="Основная навигация"
       >
         <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">

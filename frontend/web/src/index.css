@@ -2,27 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Семантические RGB (без запятых) для Tailwind `rgb(var(...) / <alpha>)` */
+/* Семантические RGB для Tailwind `rgb(var(...) / <alpha>)` — светлая тема с «воздухом», тёмная спокойная */
 @layer base {
   :root {
-    --color-canvas: 255 255 255;
+    color-scheme: light;
+    --color-canvas: 248 250 252;
     --color-surface: 255 255 255;
-    --color-surface-dim: 250 250 250;
+    --color-surface-dim: 248 250 252;
     --color-surface-bright: 255 255 255;
-    --color-surface-container-lowest: 250 250 250;
-    --color-surface-container-low: 244 244 245;
-    --color-surface-container: 244 244 245;
-    --color-surface-container-high: 236 236 238;
-    --color-surface-container-highest: 228 228 231;
-    --color-surface-variant: 228 228 231;
-    --color-on-surface: 24 24 27;
-    --color-on-surface-variant: 82 82 91;
-    --color-on-background: 24 24 27;
-    --color-outline: 212 212 216;
-    --color-outline-variant: 161 161 170;
+    --color-surface-container-lowest: 249 250 251;
+    --color-surface-container-low: 243 244 246;
+    --color-surface-container: 243 244 246;
+    --color-surface-container-high: 235 236 239;
+    --color-surface-container-highest: 226 229 233;
+    --color-surface-variant: 229 231 235;
+    --color-on-surface: 17 24 39;
+    --color-on-surface-variant: 100 116 139;
+    --color-on-background: 17 24 39;
+    --color-outline: 226 232 240;
+    --color-outline-variant: 203 213 225;
   }
 
   .dark {
+    color-scheme: dark;
     --color-canvas: 9 9 11;
     --color-surface: 24 24 27;
     --color-surface-dim: 9 9 11;
@@ -30,12 +32,12 @@
     --color-surface-container-lowest: 9 9 11;
     --color-surface-container-low: 24 24 27;
     --color-surface-container: 39 39 42;
-    --color-surface-container-high: 39 39 42;
+    --color-surface-container-high: 47 47 52;
     --color-surface-container-highest: 63 63 70;
     --color-surface-variant: 63 63 70;
-    --color-on-surface: 250 250 250;
+    --color-on-surface: 248 250 252;
     --color-on-surface-variant: 161 161 170;
-    --color-on-background: 250 250 250;
+    --color-on-background: 248 250 252;
     --color-outline: 63 63 70;
     --color-outline-variant: 82 82 91;
   }
@@ -43,75 +45,104 @@
   * { box-sizing: border-box; }
   html {
     -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
   }
   body {
     @apply bg-canvas text-on-surface antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  @media (min-width: 640px) {
+    body {
+      font-size: 15px;
+    }
   }
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { @apply bg-surface-container-low; }
-  ::-webkit-scrollbar-thumb { @apply rounded-[10px] bg-outline; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-outline/80; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-outline-variant; }
-  ::selection { @apply bg-primary/15 text-on-surface; }
+  ::selection {
+    @apply bg-primary/20 text-on-surface;
+  }
+  .dark ::selection {
+    @apply bg-primary/30 text-on-surface;
+  }
 }
 
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
-           bg-gradient-to-r from-primary to-primary-container
-           text-on-primary font-headline font-bold text-sm
-           rounded-xl shadow-soft
-           hover:brightness-[1.03] hover:shadow-card active:scale-[0.98] transition-all
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           rounded-2xl font-headline text-sm font-semibold tracking-wide text-on-primary
+           bg-gradient-to-br from-primary via-primary to-primary-dim
+           shadow-[0_2px_8px_rgb(13_148_136/0.28),0_8px_24px_-6px_rgb(13_148_136/0.22)]
+           ring-1 ring-white/15
+           transition-all duration-200 ease-smooth
+           hover:brightness-[1.04] hover:shadow-[0_4px_16px_rgb(13_148_136/0.35),0_12px_32px_-8px_rgb(13_148_136/0.2)]
+           active:scale-[0.98] active:brightness-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2
-           bg-surface-container-high text-on-surface text-sm font-bold
-           rounded-xl border border-zinc-200/80 shadow-soft
-           hover:bg-surface hover:border-zinc-300/90 transition-colors
-           dark:border-zinc-600/80 dark:hover:border-zinc-500 dark:hover:bg-surface-container;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-outline/90 bg-surface px-4 py-2
+           text-sm font-semibold text-on-surface shadow-xs
+           transition-all duration-200 ease-smooth
+           hover:border-outline-variant hover:bg-surface-container-low
+           dark:border-zinc-600/70 dark:hover:border-zinc-500 dark:hover:bg-surface-container;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-3 py-2
-           text-on-surface-variant text-sm font-medium
-           rounded-xl hover:bg-surface-container-high hover:text-on-surface transition-colors;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2
+           text-sm font-medium text-on-surface-variant
+           transition-colors duration-200 ease-smooth
+           hover:bg-surface-container-high hover:text-on-surface;
   }
   .card {
-    @apply bg-surface rounded-2xl border border-zinc-200/70 shadow-soft
-           dark:border-zinc-700/80;
-  }
-  .card-elevated {
-    @apply bg-surface rounded-2xl border border-zinc-200/60 shadow-card
+    @apply rounded-3xl border border-outline/80 bg-surface shadow-card
            dark:border-zinc-700/70;
   }
+  .card-elevated {
+    @apply rounded-3xl border border-outline/70 bg-surface shadow-lift
+           dark:border-zinc-700/60;
+  }
   .input {
-    @apply w-full bg-surface border border-zinc-200/90 rounded-xl
-           px-4 py-2 text-sm text-on-surface
-           focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40
-           placeholder:text-on-surface-variant/60
-           dark:border-zinc-600/90;
+    @apply w-full rounded-2xl border border-outline/90 bg-surface px-4 py-2.5 text-sm text-on-surface
+           shadow-xs transition-shadow duration-200 ease-smooth
+           placeholder:text-on-surface-variant/65
+           focus:border-primary/45 focus:outline-none focus:ring-2 focus:ring-primary/20
+           dark:border-zinc-600/80;
   }
   .label {
-    @apply block text-xs font-bold text-on-surface-variant tracking-widest uppercase font-label mb-2;
+    @apply mb-2 block font-label text-[11px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant;
   }
   .metric-blade {
-    @apply bg-surface border border-zinc-200/70 p-6 rounded-2xl relative overflow-hidden shadow-soft
-           hover:shadow-card hover:border-zinc-200 transition-shadow duration-200
-           dark:border-zinc-700/80 dark:hover:border-zinc-600;
+    @apply relative overflow-hidden rounded-3xl border border-outline/80 bg-surface p-6 shadow-card
+           transition-all duration-300 ease-smooth
+           hover:border-outline-variant hover:shadow-lift
+           dark:border-zinc-700/70 dark:hover:border-zinc-600;
   }
   .glass-panel {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(228, 228, 231, 0.9);
+    backdrop-filter: blur(20px) saturate(1.2);
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 8px 32px rgb(15 23 42 / 0.06);
   }
   .dark .glass-panel {
-    background: rgba(24, 24, 27, 0.92);
-    border: 1px solid rgba(63, 63, 70, 0.85);
+    background: rgba(24, 24, 27, 0.88);
+    border: 1px solid rgba(63, 63, 70, 0.65);
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
   }
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
+  }
+  /* Заголовки страниц — единый премиальный ритм */
+  .page-heading {
+    @apply font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-3xl;
+    letter-spacing: -0.025em;
+  }
+  .page-heading-brand {
+    @apply font-headline text-3xl font-bold tracking-tight text-primary sm:text-3xl;
+    letter-spacing: -0.035em;
   }
 }

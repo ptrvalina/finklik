@@ -62,7 +62,7 @@ export default function OnecSyncPage() {
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Синхронизация 1С</h1>
+          <h1 className="page-heading">Синхронизация 1С</h1>
           <p className="text-sm text-zinc-500">Очередь задач, статусы, ошибки и ручной retry</p>
         </div>
         <div className="w-full sm:w-56">

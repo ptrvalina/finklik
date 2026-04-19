@@ -84,7 +84,7 @@ export default function CalendarPage() {
     <div className="flex h-[calc(100vh-8rem)] max-w-7xl flex-col space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
+          <h1 className="page-heading">
             {MONTHS[month]} {year}
           </h1>
           <div className="flex w-fit items-center rounded-lg bg-surface-container-low p-1">

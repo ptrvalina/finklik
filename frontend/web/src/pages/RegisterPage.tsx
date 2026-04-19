@@ -24,17 +24,22 @@ export default function RegisterPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas p-4">
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-tertiary/5 blur-3xl rounded-full" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/5 blur-3xl rounded-full" />
+      <div className="absolute -left-36 -top-44 h-[28rem] w-[28rem] rounded-full bg-tertiary/[0.06] blur-3xl" />
+      <div className="absolute -bottom-44 -right-36 h-[30rem] w-[30rem] rounded-full bg-primary/[0.06] blur-3xl" />
+      <div className="absolute left-1/3 top-1/4 h-56 w-56 rounded-full bg-violet-200/25 blur-3xl dark:bg-violet-950/20" />
 
-      <div className="w-full max-w-sm relative z-10">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold text-primary font-headline tracking-tight">ФинКлик</h1>
-          <p className="text-on-surface-variant text-sm mt-2">Создайте аккаунт — это займёт 1 минуту</p>
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="mb-10 text-center">
+          <h1 className="page-heading-brand">
+            ФинКлик
+          </h1>
+          <p className="mt-2 max-w-[18rem] mx-auto text-sm leading-relaxed text-on-surface-variant">Создайте аккаунт — это займёт 1 минуту</p>
         </div>
 
-        <div className="rounded-xl border border-zinc-200/80 bg-surface p-6 shadow-card dark:border-zinc-700/80">
-          <h2 className="text-lg font-bold font-headline text-on-surface mb-6">Регистрация</h2>
+        <div className="card-elevated border border-outline/80 p-7 dark:border-zinc-700/70">
+          <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
+            Регистрация
+          </h2>
 
           {error && (
             <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error flex items-center gap-2">

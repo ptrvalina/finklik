@@ -171,7 +171,7 @@ export default function ScannerPage() {
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Сканер документов</h1>
+        <h1 className="page-heading">Сканер документов</h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500">
           Загрузите чеки, накладные или счета. AI автоматически извлечёт данные и предложит создать операцию.
         </p>

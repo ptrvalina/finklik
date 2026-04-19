@@ -83,7 +83,7 @@ export default function CurrencyPage() {
   return (
     <div className="max-w-5xl space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Курсы валют</h1>
+        <h1 className="page-heading">Курсы валют</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
           Официальные курсы <strong className="text-zinc-900">Национального банка Республики Беларусь</strong> — те же
           данные, что использует бизнес и отчётность. Сервер ФинКлик периодически обновляет справочник; конвертация идёт

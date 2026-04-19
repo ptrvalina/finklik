@@ -443,7 +443,7 @@ export default function DocumentsPage() {
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Документы</h1>
+        <h1 className="page-heading">Документы</h1>
         <p className="mt-1 text-sm text-zinc-500">Импорт и экспорт данных</p>
       </div>
 

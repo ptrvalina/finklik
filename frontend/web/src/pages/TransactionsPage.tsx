@@ -187,7 +187,7 @@ export default function TransactionsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Операции</h1>
+          <h1 className="page-heading">Операции</h1>
           <p className="mt-0.5 text-sm text-zinc-500">{total} операций</p>
         </div>
         <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>

@@ -24,7 +24,7 @@ export default function AppModal({ title, onClose, children, wide, extraWide, fo
       role="presentation"
     >
       <div
-        className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-surface shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:rounded-2xl sm:border sm:border-zinc-200/90 sm:shadow-lift dark:sm:border-zinc-700/80 ${
+        className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-surface shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:rounded-3xl sm:border sm:border-outline/90 sm:shadow-lift dark:sm:border-zinc-700/80 ${
           extraWide ? 'sm:max-w-3xl' : wide ? 'sm:max-w-lg' : 'sm:max-w-md'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -32,7 +32,7 @@ export default function AppModal({ title, onClose, children, wide, extraWide, fo
         aria-modal="true"
         aria-labelledby="app-modal-title"
       >
-        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800 sm:px-6 sm:py-4">
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-outline/80 px-4 py-4 dark:border-zinc-800 sm:px-6 sm:py-5">
           <h2 id="app-modal-title" className="min-w-0 flex-1 font-headline text-base font-bold text-on-surface sm:text-lg">
             {title}
           </h2>

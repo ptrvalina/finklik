@@ -74,7 +74,7 @@ export default function CounterpartiesPage() {
     <div className="max-w-7xl space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">Контрагенты</h1>
+          <h1 className="page-heading">Контрагенты</h1>
           <p className="mt-1 text-sm text-zinc-500">Справочник организаций и ИП</p>
         </div>
         <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>

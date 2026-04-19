@@ -18,17 +18,22 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas p-4">
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 blur-3xl rounded-full" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary/5 blur-3xl rounded-full" />
+      <div className="absolute -right-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-primary/[0.07] blur-3xl" />
+      <div className="absolute -bottom-48 -left-32 h-[32rem] w-[32rem] rounded-full bg-primary/[0.04] blur-3xl" />
+      <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-3xl dark:bg-zinc-800/30" />
 
-      <div className="w-full max-w-sm relative z-10">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold text-primary font-headline tracking-tight">ФинКлик</h1>
-          <p className="text-on-surface-variant text-sm mt-2">БИЗНЕС В КАРМАНЕ</p>
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="mb-10 text-center">
+          <h1 className="page-heading-brand">
+            ФинКлик
+          </h1>
+          <p className="mt-2.5 text-xs font-semibold tracking-[0.22em] text-on-surface-variant">БИЗНЕС В КАРМАНЕ</p>
         </div>
 
-        <div className="rounded-xl border border-zinc-200/80 bg-surface p-6 shadow-card dark:border-zinc-700/80">
-          <h2 className="text-lg font-bold font-headline text-on-surface mb-6">Войти в аккаунт</h2>
+        <div className="card-elevated border border-outline/80 p-7 dark:border-zinc-700/70">
+          <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
+            Войти в аккаунт
+          </h2>
 
           {error && (
             <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error flex items-center gap-2">
