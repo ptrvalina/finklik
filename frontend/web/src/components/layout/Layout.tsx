@@ -1,8 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
+import { useToastStack } from '../../hooks/useToastStack'
+import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
+import ToastStack from '../ui/ToastStack'
 import { ALL_NAV_ITEMS, flattenNavForSheetWithAssistant, MOBILE_BAR_ITEMS } from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -27,7 +31,10 @@ export default function Layout() {
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const navigate = useNavigate()
   const location = useLocation()
+  const qc = useQueryClient()
   const { connected, notifications, dismissNotification } = useWebSocket()
+  const { toasts, addToast, dismissToast } = useToastStack()
+  const reportToastHandled = useRef(new Set<string>())
   const [moreOpen, setMoreOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -45,6 +52,23 @@ export default function Layout() {
   useEffect(() => {
     setMoreOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    for (const n of notifications) {
+      if (n.event !== 'report_status') continue
+      if (reportToastHandled.current.has(n.id)) continue
+      reportToastHandled.current.add(n.id)
+      const formatted = formatReportStatusToast(n.data)
+      addToast({
+        title: formatted.title,
+        body: formatted.body,
+        variant: formatted.variant,
+      })
+      void qc.invalidateQueries({ queryKey: ['submissions'] })
+    }
+  }, [notifications, addToast, qc])
+
+  const bannerNotifications = notifications.filter((n) => n.event !== 'report_status')
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -300,9 +324,9 @@ export default function Layout() {
           </div>
         )}
 
-        {notifications.length > 0 && (
+        {bannerNotifications.length > 0 && (
           <div className="space-y-2 px-4 pt-3 sm:px-6 lg:px-8">
-            {notifications.slice(0, 3).map((n) => (
+            {bannerNotifications.slice(0, 3).map((n) => (
               <div
                 key={n.id}
                 className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm shadow-soft"
@@ -429,6 +453,8 @@ export default function Layout() {
           </div>
         </div>
       )}
+
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }
