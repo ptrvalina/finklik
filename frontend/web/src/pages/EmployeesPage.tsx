@@ -546,18 +546,20 @@ export default function EmployeesPage() {
           title="Увольнение"
           onClose={() => setShowFireConfirm(null)}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowFireConfirm(null)}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="min-h-12 flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white hover:brightness-110 disabled:opacity-50"
-                disabled={fireMutation.isPending}
-                onClick={() => fireMutation.mutate({ id: showFireConfirm, fire_date: fireDate })}
-              >
-                {fireMutation.isPending ? 'Увольняем...' : 'Уволить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowFireConfirm(null)}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="min-h-12 flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white hover:brightness-110 disabled:opacity-50"
+                  disabled={fireMutation.isPending}
+                  onClick={() => fireMutation.mutate({ id: showFireConfirm, fire_date: fireDate })}
+                >
+                  {fireMutation.isPending ? 'Увольняем...' : 'Уволить'}
+                </button>
+              </div>
             </div>
           }
         >
@@ -580,18 +582,20 @@ export default function EmployeesPage() {
           extraWide
           onClose={closeModal}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={closeModal}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!form.full_name || !form.position || !form.salary || isSaving}
-                onClick={handleSave}
-              >
-                {isSaving ? 'Сохраняем...' : 'Сохранить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={closeModal}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!form.full_name || !form.position || !form.salary || isSaving}
+                  onClick={handleSave}
+                >
+                  {isSaving ? 'Сохраняем...' : 'Сохранить'}
+                </button>
+              </div>
             </div>
           }
         >
@@ -812,14 +816,16 @@ export default function EmployeesPage() {
             setSalaryResult(null)
           }}
           footer={
-            <button
-              type="button"
-              className="btn-primary min-h-12 w-full"
-              disabled={salaryMutation.isPending}
-              onClick={() => salaryMutation.mutate()}
-            >
-              {salaryMutation.isPending ? 'Считаем...' : 'Рассчитать'}
-            </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <button
+                type="button"
+                className="btn-primary min-h-12 w-full"
+                disabled={salaryMutation.isPending}
+                onClick={() => salaryMutation.mutate()}
+              >
+                {salaryMutation.isPending ? 'Считаем...' : 'Рассчитать'}
+              </button>
+            </div>
           }
         >
           <p className="text-sm font-semibold text-on-surface">{selectedEmployee.full_name}</p>

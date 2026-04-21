@@ -473,7 +473,8 @@ export default function TransactionsPage() {
           title={editingTx ? 'Редактировать операцию' : 'Новая операция'}
           onClose={closeModal}
           footer={
-            <div className="flex gap-3">
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
               <button type="button" className="btn-secondary min-h-12 flex-1 sm:min-h-0" onClick={closeModal}>
                 Отмена
               </button>
@@ -485,6 +486,7 @@ export default function TransactionsPage() {
               >
                 {isSaving ? 'Сохраняем...' : 'Сохранить'}
               </button>
+              </div>
             </div>
           }
         >

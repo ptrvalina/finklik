@@ -227,18 +227,20 @@ export default function CounterpartiesPage() {
           onClose={closeModal}
           wide
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={closeModal}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!form.name || form.unp.length !== 9 || saveMutation.isPending}
-                onClick={() => saveMutation.mutate()}
-              >
-                {saveMutation.isPending ? 'Сохраняем...' : 'Сохранить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={closeModal}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!form.name || form.unp.length !== 9 || saveMutation.isPending}
+                  onClick={() => saveMutation.mutate()}
+                >
+                  {saveMutation.isPending ? 'Сохраняем...' : 'Сохранить'}
+                </button>
+              </div>
             </div>
           }
         >

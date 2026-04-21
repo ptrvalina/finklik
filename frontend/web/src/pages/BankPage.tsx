@@ -462,18 +462,20 @@ export default function BankPage() {
           wide
           onClose={() => setShowAddAccount(false)}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowAddAccount(false)}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!accountForm.bank_bic || !accountForm.account_number || addAccountMutation.isPending}
-                onClick={() => addAccountMutation.mutate()}
-              >
-                {addAccountMutation.isPending ? 'Сохраняем...' : 'Добавить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowAddAccount(false)}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!accountForm.bank_bic || !accountForm.account_number || addAccountMutation.isPending}
+                  onClick={() => addAccountMutation.mutate()}
+                >
+                  {addAccountMutation.isPending ? 'Сохраняем...' : 'Добавить'}
+                </button>
+              </div>
             </div>
           }
         >
@@ -525,18 +527,20 @@ export default function BankPage() {
           title="Новый платёж"
           onClose={() => setShowPayment(false)}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowPayment(false)}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!paymentForm.amount || !paymentForm.recipient_name || paymentMutation.isPending}
-                onClick={() => paymentMutation.mutate()}
-              >
-                {paymentMutation.isPending ? 'Отправляем...' : 'Отправить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowPayment(false)}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!paymentForm.amount || !paymentForm.recipient_name || paymentMutation.isPending}
+                  onClick={() => paymentMutation.mutate()}
+                >
+                  {paymentMutation.isPending ? 'Отправляем...' : 'Отправить'}
+                </button>
+              </div>
             </div>
           }
         >

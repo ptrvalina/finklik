@@ -6,6 +6,10 @@
 @layer base {
   :root {
     color-scheme: light;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
     --color-canvas: 248 250 252;
     --color-surface: 255 255 255;
     --color-surface-dim: 248 250 252;
@@ -46,12 +50,21 @@
   html {
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
+    height: 100%;
+    overflow: hidden;
   }
   body {
     @apply bg-canvas text-on-surface antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 15px;
     line-height: 1.5;
+    height: 100%;
+    overflow: hidden;
+  }
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
   @media (min-width: 640px) {
     body {
@@ -136,6 +149,23 @@
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
   }
+  .app-safe-x {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+  .app-safe-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+  .app-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: rgb(var(--color-surface) / 0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgb(var(--color-outline) / 0.8);
+    padding-top: 0.75rem;
+    padding-bottom: max(0.75rem, var(--safe-bottom));
+  }
   /* Заголовки страниц — единый премиальный ритм */
   .page-heading {
     @apply font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-3xl;
@@ -144,5 +174,39 @@
   .page-heading-brand {
     @apply font-headline text-3xl font-bold tracking-tight text-primary sm:text-3xl;
     letter-spacing: -0.035em;
+  }
+}
+
+@media (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+
+  .input {
+    min-height: 44px;
+    font-size: 16px; /* avoid iOS zoom on focus */
+  }
+}
+
+.app-shell body {
+  overscroll-behavior-y: contain;
+}
+
+@media (max-width: 640px) {
+  .app-compact-mobile .card,
+  .app-compact-mobile .card-elevated,
+  .app-compact-mobile .metric-blade {
+    border-radius: 1rem;
+  }
+
+  .app-compact-mobile .metric-blade {
+    padding: 1rem;
+  }
+
+  .app-compact-mobile .page-heading {
+    font-size: 1.5rem;
+    line-height: 1.25;
   }
 }

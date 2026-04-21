@@ -193,18 +193,20 @@ export default function CalendarPage() {
           title="Новое событие"
           onClose={() => setShowAddModal(false)}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowAddModal(false)}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!newEvent.title || !selectedDate || addMutation.isPending}
-                onClick={() => addMutation.mutate()}
-              >
-                {addMutation.isPending ? 'Сохраняем...' : 'Создать'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowAddModal(false)}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!newEvent.title || !selectedDate || addMutation.isPending}
+                  onClick={() => addMutation.mutate()}
+                >
+                  {addMutation.isPending ? 'Сохраняем...' : 'Создать'}
+                </button>
+              </div>
             </div>
           }
         >

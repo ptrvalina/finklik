@@ -633,18 +633,20 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
           title="Пригласить пользователя"
           onClose={() => setShowInvite(false)}
           footer={
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowInvite(false)}>
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-12 flex-1"
-                disabled={!inviteForm.email || inviteMutation.isPending}
-                onClick={() => inviteMutation.mutate()}
-              >
-                {inviteMutation.isPending ? 'Отправляем...' : 'Пригласить'}
-              </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-12 flex-1" onClick={() => setShowInvite(false)}>
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary min-h-12 flex-1"
+                  disabled={!inviteForm.email || inviteMutation.isPending}
+                  onClick={() => inviteMutation.mutate()}
+                >
+                  {inviteMutation.isPending ? 'Отправляем...' : 'Пригласить'}
+                </button>
+              </div>
             </div>
           }
         >
@@ -773,9 +775,11 @@ function RegulatorySection() {
           wide
           onClose={() => setSelectedUpdate(null)}
           footer={
-            <button type="button" className="btn-primary min-h-12 w-full" onClick={() => setSelectedUpdate(null)}>
-              Закрыть
-            </button>
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <button type="button" className="btn-primary min-h-12 w-full" onClick={() => setSelectedUpdate(null)}>
+                Закрыть
+              </button>
+            </div>
           }
         >
           <div className="space-y-4">

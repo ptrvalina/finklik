@@ -100,7 +100,7 @@ export default function Layout() {
     user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : user?.role === 'viewer' ? 'Наблюдатель' : user?.role
 
   return (
-    <div className="flex h-[100dvh] bg-canvas text-on-surface font-body antialiased">
+    <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Desktop sidebar */}
       <aside className="hidden h-full w-[272px] flex-shrink-0 flex-col border-r border-outline/50 bg-gradient-to-b from-surface via-surface to-surface-container-low/90 shadow-[4px_0_24px_-12px_rgb(15_23_42/0.06)] backdrop-blur-sm dark:border-zinc-800/60 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/95 dark:shadow-[4px_0_32px_-8px_rgb(0_0_0/0.45)] lg:flex">
         <div className="px-6 pt-9 pb-7">
@@ -374,7 +374,7 @@ export default function Layout() {
         )}
 
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/40 via-canvas to-canvas dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950">
-          <div className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 sm:py-7 lg:px-10 lg:py-9 lg:pb-10">
+          <div className="mx-auto max-w-[1600px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-10 lg:py-9 lg:pb-10">
             <Outlet />
           </div>
         </main>
@@ -382,7 +382,7 @@ export default function Layout() {
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/50 bg-surface/90 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-8px_32px_-12px_rgb(15_23_42/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-zinc-950/90 dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.5)] lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/50 bg-surface/90 pb-[max(env(safe-area-inset-bottom,0px),6px)] shadow-[0_-8px_32px_-12px_rgb(15_23_42/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-zinc-950/90 dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.5)] lg:hidden"
         aria-label="Основная навигация"
       >
         <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
@@ -393,7 +393,7 @@ export default function Layout() {
                 key={to}
                 to={to}
                 end={end}
-                className={`tap-highlight-none flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
+                className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
                   active ? 'text-primary' : 'text-zinc-500'
                 }`}
               >
@@ -406,7 +406,7 @@ export default function Layout() {
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
-            className={`tap-highlight-none flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
+            className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
               moreOpen ? 'text-primary' : 'text-zinc-500'
             }`}
           >
