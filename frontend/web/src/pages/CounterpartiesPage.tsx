@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { counterpartiesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { Link } from 'react-router-dom'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -72,14 +73,24 @@ export default function CounterpartiesPage() {
 
   return (
     <div className="max-w-7xl space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h1 className="page-heading">Контрагенты</h1>
           <p className="mt-1 text-sm text-zinc-500">Справочник организаций и ИП</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Поставщики</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Клиенты</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Реквизиты</span>
+          </div>
         </div>
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-          <Icon name="add" className="text-lg" /> Добавить
-        </button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+            <Icon name="description" className="text-lg" /> Документы
+          </Link>
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
+            <Icon name="add" className="text-lg" /> Добавить
+          </button>
+        </div>
       </div>
 
       {message && (

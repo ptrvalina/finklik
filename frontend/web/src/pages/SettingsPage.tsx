@@ -41,9 +41,15 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
-      <div>
+      <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">Настройки</h1>
         <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции 1С, команда и законодательство</p>
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Профиль</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Интеграции</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Команда</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Комплаенс</span>
+        </div>
       </div>
 
       <div className="rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft dark:border-zinc-700/80 sm:p-5">

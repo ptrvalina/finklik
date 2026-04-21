@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { dashboardApi, reportsApi, demoApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
+import ClientJourneyPanel from '../components/dashboard/ClientJourneyPanel'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -92,6 +93,7 @@ export default function DashboardPage() {
       </div>
 
       <OnboardingChecklist />
+      <ClientJourneyPanel metrics={metrics} transactions={transactions} />
 
       {/* Быстрые сервисы — мобильный super-app ряд */}
       <div className="-mx-1 lg:hidden">

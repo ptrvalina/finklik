@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { reportsApi } from '../api/client'
+import { Link } from 'react-router-dom'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -60,12 +61,20 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
         <div>
           <h1 className="page-heading">Аналитика</h1>
           <p className="mt-1 text-sm text-zinc-500">Финансовые показатели за {year} год</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Динамика</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Структура</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Рекомендации</span>
+          </div>
         </div>
-        <div className="flex w-full justify-start sm:w-auto sm:justify-end">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+            <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
+          </Link>
           <div className="flex rounded-md border border-zinc-200/80 bg-surface-container-high p-1 shadow-soft">
             <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
               <Icon name="chevron_left" className="text-sm" />

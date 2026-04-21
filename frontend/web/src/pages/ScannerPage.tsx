@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi, dashboardApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
+import { Link } from 'react-router-dom'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -170,11 +171,24 @@ export default function ScannerPage() {
 
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
-      <div>
+      <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">Сканер документов</h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-500">
           Загрузите чеки, накладные или счета. AI автоматически извлечёт данные и предложит создать операцию.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Загрузка</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Распознавание</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Операция</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link to="/transactions" className="btn-secondary !py-2 text-xs">
+            <Icon name="receipt_long" className="text-base" /> В операции
+          </Link>
+          <Link to="/documents" className="btn-secondary !py-2 text-xs">
+            <Icon name="description" className="text-base" /> В документы
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-4 sm:gap-6">

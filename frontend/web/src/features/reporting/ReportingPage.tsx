@@ -27,7 +27,7 @@ export default function ReportingPage() {
 
   return (
     <div className="max-w-7xl space-y-5 sm:space-y-6">
-      <div>
+      <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">
           {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Сдача отчётности'}
         </h1>
@@ -36,6 +36,12 @@ export default function ReportingPage() {
             ? `Отчёты и отправка в ${authorityTitle(filter)}`
             : 'Выберите орган в меню слева или перейдите в раздел ниже'}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Подготовка</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Проверка</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Подача</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Статус</span>
+        </div>
       </div>
 
       {!filter && (

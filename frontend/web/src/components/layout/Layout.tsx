@@ -68,6 +68,18 @@ export default function Layout() {
     }
   }, [notifications, addToast, qc])
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+      if (e.key === 'Escape') setSearchOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   const bannerNotifications = notifications.filter((n) => n.event !== 'report_status')
 
   useEffect(() => {
@@ -223,6 +235,17 @@ export default function Layout() {
             >
               {({ isActive }) => <Icon name="document_scanner" filled={isActive} className="text-[20px] sm:text-[22px]" />}
             </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setSearchOpen((v) => !v)}
+              className="group hidden min-w-0 flex-1 items-center gap-2 rounded-xl border border-outline/70 bg-surface-container-low/70 px-3 py-2 text-left text-sm text-on-surface-variant shadow-xs transition hover:border-outline hover:bg-surface lg:flex"
+              aria-label="Глобальный поиск по разделам"
+            >
+              <Icon name="search" className="text-lg text-zinc-400 group-hover:text-zinc-600" />
+              <span className="truncate">Поиск разделов, действий и сценариев клиента…</span>
+              <span className="ml-auto rounded-md bg-surface px-2 py-0.5 text-[10px] font-semibold text-zinc-500 ring-1 ring-outline/80">Ctrl + K</span>
+            </button>
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">

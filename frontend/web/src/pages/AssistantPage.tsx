@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { assistantApi, type AssistantChatMessage, type AssistantSource } from '../api/client'
+import { Link } from 'react-router-dom'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -57,12 +58,25 @@ export default function AssistantPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-6">
-      <div>
+      <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">Консультант</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Ориентиры по учёту, госпорталам (ИМНС, ФСЗН, Белстат, Белгосстрах), Pravo.by и справочным системам. Не заменяет бухгалтера и
           официальные разъяснения органов.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Вопрос</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Источник</span>
+          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Решение</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link to="/settings" className="btn-secondary !py-2 text-xs">
+            <Icon name="vpn_key" className="text-base" /> Ключ ИИ
+          </Link>
+          <Link to="/reporting" className="btn-secondary !py-2 text-xs">
+            <Icon name="assignment_turned_in" className="text-base" /> Отчётность
+          </Link>
+        </div>
       </div>
 
       <div

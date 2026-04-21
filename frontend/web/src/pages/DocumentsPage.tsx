@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { counterpartiesApi, documentsApi, importApi, primaryDocumentsApi } from '../api/client'
 import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -445,6 +446,21 @@ export default function DocumentsPage() {
       <div>
         <h1 className="page-heading">Документы</h1>
         <p className="mt-1 text-sm text-zinc-500">Импорт и экспорт данных</p>
+      </div>
+
+      <div className="card-elevated flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div>
+          <p className="text-sm font-semibold text-on-surface">Клиентский поток</p>
+          <p className="mt-1 text-xs text-on-surface-variant">Счёт → оплата → акт/накладная → архив/экспорт</p>
+        </div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+            <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
+          </Link>
+          <Link to="/scanner" className="btn-primary w-full sm:w-auto">
+            <Icon name="document_scanner" className="text-lg" /> В сканер
+          </Link>
+        </div>
       </div>
 
       {message && (

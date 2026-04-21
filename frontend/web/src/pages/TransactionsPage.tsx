@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dashboardApi, onecApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { Link } from 'react-router-dom'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -185,14 +186,24 @@ export default function TransactionsPage() {
   return (
     <div className="max-w-7xl space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h1 className="page-heading">Операции</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">{total} операций</p>
+          <p className="mt-1 text-sm text-zinc-500">{total} операций · единый журнал доходов/расходов и синка с 1С</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">1) Добавить</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">2) Подтвердить</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">3) Синхронизировать</span>
+          </div>
         </div>
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-          <Icon name="add" className="text-lg" /> Добавить
-        </button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+            <Icon name="upload_file" className="text-lg" /> Импорт
+          </Link>
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
+            <Icon name="add" className="text-lg" /> Добавить
+          </button>
+        </div>
       </div>
 
       {/* Filter tabs — горизонтальный скролл на телефоне */}

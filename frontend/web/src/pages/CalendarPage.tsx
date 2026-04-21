@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { Link } from 'react-router-dom'
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -82,7 +83,7 @@ export default function CalendarPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] max-w-7xl flex-col space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <h1 className="page-heading">
             {MONTHS[month]} {year}
@@ -104,6 +105,9 @@ export default function CalendarPage() {
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+            <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
+          </Link>
           <div className="-mx-1 flex overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mr-4 sm:overflow-visible sm:pb-0">
             <div className="flex min-w-max gap-1 rounded-lg bg-surface-container-low p-1">
               <button type="button" className="whitespace-nowrap rounded-md bg-surface-container-highest px-3 py-1.5 text-xs font-semibold text-on-surface sm:px-4">
