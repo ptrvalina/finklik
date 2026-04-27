@@ -5,13 +5,19 @@ import ThemeHydration from './components/ThemeHydration'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import Bank from './pages/Bank'
+import Reports from './pages/Reports'
+import Employees from './pages/Employees'
+import Accounting from './pages/Accounting'
+import Counterparties from './pages/Counterparties'
+import Websites from './pages/Websites'
+import Notes from './pages/Notes'
+import Scan from './pages/Scan'
 import TransactionsPage from './pages/TransactionsPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
-import EmployeesPage from './pages/EmployeesPage'
 import DocumentsPage from './pages/DocumentsPage'
 import BankPage from './pages/BankPage'
-import CounterpartiesPage from './pages/CounterpartiesPage'
 import ScannerPage from './pages/ScannerPage'
 import OnecSyncPage from './pages/OnecSyncPage'
 import OnecContourPage from './pages/OnecContourPage'
@@ -63,20 +69,36 @@ function AppRoutes() {
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
-          <Route path="transactions" element={<TransactionsPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="employees" element={<EmployeesPage />} />
+          <Route path="bank" element={<Bank />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="employees" element={<Employees />} />
+          <Route path="accounting" element={<Accounting />} />
+          <Route path="counterparties" element={<Counterparties />} />
+          <Route path="websites" element={<Websites />} />
+          <Route path="notes" element={<Notes />} />
+          <Route path="scan" element={<Scan />} />
+
+          {/* Legacy route aliases kept for compatibility */}
+          <Route path="transactions" element={<Navigate to="/accounting" replace />} />
+          <Route path="analytics" element={<Navigate to="/reports" replace />} />
+          <Route path="calendar" element={<Navigate to="/reports" replace />} />
           <Route path="taxes" element={<Navigate to="/bank" replace />} />
-          <Route path="reporting" element={<ReportingPage />} />
-          <Route path="reporting/:authority" element={<ReportingPage />} />
-          <Route path="documents" element={<DocumentsPage />} />
-          <Route path="bank" element={<BankPage />} />
-          <Route path="currency" element={<CurrencyPage />} />
-          <Route path="counterparties" element={<CounterpartiesPage />} />
-          <Route path="onec-contour" element={<OnecContourPage />} />
-          <Route path="onec-sync" element={<OnecSyncPage />} />
-          <Route path="scanner" element={<ScannerPage />} />
+          <Route path="reporting" element={<Navigate to="/reports" replace />} />
+          <Route path="reporting/:authority" element={<Navigate to="/reports" replace />} />
+          <Route path="documents" element={<Navigate to="/accounting" replace />} />
+          <Route path="currency" element={<Navigate to="/bank" replace />} />
+          <Route path="scanner" element={<Navigate to="/scan" replace />} />
+          <Route path="onec-contour" element={<Navigate to="/settings" replace />} />
+          <Route path="onec-sync" element={<Navigate to="/settings" replace />} />
+
+          {/* Existing pages remain available via route aliases */}
+          <Route path="legacy/bank" element={<BankPage />} />
+          <Route path="legacy/documents" element={<DocumentsPage />} />
+          <Route path="legacy/scanner" element={<ScannerPage />} />
+          <Route path="legacy/reporting" element={<ReportingPage />} />
+          <Route path="legacy/currency" element={<CurrencyPage />} />
+          <Route path="legacy/onec-contour" element={<OnecContourPage />} />
+          <Route path="legacy/onec-sync" element={<OnecSyncPage />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

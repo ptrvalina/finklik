@@ -12,7 +12,6 @@ import json
 from pathlib import Path
 import base64
 import hashlib
-import hmac
 from datetime import datetime, timezone
 from typing import Callable
 from collections import defaultdict
@@ -37,7 +36,7 @@ try:
     RATE_LIMIT_REQUESTS = _cfg.RATE_LIMIT_PER_MINUTE
     RATE_LIMIT_BURST = _cfg.RATE_LIMIT_BURST
 except Exception:
-    RATE_LIMIT_REQUESTS = 120
+    RATE_LIMIT_REQUESTS = 100
     RATE_LIMIT_BURST = 30
 RATE_LIMIT_WINDOW = 60     # секунд
 BRUTE_FORCE_MAX = 5
@@ -49,12 +48,35 @@ _CLEANUP_INTERVAL = 500
 
 # ── Rate Limiting ─────────────────────────────────────────────────────────────
 
+def _bearer_access_user_id(request: Request) -> str | None:
+    """Extract user id from access JWT (Bearer) without DB round-trip."""
+    auth = request.headers.get("Authorization") or ""
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:].strip()
+    if not token:
+        return None
+    try:
+        from jose import jwt
+
+        from app.core.config import settings as _settings
+
+        payload = jwt.decode(token, _settings.JWT_SECRET_KEY, algorithms=[_settings.JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            return None
+        sub = payload.get("sub")
+        return str(sub) if sub else None
+    except Exception:
+        return None
+
+
 def _rate_limit_key(request: Request) -> str:
-    """Ключ: IP + user_id если авторизован."""
+    """Per-user key when authenticated; otherwise per client IP."""
+    user_id = _bearer_access_user_id(request)
+    if user_id:
+        return f"rl:user:{user_id}"
     ip = request.client.host if request.client else "unknown"
-    auth = request.headers.get("Authorization", "")
-    suffix = hashlib.md5(auth.encode()).hexdigest()[:8] if auth else "anon"
-    return f"rl:{ip}:{suffix}"
+    return f"rl:ip:{ip}"
 
 
 def check_rate_limit(request: Request) -> None:
@@ -249,6 +271,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 # ── Rate Limit Middleware ─────────────────────────────────────────────────────
+
+class JwtQueryParamBlockMiddleware(BaseHTTPMiddleware):
+    """Reject requests that pass JWTs in the query string (must use header / cookie only)."""
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.scope.get("type") == "websocket":
+            return await call_next(request)
+        q = request.query_params
+        if "access_token" in q or "refresh_token" in q:
+            return Response(
+                content=json.dumps({"detail": "JWT не должен передаваться в URL"}),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                media_type="application/json",
+            )
+        return await call_next(request)
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {

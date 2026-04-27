@@ -3,6 +3,7 @@ import asyncio
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,7 @@ from contextlib import asynccontextmanager
 import structlog
 
 from app.core.config import settings
+from app.core.cors import cors_middleware_kwargs
 from app.core.database import engine, Base, get_db
 from app import models as _models  # noqa: F401 — side effect: регистрация моделей в metadata
 from app.api.v1.endpoints.auth import router as auth_router
@@ -32,8 +34,9 @@ from app.api.v1.endpoints.assistant import router as assistant_router
 from app.api.v1.endpoints.billing import router as billing_router
 from app.api.v1.endpoints.primary_documents import router as primary_documents_router
 from app.api.v1.endpoints.fx_nbrb import router as fx_nbrb_router
+from app.api.v1.endpoints.workforce import router as workforce_router
 from app.websocket.router import router as ws_router
-from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
 from app.services.nbrb_fx_service import start_nbrb_background_loop, stop_nbrb_background_loop
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -67,6 +70,22 @@ USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     log.info("startup", service="api-gateway", version=settings.APP_VERSION)
+    if not settings.DEBUG:
+        if settings.JWT_SECRET_KEY.startswith("dev_") or "min32chars" in settings.JWT_SECRET_KEY:
+            log.warning(
+                "security_jwt_secret_default",
+                hint="Задайте JWT_SECRET_KEY и JWT_REFRESH_SECRET_KEY в окружении production.",
+            )
+        if settings.JWT_REFRESH_SECRET_KEY.startswith("dev_"):
+            log.warning("security_jwt_refresh_default")
+    log.info(
+        "cors_ready",
+        origins=len(settings.cors_origins),
+        regex=bool(settings.cors_origin_regex_effective),
+        preflight_max_age=settings.CORS_PREFLIGHT_MAX_AGE,
+        trusted_hosts=len(settings.allowed_hosts),
+        refresh_cookie_samesite=settings.REFRESH_COOKIE_SAMESITE,
+    )
     sync_poller_task: asyncio.Task | None = None
     nbrb_task = start_nbrb_background_loop()
     if nbrb_task:
@@ -130,13 +149,15 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    # Vercel, GitHub Pages, Render, Cloudflare quick tunnels
-    allow_origin_regex=r"https://.*\.(trycloudflare\.com|vercel\.app|github\.io|onrender\.com)",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **cors_middleware_kwargs(
+        origins=list(settings.cors_origins),
+        origin_regex=settings.cors_origin_regex_effective,
+        max_age=settings.CORS_PREFLIGHT_MAX_AGE,
+    ),
 )
+app.add_middleware(JwtQueryParamBlockMiddleware)
+if settings.allowed_hosts:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 
 if USE_LOCAL_DOCS:
     app.mount(
@@ -190,6 +211,7 @@ app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(primary_documents_router, prefix="/api/v1")
 app.include_router(fx_nbrb_router, prefix="/api/v1")
+app.include_router(workforce_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

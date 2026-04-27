@@ -1,11 +1,32 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import AliasChoices, Field, computed_field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.core.cors import compile_cors_origin_regex, dedupe_preserve_order, parse_cors_origins_env
+
+
+_DEFAULT_CORS_CSV = ",".join(
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://finklik.vercel.app",
+        "https://ptrvalina.github.io",
+    ]
+)
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
     APP_NAME: str = "ФинКлик API"
     APP_VERSION: str = "0.4.0"
     DEBUG: bool = False
@@ -17,12 +38,34 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://finklik.vercel.app",
-        "https://ptrvalina.github.io",
-    ]
+
+    #: Явный список Origin (credentials). Env `CORS_ORIGINS`: через запятую или JSON-массив строк.
+    cors_origins_raw: str = Field(
+        default=_DEFAULT_CORS_CSV,
+        validation_alias=AliasChoices("CORS_ORIGINS"),
+        description=(
+            "Origins для CORS. Примеры: "
+            "`https://app.example.com,https://staging.example.com` или "
+            '`["https://a","https://b"]`.'
+        ),
+    )
+    #: Дополнительные origin по шаблону (preview / tunnels). Пустая строка — отключить regex.
+    CORS_ORIGIN_REGEX: str = (
+        r"https://.*\.(trycloudflare\.com|vercel\.app|github\.io|onrender\.com)"
+    )
+    #: Кэш ответа на preflight OPTIONS (секунды); 0 — без заголовка max-age.
+    CORS_PREFLIGHT_MAX_AGE: int = Field(default=600, ge=0, le=86400)
+
+    #: Ограничение заголовка Host (защита от подмены). Пусто — middleware отключён (удобно за reverse-proxy).
+    allowed_hosts_raw: str = Field(
+        default="",
+        validation_alias=AliasChoices("ALLOWED_HOSTS"),
+        description="Через запятую: example.com,*.example.com — см. Starlette TrustedHostMiddleware.",
+    )
+
+    #: Для фронта на другом домене (Vercel → API Render) задайте `none` (только HTTPS).
+    REFRESH_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+
     MOCK_BANK_URL: str = "http://localhost:8001"
     ONEC_MOCK_URL: str = "http://localhost:8002"
 
@@ -32,8 +75,8 @@ class Settings(BaseSettings):
     DB_POOL_RECYCLE: int = 1800
     DB_POOL_PRE_PING: bool = True
 
-    # Rate limiting
-    RATE_LIMIT_PER_MINUTE: int = 120
+    # Rate limiting (per authenticated user when Bearer JWT present, else per IP)
+    RATE_LIMIT_PER_MINUTE: int = 100
     RATE_LIMIT_BURST: int = 30
 
     # Email (Resend / Mailgun / SendGrid). Пустой ключ = email не отправляется, код возвращается в API.
@@ -72,6 +115,52 @@ class Settings(BaseSettings):
     )
     NBRB_FX_ENABLED: bool = True
 
+    @field_validator("REFRESH_COOKIE_SAMESITE", mode="before")
+    @classmethod
+    def _refresh_cookie_samesite_ci(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            lo = v.strip().lower()
+            if lo in ("lax", "strict", "none"):
+                return lo
+        return v
+
+    @field_validator("cors_origins_raw", mode="before")
+    @classmethod
+    def _cors_origins_raw(cls, v: Any) -> str:
+        if v is None:
+            return _DEFAULT_CORS_CSV
+        s = str(v).strip()
+        return s if s else _DEFAULT_CORS_CSV
+
+    @field_validator("CORS_ORIGIN_REGEX", mode="after")
+    @classmethod
+    def _cors_regex_strip(cls, v: str) -> str:
+        return (v or "").strip()
+
+    @model_validator(mode="after")
+    def _validate_cors_regex_compiles(self) -> Settings:
+        compile_cors_origin_regex(self.CORS_ORIGIN_REGEX)
+        return self
+
+    @computed_field
+    @property
+    def cors_origins(self) -> list[str]:
+        return parse_cors_origins_env(self.cors_origins_raw)
+
+    @computed_field
+    @property
+    def cors_origin_regex_effective(self) -> str | None:
+        return compile_cors_origin_regex(self.CORS_ORIGIN_REGEX)
+
+    @computed_field
+    @property
+    def allowed_hosts(self) -> list[str]:
+        s = self.allowed_hosts_raw.strip()
+        if not s:
+            return []
+        parts = [x.strip() for x in s.split(",") if x.strip()]
+        return dedupe_preserve_order(parts)
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def database_url_use_asyncpg(cls, v: object) -> object:
@@ -83,9 +172,6 @@ class Settings(BaseSettings):
         if v.startswith("postgresql://") and not v.startswith("postgresql+"):
             return "postgresql+asyncpg://" + v[len("postgresql://"):]
         return v
-
-    class Config:
-        env_file = ".env"
 
 
 @lru_cache

@@ -34,7 +34,9 @@ class LoginRequest(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    """Refresh token in body is optional when the same value is sent in httpOnly cookie."""
+
+    refresh_token: str | None = None
 
 
 class TokenResponse(BaseModel):

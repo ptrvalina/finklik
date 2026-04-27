@@ -51,7 +51,7 @@ MOCK_BANK_URL=http://localhost:8001
 ONEC_MOCK_URL=http://localhost:8002
 
 DEBUG=true
-CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000
 EOF
 
   ok ".env создан → $ENV_FILE"

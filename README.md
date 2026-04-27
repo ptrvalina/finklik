@@ -23,7 +23,11 @@ make dev                    # Docker: API, фронт, mock-банк, mock-1С
 | `DEBUG` | Режим отладки; для исходящих URL влияет на проверки (например http vs https) |
 | `JWT_SECRET_KEY`, `JWT_REFRESH_SECRET_KEY` | Подпись access/refresh токенов |
 | `REDIS_URL` | Кэш (при недоступности Redis кэш отключается) |
-| `CORS_ORIGINS` | Список origin для CORS |
+| `CORS_ORIGINS` | Явный список origins (CSV или JSON-массив); каждый проходит проверку |
+| `CORS_ORIGIN_REGEX` | Дополнительные origins по regex (preview); пустая строка — отключить |
+| `CORS_PREFLIGHT_MAX_AGE` | Кэш ответа на OPTIONS (сек), по умолчанию 600 |
+| `ALLOWED_HOSTS` | Разрешённые значения заголовка `Host` (через запятую); пусто — проверка выключена |
+| `REFRESH_COOKIE_SAMESITE` | `lax` / `strict` / `none` — для фронта на другом домене с HTTPS обычно `none` |
 | `MOCK_BANK_URL`, `ONEC_MOCK_URL` | URL мок-сервисов в dev |
 | `EMAIL_API_KEY`, `EMAIL_FROM`, `FRONTEND_URL` | Почта и ссылки в письмах |
 | `OPENAI_API_KEY` | Чат-ассистент (пусто — демо-ответы) |
@@ -54,6 +58,7 @@ make verify-like-ci
 | Раздел | Файл |
 |--------|------|
 | Разработка | [`docs/dev/DEVELOPER_GUIDE.md`](docs/dev/DEVELOPER_GUIDE.md) |
+| API/OpenAPI (этап 7) | [`docs/dev/API_OPENAPI_STAGE7.md`](docs/dev/API_OPENAPI_STAGE7.md) |
 | Техбэклог без внешних API | [`docs/dev/TECH_CATCHUP_ORDERED.md`](docs/dev/TECH_CATCHUP_ORDERED.md) |
 | Отложено до госAPI/ЭЦП/инфры | [`docs/dev/SPRINT_DEFERRED_EXTERNAL.md`](docs/dev/SPRINT_DEFERRED_EXTERNAL.md) |
 | Деплой | [`docs/dev/DEPLOY_RUNBOOK.md`](docs/dev/DEPLOY_RUNBOOK.md) |

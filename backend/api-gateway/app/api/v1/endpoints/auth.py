@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
@@ -14,8 +15,33 @@ from app.security import check_brute_force, record_failed_login, record_successf
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+REFRESH_COOKIE_NAME = "refresh_token"
 
-@router.post("/register", response_model=TokenResponse, status_code=201)
+
+def _attach_refresh_cookie(response: JSONResponse, refresh_token: str) -> JSONResponse:
+    max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
+    sm = settings.REFRESH_COOKIE_SAMESITE
+    # SameSite=None обязателен Secure (браузеры); кросс-сайт SPA → обычно none + HTTPS.
+    secure = sm == "none" or not settings.DEBUG
+    response.set_cookie(
+        REFRESH_COOKIE_NAME,
+        refresh_token,
+        max_age=max_age,
+        httponly=True,
+        secure=secure,
+        samesite=sm,
+        path="/",
+    )
+    return response
+
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=201,
+    summary="Register tenant owner",
+    description="Creates organization + owner user and returns access/refresh tokens. Also sets httpOnly refresh cookie.",
+)
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     import structlog
     _log = structlog.get_logger()
@@ -63,14 +89,21 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     access_token = create_access_token(str(user.id), str(org.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
 
-    return TokenResponse(
+    payload = TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
+    ).model_dump()
+    resp = JSONResponse(content=payload, status_code=201)
+    return _attach_refresh_cookie(resp, refresh_token)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Login",
+    description="Authenticates user, returns access/refresh tokens and sets httpOnly refresh cookie.",
+)
 async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
     ip = request.client.host if request.client else "unknown"
     check_brute_force(body.email)
@@ -93,16 +126,30 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     refresh_token = create_refresh_token(str(user.id))
 
     audit_log("login_success", str(user.id), "auth", None, ip)
-    return TokenResponse(
+    payload = TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
+    ).model_dump()
+    resp = JSONResponse(content=payload)
+    return _attach_refresh_cookie(resp, refresh_token)
 
 
-@router.post("/refresh", response_model=TokenResponse)
-async def refresh_tokens(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    user_id = decode_refresh_token(body.refresh_token)
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    summary="Refresh access token",
+    description="Accepts refresh token from request body or httpOnly cookie and rotates refresh token.",
+)
+async def refresh_tokens(
+    request: Request,
+    body: RefreshRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    raw = body.refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    if not raw:
+        raise HTTPException(status_code=401, detail="Требуется refresh token в теле запроса или cookie")
+    user_id = decode_refresh_token(raw)
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
     user = result.scalar_one_or_none()
     if not user:
@@ -112,11 +159,13 @@ async def refresh_tokens(body: RefreshRequest, db: AsyncSession = Depends(get_db
     access_token = create_access_token(str(user.id), org_id, user.role)
     new_refresh = create_refresh_token(str(user.id))
 
-    return TokenResponse(
+    payload = TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
+    ).model_dump()
+    resp = JSONResponse(content=payload)
+    return _attach_refresh_cookie(resp, new_refresh)
 
 
 @router.get("/me", response_model=UserResponse)

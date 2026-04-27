@@ -1,6 +1,7 @@
 from app.security.middleware import (
     SecurityHeadersMiddleware,
     RateLimitMiddleware,
+    JwtQueryParamBlockMiddleware,
     check_brute_force,
     record_failed_login,
     record_successful_login,
@@ -12,6 +13,7 @@ from app.security.middleware import (
 __all__ = [
     "SecurityHeadersMiddleware",
     "RateLimitMiddleware",
+    "JwtQueryParamBlockMiddleware",
     "check_brute_force",
     "record_failed_login",
     "record_successful_login",

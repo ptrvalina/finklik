@@ -11,15 +11,23 @@ class Employee(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
 
     # Персональные данные (хранятся зашифрованными)
     full_name_enc: Mapped[str] = mapped_column(String(500), nullable=False)
     identification_number_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    passport_data: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
     position: Mapped[str] = mapped_column(String(255), nullable=False)
+    position_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    position_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     salary: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)  # Оклад BYN
 
     hire_date: Mapped[date] = mapped_column(Date, nullable=False)
     fire_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    terminated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Налоговые данные

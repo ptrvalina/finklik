@@ -42,6 +42,7 @@ let refreshPromise: Promise<string> | null = null
 export const api = axios.create({
   baseURL: `${BASE}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
@@ -78,7 +79,11 @@ api.interceptors.response.use(
         try {
           if (!refreshPromise) {
             refreshPromise = axios
-              .post(`${BASE}/api/v1/auth/refresh`, { refresh_token: refresh })
+              .post(
+                `${BASE}/api/v1/auth/refresh`,
+                { refresh_token: refresh },
+                { withCredentials: true },
+              )
               .then(({ data }) => {
                 localStorage.setItem('access_token', data.access_token)
                 localStorage.setItem('refresh_token', data.refresh_token)
@@ -124,6 +129,18 @@ export const employeesApi = {
   fire: (id: string, fire_date?: string) => api.delete(`/employees/${id}`, { params: { fire_date } }),
   calculateSalary: (data: any) => api.post('/employees/salary/calculate', data),
   listSalary: (params: { year: number; month: number }) => api.get('/employees/salary/list', { params }),
+}
+
+export const workforceApi = {
+  terminate: (id: string, termination_date: string) =>
+    api.post(`/employees/${id}/terminate`, { termination_date }),
+  sendPu2: (data: { employee_id?: string; period?: string; xml_data?: string }) =>
+    api.post('/fszn/pu2', data),
+  sendPu3: (data: { employee_id?: string; period?: string; xml_data?: string }) =>
+    api.post('/fszn/pu3', data),
+  calculateSalary: (data: { employee_id: string; period_start: string; period_end: string }) =>
+    api.post('/salary/calculate', data),
+  listSalaryCalculations: () => api.get('/salary/calculations'),
 }
 
 export const taxApi = {

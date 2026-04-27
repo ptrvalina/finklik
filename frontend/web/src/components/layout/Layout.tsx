@@ -221,7 +221,7 @@ export default function Layout() {
             </div>
 
             <NavLink
-              to="/scanner"
+              to="/scan"
               end
               title="Сканировать"
               aria-label="Сканировать"

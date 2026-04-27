@@ -29,6 +29,7 @@ async def test_register_new_user(client: AsyncClient):
     data = resp.json()
     assert "access_token" in data
     assert "refresh_token" in data
+    assert "refresh_token=" in (resp.headers.get("set-cookie") or "")
 
 
 @pytest.mark.asyncio
@@ -67,6 +68,42 @@ async def test_login(client: AsyncClient):
     })
     assert resp.status_code == 200
     assert "access_token" in resp.json()
+    assert "refresh_token=" in (resp.headers.get("set-cookie") or "")
+
+
+@pytest.mark.asyncio
+async def test_refresh_works_from_cookie_without_body(client: AsyncClient):
+    suffix = int(time.time() * 1000) % 999999999
+    email = f"cookie_refresh_{suffix}@example.com"
+    password = "CookiePass1"
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Cookie Refresh",
+            "org_name": f"CookieOrg {suffix}",
+            "org_unp": str(suffix).zfill(9)[:9],
+        },
+    )
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login.status_code == 200
+
+    # Для тестового HTTP-клиента принудительно кладем cookie в jar,
+    # чтобы проверить fallback чтения refresh именно из cookie.
+    login_payload = login.json()
+    client.cookies.set("refresh_token", login_payload["refresh_token"])
+
+    # Тело пустое: refresh token должен читаться из httpOnly cookie.
+    refreshed = await client.post("/api/v1/auth/refresh", json={})
+    assert refreshed.status_code == 200
+    payload = refreshed.json()
+    assert "access_token" in payload
+    assert "refresh_token" in payload
+    assert "refresh_token=" in (refreshed.headers.get("set-cookie") or "")
 
 
 @pytest.mark.asyncio
@@ -128,3 +165,10 @@ async def test_me_user_without_organization(client: AsyncClient, db_session: Asy
 async def test_me_unauthenticated(client: AsyncClient):
     resp = await client.get("/api/v1/auth/me")
     assert resp.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_jwt_query_param_is_rejected(client: AsyncClient):
+    resp = await client.get("/health?access_token=fake")
+    assert resp.status_code == 400
+    assert "JWT" in str(resp.json().get("detail", ""))

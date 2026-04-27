@@ -18,7 +18,8 @@ from app.schemas.employee import (
     SalaryResponse,
 )
 from app.services.tax_calculator import calculate_salary
-from app.security import get_encryptor, audit_log
+from app.internal.audit.service import safe_log_audit
+from app.security import get_encryptor
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -131,7 +132,13 @@ async def create_employee(
     db.add(emp)
     await db.flush()
 
-    audit_log("create", current_user.id, "employee", emp.id, "internal")
+    await safe_log_audit(
+        db,
+        str(current_user.id),
+        "create",
+        "employee",
+        str(emp.id),
+    )
     return _employee_to_response(enc, emp)
 
 
@@ -189,7 +196,7 @@ async def update_employee(
         emp.is_active = False
 
     await db.flush()
-    audit_log("update", current_user.id, "employee", emp.id, "internal")
+    await safe_log_audit(db, str(current_user.id), "update", "employee", str(emp.id))
 
     return _employee_to_response(enc, emp)
 
@@ -213,7 +220,8 @@ async def fire_employee(
 
     emp.is_active = False
     emp.fire_date = fire_date or date.today()
-    audit_log("fire", current_user.id, "employee", emp.id, "internal")
+    await db.flush()
+    await safe_log_audit(db, str(current_user.id), "fire", "employee", str(emp.id))
 
 
 @router.post("/salary/calculate", response_model=SalaryResponse)
@@ -269,6 +277,18 @@ async def calculate_employee_salary(
         db.add(record)
 
     await db.flush()
+    await safe_log_audit(
+        db,
+        str(current_user.id),
+        "salary_calculate",
+        "salary_record",
+        str(record.id),
+        metadata={
+            "employee_id": body.employee_id,
+            "period_year": body.period_year,
+            "period_month": body.period_month,
+        },
+    )
     return record
 
 

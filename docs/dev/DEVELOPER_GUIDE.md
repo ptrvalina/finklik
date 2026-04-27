@@ -23,6 +23,7 @@ make dev
 | Документ | Назначение |
 |----------|------------|
 | [`../../README.md`](../../README.md) | Обзор репозитория и быстрые команды. |
+| [`API_OPENAPI_STAGE7.md`](API_OPENAPI_STAGE7.md) | Контракты этапа 7: auth/workforce, OpenAPI, правила расширения API. |
 | [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md) | Теххвосты без внешних API (чеклист). |
 | [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md) | Задачи до появления госAPI, ЭЦП, договоров с банком и т.д. |
 | [`PRODUCT_SPRINT_ALIGNMENT.md`](PRODUCT_SPRINT_ALIGNMENT.md) | Соответствие продуктовых спринтов и фактических релизов. |
@@ -173,8 +174,13 @@ docker exec finklik-postgres pg_isready -U finklik
 
 ### Фронтенд не видит API (CORS ошибка)
 ```python
-# app/core/config.py — добавь свой origin в CORS_ORIGINS
-CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://YOUR_DOMAIN"]
+# В .env API (переменная `CORS_ORIGINS`): через запятую или JSON-массив строк
+# CORS_ORIGINS=https://my-app.vercel.app,http://localhost:5173
+# CORS_ORIGINS=["https://a","https://b"]
+# CORS_PREFLIGHT_MAX_AGE=600
+# CORS_ORIGIN_REGEX=   (пусто = отключить regex)
+# ALLOWED_HOSTS=       (пусто = не проверять Host; за прокси укажите публичный hostname)
+# REFRESH_COOKIE_SAMESITE=none   (фронт на другом домене + HTTPS; иначе lax + токен в LS)
 ```
 
 ### JWT токен не принимается
