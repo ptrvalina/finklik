@@ -112,7 +112,8 @@ def upgrade() -> None:
             sa.Column("entity_type", sa.String(120), nullable=False),
             sa.Column("entity_id", sa.String(36), nullable=False),
             sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-            sa.Column("metadata", sa.JSON(), nullable=True),
+            # Имя колонки не «metadata»: в SQLAlchemy/Alembic оно конфликтует с MetaData таблицы и ломает DDL на проде.
+            sa.Column("payload", sa.JSON(), nullable=True),
         )
 
     insp = inspect(conn)

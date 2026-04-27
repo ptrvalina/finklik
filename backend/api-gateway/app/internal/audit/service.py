@@ -40,22 +40,22 @@ async def log_audit(
     metadata: dict | None = None,
 ) -> None:
     """Write a structured audit record for HR/financial actions."""
-    payload = {
+    row = {
         "id": str(uuid.uuid4()),
         "user_id": user_id,
         "action": action,
         "entity_type": entity_type,
         "entity_id": entity_id,
         "created_at": datetime.now(timezone.utc),
-        "metadata": metadata or {},
+        "payload": metadata or {},
     }
-    # New table per migration.
+    # New table per migration (column name `payload`, not `metadata` — avoids MetaData name clash in migrations).
     await db.execute(
         text(
             """
-            INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, created_at, metadata)
-            VALUES (:id, :user_id, :action, :entity_type, :entity_id, :created_at, :metadata)
+            INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, created_at, payload)
+            VALUES (:id, :user_id, :action, :entity_type, :entity_id, :created_at, :payload)
             """
         ),
-        payload,
+        row,
     )
