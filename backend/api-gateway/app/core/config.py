@@ -140,7 +140,7 @@ class Settings(BaseSettings):
         return (v or "").strip()
 
     @model_validator(mode="after")
-    def _validate_cors_regex_compiles(self) -> Settings:
+    def _validate_cors_regex_compiles(self) -> "Settings":
         compile_cors_origin_regex(self.CORS_ORIGIN_REGEX)
         return self
 
