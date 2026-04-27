@@ -107,6 +107,12 @@ async def test_refresh_works_from_cookie_without_body(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_refresh_without_json_body_is_401_without_cookie(client: AsyncClient):
+    r = await client.post("/api/v1/auth/refresh")
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     await client.post("/api/v1/auth/register", json={

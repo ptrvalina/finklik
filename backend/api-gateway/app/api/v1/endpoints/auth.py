@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -143,10 +143,11 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
 )
 async def refresh_tokens(
     request: Request,
-    body: RefreshRequest,
+    body: RefreshRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    raw = body.refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    payload = body if body is not None else RefreshRequest()
+    raw = payload.refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
     if not raw:
         raise HTTPException(status_code=401, detail="Требуется refresh token в теле запроса или cookie")
     user_id = decode_refresh_token(raw)

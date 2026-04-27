@@ -33,3 +33,15 @@ Target: `https://finklik-api.onrender.com`
 2. Re-run smoke after redeploy and migration rollout.
 3. If mismatch persists, compare `app/main.py` middleware chain and `auth.refresh` schema handling on deployed artifact.
 
+## Follow-up fix (repository)
+
+Changes landed after this report:
+
+- `JwtQueryParamBlockMiddleware` is registered **last** so it runs **first** on every HTTP request (blocks `access_token` / `refresh_token` query params consistently).
+- `POST /api/v1/auth/refresh` accepts **missing JSON body** (cookie-only refresh) via `Body(default=None)` instead of failing with **422**.
+
+After deploying the follow-up commit, re-run the smoke checks above and expect:
+
+- `GET /health?access_token=fake` => **400**
+- `POST /api/v1/auth/refresh` with empty body and no cookie => **401**
+

@@ -155,9 +155,10 @@ app.add_middleware(
         max_age=settings.CORS_PREFLIGHT_MAX_AGE,
     ),
 )
-app.add_middleware(JwtQueryParamBlockMiddleware)
 if settings.allowed_hosts:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+# Последним в цепочке add_middleware → первым на входящий запрос: блокировать JWT в query ASAP.
+app.add_middleware(JwtQueryParamBlockMiddleware)
 
 if USE_LOCAL_DOCS:
     app.mount(
