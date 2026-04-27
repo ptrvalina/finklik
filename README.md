@@ -59,6 +59,8 @@ make verify-like-ci
 |--------|------|
 | Разработка | [`docs/dev/DEVELOPER_GUIDE.md`](docs/dev/DEVELOPER_GUIDE.md) |
 | API/OpenAPI (этап 7) | [`docs/dev/API_OPENAPI_STAGE7.md`](docs/dev/API_OPENAPI_STAGE7.md) |
+| Релизный чеклист (этап 7) | [`docs/dev/RELEASE_STAGE7_CHECKLIST.md`](docs/dev/RELEASE_STAGE7_CHECKLIST.md) |
+| Прод-smoke отчёт (этап 7) | [`docs/dev/SMOKE_STAGE7_PROD_2026-04-27.md`](docs/dev/SMOKE_STAGE7_PROD_2026-04-27.md) |
 | Техбэклог без внешних API | [`docs/dev/TECH_CATCHUP_ORDERED.md`](docs/dev/TECH_CATCHUP_ORDERED.md) |
 | Отложено до госAPI/ЭЦП/инфры | [`docs/dev/SPRINT_DEFERRED_EXTERNAL.md`](docs/dev/SPRINT_DEFERRED_EXTERNAL.md) |
 | Деплой | [`docs/dev/DEPLOY_RUNBOOK.md`](docs/dev/DEPLOY_RUNBOOK.md) |

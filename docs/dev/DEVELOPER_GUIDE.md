@@ -24,6 +24,8 @@ make dev
 |----------|------------|
 | [`../../README.md`](../../README.md) | Обзор репозитория и быстрые команды. |
 | [`API_OPENAPI_STAGE7.md`](API_OPENAPI_STAGE7.md) | Контракты этапа 7: auth/workforce, OpenAPI, правила расширения API. |
+| [`RELEASE_STAGE7_CHECKLIST.md`](RELEASE_STAGE7_CHECKLIST.md) | Релизный чеклист этапа 7 (env, миграции, smoke, rollback). |
+| [`SMOKE_STAGE7_PROD_2026-04-27.md`](SMOKE_STAGE7_PROD_2026-04-27.md) | Фактический прод-smoke отчёт по stage 7. |
 | [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md) | Теххвосты без внешних API (чеклист). |
 | [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md) | Задачи до появления госAPI, ЭЦП, договоров с банком и т.д. |
 | [`PRODUCT_SPRINT_ALIGNMENT.md`](PRODUCT_SPRINT_ALIGNMENT.md) | Соответствие продуктовых спринтов и фактических релизов. |
