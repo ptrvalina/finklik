@@ -45,3 +45,12 @@ After deploying the follow-up commit, re-run the smoke checks above and expect:
 - `GET /health?access_token=fake` => **400**
 - `POST /api/v1/auth/refresh` with empty body and no cookie => **401**
 
+## Re-check after merge PR #2 (fix `94a9c69` / `39e072f`)
+
+Re-ran the two security checks against the same base URL **immediately after** `main` contained the merge commit. **Render was still serving the previous build** (typical delay: a few minutes; or auto-deploy not triggered yet).
+
+- `GET /health?access_token=fake` => **200** (expected after deploy: **400**)
+- `POST /api/v1/auth/refresh` (no body, no `Content-Type`) => **422** (expected after deploy: **401**)
+
+**Action:** in the Render dashboard, open the API service and confirm the latest deploy is **succeeded** and points at commit `39e072f` (or newer on `main`), then re-run `scripts/smoke_stage7_prod.ps1` (or the curl lines in §4 of `RELEASE_STAGE7_CHECKLIST.md`).
+

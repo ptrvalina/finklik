@@ -33,6 +33,8 @@
 - [ ] `GET /health?access_token=fake` => `400` (JWT query param block middleware).
 - [ ] `POST /api/v1/auth/refresh` с пустым телом => `401` (нет refresh token).
 
+Быстрый запуск тех же проверок: `powershell -ExecutionPolicy Bypass -File scripts/smoke_stage7_prod.ps1` (из корня репозитория).
+
 ## 5) Workforce smoke (controlled tenant)
 
 Исполнять только на тестовом tenant/организации:

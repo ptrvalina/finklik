@@ -50,6 +50,10 @@ Head репозитория: **`submission_archive_snapshot`**.
 - Смоук по [`PRE_DEMO_SMOKE.md`](PRE_DEMO_SMOKE.md) (в т.ч. сканер и подача отчётов при использовании).
 - Убедиться, что фронт указывает на новый API (`VITE_API_URL` / GitHub Pages).
 
+### Render (GitHub → auto-deploy)
+
+После merge в `main` дождитесь в dashboard Render статуса **Live / Succeeded** для сервиса API и проверьте, что задеплоенный commit совпадает с последним на GitHub (иногда сборка идёт 2–5 минут). Затем быстрый чек: [`scripts/smoke_stage7_prod.ps1`](../../scripts/smoke_stage7_prod.ps1) или раздел §4 в [`RELEASE_STAGE7_CHECKLIST.md`](RELEASE_STAGE7_CHECKLIST.md).
+
 ## 4. Откат
 
 Откат миграций в проде без бэкапа БД не рекомендуется. Имеет смысл только `alembic downgrade` на отдельной копии БД или через snapshot провайдера.
