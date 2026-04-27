@@ -102,4 +102,3 @@ class SalaryCalculationDTO(BaseModel):
     taxes: Decimal
     net_salary: Decimal
     status: str
-
