@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { teamApi } from '../api/client'
 import { resolveAppPath } from '../appBase'
-import { useAuthStore } from '../store/authStore'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -10,8 +9,6 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 
 export default function AcceptInvitePage() {
   const [params] = useSearchParams()
-  const navigate = useNavigate()
-  const { login } = useAuthStore.getState()
   const [form, setForm] = useState({
     invite_code: params.get('code') || '',
     full_name: '',
@@ -28,7 +25,6 @@ export default function AcceptInvitePage() {
     try {
       const { data } = await teamApi.acceptInvite(form)
       localStorage.setItem('access_token', data.access_token)
-      localStorage.setItem('refresh_token', data.refresh_token)
       setSuccess(true)
       setTimeout(() => {
         window.location.href = resolveAppPath('/')

@@ -49,3 +49,5 @@ postgres_data/
 
 # Локальные черновики регистрации / тестовые JSON
 tmp_register.json
+reports/test_data_*.json
+job*_logs/
