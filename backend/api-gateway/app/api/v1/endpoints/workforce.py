@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +26,7 @@ router = APIRouter(
     tags=["workforce"],
     responses={401: {"description": "Unauthorized"}, 403: {"description": "Forbidden"}},
 )
+log = structlog.get_logger()
 
 
 @router.post(
@@ -41,6 +43,7 @@ async def terminate_employee(
 ):
     """Terminate employee and set termination timestamp."""
     service = EmployeeService(db)
+    log.info("employee_terminate_requested", employee_id=employee_id, user_id=str(current_user.id))
     try:
         await service.TerminateEmployee(current_user.organization_id, employee_id, req.termination_date)
     except ValueError:
@@ -53,6 +56,7 @@ async def terminate_employee(
         entity_id=employee_id,
         metadata={"termination_date": req.termination_date.isoformat()},
     )
+    log.info("employee_terminated", employee_id=employee_id, user_id=str(current_user.id))
     return {"status": "ok"}
 
 
@@ -69,6 +73,7 @@ async def send_pu2(
 ):
     """Submit PU-2 report via FSZN client stub."""
     client = FsznClient()
+    log.info("fszn_pu2_requested", user_id=str(current_user.id), employee_id=req.employee_id)
     protocol_id, status = await client.SendPu2(req.model_dump())
     report_id = protocol_id
     await db.execute(
@@ -91,11 +96,12 @@ async def send_pu2(
     await safe_log_audit(
         db=db,
         user_id=str(current_user.id),
-        action="fszn_pu2_send",
+        action="fszn_send_pu2",
         entity_type="fszn_report",
         entity_id=report_id,
         metadata={"status": status},
     )
+    log.info("fszn_pu2_completed", protocol_id=protocol_id, status=status, user_id=str(current_user.id))
     return FsznResponse(protocol_id=protocol_id, status=status)
 
 
@@ -112,6 +118,7 @@ async def send_pu3(
 ):
     """Submit PU-3 report via FSZN client stub."""
     client = FsznClient()
+    log.info("fszn_pu3_requested", user_id=str(current_user.id), period=str(req.period) if req.period else None)
     protocol_id, status = await client.SendPu3(req.model_dump())
     report_id = protocol_id
     await db.execute(
@@ -134,11 +141,12 @@ async def send_pu3(
     await safe_log_audit(
         db=db,
         user_id=str(current_user.id),
-        action="fszn_pu3_send",
+        action="fszn_send_pu3",
         entity_type="fszn_report",
         entity_id=report_id,
         metadata={"status": status},
     )
+    log.info("fszn_pu3_completed", protocol_id=protocol_id, status=status, user_id=str(current_user.id))
     return FsznResponse(protocol_id=protocol_id, status=status)
 
 
@@ -156,8 +164,14 @@ async def calculate_salary(
 ):
     """Calculate salary and persist salary_calculations row."""
     calculator = SalaryCalculator(db)
+    log.info("salary_calculation_requested", employee_id=req.employee_id, user_id=str(current_user.id))
     try:
-        result = await calculator.CalculateSalary(req.employee_id, req.period_start, req.period_end)
+        result = await calculator.CalculateSalary(
+            current_user.organization_id,
+            req.employee_id,
+            req.period_start,
+            req.period_end,
+        )
     except ValueError:
         raise HTTPException(status_code=404, detail="Employee not found")
     await safe_log_audit(
@@ -168,6 +182,7 @@ async def calculate_salary(
         entity_id=result["id"],
         metadata={"employee_id": req.employee_id},
     )
+    log.info("salary_calculation_completed", calculation_id=result["id"], employee_id=req.employee_id)
     return SalaryCalculationDTO(**result)
 
 

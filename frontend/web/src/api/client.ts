@@ -74,34 +74,31 @@ api.interceptors.response.use(
 
     if (isAuthError && !isRefreshRequest && !original._retry) {
       original._retry = true
-      const refresh = localStorage.getItem('refresh_token')
-      if (refresh) {
-        try {
-          if (!refreshPromise) {
-            refreshPromise = axios
-              .post(
-                `${BASE}/api/v1/auth/refresh`,
-                { refresh_token: refresh },
-                { withCredentials: true },
-              )
-              .then(({ data }) => {
-                localStorage.setItem('access_token', data.access_token)
-                localStorage.setItem('refresh_token', data.refresh_token)
-                return data.access_token as string
-              })
-              .finally(() => {
-                refreshPromise = null
-              })
-          }
-
-          const accessToken = await refreshPromise
-          original.headers = original.headers ?? {}
-          original.headers.Authorization = `Bearer ${accessToken}`
-          return api(original)
-        } catch {
-          localStorage.clear()
-          window.location.href = resolveAppPath('/login')
+      try {
+        if (!refreshPromise) {
+          refreshPromise = axios
+            .post(
+              `${BASE}/api/v1/auth/refresh`,
+              {},
+              { withCredentials: true },
+            )
+            .then(({ data }) => {
+              localStorage.setItem('access_token', data.access_token)
+              localStorage.setItem('refresh_token', data.refresh_token)
+              return data.access_token as string
+            })
+            .finally(() => {
+              refreshPromise = null
+            })
         }
+
+        const accessToken = await refreshPromise
+        original.headers = original.headers ?? {}
+        original.headers.Authorization = `Bearer ${accessToken}`
+        return api(original)
+      } catch {
+        localStorage.clear()
+        window.location.href = resolveAppPath('/login')
       }
     }
     return Promise.reject(error)

@@ -139,17 +139,17 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     "/refresh",
     response_model=TokenResponse,
     summary="Refresh access token",
-    description="Accepts refresh token from request body or httpOnly cookie and rotates refresh token.",
+    description="Accepts refresh token from httpOnly cookie and rotates refresh token.",
 )
 async def refresh_tokens(
     request: Request,
     body: RefreshRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    payload = body if body is not None else RefreshRequest()
-    raw = payload.refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    _ = body
+    raw = request.cookies.get(REFRESH_COOKIE_NAME)
     if not raw:
-        raise HTTPException(status_code=401, detail="Требуется refresh token в теле запроса или cookie")
+        raise HTTPException(status_code=401, detail="Требуется refresh token в httpOnly cookie")
     user_id = decode_refresh_token(raw)
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
     user = result.scalar_one_or_none()

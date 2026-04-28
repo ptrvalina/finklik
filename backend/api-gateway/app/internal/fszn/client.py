@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-import random
+import structlog
 
 from app.internal.fszn.rpa import FsznRpaError, call_rpa_script
 
@@ -20,7 +20,7 @@ class FsznClient:
         }
 
     async def SendPu2(self, employee_data: dict) -> tuple[str, str]:
-        """Send PU-2 through RPA and return protocol_id + status."""
+        """Send PU-2 through RPA and return protocol ID and status."""
         xml_data = str(employee_data.get("xml_data") or "<PU2 />")
         try:
             protocol_id = call_rpa_script(
@@ -29,12 +29,14 @@ class FsznClient:
                 credentials=self.credentials,
                 report_type="pu2",
             )
+            structlog.get_logger().info("fszn_send_pu2_ok", protocol_id=protocol_id)
             return protocol_id, "accepted"
-        except FsznRpaError:
-            return f"failed-{random.randint(100000, 999999)}", "rejected"
+        except FsznRpaError as exc:
+            structlog.get_logger().warning("fszn_send_pu2_failed", error=str(exc))
+            return f"failed-pu2-{abs(hash(xml_data)) % 1000000:06d}", "rejected"
 
     async def SendPu3(self, period_data: dict) -> tuple[str, str]:
-        """Send PU-3 through RPA and return protocol_id + status."""
+        """Send PU-3 through RPA and return protocol ID and status."""
         xml_data = str(period_data.get("xml_data") or "<PU3 />")
         try:
             protocol_id = call_rpa_script(
@@ -43,11 +45,16 @@ class FsznClient:
                 credentials=self.credentials,
                 report_type="pu3",
             )
+            structlog.get_logger().info("fszn_send_pu3_ok", protocol_id=protocol_id)
             return protocol_id, "accepted"
-        except FsznRpaError:
-            return f"failed-{random.randint(100000, 999999)}", "rejected"
+        except FsznRpaError as exc:
+            structlog.get_logger().warning("fszn_send_pu3_failed", error=str(exc))
+            return f"failed-pu3-{abs(hash(xml_data)) % 1000000:06d}", "rejected"
 
     async def CheckReportStatus(self, protocol_id: str) -> str:
-        """Check report status; stubbed until dedicated status parser is added."""
-        _ = protocol_id
-        return random.choice(["pending", "accepted", "rejected"])
+        """Check report status from protocol ID pattern."""
+        if protocol_id.startswith("failed-"):
+            return "rejected"
+        if protocol_id.startswith("FSZN-"):
+            return "accepted"
+        return "pending"

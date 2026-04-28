@@ -19,6 +19,7 @@ from app.schemas.employee import (
 )
 from app.services.tax_calculator import calculate_salary
 from app.internal.audit.service import safe_log_audit
+from app.internal.crypto.encrypt import get_aes_gcm_encryptor
 from app.security import get_encryptor
 
 router = APIRouter(prefix="/employees", tags=["employees"])
@@ -54,7 +55,16 @@ def _decrypt_id_document(enc, raw_enc: str | None) -> IdentityDocumentOut | None
         return None
 
 
-def _employee_to_response(enc, e: Employee) -> EmployeeResponse:
+def _safe_decrypt(enc, raw_value: str | None) -> str | None:
+    if not raw_value:
+        return None
+    try:
+        return enc.decrypt(raw_value)
+    except Exception:
+        return None
+
+
+def _employee_to_response(enc, pii_enc, e: Employee) -> EmployeeResponse:
     id_num = None
     if e.identification_number_enc:
         try:
@@ -62,6 +72,10 @@ def _employee_to_response(enc, e: Employee) -> EmployeeResponse:
         except Exception:
             id_num = None
     id_doc = _decrypt_id_document(enc, e.id_document_payload_enc)
+    passport_data = _safe_decrypt(pii_enc, e.passport_data)
+    phone = _safe_decrypt(pii_enc, e.phone)
+    email = _safe_decrypt(pii_enc, e.email)
+    address = _safe_decrypt(pii_enc, e.address)
     return EmployeeResponse(
         id=e.id,
         full_name=enc.decrypt(e.full_name_enc),
@@ -79,6 +93,10 @@ def _employee_to_response(enc, e: Employee) -> EmployeeResponse:
         work_hours_per_week=e.work_hours_per_week,
         id_document_type=e.id_document_type,
         id_document=id_doc,
+        passport_data=passport_data,
+        phone=phone,
+        email=email,
+        address=address,
         created_at=e.created_at,
     )
 
@@ -90,6 +108,7 @@ async def list_employees(
     db: AsyncSession = Depends(get_db),
 ):
     enc = get_encryptor()
+    pii_enc = get_aes_gcm_encryptor()
     filters = [Employee.organization_id == current_user.organization_id]
     if active_only:
         filters.append(Employee.is_active == True)
@@ -99,7 +118,7 @@ async def list_employees(
     )
     employees = result.scalars().all()
 
-    return [_employee_to_response(enc, e) for e in employees]
+    return [_employee_to_response(enc, pii_enc, e) for e in employees]
 
 
 @router.post("", response_model=EmployeeResponse, status_code=201)
@@ -109,6 +128,7 @@ async def create_employee(
     db: AsyncSession = Depends(get_db),
 ):
     enc = get_encryptor()
+    pii_enc = get_aes_gcm_encryptor()
     id_num_enc = enc.encrypt(body.identification_number) if body.identification_number else None
     id_doc_enc = None
     if body.id_document and body.id_document_type:
@@ -128,6 +148,10 @@ async def create_employee(
         work_hours_per_week=body.work_hours_per_week,
         id_document_type=body.id_document_type,
         id_document_payload_enc=id_doc_enc,
+        passport_data=pii_enc.encrypt(body.passport_data) if body.passport_data else None,
+        phone=pii_enc.encrypt(body.phone) if body.phone else None,
+        email=pii_enc.encrypt(str(body.email)) if body.email else None,
+        address=pii_enc.encrypt(body.address) if body.address else None,
     )
     db.add(emp)
     await db.flush()
@@ -135,11 +159,11 @@ async def create_employee(
     await safe_log_audit(
         db,
         str(current_user.id),
-        "create",
+        "employee_hire",
         "employee",
         str(emp.id),
     )
-    return _employee_to_response(enc, emp)
+    return _employee_to_response(enc, pii_enc, emp)
 
 
 @router.put("/{emp_id}", response_model=EmployeeResponse)
@@ -150,6 +174,7 @@ async def update_employee(
     db: AsyncSession = Depends(get_db),
 ):
     enc = get_encryptor()
+    pii_enc = get_aes_gcm_encryptor()
     result = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
@@ -196,9 +221,9 @@ async def update_employee(
         emp.is_active = False
 
     await db.flush()
-    await safe_log_audit(db, str(current_user.id), "update", "employee", str(emp.id))
+    await safe_log_audit(db, str(current_user.id), "employee_update", "employee", str(emp.id))
 
-    return _employee_to_response(enc, emp)
+    return _employee_to_response(enc, pii_enc, emp)
 
 
 @router.delete("/{emp_id}", status_code=204)
@@ -221,7 +246,7 @@ async def fire_employee(
     emp.is_active = False
     emp.fire_date = fire_date or date.today()
     await db.flush()
-    await safe_log_audit(db, str(current_user.id), "fire", "employee", str(emp.id))
+    await safe_log_audit(db, str(current_user.id), "employee_terminate", "employee", str(emp.id))
 
 
 @router.post("/salary/calculate", response_model=SalaryResponse)

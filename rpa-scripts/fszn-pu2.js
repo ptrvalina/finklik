@@ -74,13 +74,17 @@ async function main() {
     await page.goto(portalUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
     // NOTE: селекторы могут отличаться на реальном портале; это рабочий baseline.
-    await page.fill('input[name="login"], input[type="text"]', login);
+    await page.fill('input[name="login"], input[name="username"], input[type="text"]', login);
     await page.fill('input[name="password"], input[type="password"]', password);
     await page.click('button[type="submit"], input[type="submit"]');
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => null);
     await page.waitForTimeout(1500);
 
     // Переход в загрузку отчета.
-    await page.click(`text=/ПУ-2|ПУ2|PU-2|${reportType.toUpperCase()}/i`);
+    const reportMatcher = reportType.toLowerCase() === 'pu3'
+      ? /ПУ-3|ПУ3|PU-3/i
+      : /ПУ-2|ПУ2|PU-2/i;
+    await page.click(`text=${reportMatcher}`);
     await page.waitForTimeout(1200);
 
     const fileInput = await page.$('input[type="file"]');
@@ -95,13 +99,14 @@ async function main() {
     // Базовый извлекатель номера протокола/квитанции.
     const pageText = await page.textContent('body');
     const match = (pageText || '').match(/(?:протокол|квитанц(?:ия|ии)|номер)\s*[:№]?\s*([A-Za-z0-9\-_/]+)/i);
-    const protocolID = match?.[1] || `FSZN-${Date.now()}`;
+    const protocolID = match?.[1] || `FSZN-${reportType.toUpperCase()}-${Date.now()}`;
+    const status = /(принят|успешно|accepted)/i.test(pageText || '') ? 'accepted' : 'pending';
 
     process.stdout.write(
       JSON.stringify({
         ok: true,
         protocol_id: protocolID,
-        status: 'accepted',
+        status,
         report_type: reportType,
       }),
     );

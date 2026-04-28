@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФинКлик — полная презентация продукта</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #030712;
+      --surface: #0f172a;
+      --card: #111c33;
+      --border: rgba(148, 163, 184, 0.12);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --teal: #14b8a6;
+      --cyan: #22d3ee;
+      --amber: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(20, 184, 166, 0.12), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(34, 211, 238, 0.1), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .deck { height: 100vh; position: relative; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 3vw, 2.5rem);
+      padding-bottom: 5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .eyebrow {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.45rem;
+    }
+    h1 {
+      font-size: clamp(1.5rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      max-width: 56rem;
+    }
+    h1 .grad {
+      background: linear-gradient(120deg, #5eead4, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 {
+      font-size: clamp(1.05rem, 2.4vw, 1.55rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+      max-width: 52rem;
+    }
+    .lead {
+      font-size: clamp(0.86rem, 1.45vw, 1.05rem);
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 48rem;
+      margin-top: 0.35rem;
+    }
+    .bullets {
+      margin-top: 0.85rem;
+      max-width: 52rem;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .bullets li {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+      margin-left: 1.15rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.85rem;
+      max-width: 1100px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.85rem 1rem;
+    }
+    .card h3 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .card p {
+      font-size: 0.74rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .tbl-wrap {
+      margin-top: 0.8rem;
+      max-width: 1100px;
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+    }
+    .tbl th, .tbl td {
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .tbl th {
+      color: #5eead4;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .tbl td {
+      color: #cbd5e1;
+    }
+    .shot-wrap {
+      margin-top: 0.75rem;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      max-width: 1100px;
+      width: 100%;
+    }
+    .shot-wrap img {
+      max-width: 100%;
+      max-height: min(52vh, 520px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      max-width: 1100px;
+      width: 100%;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .cols { grid-template-columns: 1fr; }
+      .shot-wrap img { max-height: 42vh; }
+    }
+    .cols img {
+      max-width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+    .tagline {
+      font-size: 0.68rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+      max-width: 52rem;
+    }
+    .big-num {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--teal);
+      margin-top: 0.5rem;
+    }
+    .footer-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+      background: rgba(3, 7, 18, 0.92);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .footer-nav { display: none; }
+    .nav-btn {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: #e2e8f0;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .nav-btn:hover { border-color: rgba(20, 184, 166, 0.45); color: var(--teal); }
+    .progress {
+      flex: 1;
+      height: 4px;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--teal), var(--cyan));
+      transition: width 0.25s ease;
+    }
+    .slide-num { font-size: 0.72rem; color: var(--muted); min-width: 4.5rem; text-align: center; }
+    .pill {
+      display: inline-block;
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      background: rgba(251, 191, 36, 0.12);
+      color: var(--amber);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      margin-left: 0.35rem;
+      vertical-align: middle;
+    }
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+      html, body {
+        height: auto;
+        overflow: visible;
+        background: #030712 !important;
+        color: #f8fafc;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .deck {
+        height: auto;
+      }
+      .slide {
+        position: relative;
+        inset: auto;
+        min-height: 185mm;
+        opacity: 1 !important;
+        pointer-events: auto;
+        transform: none;
+        overflow: visible;
+        page-break-after: always;
+        break-after: page;
+        background: #030712;
+        color: #f8fafc;
+        padding: 8mm;
+      }
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .footer-nav {
+        display: none !important;
+      }
+      .card {
+        break-inside: avoid;
+        background: #111c33;
+        border-color: rgba(148, 163, 184, 0.2);
+      }
+      .lead, .tagline, .bullets li, .card p {
+        color: #cbd5e1;
+      }
+      .eyebrow {
+        color: #2dd4bf;
+      }
+      h1, h2, h3, .slide, .num, .big-num {
+        color: #f8fafc;
+      }
+      .shot-wrap img, .cols img {
+        max-height: 110mm;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 1 -->
+    <section class="slide active" data-slide>
+      <p class="eyebrow">ФинКлик · Product deck</p>
+      <h1>Единая <span class="grad">финансово-учётная</span> платформа для бизнеса Беларуси</h1>
+      <p class="lead">Операции, банк, первичка, налоги, отчётность, кадры, контрагенты, ИИ и мобильный клиент — в одном контуре данных. Ниже раскрыт полный потенциал системы: как продукт выглядит для клиента и партнёра «end-to-end».</p>
+      <p class="tagline">Навигация: стрелки / пробел / свайп. Материал для презентации инвесторам, банку white-label и enterprise-заказчику.</p>
+      <div class="big-num">360°</div>
+      <p class="lead" style="margin-top:0.25rem">От первички до статуса отчёта и push-уведомления — без разрыва между «учётом» и «действием».</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Рынок и боль</p>
+      <h2>Учёт разъезжается между Excel, банком, 1С и «головой бухгалтера»</h2>
+      <ul class="bullets">
+        <li>Нет единого места, где видны деньги, налоги, сроки и документы одновременно.</li>
+        <li>Импорт выписок, сканы, первичка и отчётность живут в разных окнах — растёт риск ошибки и штрафов.</li>
+        <li>Владелец не понимает «что делать сегодня»: дедлайн, оплата, согласование, отправка в орган.</li>
+        <li>Банку и экосистеме не хватает «учётного слоя» поверх транзакций — чтобы удержать МСП в своём контуре.</li>
+      </ul>
+      <div class="grid">
+        <div class="card"><h3>ФинКлик закрывает разрыв</h3><p>Один источник правды по операциям, документам, налогам и статусам подачи — с API и white-label для дистрибуции.</p></div>
+        <div class="card"><h3>Кому это критично</h3><p>ИП и ООО на УСН/НДС, с банковским оборотом, с кадрами и с регулярной отчётностью в ИМНС, ФСЗН, Белстат, Белгосстрах.</p></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Позиционирование</p>
+      <h2>ФинКлик — «операционная система» финансового compliance для МСП</h2>
+      <ul class="bullets">
+        <li><strong>Учёт</strong>: журнал операций, категории, импорт, сверка с банком, связка с 1С.</li>
+        <li><strong>Документы</strong>: счета, акты, накладные, печать PDF, оплата по ссылке/QR, таймлайн событий оплаты.</li>
+        <li><strong>Налоги и отчётность</strong>: калькуляторы, агрегаты ПУ-3, подготовка пакетов, подача в адаптер портала, WebSocket и архив снимка на момент отправки.</li>
+        <li><strong>ИИ</strong>: консультант с RAG по официальным ориентирам, изолированный ключ организации (BYOK).</li>
+        <li><strong>Мобильность</strong>: PWA, app-shell, safe-area, липкие действия в формах — готовность к нативной оболочке.</li>
+      </ul>
+    </section>
+
+    <!-- 4 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 1</p>
+      <h2>Командный центр: метрики, дедлайны и следующий шаг клиента</h2>
+      <p class="lead">Дашборд показывает деньги, налоги к уплате, ближайшие дедлайны и «что делать сейчас» — логика ведения клиента по приоритету, а не просто цифры.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (329).png" alt="ФинКлик — главная панель" />
+      </div>
+    </section>
+
+    <!-- 5 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 2</p>
+      <h2>Операции и контроль статуса: от черновика до синхронизации с 1С</h2>
+      <p class="lead">Единый журнал доходов и расходов, фильтры, быстрый импорт из документов, действия по строке и прозрачный статус синхронизации с учётной системой.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (330).png" alt="ФинКлик — операции" />
+      </div>
+    </section>
+
+    <!-- 6 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 3</p>
+      <h2>Аналитика: динамика, структура расходов, обороты по контрагентам</h2>
+      <p class="lead">Руководитель видит тренд, маржу и «кто съедает маржу» — данные уже в платформе, без выгрузок в сторонние BI для базовых решений.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (331).png" alt="ФинКлик — аналитика" />
+      </div>
+    </section>
+
+    <!-- 7 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 4</p>
+      <h2>Календарь обязательств: налоги, зарплаты, отчёты и ваши события</h2>
+      <p class="lead">Автоматические якоря по типовым срокам плюс пользовательские задачи — единая лента ответственности для владельца и бухгалтера.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (332).png" alt="ФинКлик — календарь" />
+      </div>
+    </section>
+
+    <!-- 8 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 5</p>
+      <h2>Кадры и расчёт вознаграждения: ФСЗН, НДФЛ, ведомости</h2>
+      <p class="lead">Карточка сотрудника, льготы, документы, расчётный лист по периоду — связка с операциями и отчётностью в одном контуре.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (333).png" alt="ФинКлик — сотрудники" />
+      </div>
+    </section>
+
+    <!-- 9 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 6</p>
+      <h2>Документы: импорт, экспорт, первичка и платёжный контур</h2>
+      <p class="lead">Счёт → оплата → акт/накладная → архив и выгрузки. История webhook/UI/email для демонстрации зрелости платёжного трека.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (334).png" alt="ФинКлик — документы" />
+      </div>
+    </section>
+
+    <!-- 10 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 7</p>
+      <h2>Контрагенты: реквизиты, УНП, база для счетов и актов</h2>
+      <p class="lead">Справочник как фундамент первички и аналитики по контрагентам — без дублирования ввода в каждом документе.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (335).png" alt="ФинКлик — контрагенты" />
+      </div>
+    </section>
+
+    <!-- 11 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 8</p>
+      <h2>Сканер: AI-извлечение из файла и текста → готовая операция</h2>
+      <p class="lead">Загрузка PDF/изображений, текстовый режим, уверенность распознавания, ручная правка полей перед проводкой — снижение труда на вводе.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (336).png" alt="ФинКлик — сканер" />
+      </div>
+    </section>
+
+    <!-- 12 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 9</p>
+      <h2>Сдача отчётности: ИМНС, ФСЗН, Белгосстрах, Белстат</h2>
+      <p class="lead">Единый UX подготовки, подтверждения и отправки; статусы, ссылки на органы, mock/http-адаптер для пилотов до подключения реальных API и ЭЦП.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (337).png" alt="ФинКлик — отчётность" />
+      </div>
+    </section>
+
+    <!-- 13 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 10</p>
+      <h2>Регламентные обновления: мониторинг нормативки «внутри продукта»</h2>
+      <p class="lead">Лента изменений с фильтром по органам, важность, даты вступления — снижает surprise-risk для бухгалтерии и владельца.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (338).png" alt="ФинКлик — регламентные обновления" />
+      </div>
+    </section>
+
+    <!-- 14 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 11</p>
+      <h2>ИИ-консультант: ответы с опорой на источники, режимы приватности</h2>
+      <p class="lead">Каталог первоисточников, BYOK для организации, демо-режим без ключа — прозрачная модель доверия для enterprise.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (339).png" alt="ФинКлик — консультант" />
+      </div>
+    </section>
+
+    <!-- 15 screenshot -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальный слой · экран 12</p>
+      <h2>Настройки: профиль, интеграции, тариф, команда, комплаенс-контур</h2>
+      <p class="lead">Тема, 1С HTTP-сервис, ключ LLM, биллинг, приглашения — всё, что нужно для внедрения в организации и white-label у банка.</p>
+      <div class="shot-wrap">
+        <img data-shot="Снимок экрана (340).png" alt="ФинКлик — настройки" />
+      </div>
+    </section>
+
+    <!-- 16 deep dive bank -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Модуль «Банк»</p>
+      <h2>Мульти-банк, платежи, выписки и сверка с учётом</h2>
+      <ul class="bullets">
+        <li>Подключение нескольких счетов, основной счёт, активность.</li>
+        <li>Импорт выписок (JSON/адаптеры) с дедупликацией и отражением в операциях.</li>
+        <li>Платёжные сценарии и сверка «книга ↔ импорт» за период — основа для банковского white-label.</li>
+        <li>Проверка контрагента по УНП через контур 1С — снижение мошенничества и ошибок реквизитов.</li>
+      </ul>
+      <div class="grid">
+        <div class="card"><h3>Для банка</h3><p>Готовый «учётный слой» поверх API выписок: удержание клиента, кросс-продукт, снижение нагрузки на поддержку.</p></div>
+        <div class="card"><h3>Для клиента</h3><p>Меньше ручного ввода, больше автоматической классификации и прозрачности остатков.</p></div>
+      </div>
+    </section>
+
+    <!-- 17 reporting deep -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Модуль «Отчётность»</p>
+      <h2>От черновика до архивного снимка подачи</h2>
+      <ul class="bullets">
+        <li>Подготовка отчётов по ведомствам, периодам и формам; предпросмотр и выгрузки в UI.</li>
+        <li>Подача через адаптер (mock / http), симуляция accept/reject в демо, возврат в черновик.</li>
+        <li>WebSocket <code style="color:#94a3b8">report_status</code> и уведомления — операционная осведомлённость без опроса статуса вручную.</li>
+        <li>Архивный снимок данных на момент отправки — аудит и разбор спорных ситуаций.</li>
+      </ul>
+    </section>
+
+    <!-- 18 tech -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Архитектура и надёжность</p>
+      <h2>Backend, миграции, тесты и готовность к продакшену</h2>
+      <ul class="bullets">
+        <li><strong>FastAPI</strong> + Alembic, асинхронная БД, модульная доменная логика.</li>
+        <li><strong>CI</strong>: линт, тесты, сборка фронта, smoke-сценарии.</li>
+        <li><strong>Безопасность паролей</strong>: PBKDF2 для новых пользователей, совместимость со старыми bcrypt-хешами.</li>
+        <li><strong>Наблюдаемость</strong>: заготовки под Prometheus/Grafana в инфраструктурных файлах репозитория.</li>
+      </ul>
+    </section>
+
+    <!-- 19 mobile -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Мобильное приложение</p>
+      <h2>Тот же продукт — в формате «app-first»</h2>
+      <ul class="bullets">
+        <li>PWA manifest, иконка, standalone-режим; детект app-shell для компактного UI.</li>
+        <li>Safe-area, увеличенные tap-targets, отступы под нижнюю навигацию.</li>
+        <li>Липкие панели действий в модальных формах — как в нативных приложениях.</li>
+        <li>Следующий шаг инженерии: Capacitor/React Native shell без смены API.</li>
+      </ul>
+    </section>
+
+    <!-- 20 ecosystem -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Экосистема</p>
+      <h2>Банк · 1С · Госорганы · ИИ — в одной истории клиента</h2>
+      <div class="cols">
+        <div>
+          <ul class="bullets">
+            <li><strong>Банк</strong>: выписки и платежи автоматически наполняют учёт.</li>
+            <li><strong>1С</strong>: синхронизация операций и справочников, очередь задач, retry.</li>
+            <li><strong>Госорганы</strong>: подготовка и подача отчётности, статусы, архив.</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="bullets">
+            <li><strong>ИИ</strong>: объясняет нормы, помогает сформулировать шаги, не подменяет юридическую ответственность.</li>
+            <li><strong>Команда</strong>: роли, приглашения, тарифные лимиты — готово к организациям с несколькими пользователями.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 21 metrics -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Метрики успеха</p>
+      <h2>Что измеряем при масштабировании</h2>
+      <div class="grid">
+        <div class="card"><h3>Время ввода</h3><p>Снижение минут на операцию за счёт импорта, сканера и шаблонов первички.</p></div>
+        <div class="card"><h3>Соблюдение сроков</h3><p>Доля отчётов подготовленных до дедлайна; SLA реакции на reject.</p></div>
+        <div class="card"><h3>Качество данных</h3><p>Доля автоматически сопоставленных банковских строк; ошибки синка 1С.</p></div>
+        <div class="card"><h3>Удержание</h3><p>WAU/MAU, глубина сценария (сколько модулей использует организация).</p></div>
+      </div>
+    </section>
+
+    <!-- 22 roadmap narrative -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Горизонт развития <span class="pill">Vision</span></p>
+      <h2>Уже сейчас — ядро; дальше — глубина интеграций и масштаб</h2>
+      <ul class="bullets">
+        <li><strong>Сейчас</strong>: полный UX ядра, демо-контуры госпорталов, OCR-пайплайн, отчётность и уведомления.</li>
+        <li><strong>Ближайший этап</strong>: нативная оболочка, push, offline-read критичных экранов.</li>
+        <li><strong>Средний этап</strong>: прямые API банков и порталов по договорённости, ЭЦП, очереди долгих задач.</li>
+        <li><strong>Зрелость</strong>: мульти-тенант изоляция, расширенный аудит, нагрузочные профили под тысячи организаций.</li>
+      </ul>
+      <p class="tagline">Детализация отложенных внешних контуров зафиксирована в репозитории (sprint deferred) — для прозрачности с инвестором и регулятором.</p>
+    </section>
+
+    <!-- 23 two screenshots comparison -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Сценарная математика · 3 года</p>
+      <h2>Клиентская база и возможная капитализация (Year 3)</h2>
+      <p class="lead">Тарифная матрица: <strong>50 / 150 / 250 руб в месяц</strong> (Lite / Pro / Business). В модели используется blended ARPA <strong>$240–$720/год</strong> с учётом микса тарифов, скидок и годовой предоплаты; EBITDA margin <strong>18–35%</strong>, диапазон мультипликатора <strong>ARR × 4–9</strong> или <strong>EBITDA × 10–18</strong>.</p>
+      <div class="grid">
+        <div class="card"><h3>Lite</h3><p><strong>50 руб/мес</strong> → ~600 руб/год на клиента. Основной входной план для малого бизнеса.</p></div>
+        <div class="card"><h3>Pro</h3><p><strong>150 руб/мес</strong> → ~1 800 руб/год. Базовый рабочий план для растущих компаний.</p></div>
+        <div class="card"><h3>Business</h3><p><strong>250 руб/мес</strong> → ~3 000 руб/год. Расширенный контур и командные сценарии.</p></div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Клиенты</th>
+              <th>ARR, $млн</th>
+              <th>Выручка/год, $млн</th>
+              <th>EBITDA, $млн</th>
+              <th>Оценка low, $млн</th>
+              <th>Оценка high, $млн</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>100</td><td>0.02–0.07</td><td>0.02–0.07</td><td>0.00–0.02</td><td>0.1</td><td>0.6</td></tr>
+            <tr><td>500</td><td>0.12–0.36</td><td>0.12–0.36</td><td>0.02–0.13</td><td>0.5</td><td>3.2</td></tr>
+            <tr><td>1 000</td><td>0.24–0.72</td><td>0.24–0.72</td><td>0.04–0.25</td><td>1.0</td><td>6.5</td></tr>
+            <tr><td>5 000</td><td>1.20–3.60</td><td>1.20–3.60</td><td>0.22–1.26</td><td>4.8</td><td>32.4</td></tr>
+            <tr><td>10 000</td><td>2.40–7.20</td><td>2.40–7.20</td><td>0.43–2.52</td><td>9.6</td><td>64.8</td></tr>
+            <tr><td>20 000</td><td>4.80–14.40</td><td>4.80–14.40</td><td>0.86–5.04</td><td>19.2</td><td>129.6</td></tr>
+            <tr><td>40 000+</td><td>9.60–28.80+</td><td>9.60–28.80+</td><td>1.73–10.08+</td><td>38.4+</td><td>259.2+</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tagline">Year 3 обычно отражает стадию product-market fit + масштабируемый sales engine. Оценка растёт нелинейно при снижении churn и росте NRR.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Сценарная математика · 5 лет</p>
+      <h2>Потенциал капитализации при зрелой экосистеме (Year 5)</h2>
+      <p class="lead">В Year 5 добавляется эффект платформы: embedded finance, white-label в банках, партнёрские каналы 1С/интеграторов. При той же тарифной сетке <strong>50/150/250 руб</strong> рост капитализации идёт за счёт объёма базы, расширения доли Pro/Business и снижения churn. Диапазон мультипликатора: <strong>ARR × 5–12</strong>.</p>
+      <div class="grid">
+        <div class="card"><h3>10 000 клиентов</h3><p>ARR: <strong>$2.4–7.2 млн</strong><br/>Возможная оценка: <strong>$12–86 млн</strong><br/>Реалистичный базовый коридор: <strong>$25–45 млн</strong>.</p></div>
+        <div class="card"><h3>20 000 клиентов</h3><p>ARR: <strong>$4.8–14.4 млн</strong><br/>Возможная оценка: <strong>$24–173 млн</strong><br/>Базовый коридор: <strong>$50–90 млн</strong>.</p></div>
+        <div class="card"><h3>40 000+ клиентов</h3><p>ARR: <strong>$9.6–28.8+ млн</strong><br/>Возможная оценка: <strong>$48–345+ млн</strong><br/>Upside при низком churn: <strong>$120–220+ млн</strong>.</p></div>
+      </div>
+      <ul class="bullets">
+        <li>Консервативный сценарий: низкий ARPA, медленный sales-cycle, ограничения по интеграциям.</li>
+        <li>Базовый сценарий: стабильный рост SMB + партнёрский канал через банк/интегратора.</li>
+        <li>Агрессивный сценарий: сильный white-label distribution и расширение продуктовой линейки.</li>
+      </ul>
+      <p class="tagline">Это сценарная оценка, не оферта. Для инвест-комитета обычно фиксируют 3 кейса: downside / base / upside с квартальным ревью факта против плана.</p>
+    </section>
+
+    <!-- 23 two screenshots comparison -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Визуальная связка</p>
+      <h2>От денег к отчёту — два экрана одной системы</h2>
+      <p class="lead">Слева — операционный слой, справа — контур отчётности. Один логин, одна организация, одна команда.</p>
+      <div class="cols">
+        <img data-shot="Снимок экрана (330).png" alt="Операции" />
+        <img data-shot="Снимок экрана (337).png" alt="Отчётность" />
+      </div>
+    </section>
+
+    <!-- 24 CTA -->
+    <section class="slide" data-slide>
+      <p class="eyebrow">Заключение</p>
+      <h1>ФинКлик — <span class="grad">готовая платформа</span> для масштабирования</h1>
+      <p class="lead">Мы показываем зрелый UX, сквозные сценарии и техническую базу: от мобильного клиента до отчётности и ИИ. Готовы к пилоту с банком, интегратором 1С или прямым B2B-внедрением.</p>
+      <ul class="bullets">
+        <li>Демо: локально или на стенде — по NDA.</li>
+        <li>Материалы: исходный код, runbook, tech backlog в репозитории.</li>
+        <li>Следующий шаг: выбор когорты пилота и KPI на 90 дней.</li>
+      </ul>
+      <p class="tagline" style="margin-top:1rem">Конфиденциальный материал для продуктовой демонстрации и обсуждения пилота.</p>
+    </section>
+  </div>
+
+  <div class="footer-nav">
+    <button type="button" class="nav-btn" id="prev" aria-label="Назад">←</button>
+    <div class="progress" aria-hidden="true"><div class="progress-bar" id="bar"></div></div>
+    <span class="slide-num" id="num">1 / 24</span>
+    <button type="button" class="nav-btn" id="next" aria-label="Вперёд">→</button>
+  </div>
+
+  <script>
+    (function () {
+      var slides = [].slice.call(document.querySelectorAll('[data-slide]'));
+      var i = 0;
+      var touchStartX = null;
+      var shotBases = [
+        '../vtb-finklik-pitch/media/',
+        './media/',
+        './vtb-finklik-pitch/media/',
+        '../media/',
+        '../../Downloads/finklik/docs/presentations/vtb-finklik-pitch/media/'
+      ];
+
+      function bindScreenshot(img) {
+        var name = img.getAttribute('data-shot');
+        if (!name) return;
+        var idx = 0;
+
+        function tryNext() {
+          if (idx >= shotBases.length) {
+            img.style.display = 'none';
+            var note = document.createElement('div');
+            note.className = 'card';
+            note.style.maxWidth = '720px';
+            note.innerHTML = '<h3>Скриншот не найден</h3><p>Положите файл <code style=\"color:#cbd5e1\">' + name + '</code> в папку <code style=\"color:#cbd5e1\">media</code> рядом с презентацией или откройте файл прямо из репозитория <code style=\"color:#cbd5e1\">docs/presentations/finklik-full-deck/</code>.</p>';
+            img.parentElement.appendChild(note);
+            return;
+          }
+          img.src = shotBases[idx] + name;
+          idx += 1;
+        }
+
+        img.addEventListener('error', tryNext);
+        tryNext();
+      }
+
+      [].slice.call(document.querySelectorAll('img[data-shot]')).forEach(bindScreenshot);
+
+      function render() {
+        slides.forEach(function (s, j) {
+          s.classList.toggle('active', j === i);
+        });
+        document.getElementById('num').textContent = i + 1 + ' / ' + slides.length;
+        document.getElementById('bar').style.width = ((i + 1) / slides.length * 100) + '%';
+      }
+
+      function go(d) {
+        i = (i + d + slides.length) % slides.length;
+        render();
+      }
+      render();
+      setInterval(function () { go(1); }, 5500);
+    })();
+  </script>
+</body>
+</html>

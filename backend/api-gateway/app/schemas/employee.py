@@ -1,6 +1,8 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+import re
+
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from decimal import Decimal
 from datetime import date, datetime
 
@@ -43,6 +45,10 @@ class EmployeeCreate(BaseModel):
         description="passport | residence_permit | refugee_certificate | other",
     )
     id_document: IdentityDocumentPayload | None = None
+    passport_data: str | None = Field(default=None, min_length=2, max_length=2000)
+    phone: str | None = Field(default=None, min_length=5, max_length=40)
+    email: EmailStr | None = None
+    address: str | None = Field(default=None, min_length=2, max_length=500)
 
     @field_validator("id_document_type")
     @classmethod
@@ -50,6 +56,17 @@ class EmployeeCreate(BaseModel):
         if v is None or v == "":
             return None
         return v.strip().lower()
+
+    @field_validator("phone")
+    @classmethod
+    def normalize_phone(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        raw = v.strip()
+        digits = re.sub(r"[^\d+]", "", raw)
+        if len(digits) < 10 or len(digits) > 16:
+            raise ValueError("Укажите корректный номер телефона")
+        return raw
 
     @model_validator(mode="after")
     def document_fields(self):
@@ -99,6 +116,10 @@ class EmployeeResponse(BaseModel):
     work_hours_per_week: Decimal | None = None
     id_document_type: str | None = None
     id_document: IdentityDocumentOut | None = None
+    passport_data: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

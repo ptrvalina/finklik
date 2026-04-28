@@ -2,6 +2,20 @@
 
 Веб-платформа учёта и отчётности для ИП/организаций (РБ): операции, налоги, сканер документов, подача отчётов (mock/http-адаптер до подключения реальных госпорталов).
 
+## Новый функционал (HR + ФСЗН + зарплата)
+
+- Новое меню и страницы: Банк, Отчётность, Сотрудники, Учёт, Контрагенты, Сайты для работы, Заметки, Скан.
+- Блок `Сотрудники`: приём, увольнение, штат, расчёт зарплаты, статусы отправки в ФСЗН.
+- Backend endpoint'ы этапа workforce:
+  - `POST /api/v1/employees`
+  - `GET /api/v1/employees`
+  - `POST /api/v1/employees/{employee_id}/terminate`
+  - `POST /api/v1/fszn/pu2`
+  - `POST /api/v1/fszn/pu3`
+  - `POST /api/v1/salary/calculate`
+  - `GET /api/v1/salary/calculations`
+- Дополнительная OpenAPI спецификация новых endpoint'ов: `api/swagger.yaml`.
+
 ## Быстрый старт
 
 ```bash
@@ -35,6 +49,12 @@ make dev                    # Docker: API, фронт, mock-банк, mock-1С
 | `PROVISION_ADMIN_TOKEN`, `PROVISION_WEBHOOK_SECRET` | Админ- и вебхук-провижин 1С |
 | `SUBMISSION_PORTAL_MODE`, `SUBMISSION_PORTAL_BASE_URL` | Режим подачи отчётов: `mock` или `http` |
 | `NBRB_FX_ENABLED`, `NBRB_FX_REFRESH_SECONDS` | Курсы НБ РБ: фоновое обновление (0 — только по запросу) |
+| `RATE_LIMIT_PER_MINUTE` | Лимит запросов API на пользователя/минуту (по умолчанию 100) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | TTL access JWT (по умолчанию 15 минут) |
+| `REFRESH_COOKIE_HTTPONLY` | HttpOnly refresh-cookie (`true` в production) |
+| `JWT_SECRET_KEY` | Используется как основа ключа AES-256-GCM для шифрования ПД сотрудников |
+| `FSZN_RPA_SCRIPT_PATH` | Путь к Playwright-скрипту отправки ПУ-2/ПУ-3 |
+| `FSZN_PORTAL_LOGIN`, `FSZN_PORTAL_PASSWORD`, `FSZN_PORTAL_URL` | Доступ к порталу ФСЗН для RPA |
 
 Полный список полей — класс `Settings` в `backend/api-gateway/app/core/config.py`.
 
@@ -50,6 +70,8 @@ make verify-like-ci
 Зависимости для линта и полного pytest: `pip install -r backend/api-gateway/requirements.txt -r backend/api-gateway/requirements-dev.txt`.
 
 Фронт: `cd frontend/web && npm run build` (или `npm run typecheck` — только TypeScript).
+
+Миграции: `cd backend/api-gateway && alembic upgrade head`.
 
 Демо-smoke: `make demo-smoke` → [`docs/dev/PRE_DEMO_SMOKE.md`](docs/dev/PRE_DEMO_SMOKE.md).
 

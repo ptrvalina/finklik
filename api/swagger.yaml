@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Finklik Workforce API
+  version: 1.0.0
+  description: |
+    OpenAPI for employee onboarding, termination, salary calculations and FSZN submissions.
+servers:
+  - url: /api/v1
+paths:
+  /employees:
+    get:
+      summary: List employees
+      parameters:
+        - in: query
+          name: active_only
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Employee list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeCreateRequest"
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+  /employees/{employee_id}/terminate:
+    post:
+      summary: Terminate employee
+      parameters:
+        - in: path
+          name: employee_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerminateEmployeeRequest"
+      responses:
+        "200":
+          description: Employee terminated
+  /fszn/pu2:
+    post:
+      summary: Send FSZN PU-2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FsznRequest"
+      responses:
+        "200":
+          description: FSZN response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FsznResponse"
+  /fszn/pu3:
+    post:
+      summary: Send FSZN PU-3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FsznRequest"
+      responses:
+        "200":
+          description: FSZN response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FsznResponse"
+  /salary/calculate:
+    post:
+      summary: Calculate salary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SalaryCalculationRequest"
+      responses:
+        "200":
+          description: Salary calculation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalaryCalculation"
+  /salary/calculations:
+    get:
+      summary: List salary calculations
+      responses:
+        "200":
+          description: Salary calculations list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalaryCalculation"
+components:
+  schemas:
+    EmployeeCreateRequest:
+      type: object
+      required:
+        - full_name
+        - position
+        - salary
+        - hire_date
+      properties:
+        full_name:
+          type: string
+        position:
+          type: string
+        salary:
+          type: number
+        hire_date:
+          type: string
+          format: date
+        passport_data:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        address:
+          type: string
+          nullable: true
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+        position:
+          type: string
+        salary:
+          type: number
+        hire_date:
+          type: string
+          format: date
+        fire_date:
+          type: string
+          format: date
+          nullable: true
+        is_active:
+          type: boolean
+        passport_data:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+    TerminateEmployeeRequest:
+      type: object
+      required:
+        - termination_date
+      properties:
+        termination_date:
+          type: string
+          format: date
+    FsznRequest:
+      type: object
+      properties:
+        employee_id:
+          type: string
+          nullable: true
+        period:
+          type: string
+          format: date
+          nullable: true
+        xml_data:
+          type: string
+          nullable: true
+    FsznResponse:
+      type: object
+      required:
+        - protocol_id
+        - status
+      properties:
+        protocol_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+    SalaryCalculationRequest:
+      type: object
+      required:
+        - employee_id
+        - period_start
+        - period_end
+      properties:
+        employee_id:
+          type: string
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+    SalaryCalculation:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        period:
+          type: string
+          format: date
+        base_salary:
+          type: number
+        bonuses:
+          type: number
+        deductions:
+          type: number
+        taxes:
+          type: number
+        net_salary:
+          type: number
+        status:
+          type: string

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { employeesApi, scannerApi, workforceApi } from '../api/client'
+import { api, employeesApi, regulatoryApi, scannerApi, workforceApi } from '../api/client'
+import { saveBlob } from '../utils/fileDownload'
 
 type EmployeeRow = {
   id: string
@@ -19,6 +20,59 @@ type SalaryRow = {
   taxes: string
   net_salary: string
   status: string
+}
+
+type RegulatoryUpdate = {
+  id: string
+  title: string
+  summary?: string
+  authority_name?: string
+  authority?: string
+  category?: string
+  effective_date?: string
+  severity?: string
+}
+
+type PlannerEvent = {
+  id: string
+  title: string
+  event_date: string
+  event_type: string
+  color: string
+}
+
+const eventTypeMeta: Record<string, { label: string; badgeClass: string }> = {
+  meeting: { label: 'Кадры', badgeClass: 'bg-blue-100 text-blue-800' },
+  deadline: { label: 'Дедлайн', badgeClass: 'bg-amber-100 text-amber-800' },
+  salary: { label: 'Зарплата', badgeClass: 'bg-emerald-100 text-emerald-800' },
+  report: { label: 'Отчет', badgeClass: 'bg-violet-100 text-violet-800' },
+  custom: { label: 'Событие', badgeClass: 'bg-zinc-200 text-zinc-700' },
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function daysUntil(dateIso: string) {
+  const today = startOfDay(new Date())
+  const eventDate = startOfDay(new Date(dateIso))
+  return Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function deadlineMeta(dateIso: string) {
+  const diff = daysUntil(dateIso)
+  if (diff < 0) return { label: `Просрочено на ${Math.abs(diff)} дн.`, className: 'bg-rose-100 text-rose-700' }
+  if (diff === 0) return { label: 'Сегодня', className: 'bg-orange-100 text-orange-700' }
+  if (diff <= 7) return { label: `Через ${diff} дн.`, className: 'bg-amber-100 text-amber-800' }
+  return { label: 'Запланировано', className: 'bg-emerald-100 text-emerald-700' }
+}
+
+function deadlinePriority(dateIso: string) {
+  const diff = daysUntil(dateIso)
+  if (diff < 0) return 0
+  if (diff === 0) return 1
+  if (diff <= 7) return 2
+  return 3
 }
 
 function makeOrderNumber() {
@@ -42,6 +96,7 @@ export default function Employees() {
   const [loading, setLoading] = useState(false)
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [uiError, setUiError] = useState<string | null>(null)
   const [terminationSubmitting, setTerminationSubmitting] = useState(false)
   const [salaryRows, setSalaryRows] = useState<SalaryRow[]>([])
   const [salaryLoading, setSalaryLoading] = useState(false)
@@ -77,6 +132,18 @@ export default function Employees() {
     employeeID: '',
     date: new Date().toISOString().slice(0, 10),
   })
+  const [lastCreatedEmployeeID, setLastCreatedEmployeeID] = useState<string>('')
+  const [busyAction, setBusyAction] = useState<string | null>(null)
+  const [lastActionMessage, setLastActionMessage] = useState<string>('')
+  const [regulatoryUpdates, setRegulatoryUpdates] = useState<RegulatoryUpdate[]>([])
+  const [plannerEvents, setPlannerEvents] = useState<PlannerEvent[]>([])
+  const [lawsRefreshing, setLawsRefreshing] = useState(false)
+  const [plannerFilter, setPlannerFilter] = useState<'all' | 'hire' | 'termination' | 'changes'>('all')
+  const [reminderDays, setReminderDays] = useState<1 | 3 | 7>(3)
+  const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [editingDate, setEditingDate] = useState('')
+  const [plannerBusy, setPlannerBusy] = useState(false)
 
   const activeEmployees = useMemo(() => employees.filter((e) => e.is_active), [employees])
 
@@ -85,6 +152,13 @@ export default function Employees() {
     try {
       const { data } = await employeesApi.list({ active_only: false })
       setEmployees(data || [])
+      setUiError(null)
+      if (!termination.employeeID && data?.length) {
+        const firstActive = (data as EmployeeRow[]).find((employee) => employee.is_active)
+        if (firstActive) {
+          setTermination((prev) => ({ ...prev, employeeID: firstActive.id }))
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -93,6 +167,135 @@ export default function Employees() {
   useEffect(() => {
     void loadEmployees()
   }, [])
+
+  async function loadRegulatory() {
+    try {
+      setLawsRefreshing(true)
+      const { data } = await regulatoryApi.getUpdates()
+      setRegulatoryUpdates(data?.updates || [])
+    } catch {
+      setUiError((prev) => prev || 'Не удалось загрузить блок обновлений законодательства')
+    } finally {
+      setLawsRefreshing(false)
+    }
+  }
+
+  async function loadPlanner() {
+    const today = new Date()
+    const from = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10)
+    const to = new Date(today.getFullYear(), today.getMonth() + 3, 0).toISOString().slice(0, 10)
+    try {
+      const { data } = await api.get('/calendar/events', { params: { date_from: from, date_to: to } })
+      setPlannerEvents((data || []).filter((event: PlannerEvent) => /сотрудник|кадры|увольн|прием|приём/i.test(event.title)))
+    } catch {
+      setUiError((prev) => prev || 'Не удалось загрузить планер кадровых событий')
+    }
+  }
+
+  useEffect(() => {
+    void loadRegulatory()
+    void loadPlanner()
+    const timer = window.setInterval(() => {
+      void loadRegulatory()
+    }, 1000 * 60 * 10)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  async function addPlannerEvent(title: string, eventDate: string, eventType = 'deadline') {
+    await api.post('/calendar/events', {
+      title,
+      event_date: eventDate,
+      event_type: eventType,
+      color: eventType === 'salary' ? '#059669' : '#2563eb',
+    })
+    await loadPlanner()
+  }
+
+  async function updatePlannerEvent() {
+    if (!editingEvent) return
+    setPlannerBusy(true)
+    try {
+      await api.put(`/calendar/events/${editingEvent.id}`, {
+        title: editingTitle,
+        event_date: editingDate,
+      })
+      setEditingEvent(null)
+      await loadPlanner()
+    } finally {
+      setPlannerBusy(false)
+    }
+  }
+
+  async function deletePlannerEvent(id: string) {
+    if (!confirm('Удалить это событие из планера?')) return
+    setPlannerBusy(true)
+    try {
+      await api.delete(`/calendar/events/${id}`)
+      await loadPlanner()
+    } finally {
+      setPlannerBusy(false)
+    }
+  }
+
+  function exportPlannerCsv() {
+    const header = ['date', 'type', 'title']
+    const rows = filteredPlannerEvents.map((event) => [
+      event.event_date,
+      eventTypeMeta[event.event_type]?.label || event.event_type,
+      `"${(event.title || '').replace(/"/g, '""')}"`,
+    ])
+    const csv = [header.join(';'), ...rows.map((row) => row.join(';'))].join('\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+    saveBlob(blob, `employees_planner_${new Date().toISOString().slice(0, 10)}.csv`)
+  }
+
+  const tomorrowDate = useMemo(() => {
+    const now = new Date()
+    now.setDate(now.getDate() + 1)
+    return now.toISOString().slice(0, 10)
+  }, [])
+
+  const filteredPlannerEvents = useMemo(() => {
+    const sorted = [...plannerEvents].sort((a, b) => {
+      const p = deadlinePriority(a.event_date) - deadlinePriority(b.event_date)
+      if (p !== 0) return p
+      return a.event_date.localeCompare(b.event_date)
+    })
+    if (plannerFilter === 'all') return sorted
+    if (plannerFilter === 'hire') return sorted.filter((event) => /прием|приём|hire|контракт/i.test(event.title))
+    if (plannerFilter === 'termination') return sorted.filter((event) => /увольн|terminate|pu-2|пу-2/i.test(event.title))
+    return sorted.filter((event) => /изменение|премия|больнич|отпуск|матпомощ/i.test(event.title))
+  }, [plannerEvents, plannerFilter])
+
+  const reminderEvents = useMemo(() => {
+    return filteredPlannerEvents.filter((event) => {
+      const diff = daysUntil(event.event_date)
+      return diff >= 0 && diff <= reminderDays
+    })
+  }, [filteredPlannerEvents, reminderDays])
+
+  async function runHrAction(label: string, employeeIDOverride?: string, orderNumberOverride?: string) {
+    const targetEmployeeID = employeeIDOverride || dismissAction.employeeID
+    const targetOrderNumber = orderNumberOverride || dismissAction.orderNumber
+    if (!targetEmployeeID) {
+      alert('Сначала выберите сотрудника в блоке "Штат".')
+      return
+    }
+    setBusyAction(label)
+    try {
+      const employee = employees.find((row) => row.id === targetEmployeeID)
+      const employeeName = employee?.full_name || targetEmployeeID
+      const message = `${label} оформлено для ${employeeName} (приказ № ${targetOrderNumber})`
+      setLastActionMessage(message)
+      await addPlannerEvent(`${label}: ${employeeName}`, new Date().toISOString().slice(0, 10), 'meeting')
+      setUiError(null)
+      alert(message)
+    } catch {
+      setUiError(`Не удалось выполнить действие: ${label}`)
+    } finally {
+      setBusyAction(null)
+    }
+  }
 
   async function handlePassportScan(file?: File) {
     try {
@@ -114,15 +317,27 @@ export default function Employees() {
     }
     setSubmitting(true)
     try {
-      await employeesApi.create({
+      if (!hireForm.fullName.trim() || !hireForm.positionName.trim() || Number(hireForm.salary || 0) <= 0) {
+        alert('Заполните ФИО, должность и сумму ЗП.')
+        return
+      }
+      const { data } = await employeesApi.create({
         full_name: hireForm.fullName,
         identification_number: null,
         position: hireForm.positionName,
         salary: Number(hireForm.salary || 0),
         hire_date: hireForm.hireDate,
         has_children: 0,
+        passport_data: hireForm.passportData || null,
+        position_code: hireForm.positionCode || null,
+        position_name: hireForm.positionName || null,
+        address: hireForm.address || null,
+        phone: hireForm.phone || null,
+        email: hireForm.email || null,
       })
+      setLastCreatedEmployeeID(data?.id || '')
       await loadEmployees()
+      setUiError(null)
       alert('Сотрудник принят. Данные отправлены на подпись.')
       setHireForm((prev) => ({
         ...prev,
@@ -138,7 +353,9 @@ export default function Employees() {
       }))
       setConsent(false)
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Ошибка при создании сотрудника')
+      const message = e?.response?.data?.detail || 'Ошибка при создании сотрудника'
+      setUiError(String(message))
+      alert(message)
     } finally {
       setSubmitting(false)
     }
@@ -150,9 +367,11 @@ export default function Employees() {
       const { data } = await workforceApi.sendPu2({ employee_id: employeeID })
       setPu2StatusMap((prev) => ({ ...prev, [employeeID]: data.status || 'accepted' }))
       setLastFsznStatus(data.status || 'accepted')
+      setUiError(null)
     } catch {
       setPu2StatusMap((prev) => ({ ...prev, [employeeID]: 'rejected' }))
       setLastFsznStatus('rejected')
+      setUiError('Не удалось отправить ПУ-2 в ФСЗН')
     }
   }
 
@@ -167,9 +386,12 @@ export default function Employees() {
       await workforceApi.terminate(termination.employeeID, termination.date)
       await handleSendPu2(termination.employeeID)
       await loadEmployees()
+      setUiError(null)
       alert('Сотрудник уволен')
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Ошибка увольнения')
+      const message = e?.response?.data?.detail || 'Ошибка увольнения'
+      setUiError(String(message))
+      alert(message)
     } finally {
       setTerminationSubmitting(false)
     }
@@ -190,8 +412,11 @@ export default function Employees() {
       }
       const { data } = await workforceApi.listSalaryCalculations()
       setSalaryRows(data || [])
+      setUiError(null)
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Ошибка расчета зарплаты')
+      const message = e?.response?.data?.detail || 'Ошибка расчета зарплаты'
+      setUiError(String(message))
+      alert(message)
     } finally {
       setSalaryLoading(false)
     }
@@ -205,12 +430,14 @@ export default function Employees() {
           xml_data: '<PU3 />',
         })
         setLastFsznStatus(data.status || 'accepted')
+        setUiError(null)
         return
       }
       setLastFsznStatus('pending')
       setTimeout(() => setLastFsznStatus('accepted'), 1200)
     } catch {
       setLastFsznStatus('rejected')
+      setUiError('Ошибка отправки в ФСЗН')
     }
   }
 
@@ -221,6 +448,7 @@ export default function Employees() {
         <p className="mt-1 text-sm text-on-surface-variant">
           Прием, увольнение, штат, зарплата и ФСЗН в одном месте.
         </p>
+        {uiError ? <p className="mt-2 text-sm text-rose-500">{uiError}</p> : null}
       </header>
 
       <section className="card-elevated space-y-4 p-6">
@@ -247,19 +475,62 @@ export default function Employees() {
         />
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" onClick={() => passportFileRef.current?.click()}>Скан паспорта</button>
-          <button className="btn-secondary" onClick={() => alert('Отправлено на подпись')}>Сформировать контракт и приказ</button>
           <button
-            className={`btn-secondary text-white ${statusClass(hireForm.fullName ? pu2StatusMap[activeEmployees[0]?.id || ''] : undefined)}`}
+            className="btn-secondary"
+            disabled={busyAction === 'contract'}
+            onClick={async () => {
+              setBusyAction('contract')
+              try {
+                await addPlannerEvent(`Подписать контракт (приказ № ${hireForm.orderNumber})`, hireForm.orderDate, 'report')
+                setLastActionMessage('Контракт и приказ отправлены на подпись.')
+                alert('Отправлено на подпись')
+              } finally {
+                setBusyAction(null)
+              }
+            }}
+          >
+            {busyAction === 'contract' ? 'Отправка...' : 'Сформировать контракт и приказ'}
+          </button>
+          <button
+            className={`btn-secondary text-white ${statusClass(lastCreatedEmployeeID ? pu2StatusMap[lastCreatedEmployeeID] : undefined)}`}
             onClick={() => {
-              const target = activeEmployees[0]?.id
+              const target = lastCreatedEmployeeID || activeEmployees[0]?.id
               if (!target) return alert('Сначала создайте сотрудника')
               void handleSendPu2(target)
             }}
           >
             ПУ-2
           </button>
-          <button className="btn-secondary" onClick={() => alert('Открыть счёт — в разработке')}>Открыть счёт</button>
-          <button className="btn-secondary" onClick={() => alert('Штатное расписание — в разработке')}>Штатное расписание</button>
+          <button
+            className="btn-secondary"
+            disabled={busyAction === 'bank_account'}
+            onClick={async () => {
+              setBusyAction('bank_account')
+              try {
+                await addPlannerEvent('Открыть зарплатный счёт сотруднику', new Date().toISOString().slice(0, 10), 'deadline')
+                setLastActionMessage('Задача на открытие счёта поставлена в планер.')
+              } finally {
+                setBusyAction(null)
+              }
+            }}
+          >
+            {busyAction === 'bank_account' ? 'Создаём...' : 'Открыть счёт'}
+          </button>
+          <button
+            className="btn-secondary"
+            disabled={busyAction === 'staffing'}
+            onClick={async () => {
+              setBusyAction('staffing')
+              try {
+                await addPlannerEvent('Обновить штатное расписание', new Date().toISOString().slice(0, 10), 'custom')
+                setLastActionMessage('Штатное расписание добавлено в планер.')
+              } finally {
+                setBusyAction(null)
+              }
+            }}
+          >
+            {busyAction === 'staffing' ? 'Обновляем...' : 'Штатное расписание'}
+          </button>
         </div>
         <label className="flex items-center gap-2 text-sm text-on-surface-variant">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
@@ -283,6 +554,16 @@ export default function Employees() {
         </div>
         <button className="btn-primary" disabled={terminationSubmitting} onClick={() => void handleTerminate()}>
           {terminationSubmitting ? 'Увольнение...' : 'Уволить'}
+        </button>
+        <button
+          className={`btn-secondary text-white ${statusClass(termination.employeeID ? pu2StatusMap[termination.employeeID] : undefined)}`}
+          disabled={!termination.employeeID}
+          onClick={() => {
+            if (!termination.employeeID) return
+            void handleSendPu2(termination.employeeID)
+          }}
+        >
+          ПУ-2 по увольнению
         </button>
       </section>
 
@@ -314,8 +595,9 @@ export default function Employees() {
                             key={title}
                             className="rounded-lg border border-outline/70 px-2 py-1 text-xs"
                             onClick={() => {
-                              setDismissAction((prev) => ({ ...prev, employeeID: employee.id, orderNumber: makeOrderNumber() }))
-                              alert(`${title}: форма откроется в следующем этапе. Приказ № ${makeOrderNumber()}`)
+                              const nextOrderNumber = makeOrderNumber()
+                              setDismissAction((prev) => ({ ...prev, employeeID: employee.id, orderNumber: nextOrderNumber }))
+                              void runHrAction(title, employee.id, nextOrderNumber)
                             }}
                           >
                             {title}
@@ -345,6 +627,17 @@ export default function Employees() {
           <input className="input" placeholder="Сумма/комментарий" value={dismissAction.amount} onChange={(e) => setDismissAction((p) => ({ ...p, amount: e.target.value }))} />
           <input className="input" value={dismissAction.orderNumber} onChange={(e) => setDismissAction((p) => ({ ...p, orderNumber: e.target.value }))} />
         </div>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <button className="btn-secondary w-full" disabled={busyAction === 'Больничный'} onClick={() => void runHrAction('Больничный')}>Оформить больничный</button>
+          <button className="btn-secondary w-full" disabled={busyAction === 'Отпуск'} onClick={() => void runHrAction('Отпуск')}>Оформить отпуск</button>
+          <button className="btn-secondary w-full" disabled={busyAction === 'Изменение ЗП'} onClick={() => void runHrAction('Изменение ЗП')}>Применить изменение ЗП</button>
+          <button className="btn-secondary w-full" disabled={busyAction === 'Изменение должности'} onClick={() => void runHrAction('Изменение должности')}>Применить изменение должности</button>
+          <button className="btn-secondary w-full" disabled={busyAction === 'Премия'} onClick={() => void runHrAction('Премия')}>Начислить премию</button>
+          <button className="btn-secondary w-full" disabled={busyAction === 'Матпомощь'} onClick={() => void runHrAction('Матпомощь')}>Выдать матпомощь</button>
+        </div>
+        {lastActionMessage ? (
+          <p className="text-sm text-on-surface-variant">{lastActionMessage}</p>
+        ) : null}
       </section>
 
       <section className="card-elevated space-y-4 p-6">
@@ -354,7 +647,21 @@ export default function Employees() {
           <button className="btn-primary" disabled={salaryLoading} onClick={() => void handleSalaryCalculate()}>
             {salaryLoading ? 'Считаем...' : 'Рассчитать'}
           </button>
-          <button className="btn-secondary" onClick={() => alert('Выплата — в разработке')}>Выплатить</button>
+          <button
+            className="btn-secondary"
+            disabled={busyAction === 'salary_pay'}
+            onClick={async () => {
+              setBusyAction('salary_pay')
+              try {
+                await addPlannerEvent(`Выплата зарплаты за ${salaryPeriod}`, `${salaryPeriod}-25`, 'salary')
+                setLastActionMessage('Выплата добавлена в планер событий.')
+              } finally {
+                setBusyAction(null)
+              }
+            }}
+          >
+            {busyAction === 'salary_pay' ? 'Формируем...' : 'Выплатить'}
+          </button>
         </div>
         <div className="overflow-x-auto rounded-xl border border-outline/60">
           <table className="min-w-full text-sm">
@@ -395,6 +702,174 @@ export default function Employees() {
         <div className="flex items-center gap-2 text-sm">
           <span className={`inline-block h-3 w-3 rounded-full ${statusClass(lastFsznStatus || undefined)}`} />
           <span className="text-on-surface-variant">Статус последней отправки: {lastFsznStatus || 'нет данных'}</span>
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <div className="card-elevated space-y-4 p-6">
+          <h2 className="text-lg font-semibold text-on-surface">6) Законы и постановления по кадрам</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-on-surface-variant">
+              Блок обновляется автоматически каждые 10 минут из регуляторной ленты.
+            </p>
+            <button className="btn-secondary" disabled={lawsRefreshing} onClick={() => void loadRegulatory()}>
+              {lawsRefreshing ? 'Обновляем...' : 'Обновить сейчас'}
+            </button>
+          </div>
+          {['law_change', 'form_update', 'deadline', 'rate_change'].map((category) => {
+            const items = regulatoryUpdates.filter((update) => update.category === category).slice(0, 6)
+            const title =
+              category === 'law_change' ? 'Законы' :
+              category === 'form_update' ? 'Формы и шаблоны' :
+              category === 'deadline' ? 'Сроки' :
+              'Ставки'
+            return (
+              <div key={category} className="space-y-2 rounded-xl border border-outline/60 p-3">
+                <h3 className="text-sm font-semibold text-on-surface">{title}</h3>
+                {items.length === 0 ? (
+                  <p className="text-xs text-on-surface-variant">Нет новых публикаций.</p>
+                ) : (
+                  <ul className="space-y-2 text-xs">
+                    {items.map((update) => (
+                      <li key={update.id} className="rounded-lg bg-surface-container-low p-2">
+                        <p className="font-semibold text-on-surface">{update.title}</p>
+                        <p className="text-on-surface-variant">{update.summary || 'Без описания'}</p>
+                        <p className="mt-1 text-[11px] text-on-surface-variant">
+                          {update.authority_name || update.authority || 'Регулятор'} • {update.effective_date ? new Date(update.effective_date).toLocaleDateString('ru-BY') : 'дата не указана'}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="card-elevated space-y-4 p-6">
+          <h2 className="text-lg font-semibold text-on-surface">7) Планер событий (найм/увольнение)</h2>
+          <p className="text-sm text-on-surface-variant">
+            Автоматически пополняется событиями из действий на этой странице.
+          </p>
+          <div className="grid gap-2 md:grid-cols-3">
+            <button
+              className="btn-secondary w-full"
+              onClick={() => void addPlannerEvent('Проверка кадровых документов (завтра)', tomorrowDate, 'meeting')}
+            >
+              Событие на завтра
+            </button>
+            <button
+              className="btn-secondary w-full"
+              onClick={() =>
+                void addPlannerEvent(
+                  `Контроль приказа о приеме № ${hireForm.orderNumber}`,
+                  hireForm.orderDate,
+                  'report',
+                )
+              }
+            >
+              Событие на дату приказа
+            </button>
+            <button
+              className="btn-secondary w-full"
+              disabled={!termination.date}
+              onClick={() =>
+                void addPlannerEvent(
+                  `Контроль увольнения сотрудника`,
+                  termination.date,
+                  'deadline',
+                )
+              }
+            >
+              Событие на дату увольнения
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className={`btn-secondary ${plannerFilter === 'all' ? 'ring-2 ring-primary' : ''}`} onClick={() => setPlannerFilter('all')}>Все</button>
+            <button className={`btn-secondary ${plannerFilter === 'hire' ? 'ring-2 ring-primary' : ''}`} onClick={() => setPlannerFilter('hire')}>Найм</button>
+            <button className={`btn-secondary ${plannerFilter === 'termination' ? 'ring-2 ring-primary' : ''}`} onClick={() => setPlannerFilter('termination')}>Увольнение</button>
+            <button className={`btn-secondary ${plannerFilter === 'changes' ? 'ring-2 ring-primary' : ''}`} onClick={() => setPlannerFilter('changes')}>Кадровые изменения</button>
+            <button className="btn-secondary" onClick={exportPlannerCsv}>Экспорт CSV</button>
+          </div>
+          <div className="rounded-xl border border-outline/60 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-medium text-on-surface">Напоминания:</p>
+              <button className={`btn-secondary ${reminderDays === 1 ? 'ring-2 ring-primary' : ''}`} onClick={() => setReminderDays(1)}>1 день</button>
+              <button className={`btn-secondary ${reminderDays === 3 ? 'ring-2 ring-primary' : ''}`} onClick={() => setReminderDays(3)}>3 дня</button>
+              <button className={`btn-secondary ${reminderDays === 7 ? 'ring-2 ring-primary' : ''}`} onClick={() => setReminderDays(7)}>7 дней</button>
+            </div>
+            <div className="mt-2 space-y-2">
+              {reminderEvents.length === 0 ? (
+                <p className="text-xs text-on-surface-variant">На выбранный период напоминаний нет.</p>
+              ) : (
+                reminderEvents.map((event) => {
+                  const meta = deadlineMeta(event.event_date)
+                  return (
+                    <div key={`reminder-${event.id}`} className="flex items-center justify-between rounded-lg bg-surface-container-low p-2">
+                      <p className="text-xs text-on-surface">{event.title}</p>
+                      <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${meta.className}`}>{meta.label}</span>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            {filteredPlannerEvents.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">Пока нет событий по кадрам.</p>
+            ) : (
+              filteredPlannerEvents.map((event) => (
+                  (() => {
+                    const deadline = deadlineMeta(event.event_date)
+                    return (
+                  <div key={event.id} className="flex items-center justify-between rounded-xl border border-outline/60 p-3">
+                    <div>
+                      <p className="text-sm font-medium text-on-surface">{event.title}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <p className="text-xs text-on-surface-variant">{new Date(event.event_date).toLocaleDateString('ru-BY')}</p>
+                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${deadline.className}`}>{deadline.label}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventTypeMeta[event.event_type]?.badgeClass || eventTypeMeta.custom.badgeClass}`}>
+                        {eventTypeMeta[event.event_type]?.label || event.event_type}
+                      </span>
+                      <button
+                        className="rounded-md border border-outline/70 px-2 py-1 text-xs"
+                        onClick={() => {
+                          setEditingEvent(event)
+                          setEditingTitle(event.title)
+                          setEditingDate(event.event_date)
+                        }}
+                      >
+                        Изменить
+                      </button>
+                      <button
+                        className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-600"
+                        onClick={() => void deletePlannerEvent(event.id)}
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                    )
+                  })()
+                ))
+            )}
+          </div>
+          {editingEvent ? (
+            <div className="space-y-2 rounded-xl border border-outline/60 p-3">
+              <p className="text-sm font-semibold text-on-surface">Редактирование события</p>
+              <input className="input" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} />
+              <input className="input" type="date" value={editingDate} onChange={(e) => setEditingDate(e.target.value)} />
+              <div className="flex gap-2">
+                <button className="btn-primary" disabled={plannerBusy} onClick={() => void updatePlannerEvent()}>
+                  {plannerBusy ? 'Сохраняем...' : 'Сохранить'}
+                </button>
+                <button className="btn-secondary" onClick={() => setEditingEvent(null)}>Отмена</button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     </section>

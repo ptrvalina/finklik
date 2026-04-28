@@ -18,6 +18,7 @@ class SalaryCalculator:
 
     async def CalculateSalary(
         self,
+        tenant_id: str,
         employee_id: str,
         period_start: date,
         period_end: date,
@@ -25,8 +26,8 @@ class SalaryCalculator:
         """Calculate salary totals for period and persist draft calculation."""
         _ = period_end
         row = await self.db.execute(
-            text("SELECT salary FROM employees WHERE id = :employee_id"),
-            {"employee_id": employee_id},
+            text("SELECT salary FROM employees WHERE id = :employee_id AND organization_id = :tenant_id"),
+            {"employee_id": employee_id, "tenant_id": tenant_id},
         )
         source = row.first()
         if source is None:
@@ -71,11 +72,11 @@ class SalaryCalculator:
             "status": "draft",
         }
 
-    async def CalculateVacationPay(self, employee_id: str, days: int) -> float:
+    async def CalculateVacationPay(self, tenant_id: str, employee_id: str, days: int) -> float:
         """Calculate vacation pay based on average daily salary."""
         row = await self.db.execute(
-            text("SELECT salary FROM employees WHERE id = :employee_id"),
-            {"employee_id": employee_id},
+            text("SELECT salary FROM employees WHERE id = :employee_id AND organization_id = :tenant_id"),
+            {"employee_id": employee_id, "tenant_id": tenant_id},
         )
         source = row.first()
         if source is None:
@@ -83,8 +84,9 @@ class SalaryCalculator:
         avg_day = Decimal(str(source[0])) / Decimal("29.7")
         return float(avg_day * Decimal(days))
 
-    async def CalculateSickPay(self, employee_id: str, days: int, avg_salary: float) -> float:
+    async def CalculateSickPay(self, tenant_id: str, employee_id: str, days: int, avg_salary: float) -> float:
         """Calculate sick pay with 80% coefficient."""
+        _ = tenant_id
         _ = employee_id
         amount = Decimal(str(avg_salary)) * Decimal(days) * Decimal("0.8")
         return float(amount)

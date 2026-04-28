@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,9 +21,11 @@ class EmployeeService:
         self.db = db
         self.pii_encryptor = get_aes_gcm_encryptor()
         self.name_encryptor = get_encryptor()
+        self.log = structlog.get_logger().bind(component="employee_service")
 
     async def CreateEmployee(self, tenant_id: str, req: EmployeeCreateRequest) -> Employee:
         """Create employee and encrypt all personal data before persistence."""
+        self.log.info("employee_create_started", tenant_id=tenant_id, position_code=req.position_code)
         employee = Employee(
             organization_id=tenant_id,
             tenant_id=tenant_id,
@@ -40,6 +43,7 @@ class EmployeeService:
         )
         self.db.add(employee)
         await self.db.flush()
+        self.log.info("employee_create_completed", tenant_id=tenant_id, employee_id=str(employee.id))
         return employee
 
     async def TerminateEmployee(self, tenant_id: str, employee_id: str, termination_date: date) -> None:
@@ -49,6 +53,7 @@ class EmployeeService:
         employee.fire_date = termination_date
         employee.terminated_at = datetime.now(timezone.utc)
         await self.db.flush()
+        self.log.info("employee_terminated", tenant_id=tenant_id, employee_id=employee_id)
 
     async def GetEmployees(self, tenant_id: str) -> list[Employee]:
         """Return all employees for tenant ordered by creation date."""

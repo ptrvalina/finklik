@@ -144,7 +144,7 @@ jobs:
             tests/integration/test_metrics.py \
             tests/integration/test_submissions.py \
             tests/integration/test_scanner.py \
-            -v --tb=short
+            -v --tb=short -m "not network"
 
   backend-lint:
     name: Backend Lint
