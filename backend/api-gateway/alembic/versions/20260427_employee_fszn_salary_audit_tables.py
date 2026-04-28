@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import inspect
 
-revision: str = "employee_fszn_salary_audit_tables"
+revision: str = "emp_fszn_salary_audit_tables"
 down_revision: str | None = "org_llm_isolated_key"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
