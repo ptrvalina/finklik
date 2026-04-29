@@ -143,8 +143,10 @@ api.interceptors.response.use(
 )
 
 export const authApi = {
-  register: (data: any) => api.post('/auth/register', data),
-  login: (data: any) => api.post('/auth/login', data),
+  // Без cookies: кросс-доменный вход (Pages→Render) надёжнее; refresh-cookie всё равно часто
+  // режется как third-party — токен доступа приходит в JSON.
+  register: (data: any) => api.post('/auth/register', data, { withCredentials: false }),
+  login: (data: any) => api.post('/auth/login', data, { withCredentials: false }),
   me: () => api.get('/auth/me'),
 }
 

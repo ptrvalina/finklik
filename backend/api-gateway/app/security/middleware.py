@@ -265,7 +265,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        if _local_docs_assets_present() or not _is_docs_csp_path(request.url.path):
+        path = request.url.path
+        # JSON API не рендерит документ; CSP с connect-src 'self' на ответе API бессмысленен и в редких
+        # клиентах создаёт лишний шум при cross-origin fetch с GitHub Pages / Vercel.
+        should_set_csp = not path.startswith("/api/") and (
+            _local_docs_assets_present() or not _is_docs_csp_path(path)
+        )
+        if should_set_csp:
             response.headers["Content-Security-Policy"] = _CSP_DEFAULT
         return response
 
