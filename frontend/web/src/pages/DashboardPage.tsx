@@ -132,7 +132,7 @@ export default function DashboardPage() {
             УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="page-actions sm:w-auto sm:flex-row sm:gap-3">
           <Link to="/documents" className="btn-secondary !py-2.5 text-sm">
             <Icon name="file_download" className="text-lg" />
             Экспорт
@@ -215,7 +215,7 @@ export default function DashboardPage() {
       {/* Bento Grid */}
       <div className="grid grid-cols-12 gap-6">
         {/* Chart */}
-        <div className="col-span-12 rounded-2xl border border-zinc-200/80 bg-surface p-4 shadow-soft dark:border-zinc-700/80 sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="page-section col-span-12 bg-surface p-4 dark:border-zinc-700/80 sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-4 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы</h3>
             <div className="flex items-center gap-6">
@@ -264,7 +264,7 @@ export default function DashboardPage() {
 
         {/* Taxes sidebar */}
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
-          <div className="flex-1 rounded-2xl border border-zinc-200/80 bg-surface p-4 shadow-soft dark:border-zinc-700/80 sm:p-6">
+          <div className="page-section flex-1 bg-surface p-4 dark:border-zinc-700/80 sm:p-6">
             <h3 className="label mb-6 flex items-center gap-2">
               <Icon name="calculate" className="text-primary text-lg" />
               Налоги к уплате
@@ -311,7 +311,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent transactions */}
-        <div className="col-span-12 overflow-hidden rounded-2xl border border-zinc-200/80 bg-surface shadow-soft dark:border-zinc-700/80">
+        <div className="page-section col-span-12 overflow-hidden bg-surface p-0 dark:border-zinc-700/80">
           <div className="flex flex-col gap-2 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
             <Link to="/transactions" className="text-sm font-bold text-primary hover:underline">
@@ -319,7 +319,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           {transactions.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="empty-state py-12">
               <Icon name="receipt_long" className="text-4xl text-on-surface-variant/30" />
               <p className="text-on-surface-variant text-sm mt-3">Операций пока нет</p>
               <button

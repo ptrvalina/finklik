@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
       {automationKpi && (
-        <div className="rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6">
+        <div className="page-section p-4 sm:p-6">
           <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
       )}
 
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
-        <div className="col-span-12 rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="page-section col-span-12 p-4 sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-6 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы по месяцам</h3>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
@@ -249,11 +249,11 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="col-span-12 overflow-hidden rounded-xl border border-zinc-200/80 bg-surface-container-low shadow-soft">
+        <div className="page-section col-span-12 overflow-hidden p-0">
           <CounterpartyTurnover />
         </div>
 
-        <div className="col-span-12 rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6 lg:p-8">
+        <div className="page-section col-span-12 p-4 sm:p-6 lg:p-8">
           <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -303,7 +303,7 @@ function CounterpartyTurnover() {
         <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[640px] text-left">
             <thead>
-              <tr className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant bg-surface-container-high/50">
+              <tr className="table-head-row">
                 <th className="px-4 py-3 text-left sm:px-6 sm:py-4 lg:px-8">Контрагент</th>
                 <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Доходы</th>
                 <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Расходы</th>

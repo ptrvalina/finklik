@@ -52,7 +52,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft dark:border-zinc-700/80 sm:p-5">
+      <div className="page-section p-4 dark:border-zinc-700/80 sm:p-5">
         <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
         <div className="flex flex-wrap gap-2">
           <button
@@ -129,7 +129,7 @@ function ProfileSection() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+      <div className="page-section p-5">
         <h3 className="text-sm font-bold text-on-surface mb-4">Профиль организации</h3>
         <div className="space-y-3">
           {rows.map(r => (
@@ -271,7 +271,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
           {message.text}
         </div>
       )}
-      <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+      <div className="page-section p-5">
         <h3 className="mb-1 text-sm font-bold text-on-surface">Внешний HTTP-сервис</h3>
         <p className="mb-4 text-[11px] text-on-surface-variant">
           Endpoint и токен для обмена через внешний API (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
@@ -321,7 +321,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       </div>
 
       {isOwner && (
-        <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+        <div className="page-section p-5">
           <h3 className="mb-1 text-sm font-bold text-on-surface">ИИ-консультант: изолированный ключ (BYOK)</h3>
           <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
             Сохраните API-ключ вашего LLM-провайдера (OpenAI-совместимый Chat Completions) — он шифруется и привязан только к вашей
@@ -391,7 +391,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
       {isOwner && (
-        <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+        <div className="page-section p-5">
           <h3 className="mb-1 text-sm font-bold text-on-surface">Центр автопилота</h3>
           <p className="mb-4 text-[11px] text-on-surface-variant">
             Режимы: Assist, Checkpoints, Autopilot. Включайте только те сценарии, которые готовы к полностью автоматическому циклу.
@@ -488,7 +488,7 @@ function BillingSection() {
         <div className="bg-surface-container-low rounded-xl p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
       ) : (
         <>
-          <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+          <div className="page-section p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-on-surface">Текущий тариф</h3>
               <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
@@ -512,7 +512,7 @@ function BillingSection() {
           </div>
 
           {usage && currentPlan && (
-            <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+            <div className="page-section p-5">
               <h3 className="text-sm font-bold text-on-surface mb-3">Использование</h3>
               <div className="space-y-2">
                 {([
@@ -626,7 +626,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl bg-surface-container-low p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
+      <div className="page-section flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div>
           <p className="text-sm font-bold text-on-surface">Пользователи: {currentCount} из {maxUsers}</p>
           <p className="mt-0.5 text-xs text-on-surface-variant">Тариф позволяет до {maxUsers} пользователей в организации</p>
@@ -696,7 +696,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
       </div>
 
       {invitations.length > 0 && (
-        <div className="space-y-3 rounded-xl bg-surface-container-low p-4 sm:p-5">
+        <div className="page-section space-y-3 p-4 sm:p-5">
           <h3 className="text-sm font-bold text-on-surface">Ожидающие приглашения</h3>
           {invitations.map((inv: any) => (
             <div key={inv.id} className="flex flex-col gap-2 rounded-lg bg-surface-container-high p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -788,7 +788,7 @@ function RegulatorySection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl bg-surface-container-low p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
+      <div className="page-section flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <select className="input min-h-11 w-full rounded-xl sm:w-44" value={filter} onChange={e => setFilter(e.target.value)}>
             <option value="">Все органы</option>

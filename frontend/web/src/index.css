@@ -88,7 +88,7 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
+    @apply inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5
            rounded-2xl font-headline text-sm font-semibold tracking-wide text-on-primary
            bg-gradient-to-br from-primary via-primary to-primary-dim
            shadow-[0_2px_8px_rgb(13_148_136/0.28),0_8px_24px_-6px_rgb(13_148_136/0.22)]
@@ -99,14 +99,14 @@
            disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-outline/90 bg-surface px-4 py-2
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-outline/90 bg-surface px-4 py-2
            text-sm font-semibold text-on-surface shadow-xs
            transition-all duration-200 ease-smooth
            hover:border-outline-variant hover:bg-surface-container-low
            dark:border-zinc-600/70 dark:hover:border-zinc-500 dark:hover:bg-surface-container;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2
            text-sm font-medium text-on-surface-variant
            transition-colors duration-200 ease-smooth
            hover:bg-surface-container-high hover:text-on-surface;
@@ -120,14 +120,30 @@
            dark:border-zinc-700/60;
   }
   .input {
-    @apply w-full rounded-2xl border border-outline/90 bg-surface px-4 py-2.5 text-sm text-on-surface
+    @apply w-full min-h-11 rounded-2xl border border-outline/90 bg-surface px-4 py-2.5 text-sm text-on-surface
            shadow-xs transition-shadow duration-200 ease-smooth
            placeholder:text-on-surface-variant/65
            focus:border-primary/45 focus:outline-none focus:ring-2 focus:ring-primary/20
            dark:border-zinc-600/80;
   }
+  .input[type='date'],
+  .input[type='number'],
+  .input[type='email'],
+  .input[type='password'],
+  .input[type='search'],
+  .input[type='text'],
+  .input select,
+  select.input {
+    @apply leading-tight;
+  }
+  textarea.input {
+    min-height: 7rem;
+    line-height: 1.45;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
   .label {
-    @apply mb-2 block font-label text-[11px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant;
+    @apply mb-1.5 block font-label text-[11px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant;
   }
   .metric-blade {
     @apply relative overflow-hidden rounded-3xl border border-outline/80 bg-surface p-6 shadow-card
@@ -174,6 +190,18 @@
   .page-heading-brand {
     @apply font-headline text-3xl font-bold tracking-tight text-primary sm:text-3xl;
     letter-spacing: -0.035em;
+  }
+  .page-section {
+    @apply rounded-2xl border border-outline/70 bg-surface p-4 shadow-soft sm:p-6;
+  }
+  .page-actions {
+    @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center;
+  }
+  .empty-state {
+    @apply p-12 text-center text-on-surface-variant;
+  }
+  .table-head-row {
+    @apply bg-surface-container-high/50 text-[10px] font-label uppercase tracking-widest text-on-surface-variant;
   }
 }
 

@@ -311,7 +311,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Search & filters */}
-      <div className="grid grid-cols-1 gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:gap-4 sm:p-5 md:grid-cols-3">
+      <div className="page-section grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 md:grid-cols-3">
         <div>
           <label className="label">Поиск</label>
           <div className="relative">
@@ -439,7 +439,7 @@ export default function TransactionsPage() {
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[640px] text-left">
                 <thead>
-                  <tr className="bg-surface-container-high/50 text-[10px] font-label uppercase tracking-widest text-on-surface-variant">
+                  <tr className="table-head-row">
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Описание</th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Дата</th>
                     <th className="px-4 py-3 text-right sm:px-6 sm:py-4">Сумма</th>

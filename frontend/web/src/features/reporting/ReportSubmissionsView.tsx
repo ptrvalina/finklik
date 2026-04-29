@@ -281,7 +281,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl bg-surface-container-low p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
+      <div className="page-section flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div>
           <p className="text-sm font-bold text-on-surface">Автоматическая подача отчётов</p>
           <p className="mt-0.5 text-xs text-on-surface-variant">
@@ -291,7 +291,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
             Готово к автоподаче: {confirmedCount}
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="page-actions">
           <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowCreate(true)}>
             <Icon name="add" className="text-lg" /> Сформировать отчёт
           </button>
@@ -310,7 +310,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         Автоподача работает только для валидных и подтверждённых пакетов; ошибки автоматически возвращаются в контур проверки.
       </div>
 
-      <div className="rounded-xl bg-surface-container-low p-3 sm:p-4">
+      <div className="page-section p-3 sm:p-4">
         <div className={`grid gap-2 sm:gap-3 ${statsKeys.length === 1 ? 'grid-cols-1 sm:max-w-xs' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {statsKeys.map((auth) => {
             const count = submissions.filter((s: any) => s.authority === auth).length
@@ -330,16 +330,16 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
       </div>
 
       {isLoading ? (
-        <div className="rounded-xl bg-surface-container-low p-12 text-center text-sm text-on-surface-variant">Загрузка...</div>
+        <div className="page-section empty-state p-12 text-sm text-on-surface-variant">Загрузка...</div>
       ) : submissions.length === 0 ? (
-        <div className="rounded-xl bg-surface-container-low p-16 text-center">
+        <div className="page-section empty-state p-16">
           <Icon name="send" className="text-5xl text-on-surface-variant/20" />
           <p className="mt-4 text-sm text-on-surface-variant">Отчётов ещё нет</p>
         </div>
       ) : (
         <div className="space-y-3">
           {submissions.map((s: any) => (
-            <div key={s.id} className="rounded-xl border border-outline-variant/10 bg-surface-container-low p-5">
+            <div key={s.id} className="page-section p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">

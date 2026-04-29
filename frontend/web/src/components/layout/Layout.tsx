@@ -436,7 +436,7 @@ export default function Layout() {
         )}
 
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/40 via-canvas to-canvas dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950">
-          <div className="mx-auto max-w-[1600px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-10 lg:py-9 lg:pb-10">
+          <div className="mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
             <Outlet />
           </div>
         </main>

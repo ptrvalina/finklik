@@ -459,7 +459,7 @@ export default function DocumentsPage() {
           <p className="text-sm font-semibold text-on-surface">Клиентский поток</p>
           <p className="mt-1 text-xs text-on-surface-variant">Счёт → оплата → акт/накладная → архив/экспорт</p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="page-actions">
           <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
             <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
           </Link>
@@ -481,7 +481,7 @@ export default function DocumentsPage() {
       )}
 
       {/* CSV Import */}
-      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
+      <div className="page-section p-4 sm:p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Icon name="upload_file" className="text-primary" />
@@ -517,7 +517,7 @@ export default function DocumentsPage() {
                   <span className="text-error ml-2">({csvPreview.errors.length} ошибок)</span>
                 )}
               </p>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-2">
+              <div className="page-actions sm:gap-2">
                 <button type="button" className="btn-ghost min-h-11 w-full sm:w-auto" onClick={() => { setCsvPreview(null); setCsvFile(null) }}>Отмена</button>
                 <button type="button" className="btn-primary min-h-11 w-full sm:w-auto" disabled={csvImporting || csvPreview.total_parsed === 0} onClick={handleCsvImport}>
                   <Icon name="file_download" className="text-lg" />
@@ -581,7 +581,7 @@ export default function DocumentsPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {docs.map(doc => (
-          <div key={doc.loadKey} className="group rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft transition-colors hover:bg-surface-container sm:p-6">
+          <div key={doc.loadKey} className="page-section group p-4 transition-colors hover:bg-surface-container sm:p-6">
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-surface-bright">
@@ -609,7 +609,7 @@ export default function DocumentsPage() {
         Печать — PDF с реквизитами ИП/ООО из организации.
       </p>
 
-      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
+      <div className="page-section p-4 sm:p-6">
         <h3 className="text-sm font-bold text-on-surface">Создать документ</h3>
         <p className="text-[10px] text-on-surface-variant mb-4">
           Нумерация СЧ/АКТ/ТН по году; автонумерация или свой номер. Для акта и накладной можно выбрать счёт-основание.
@@ -695,7 +695,7 @@ export default function DocumentsPage() {
         </button>
       </div>
 
-      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
+      <div className="page-section p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h3 className="text-sm font-bold text-on-surface">Список документов</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
@@ -733,7 +733,7 @@ export default function DocumentsPage() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-xs">
               <thead>
-                <tr className="bg-surface-container-high/50 text-[10px] uppercase tracking-wider text-on-surface-variant">
+                <tr className="table-head-row tracking-wider">
                   <th className="px-3 py-2">Тип</th>
                   <th className="px-3 py-2">Номер</th>
                   <th className="px-3 py-2">Статус</th>

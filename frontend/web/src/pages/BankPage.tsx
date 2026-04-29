@@ -145,7 +145,7 @@ export default function BankPage() {
             <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Сверка</span>
           </div>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
+        <div className="page-actions sm:gap-3">
           <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
             <Icon name="send" className="text-lg" /> Новый платёж
           </button>
@@ -234,9 +234,9 @@ export default function BankPage() {
               <span className="text-xs text-zinc-500">{statementsData?.total || 0} всего</span>
             </div>
             {statementsLoading ? (
-              <div className="p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
+              <div className="empty-state text-sm">Загрузка...</div>
             ) : statements.length === 0 ? (
-              <div className="p-12 text-center">
+              <div className="empty-state">
                 <Icon name="receipt_long" className="text-4xl text-on-surface-variant/20" />
                 <p className="text-on-surface-variant text-sm mt-3">Операций пока нет</p>
               </div>
@@ -273,7 +273,7 @@ export default function BankPage() {
       {tab === 'accounts' && (
         <div className="space-y-4">
           {accounts.length === 0 ? (
-            <div className="rounded-2xl bg-surface-container-low p-10 text-center sm:p-16">
+            <div className="page-section p-10 text-center sm:p-16">
               <Icon name="account_balance" className="text-5xl text-on-surface-variant/20" />
               <p className="text-on-surface-variant text-sm mt-4">У вас ещё нет привязанных счетов</p>
               <button type="button" className="btn-primary mt-4" onClick={() => setShowAddAccount(true)}>
@@ -344,7 +344,7 @@ export default function BankPage() {
 
       {/* Payments */}
       {tab === 'payments' && (
-        <div className="w-full max-w-lg rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-8">
+        <div className="page-section w-full max-w-lg p-5 sm:p-8">
           <h2 className="mb-6 font-headline text-lg font-bold text-on-surface">Новый платёж</h2>
           <div className="space-y-4">
             <div>
@@ -390,7 +390,7 @@ export default function BankPage() {
 
       {tab === 'reconciliation' && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
+          <div className="page-section p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Сверка учёт ↔ выписка</h3>
             <p className="mb-4 text-[11px] text-zinc-500">
               Обороты за период: весь учёт и отдельно операции с категорией <code className="text-teal-400">bank_import</code>.
@@ -425,7 +425,7 @@ export default function BankPage() {
               </div>
             )}
           </div>
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
+          <div className="page-section p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Импорт выписки (JSON)</h3>
             <p className="mb-3 text-[11px] text-zinc-500">
               Массив строк: <code className="text-zinc-400">transaction_date</code>, <code className="text-zinc-400">amount</code>,{' '}

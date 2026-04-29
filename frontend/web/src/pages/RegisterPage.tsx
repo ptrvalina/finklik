@@ -47,31 +47,31 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
               <label className="label">Ваше имя</label>
-              <input className="input" placeholder="Иванов Иван Иванович" value={form.full_name} onChange={set('full_name')} required />
+              <input className="input min-h-11" placeholder="Иванов Иван Иванович" value={form.full_name} onChange={set('full_name')} required />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <label className="label">Email</label>
-              <input type="email" className="input" placeholder="ivan@company.by" value={form.email} onChange={set('email')} required />
+              <input type="email" className="input min-h-11" placeholder="ivan@company.by" value={form.email} onChange={set('email')} required />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <label className="label">Пароль</label>
-              <input type="password" className="input" placeholder="Мин. 8 символов + заглавная + цифра" value={form.password} onChange={set('password')} required minLength={8} />
+              <input type="password" className="input min-h-11" placeholder="Мин. 8 символов + заглавная + цифра" value={form.password} onChange={set('password')} required minLength={8} />
             </div>
 
-            <div className="border-t border-outline-variant/20 pt-4">
+            <div className="space-y-3 border-t border-outline-variant/20 pt-4">
               <p className="label">Организация / ИП</p>
-              <div className="space-y-3">
-                <div>
+              <div className="space-y-3.5">
+                <div className="space-y-1.5">
                   <label className="label">Форма</label>
                   <div className="flex gap-2">
                     {([['ip', 'ИП'], ['ooo', 'ООО']] as const).map(([val, label]) => (
                       <button
                         key={val}
                         type="button"
-                        className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-bold transition-all ${
+                        className={`inline-flex h-11 flex-1 items-center justify-center rounded-lg border px-3 text-sm font-bold transition-all ${
                           form.legal_form === val
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-outline-variant/20 text-on-surface-variant hover:border-outline-variant/40'
@@ -83,10 +83,10 @@ export default function RegisterPage() {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="label">Режим налогообложения</label>
                   <select
-                    className="input"
+                    className="input min-h-11"
                     value={form.tax_regime}
                     onChange={e => setForm(f => ({ ...f, tax_regime: e.target.value }))}
                   >
@@ -95,18 +95,18 @@ export default function RegisterPage() {
                     <option value="osn_vat">Общая с НДС</option>
                   </select>
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="label">Название</label>
-                  <input className="input" placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО "Ромашка"'} value={form.org_name} onChange={set('org_name')} required />
+                  <input className="input min-h-11" placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО "Ромашка"'} value={form.org_name} onChange={set('org_name')} required />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="label">УНП (9 цифр)</label>
-                  <input className="input" placeholder="691234567" value={form.org_unp} onChange={set('org_unp')} required maxLength={9} pattern="\d{9}" />
+                  <input className="input min-h-11" placeholder="691234567" value={form.org_unp} onChange={set('org_unp')} required maxLength={9} pattern="\d{9}" />
                 </div>
               </div>
             </div>
 
-            <button type="submit" className="btn-primary w-full" disabled={isLoading}>
+            <button type="submit" className="btn-primary min-h-12 w-full" disabled={isLoading}>
               {isLoading ? 'Создаём аккаунт...' : 'Зарегистрироваться'}
             </button>
           </form>
