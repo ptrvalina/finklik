@@ -175,6 +175,10 @@ export const bankApi = {
   reconciliation: (date_from: string, date_to: string) =>
     api.get('/bank/reconciliation', { params: { date_from, date_to } }),
   externalStatementPreview: () => api.get('/bank/external-statement'),
+  oauthUrl: (account_id: string) => api.get('/bank/oauth/url', { params: { account_id } }),
+  oauthCallback: (data: { account_id: string; code: string; provider?: string }) => api.post('/bank/oauth/callback', data),
+  oauthStatus: (account_id: string) => api.get('/bank/oauth/status', { params: { account_id } }),
+  oauthImport: (data: { account_id: string; date_from: string; date_to: string }) => api.post('/bank/oauth/import', data),
 }
 
 export const onecApi = {
@@ -201,6 +205,11 @@ export const scannerApi = {
     api.post('/scanner/parse-text', { text, doc_type }),
   list: (params?: any) => api.get('/scanner/documents', { params }),
   remove: (id: string) => api.delete(`/scanner/documents/${id}`),
+  uploadToKudir: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/scanner/upload-to-kudir', form)
+  },
 }
 
 export const plannerApi = {
@@ -210,11 +219,14 @@ export const plannerApi = {
   closeTask: (id: string) => api.post(`/planner/tasks/${id}/close`),
   createReport: (id: string, data: { content: string; attachments?: string[] }) =>
     api.post(`/planner/tasks/${id}/report`, data),
+  listComments: (id: string) => api.get(`/planner/tasks/${id}/comments`),
+  addComment: (id: string, data: { content: string }) => api.post(`/planner/tasks/${id}/comments`, data),
 }
 
 export const notificationsApi = {
   list: (limit = 20) => api.get('/notifications', { params: { limit } }),
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/read-all'),
 }
 
 export const importApi = {

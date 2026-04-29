@@ -57,6 +57,10 @@ export default function Layout() {
     mutationFn: (id: string) => notificationsApi.markRead(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   })
+  const markAllReadMutation = useMutation({
+    mutationFn: () => notificationsApi.markAllRead(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  })
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -287,7 +291,17 @@ export default function Layout() {
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift dark:bg-zinc-900">
-                  <p className="px-2 py-1 text-sm font-semibold">Уведомления</p>
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <p className="text-sm font-semibold">Уведомления</p>
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline disabled:opacity-60"
+                      onClick={() => markAllReadMutation.mutate()}
+                      disabled={unreadCount === 0 || markAllReadMutation.isPending}
+                    >
+                      Прочитать все
+                    </button>
+                  </div>
                   <div className="max-h-72 overflow-auto">
                     {plannerNotifications.length === 0 ? (
                       <p className="px-2 py-3 text-sm text-on-surface-variant">Нет уведомлений</p>
@@ -299,6 +313,8 @@ export default function Layout() {
                           className={`mb-1 w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-container-low ${n.is_read ? 'opacity-70' : ''}`}
                           onClick={() => {
                             if (!n.is_read) markReadMutation.mutate(n.id)
+                            navigate('/planner')
+                            setNotifOpen(false)
                           }}
                         >
                           <p className="font-medium">{n.message}</p>

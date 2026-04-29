@@ -8,7 +8,7 @@ from app.models.regulatory import RegulatoryUpdate, RegulatoryNotification, Repo
 from app.models.subscription import Plan, Subscription
 from app.models.onec import OneCConnection, OneCAccount, OneCContour
 from app.models.onec_sync import OneCSyncJob
-from app.models.planner import PlannerTask, PlannerReport
+from app.models.planner import PlannerTask, PlannerReport, PlannerComment
 from app.models.notification import Notification
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     "Counterparty", "ScannedDocument", "PrimaryDocument", "PrimaryDocumentSequence", "PaymentEvent", "BankAccount",
     "RegulatoryUpdate", "RegulatoryNotification", "ReportSubmission",
     "Plan", "Subscription", "OneCConnection", "OneCAccount", "OneCContour", "OneCSyncJob",
-    "PlannerTask", "PlannerReport", "Notification",
+    "PlannerTask", "PlannerReport", "PlannerComment", "Notification",
 ]

@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import require_roles
 from app.models.notification import Notification
-from app.models.planner import PlannerReport, PlannerTask
+from app.models.planner import PlannerComment, PlannerReport, PlannerTask
 from app.models.user import User
 from app.schemas.planner import (
     PlannerReportCreate,
     PlannerReportResponse,
+    PlannerCommentCreate,
+    PlannerCommentResponse,
     PlannerTaskCreate,
     PlannerTaskResponse,
 )
@@ -193,3 +195,51 @@ async def create_report(
         attachments=list(report.attachments or []),
         created_at=report.created_at,
     )
+
+
+@router.get("/tasks/{task_id}/comments", response_model=list[PlannerCommentResponse])
+async def list_comments(
+    task_id: str,
+    current_user: User = Depends(require_roles("admin", "accountant", "manager")),
+    db: AsyncSession = Depends(get_db),
+):
+    task_result = await db.execute(
+        select(PlannerTask).where(
+            PlannerTask.id == task_id,
+            PlannerTask.tenant_id == str(current_user.organization_id),
+        )
+    )
+    task = task_result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+    comments = await db.execute(
+        select(PlannerComment).where(PlannerComment.task_id == task_id).order_by(PlannerComment.created_at.asc())
+    )
+    return comments.scalars().all()
+
+
+@router.post("/tasks/{task_id}/comments", response_model=PlannerCommentResponse, status_code=201)
+async def add_comment(
+    task_id: str,
+    body: PlannerCommentCreate,
+    current_user: User = Depends(require_roles("admin", "accountant", "manager")),
+    db: AsyncSession = Depends(get_db),
+):
+    task_result = await db.execute(
+        select(PlannerTask).where(
+            PlannerTask.id == task_id,
+            PlannerTask.tenant_id == str(current_user.organization_id),
+        )
+    )
+    task = task_result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+
+    comment = PlannerComment(
+        task_id=task_id,
+        author_id=str(current_user.id),
+        content=body.content.strip(),
+    )
+    db.add(comment)
+    await db.flush()
+    return comment

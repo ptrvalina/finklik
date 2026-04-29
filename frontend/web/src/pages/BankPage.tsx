@@ -39,6 +39,8 @@ export default function BankPage() {
       monthStartStr +
       '", "amount": 100.5, "direction": "credit", "description": "Поступление по выписке"}\n]'
   )
+  const [oauthAccountId, setOauthAccountId] = useState('')
+  const [oauthCode, setOauthCode] = useState('')
 
   const { data: balanceData } = useQuery({ queryKey: ['bank-balance'], queryFn: () => bankApi.getBalance().then(r => r.data), refetchInterval: 15000 })
   const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
@@ -75,6 +77,39 @@ export default function BankPage() {
       flash('success', `Импорт: создано ${res.data.created}, пропущено дублей ${res.data.skipped_duplicates}`)
     },
     onError: () => flash('error', 'Ошибка импорта (проверьте JSON)'),
+  })
+  const oauthUrlMutation = useMutation({
+    mutationFn: (accountId: string) => bankApi.oauthUrl(accountId),
+    onSuccess: (res) => {
+      const url = res.data?.oauth_url
+      const accountId = res.data?.account_id
+      if (accountId && typeof window !== 'undefined') {
+        localStorage.setItem('bank_oauth_account_id', String(accountId))
+      }
+      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+      flash('success', 'Окно OAuth2 открыто. Callback обработается автоматически.')
+    },
+    onError: () => flash('error', 'Не удалось получить OAuth URL'),
+  })
+  const oauthCallbackMutation = useMutation({
+    mutationFn: (data: { account_id: string; code: string }) => bankApi.oauthCallback(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bank-accounts'] })
+      flash('success', 'Банк подключен через OAuth2')
+    },
+    onError: () => flash('error', 'Ошибка OAuth callback'),
+  })
+  const oauthImportMutation = useMutation({
+    mutationFn: (data: { account_id: string; date_from: string; date_to: string }) => bankApi.oauthImport(data),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['bank-balance'] })
+      qc.invalidateQueries({ queryKey: ['bank-statements'] })
+      qc.invalidateQueries({ queryKey: ['bank-reconciliation'] })
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      flash('success', `OAuth импорт завершён: ${res.data?.import_result?.created ?? 0} новых`)
+    },
+    onError: () => flash('error', 'Ошибка OAuth импорта'),
   })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }
@@ -259,6 +294,9 @@ export default function BankPage() {
                       <p className="text-xs text-on-surface-variant mt-0.5">BIC: {acc.bank_bic} · {acc.currency}</p>
                     </div>
                     <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => { setOauthAccountId(acc.id); oauthUrlMutation.mutate(acc.id) }} className="btn-ghost !text-xs !px-2" title="OAuth2">
+                        <Icon name="link" className="text-sm" />
+                      </button>
                       {!acc.is_primary && (
                         <button type="button" onClick={() => setPrimaryMutation.mutate(acc.id)} className="btn-ghost !text-xs !px-2">
                           <Icon name="star" className="text-sm" />
@@ -273,6 +311,26 @@ export default function BankPage() {
               ))}
             </div>
           )}
+          <div className="mt-5 rounded-xl border border-zinc-200/80 bg-surface p-4">
+            <p className="mb-2 text-sm font-semibold">OAuth2 подключение банка</p>
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <select className="input" value={oauthAccountId} onChange={(e) => setOauthAccountId(e.target.value)}>
+                <option value="">Выберите счёт</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.bank_name} · {a.account_number}</option>
+                ))}
+              </select>
+              <input className="input" placeholder="code из callback" value={oauthCode} onChange={(e) => setOauthCode(e.target.value)} />
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={!oauthAccountId || !oauthCode || oauthCallbackMutation.isPending}
+                onClick={() => oauthCallbackMutation.mutate({ account_id: oauthAccountId, code: oauthCode })}
+              >
+                Подтвердить
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -387,6 +445,25 @@ export default function BankPage() {
             >
               {importStatementMutation.isPending ? 'Импорт…' : 'Импортировать в учёт'}
             </button>
+            <div className="mt-4 border-t border-zinc-200/80 pt-4">
+              <p className="mb-2 text-sm font-semibold">Импорт из банка через OAuth2</p>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <select className="input" value={oauthAccountId} onChange={(e) => setOauthAccountId(e.target.value)}>
+                  <option value="">Выберите подключённый счёт</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>{a.bank_name} · {a.account_number}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={!oauthAccountId || oauthImportMutation.isPending}
+                  onClick={() => oauthImportMutation.mutate({ account_id: oauthAccountId, date_from: recDateFrom, date_to: recDateTo })}
+                >
+                  {oauthImportMutation.isPending ? 'Импорт…' : 'OAuth → КУДиР'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -44,3 +44,20 @@ async def mark_notification_read(
     notification.is_read = True
     await db.flush()
     return notification
+
+
+@router.post("/read-all")
+async def mark_all_notifications_read(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        update(Notification)
+        .where(
+            Notification.user_id == str(current_user.id),
+            Notification.is_read.is_(False),
+        )
+        .values(is_read=True)
+    )
+    await db.flush()
+    return {"ok": True, "updated": int(result.rowcount or 0)}

@@ -18,6 +18,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
 import DocumentsPage from './pages/DocumentsPage'
 import BankPage from './pages/BankPage'
+import BankOAuthCallbackPage from './pages/BankOAuthCallbackPage'
 import ScannerPage from './pages/ScannerPage'
 import OnecSyncPage from './pages/OnecSyncPage'
 import OnecContourPage from './pages/OnecContourPage'
@@ -83,6 +84,7 @@ function AppRoutes() {
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
           <Route path="bank" element={<RoleRoute allow={['admin', 'accountant']}><Bank /></RoleRoute>} />
+          <Route path="bank/oauth/callback" element={<RoleRoute allow={['admin', 'accountant']}><BankOAuthCallbackPage /></RoleRoute>} />
           <Route path="reports" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
           <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>} />
           <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />

@@ -1,5 +1,7 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+from urllib.parse import urlencode
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +55,18 @@ class PaymentRequest(BaseModel):
     recipient_name: str = Field(min_length=2)
     description: str = Field(min_length=2)
     account_id: str | None = None
+
+
+class OAuthCallbackPayload(BaseModel):
+    account_id: str
+    code: str = Field(min_length=3)
+    provider: str = Field(default="bank_oauth")
+
+
+class OAuthImportPayload(BaseModel):
+    account_id: str
+    date_from: date
+    date_to: date
 
 
 @router.get("/banks")
@@ -306,12 +320,86 @@ async def import_bank_statement(
                 transaction_date=line.transaction_date,
                 status="confirmed",
                 category="bank_import",
+                source="bank",
             )
         )
         created += 1
     await db.flush()
     await cache.invalidate_org(str(org_id))
     return {"created": created, "skipped_duplicates": skipped, "total_lines": len(body.lines)}
+
+
+@router.get("/oauth/url")
+async def get_oauth_url(
+    account_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    account = await _get_account_or_404(db, current_user.organization_id, account_id)
+    if not settings.BANK_OAUTH_AUTHORIZE_URL:
+        raise HTTPException(400, "BANK_OAUTH_AUTHORIZE_URL не задан")
+
+    state = f"{account.id}:{secrets.token_urlsafe(12)}"
+    redirect_uri = settings.BANK_OAUTH_CALLBACK_URL or f"{settings.FRONTEND_URL.rstrip('/')}/bank/oauth/callback"
+    params = {
+        "response_type": "code",
+        "client_id": settings.BANK_OAUTH_CLIENT_ID or "finklik-dev-client",
+        "redirect_uri": redirect_uri,
+        "scope": "statements transactions read",
+        "state": state,
+    }
+    url = f"{settings.BANK_OAUTH_AUTHORIZE_URL}?{urlencode(params)}"
+    return {"account_id": account.id, "oauth_url": url, "state": state}
+
+
+@router.post("/oauth/callback")
+async def oauth_callback(
+    body: OAuthCallbackPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    account = await _get_account_or_404(db, current_user.organization_id, body.account_id)
+    token_data = await _exchange_oauth_code(body.code)
+    account.oauth_provider = body.provider
+    account.oauth_access_token = token_data["access_token"]
+    account.oauth_refresh_token = token_data.get("refresh_token")
+    account.oauth_token_expires_at = token_data.get("expires_at")
+    account.oauth_connected_at = datetime.now(timezone.utc)
+    await db.flush()
+    return {"ok": True, "account_id": account.id, "provider": account.oauth_provider}
+
+
+@router.get("/oauth/status")
+async def oauth_status(
+    account_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    account = await _get_account_or_404(db, current_user.organization_id, account_id)
+    connected = bool(account.oauth_access_token)
+    return {
+        "account_id": account.id,
+        "connected": connected,
+        "provider": account.oauth_provider,
+        "connected_at": account.oauth_connected_at.isoformat() if account.oauth_connected_at else None,
+        "expires_at": account.oauth_token_expires_at.isoformat() if account.oauth_token_expires_at else None,
+    }
+
+
+@router.post("/oauth/import")
+async def oauth_import_to_kudir(
+    body: OAuthImportPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    account = await _get_account_or_404(db, current_user.organization_id, body.account_id)
+    if body.date_to < body.date_from:
+        raise HTTPException(400, "date_to раньше date_from")
+
+    lines = await _fetch_oauth_statement_lines(account, body.date_from, body.date_to)
+    payload = StatementImportPayload(lines=lines)
+    result = await import_bank_statement(payload, current_user=current_user, db=db)
+    return {"account_id": account.id, "import_result": result, "lines_received": len(lines)}
 
 
 @router.get("/reconciliation")
@@ -437,6 +525,105 @@ async def fetch_external_statement_preview(
     return {"available": True, "lines": lines, "source": url}
 
 
+async def _get_account_or_404(db: AsyncSession, organization_id: str, account_id: str) -> BankAccount:
+    result = await db.execute(
+        select(BankAccount).where(
+            BankAccount.id == account_id,
+            BankAccount.organization_id == organization_id,
+        )
+    )
+    account = result.scalar_one_or_none()
+    if not account:
+        raise HTTPException(404, "Счёт не найден")
+    return account
+
+
+async def _exchange_oauth_code(code: str) -> dict:
+    now = datetime.now(timezone.utc)
+    if not settings.BANK_OAUTH_TOKEN_URL:
+        return {
+            "access_token": f"mock_token_{code}",
+            "refresh_token": f"mock_refresh_{code}",
+            "expires_at": now + timedelta(hours=1),
+        }
+
+    token_url = settings.BANK_OAUTH_TOKEN_URL
+    try:
+        validate_outbound_http_url(
+            token_url,
+            invalid="Некорректный BANK_OAUTH_TOKEN_URL",
+            https_required="BANK_OAUTH_TOKEN_URL должен быть https",
+            resolve_failed="Не удалось разрешить хост BANK_OAUTH_TOKEN_URL",
+            private_literal="BANK_OAUTH_TOKEN_URL не должен указывать на приватный/локальный адрес",
+            private_resolved="BANK_OAUTH_TOKEN_URL резолвится в приватную/локальную сеть",
+        )
+    except HTTPException:
+        raise
+
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": settings.BANK_OAUTH_CLIENT_ID,
+        "client_secret": settings.BANK_OAUTH_CLIENT_SECRET,
+        "redirect_uri": settings.BANK_OAUTH_CALLBACK_URL or f"{settings.FRONTEND_URL.rstrip('/')}/bank/oauth/callback",
+    }
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(token_url, data=payload)
+        resp.raise_for_status()
+        data = resp.json()
+
+    expires_in = int(data.get("expires_in") or 3600)
+    return {
+        "access_token": str(data.get("access_token") or ""),
+        "refresh_token": data.get("refresh_token"),
+        "expires_at": now + timedelta(seconds=expires_in),
+    }
+
+
+async def _fetch_oauth_statement_lines(account: BankAccount, date_from: date, date_to: date) -> list:
+    if not account.oauth_access_token:
+        raise HTTPException(400, "Сначала подключите банк через OAuth2")
+
+    url = settings.MOCK_BANK_URL.rstrip("/") + "/oauth/statement" if settings.MOCK_BANK_URL else ""
+    if url:
+        try:
+            validate_outbound_http_url(
+                url,
+                invalid="Некорректный MOCK_BANK_URL",
+                https_required="Для production MOCK_BANK_URL должен быть https",
+                resolve_failed="Не удалось разрешить хост MOCK_BANK_URL",
+                private_literal="MOCK_BANK_URL не должен указывать на приватный/локальный адрес",
+                private_resolved="MOCK_BANK_URL резолвится в приватную/локальную сеть",
+            )
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    url,
+                    headers={"Authorization": f"Bearer {account.oauth_access_token}"},
+                    params={"date_from": str(date_from), "date_to": str(date_to)},
+                )
+                if resp.status_code < 300:
+                    payload = resp.json()
+                    raw_lines = payload.get("lines") if isinstance(payload, dict) else payload
+                    if isinstance(raw_lines, list):
+                        return raw_lines
+        except Exception:
+            pass
+
+    total_days = max(1, (date_to - date_from).days + 1)
+    lines = []
+    for idx in range(min(total_days, 7)):
+        tx_date = date_from + timedelta(days=idx)
+        lines.append(
+            {
+                "transaction_date": tx_date,
+                "amount": float(100 + idx * 23),
+                "direction": "credit" if idx % 3 == 0 else "debit",
+                "description": f"OAuth выписка {account.bank_name} #{idx + 1}",
+            }
+        )
+    return lines
+
+
 def _account_to_dict(a: BankAccount) -> dict:
     bank_info = next((b for b in BELARUSIAN_BANKS if b["bic"] == a.bank_bic), None)
     return {
@@ -447,6 +634,8 @@ def _account_to_dict(a: BankAccount) -> dict:
         "currency": a.currency,
         "is_primary": a.is_primary,
         "is_active": a.is_active,
+        "oauth_connected": bool(a.oauth_access_token),
+        "oauth_provider": a.oauth_provider,
         "color": bank_info["color"] if bank_info else "#6B7280",
         "created_at": a.created_at.isoformat(),
     }

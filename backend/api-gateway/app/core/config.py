@@ -88,6 +88,11 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_DEFAULT_CHAT_ID: str = ""
     FRONTEND_URL: str = "https://ptrvalina.github.io/finklik"
+    BANK_OAUTH_CLIENT_ID: str = ""
+    BANK_OAUTH_CLIENT_SECRET: str = ""
+    BANK_OAUTH_AUTHORIZE_URL: str = ""
+    BANK_OAUTH_TOKEN_URL: str = ""
+    BANK_OAUTH_CALLBACK_URL: str = ""
 
     # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо, если у организации нет своего BYOK-ключа.
     # Ключ организации (приоритетнее) хранится в БД в зашифрованном виде — см. /assistant/organization-key.

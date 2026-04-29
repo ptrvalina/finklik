@@ -1,4 +1,6 @@
 import json
+from datetime import date
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
@@ -8,7 +10,9 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.document import ScannedDocument
+from app.models.transaction import Transaction
 from app.services.ocr_service import tesseract_ocr_process, parse_text_document
+from app.services.expense_ai_classifier import classify_expense_category
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -84,6 +88,71 @@ async def upload_and_scan(
         "parsed": ocr_result.get("parsed", {}),
         "warnings": ocr_result.get("warnings", []),
         "created_at": doc.created_at.isoformat(),
+    }
+
+
+@router.post("/upload-to-kudir")
+async def upload_to_kudir(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    effective_type = _normalize_upload_content_type(file.content_type, file.filename or "")
+    if effective_type not in ALLOWED_TYPES:
+        raise HTTPException(400, "Неподдерживаемый формат файла")
+
+    contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
+
+    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    parsed = ocr_result.get("parsed", {}) or {}
+    try:
+        tx_date = date.fromisoformat(str(parsed.get("transaction_date")))
+    except Exception:
+        tx_date = date.today()
+    amount = Decimal(str(parsed.get("amount", 0) or 0))
+    vat_amount = Decimal(str(parsed.get("vat_amount", 0) or 0))
+    category, confidence = classify_expense_category(
+        f"{parsed.get('description', '')}\n{parsed.get('counterparty_name', '')}\n{ocr_result.get('ocr_text', '')}"
+    )
+
+    doc = ScannedDocument(
+        organization_id=current_user.organization_id,
+        user_id=current_user.id,
+        filename=file.filename or "unknown",
+        doc_type=ocr_result["doc_type"],
+        status="done",
+        ocr_text=ocr_result.get("ocr_text", ""),
+        parsed_data=json.dumps(parsed, ensure_ascii=False),
+        confidence=ocr_result.get("confidence", 0),
+    )
+    db.add(doc)
+    await db.flush()
+
+    tx = Transaction(
+        organization_id=current_user.organization_id,
+        type=parsed.get("type", "expense"),
+        amount=amount if amount > 0 else Decimal("0.01"),
+        vat_amount=vat_amount if vat_amount >= 0 else Decimal("0"),
+        category=category,
+        description=parsed.get("description") or f"Скан {file.filename or ''}".strip(),
+        transaction_date=tx_date,
+        source="scan",
+        ai_category_confidence=Decimal(str(confidence)),
+        receipt_image_url=f"scanned://{doc.id}/{doc.filename}",
+    )
+    db.add(tx)
+    await db.flush()
+
+    doc.transaction_id = tx.id
+    return {
+        "document_id": doc.id,
+        "transaction_id": tx.id,
+        "ai_category": category,
+        "ai_category_confidence": confidence,
+        "amount": str(tx.amount),
+        "source": tx.source,
     }
 
 

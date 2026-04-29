@@ -21,6 +21,9 @@ class TransactionCreate(BaseModel):
     counterparty_id: str | None = None
     category: str | None = None
     description: str | None = None
+    source: str = Field(default="manual", pattern="^(manual|scan|bank)$")
+    ai_category_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    receipt_image_url: str | None = None
     transaction_date: date
 
 
@@ -32,6 +35,9 @@ class TransactionResponse(BaseModel):
     counterparty_id: str | None = None
     category: str | None = None
     description: str | None
+    source: str
+    ai_category_confidence: Decimal | None = None
+    receipt_image_url: str | None = None
     transaction_date: date
     status: str
     created_at: datetime

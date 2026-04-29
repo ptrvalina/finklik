@@ -19,6 +19,9 @@ function suggestCategory(text: string) {
 
 export default function Accounting() {
   const qc = useQueryClient()
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+  const monthStartStr = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
   const [type, setType] = useState<'income' | 'expense'>('expense')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -27,13 +30,34 @@ export default function Accounting() {
   const [scanFile, setScanFile] = useState<File | null>(null)
   const [source, setSource] = useState<'manual' | 'scan' | 'bank'>('manual')
   const [receiptUrl, setReceiptUrl] = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState(monthStartStr)
+  const [filterDateTo, setFilterDateTo] = useState(todayStr)
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all')
+  const [filterSearch, setFilterSearch] = useState('')
 
   const aiSuggestion = useMemo(() => suggestCategory(description), [description])
 
   const txQuery = useQuery({
     queryKey: ['transactions', 'accounting'],
-    queryFn: () => dashboardApi.getTransactions({ per_page: 30 }).then((r) => r.data),
+    queryFn: () => dashboardApi.getTransactions({ per_page: 200 }).then((r) => r.data),
   })
+  const filteredItems = useMemo(() => {
+    const items = txQuery.data?.items || []
+    return items.filter((tx: any) => {
+      const txDate = String(tx.transaction_date || '')
+      if (filterDateFrom && txDate < filterDateFrom) return false
+      if (filterDateTo && txDate > filterDateTo) return false
+      if (filterType !== 'all' && tx.type !== filterType) return false
+      if (filterCategory !== 'all' && (tx.category || 'other') !== filterCategory) return false
+      if (filterSearch.trim()) {
+        const term = filterSearch.trim().toLowerCase()
+        const hay = `${tx.description || ''} ${tx.category || ''}`.toLowerCase()
+        if (!hay.includes(term)) return false
+      }
+      return true
+    })
+  }, [txQuery.data?.items, filterDateFrom, filterDateTo, filterType, filterCategory, filterSearch])
 
   const uploadScanMutation = useMutation({
     mutationFn: async () => {
@@ -47,6 +71,15 @@ export default function Accounting() {
       return response.data
     },
   })
+  const uploadToKudirMutation = useMutation({
+    mutationFn: async () => {
+      if (!scanFile) return null
+      return scannerApi.uploadToKudir(scanFile)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -55,7 +88,10 @@ export default function Accounting() {
         amount: Number(amount || 0),
         vat_amount: 0,
         category,
-        description: `[${source}] ${description}${receiptUrl ? ` | receipt:${receiptUrl}` : ''} | ai_conf:${aiSuggestion.confidence}`,
+        description,
+        source,
+        ai_category_confidence: aiSuggestion.confidence,
+        receipt_image_url: receiptUrl || null,
         transaction_date: transactionDate,
       }),
     onSuccess: () => {
@@ -128,14 +164,42 @@ export default function Accounting() {
           <button type="button" className="btn-secondary" onClick={() => uploadScanMutation.mutate()} disabled={!scanFile || uploadScanMutation.isPending}>
             OCR из скана
           </button>
+          <button type="button" className="btn-secondary" onClick={() => uploadToKudirMutation.mutate()} disabled={!scanFile || uploadToKudirMutation.isPending}>
+            OCR + AI + в КУДиР
+          </button>
           <button type="submit" className="btn-primary" disabled={createMutation.isPending}>Добавить в КУДиР</button>
         </div>
       </form>
 
       <div className="card-elevated p-5">
-        <h2 className="mb-3 text-lg font-semibold">Записи</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Записи</h2>
+          <div className="inline-flex gap-1 rounded-lg border border-outline/70 p-1">
+            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { setFilterDateFrom(monthStartStr); setFilterDateTo(todayStr) }}>Этот месяц</button>
+            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 30); setFilterDateFrom(d.toISOString().slice(0, 10)); setFilterDateTo(todayStr) }}>30 дней</button>
+            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { setFilterDateFrom(''); setFilterDateTo(todayStr) }}>Все</button>
+          </div>
+        </div>
+        <div className="mb-4 grid gap-2 md:grid-cols-5">
+          <input className="input" type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
+          <input className="input" type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
+          <select className="input" value={filterType} onChange={(e) => setFilterType(e.target.value as any)}>
+            <option value="all">Все типы</option>
+            <option value="income">Доход</option>
+            <option value="expense">Расход</option>
+          </select>
+          <select className="input" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+            <option value="all">Все категории</option>
+            <option value="rent">Аренда</option>
+            <option value="tax">Налоги</option>
+            <option value="advertising">Реклама</option>
+            <option value="goods">Товары</option>
+            <option value="other">Прочее</option>
+          </select>
+          <input className="input" placeholder="Поиск" value={filterSearch} onChange={(e) => setFilterSearch(e.target.value)} />
+        </div>
         <div className="space-y-2">
-          {(txQuery.data?.items || []).map((tx: any) => (
+          {filteredItems.map((tx: any) => (
             <div key={tx.id} className="flex items-center justify-between rounded-lg border border-outline/60 px-3 py-2 text-sm">
               <div>
                 <p className="font-medium">{tx.description}</p>
@@ -144,6 +208,7 @@ export default function Accounting() {
               <span>{tx.amount}</span>
             </div>
           ))}
+          {filteredItems.length === 0 && <p className="text-sm text-on-surface-variant">Нет записей по выбранным фильтрам.</p>}
         </div>
       </div>
     </section>
