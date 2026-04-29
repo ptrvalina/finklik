@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.security.ssrf import validate_outbound_http_url
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.counterparty import Counterparty
 from app.models.onec import OneCAccount, OneCConnection
 from app.models.onec_sync import OneCSyncJob
@@ -16,7 +16,11 @@ from app.models.transaction import Transaction
 from app.models.user import User
 from app.services.onec_sync_service import enqueue_sync_job, reset_sync_job_for_retry
 
-router = APIRouter(prefix="/onec", tags=["1c-integration"])
+router = APIRouter(
+    prefix="/onec",
+    tags=["1c-integration"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 MOCK_COUNTERPARTIES = {
     "100000001": {"name": "ОАО Минский молочный завод №1", "unp": "100000001", "address": "г. Минск, ул. Маяковского, 108", "type": "Юридическое лицо", "account": "BY20AKBB30120000000040000000"},

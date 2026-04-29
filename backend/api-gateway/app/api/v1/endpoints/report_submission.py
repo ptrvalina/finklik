@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.employee import Employee, SalaryRecord
 from app.models.regulatory import ReportSubmission
 from app.models.transaction import Transaction
@@ -36,7 +36,11 @@ from app.services.submission_notifications import notify_submission_portal_resul
 from app.services.submission_portal import submit_to_http_portal
 from app.services.tax_calculator import calculate_fsszn, calculate_usn, calculate_vat, get_tax_rules_for_year
 
-router = APIRouter(prefix="/submissions", tags=["report-submissions"])
+router = APIRouter(
+    prefix="/submissions",
+    tags=["report-submissions"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 log = structlog.get_logger()
 
 _PERIOD_RE = re.compile(r"^(\d{4})-(Q([1-4])|M(0[1-9]|1[0-2]))$")

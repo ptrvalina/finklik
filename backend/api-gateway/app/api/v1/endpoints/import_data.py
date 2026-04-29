@@ -8,12 +8,16 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.cache.redis_cache import cache
 
-router = APIRouter(prefix="/import", tags=["import"])
+router = APIRouter(
+    prefix="/import",
+    tags=["import"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 VALID_TYPES = {"income", "expense", "refund", "writeoff"}
 

@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.counterparty import Counterparty
 from app.models.document import PaymentEvent, PrimaryDocument
 from app.models.transaction import Transaction
@@ -30,7 +30,11 @@ from app.services.primary_document_numbering import allocate_next_document_numbe
 from app.services.primary_document_pdf import PrimaryDocumentPdfContext, generate_primary_document_pdf
 from app.services.email_service import send_payment_link_email
 
-router = APIRouter(prefix="/primary-documents", tags=["primary-documents"])
+router = APIRouter(
+    prefix="/primary-documents",
+    tags=["primary-documents"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 log = structlog.get_logger(__name__)
 
 

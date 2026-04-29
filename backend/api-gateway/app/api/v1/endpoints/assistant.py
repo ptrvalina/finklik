@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import Organization, User
 from app.services.org_llm_crypto import decrypt_org_llm_api_key, encrypt_org_llm_api_key
 from app.services.assistant_knowledge import (
@@ -30,7 +30,11 @@ from app.services.assistant_knowledge import (
 )
 
 log = structlog.get_logger()
-router = APIRouter(prefix="/assistant", tags=["assistant"])
+router = APIRouter(
+    prefix="/assistant",
+    tags=["assistant"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 SYSTEM_PROMPT = """Ты — ИИ-ассистент веб-приложения «ФинКлик» для малого бизнеса в Беларуси.
 Твоя роль: напоминать о сроках и типовых шагах, ориентировать по разделам продукта, кратко объяснять практику взаимодействия с госорганами

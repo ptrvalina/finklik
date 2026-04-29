@@ -10,11 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.regulatory import RegulatoryUpdate, RegulatoryNotification
 
-router = APIRouter(prefix="/regulatory", tags=["regulatory"])
+router = APIRouter(
+    prefix="/regulatory",
+    tags=["regulatory"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 AUTHORITIES = {
     "fsszn": "ФСЗН",

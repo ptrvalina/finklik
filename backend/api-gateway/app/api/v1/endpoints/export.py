@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, func
 from datetime import date
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User, Organization
 from app.models.transaction import Transaction
 from app.models.employee import SalaryRecord, Employee
@@ -21,7 +21,11 @@ from app.services.pu3_aggregation import build_pu3_aggregates
 from decimal import Decimal
 from app.security import get_encryptor
 
-router = APIRouter(prefix="/export", tags=["export"])
+router = APIRouter(
+    prefix="/export",
+    tags=["export"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 
 @router.get("/transactions.csv")

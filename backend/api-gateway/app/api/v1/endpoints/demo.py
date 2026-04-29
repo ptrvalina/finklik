@@ -9,13 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.counterparty import Counterparty
 from app.cache.redis_cache import cache
 
-router = APIRouter(prefix="/demo", tags=["demo"])
+router = APIRouter(
+    prefix="/demo",
+    tags=["demo"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 SAMPLE_COUNTERPARTIES = [
     {"name": "ОАО Минский молочный завод", "unp": "100001001", "contact_person": "Иванов А.П.", "phone": "+375291001010", "email": "mmz@example.by"},

@@ -6,14 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User, Organization
 from app.models.subscription import Plan, Subscription
 from app.models.transaction import Transaction
 from app.models.employee import Employee
 from app.models.counterparty import Counterparty
 
-router = APIRouter(prefix="/billing", tags=["billing"])
+router = APIRouter(
+    prefix="/billing",
+    tags=["billing"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 DEFAULT_PLANS = [
     {

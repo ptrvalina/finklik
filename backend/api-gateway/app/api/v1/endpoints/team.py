@@ -9,12 +9,16 @@ from sqlalchemy import select, func, and_
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.core.security import hash_password
 from app.models.user import User, Organization, Invitation
 from app.services.email_service import send_invite_email
 
-router = APIRouter(prefix="/team", tags=["team"])
+router = APIRouter(
+    prefix="/team",
+    tags=["team"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 
 class InviteRequest(BaseModel):
