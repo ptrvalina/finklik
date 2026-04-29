@@ -17,10 +17,18 @@ function isCloudStaticHost(host: string): boolean {
   return host.endsWith('.github.io') || host.endsWith('.vercel.app')
 }
 
+function isStaticFrontendUrl(url: string): boolean {
+  try {
+    return isCloudStaticHost(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
 function resolveEnvApiBase(fromEnv: unknown): string | null {
   if (!fromEnv || !String(fromEnv).trim()) return null
   const candidate = String(fromEnv).trim().replace(/\/$/, '')
-  if (isGithubPagesOrigin(candidate)) return PRODUCTION_API_BASE
+  if (isGithubPagesOrigin(candidate) || isStaticFrontendUrl(candidate)) return PRODUCTION_API_BASE
   try {
     const parsed = new URL(candidate)
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
