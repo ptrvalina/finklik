@@ -3,12 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.counterparty import Counterparty
 from app.schemas.counterparty import CounterpartyCreate, CounterpartyUpdate, CounterpartyResponse
 
-router = APIRouter(prefix="/counterparties", tags=["counterparties"])
+router = APIRouter(
+    prefix="/counterparties",
+    tags=["counterparties"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 
 @router.get("", response_model=list[CounterpartyResponse])

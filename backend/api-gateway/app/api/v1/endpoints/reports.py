@@ -5,12 +5,16 @@ from decimal import Decimal
 from datetime import date, datetime, timezone
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.schemas.transaction import CATEGORY_LABELS
 
-router = APIRouter(prefix="/reports", tags=["reports"])
+router = APIRouter(
+    prefix="/reports",
+    tags=["reports"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 
 @router.get("/monthly-summary")

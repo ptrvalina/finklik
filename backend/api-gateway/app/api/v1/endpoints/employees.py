@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, func
 from datetime import date
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.employee import Employee, SalaryRecord
 from app.schemas.employee import (
@@ -22,7 +22,11 @@ from app.internal.audit.service import safe_log_audit
 from app.internal.crypto.encrypt import get_aes_gcm_encryptor
 from app.security import get_encryptor
 
-router = APIRouter(prefix="/employees", tags=["employees"])
+router = APIRouter(
+    prefix="/employees",
+    tags=["employees"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 
 def _id_doc_to_json(p: IdentityDocumentPayload) -> str:

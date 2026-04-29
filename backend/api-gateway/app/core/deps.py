@@ -20,3 +20,21 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не найден")
     return user
+
+
+def require_roles(*allowed_roles: str):
+    normalized = {r.strip().lower() for r in allowed_roles if r and r.strip()}
+
+    async def _dependency(current_user: User = Depends(get_current_user)) -> User:
+        # Совместимость: историческая роль owner эквивалентна новой admin.
+        current_role = (current_user.role or "").strip().lower()
+        effective_role = "admin" if current_role == "owner" else current_role
+        effective_allowed = {"admin" if r == "owner" else r for r in normalized}
+        if effective_role not in effective_allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Недостаточно прав для выполнения операции",
+            )
+        return current_user
+
+    return _dependency

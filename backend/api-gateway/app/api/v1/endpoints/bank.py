@@ -8,14 +8,18 @@ from pydantic import BaseModel, Field
 import httpx
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 from app.core.config import settings
 from app.security.ssrf import validate_outbound_http_url
 from app.models.user import User
 from app.models.bank_account import BankAccount
 from app.schemas.bank_import import StatementImportPayload
 
-router = APIRouter(prefix="/bank", tags=["bank"])
+router = APIRouter(
+    prefix="/bank",
+    tags=["bank"],
+    dependencies=[Depends(require_roles("admin", "accountant"))],
+)
 
 BELARUSIAN_BANKS = [
     {"name": "Беларусбанк", "bic": "AKBBBY2X", "color": "#00875A"},

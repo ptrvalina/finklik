@@ -19,7 +19,7 @@ router = APIRouter(prefix="/team", tags=["team"])
 
 class InviteRequest(BaseModel):
     email: EmailStr
-    role: str = Field(default="accountant", pattern="^(accountant|viewer)$")
+    role: str = Field(default="accountant", pattern="^(accountant|manager|viewer)$")
 
 
 class InviteAcceptRequest(BaseModel):

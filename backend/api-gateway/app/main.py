@@ -35,6 +35,8 @@ from app.api.v1.endpoints.billing import router as billing_router
 from app.api.v1.endpoints.primary_documents import router as primary_documents_router
 from app.api.v1.endpoints.fx_nbrb import router as fx_nbrb_router
 from app.api.v1.endpoints.workforce import router as workforce_router
+from app.api.v1.endpoints.planner import router as planner_router
+from app.api.v1.endpoints.notifications import router as notifications_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
@@ -213,6 +215,8 @@ app.include_router(billing_router, prefix="/api/v1")
 app.include_router(primary_documents_router, prefix="/api/v1")
 app.include_router(fx_nbrb_router, prefix="/api/v1")
 app.include_router(workforce_router, prefix="/api/v1")
+app.include_router(planner_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

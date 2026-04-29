@@ -85,6 +85,8 @@ class Settings(BaseSettings):
     EMAIL_API_KEY: str = ""
     EMAIL_API_URL: str = "https://api.resend.com/emails"
     EMAIL_FROM: str = "ФинКлик <noreply@finklik.by>"
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_DEFAULT_CHAT_ID: str = ""
     FRONTEND_URL: str = "https://ptrvalina.github.io/finklik"
 
     # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо, если у организации нет своего BYOK-ключа.
