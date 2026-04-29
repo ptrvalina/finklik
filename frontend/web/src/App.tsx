@@ -12,7 +12,7 @@ import Accounting from './pages/Accounting'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
 import Notes from './pages/Notes'
-import Scan from './pages/Scan'
+import Planner from './pages/Planner'
 import TransactionsPage from './pages/TransactionsPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
@@ -36,6 +36,19 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>
+}
+
+function RoleRoute({
+  allow,
+  children,
+}: {
+  allow: Array<'admin' | 'owner' | 'accountant' | 'manager' | 'viewer'>
+  children: React.ReactNode
+}) {
+  const user = useAuthStore((s) => s.user)
+  const role = (user?.role || '').toLowerCase()
+  if (allow.includes('admin') && role === 'owner') return <>{children}</>
+  return allow.includes(role as any) ? <>{children}</> : <Navigate to="/" replace />
 }
 
 export default function App() {
@@ -69,14 +82,15 @@ function AppRoutes() {
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
-          <Route path="bank" element={<Bank />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="employees" element={<Employees />} />
-          <Route path="accounting" element={<Accounting />} />
-          <Route path="counterparties" element={<Counterparties />} />
+          <Route path="bank" element={<RoleRoute allow={['admin', 'accountant']}><Bank /></RoleRoute>} />
+          <Route path="reports" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
+          <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>} />
+          <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
+          <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Websites />} />
           <Route path="notes" element={<Notes />} />
-          <Route path="scan" element={<Scan />} />
+          <Route path="scan" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><ScannerPage /></RoleRoute>} />
+          <Route path="planner" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><Planner /></RoleRoute>} />
 
           {/* Legacy route aliases kept for compatibility */}
           <Route path="transactions" element={<Navigate to="/accounting" replace />} />
@@ -100,7 +114,7 @@ function AppRoutes() {
           <Route path="legacy/onec-contour" element={<OnecContourPage />} />
           <Route path="legacy/onec-sync" element={<OnecSyncPage />} />
           <Route path="assistant" element={<AssistantPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings" element={<RoleRoute allow={['admin', 'accountant']}><SettingsPage /></RoleRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

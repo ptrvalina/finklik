@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
@@ -7,7 +7,8 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
 import ToastStack from '../ui/ToastStack'
-import { ALL_NAV_ITEMS, flattenNavForSheetWithAssistant, MOBILE_BAR_ITEMS } from './navConfig'
+import { notificationsApi } from '../../api/client'
+import { flattenNavForSheetWithAssistant, getMobileBarItemsForRole, getNavItemsForRole } from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -38,7 +39,24 @@ export default function Layout() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const notifMenuRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
+  const role = (user?.role || '').toLowerCase()
+  const isManager = role === 'manager'
+  const navItems = getNavItemsForRole(role)
+  const mobileBarItems = getMobileBarItemsForRole(role)
+  const sheetItems = isManager ? navItems : flattenNavForSheetWithAssistant(navItems)
+  const { data: plannerNotifications = [] } = useQuery({
+    queryKey: ['notifications', 'list'],
+    queryFn: () => notificationsApi.list(20).then((r) => r.data ?? []),
+  })
+  const unreadCount = plannerNotifications.filter((n: any) => !n.is_read).length
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => notificationsApi.markRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  })
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -85,6 +103,7 @@ export default function Layout() {
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserOpen(false)
+      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target as Node)) setNotifOpen(false)
     }
     document.addEventListener('click', onDocClick)
     return () => document.removeEventListener('click', onDocClick)
@@ -121,7 +140,7 @@ export default function Layout() {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">
           <nav className="space-y-1">
-          {ALL_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const { to, label, icon, end, flyout } = item
             const active =
               pathActive(location.pathname, to, end) ||
@@ -188,7 +207,7 @@ export default function Layout() {
           </nav>
         </div>
 
-        <div className="flex justify-center border-t border-outline/50 p-4 dark:border-zinc-800/80">
+        {!isManager && <div className="flex justify-center border-t border-outline/50 p-4 dark:border-zinc-800/80">
           <NavLink
             to="/assistant"
             title="Консультант"
@@ -203,7 +222,7 @@ export default function Layout() {
           >
             {({ isActive }) => <Icon name="smart_toy" filled={isActive} className="text-[20px]" />}
           </NavLink>
-        </div>
+        </div>}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -254,17 +273,42 @@ export default function Layout() {
               {connected ? 'Онлайн' : 'Офлайн'}
             </div>
             {/* Колокольчик + тема */}
-            <div className="flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-zinc-700/70 dark:bg-zinc-900/90 sm:gap-1 sm:p-1.5">
+            <div className="relative flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-zinc-700/70 dark:bg-zinc-900/90 sm:gap-1 sm:p-1.5" ref={notifMenuRef}>
               <button
                 type="button"
+                onClick={() => setNotifOpen((v) => !v)}
                 className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400"
                 aria-label="Уведомления"
               >
                 <Icon name="notifications" className="text-xl" />
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-zinc-800 sm:right-1.5 sm:top-1.5" />
                 )}
               </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift dark:bg-zinc-900">
+                  <p className="px-2 py-1 text-sm font-semibold">Уведомления</p>
+                  <div className="max-h-72 overflow-auto">
+                    {plannerNotifications.length === 0 ? (
+                      <p className="px-2 py-3 text-sm text-on-surface-variant">Нет уведомлений</p>
+                    ) : (
+                      plannerNotifications.map((n: any) => (
+                        <button
+                          type="button"
+                          key={n.id}
+                          className={`mb-1 w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-container-low ${n.is_read ? 'opacity-70' : ''}`}
+                          onClick={() => {
+                            if (!n.is_read) markReadMutation.mutate(n.id)
+                          }}
+                        >
+                          <p className="font-medium">{n.message}</p>
+                          <p className="text-xs text-on-surface-variant">{new Date(n.created_at).toLocaleString('ru-RU')}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
               <span className="hidden h-6 w-px bg-outline/90 dark:bg-zinc-600 sm:block" aria-hidden />
               <button
                 type="button"
@@ -304,14 +348,16 @@ export default function Layout() {
                     <p className="truncate text-xs text-zinc-500">{user?.email}</p>
                     <p className="truncate text-[11px] text-zinc-500">{roleLabel}</p>
                   </div>
-                  <Link
-                    to="/settings"
-                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-zinc-800/80"
-                    onClick={() => setUserOpen(false)}
-                  >
-                    <Icon name="settings" className="text-lg" />
-                    Настройки и команда
-                  </Link>
+                  {!isManager && (
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-zinc-800/80"
+                      onClick={() => setUserOpen(false)}
+                    >
+                      <Icon name="settings" className="text-lg" />
+                      Настройки и команда
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -386,7 +432,7 @@ export default function Layout() {
         aria-label="Основная навигация"
       >
         <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
-          {MOBILE_BAR_ITEMS.map(({ to, label, icon, end }) => {
+          {mobileBarItems.map(({ to, label, icon, end }) => {
             const active = pathActive(location.pathname, to, end)
             return (
               <NavLink
@@ -446,7 +492,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="grid max-h-[calc(88vh-4rem)] grid-cols-3 gap-2 overflow-y-auto p-4 sm:grid-cols-4">
-              {flattenNavForSheetWithAssistant(ALL_NAV_ITEMS).map(({ to, label, icon, end, description }) => {
+              {sheetItems.map(({ to, label, icon, end, description }) => {
                 const active = pathActive(location.pathname, to, end)
                 return (
                   <NavLink

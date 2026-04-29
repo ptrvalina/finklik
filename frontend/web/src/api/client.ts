@@ -203,6 +203,20 @@ export const scannerApi = {
   remove: (id: string) => api.delete(`/scanner/documents/${id}`),
 }
 
+export const plannerApi = {
+  listTasks: (mode: 'all' | 'mine' | 'assigned' = 'all') => api.get('/planner/tasks', { params: { mode } }),
+  createTask: (data: { title: string; description?: string; attachments?: string[]; assignee_id: string }) =>
+    api.post('/planner/tasks', data),
+  closeTask: (id: string) => api.post(`/planner/tasks/${id}/close`),
+  createReport: (id: string, data: { content: string; attachments?: string[] }) =>
+    api.post(`/planner/tasks/${id}/report`, data),
+}
+
+export const notificationsApi = {
+  list: (limit = 20) => api.get('/notifications', { params: { limit } }),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`),
+}
+
 export const importApi = {
   previewCsv: (file: File) => {
     const form = new FormData()

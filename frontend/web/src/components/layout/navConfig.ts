@@ -54,6 +54,7 @@ export function flattenNavForSheetWithAssistant(
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Главная', icon: 'dashboard', end: true, description: 'Сводка и метрики' },
+  { to: '/planner', label: 'Планер', icon: 'event_note', description: 'Задачи и отчёты команды' },
   { to: '/bank', label: 'Банк', icon: 'account_balance_wallet', description: 'Платежи, выписки, счета' },
   { to: '/reports', label: 'Отчетность', icon: 'assignment_turned_in', description: 'Налоговые и регламентные отчёты' },
   { to: '/employees', label: 'Сотрудники', icon: 'group', description: 'Кадры и зарплата' },
@@ -73,3 +74,19 @@ export const MOBILE_BAR_ITEMS: BarItem[] = [
   { to: '/reports', label: 'Отчетность', icon: 'assignment_turned_in' },
   { to: '/scan', label: 'Скан', icon: 'document_scanner' },
 ]
+
+const MANAGER_ALLOWED = new Set(['/', '/scan', '/planner'])
+
+export function getNavItemsForRole(role?: string | null): NavItem[] {
+  if ((role || '').toLowerCase() !== 'manager') return ALL_NAV_ITEMS
+  return ALL_NAV_ITEMS.filter((item) => MANAGER_ALLOWED.has(item.to))
+}
+
+export function getMobileBarItemsForRole(role?: string | null): BarItem[] {
+  if ((role || '').toLowerCase() !== 'manager') return MOBILE_BAR_ITEMS
+  return [
+    { to: '/', label: 'Главная', icon: 'home', end: true },
+    { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
+    { to: '/planner', label: 'Планер', icon: 'event_note' },
+  ]
+}

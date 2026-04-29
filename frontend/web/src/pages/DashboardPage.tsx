@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { dashboardApi, reportsApi, demoApi } from '../api/client'
 import { Link } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import ClientJourneyPanel from '../components/dashboard/ClientJourneyPanel'
 
@@ -18,6 +19,8 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 }
 
 export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user)
+  const isManager = (user?.role || '').toLowerCase() === 'manager'
   const qc = useQueryClient()
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -73,6 +76,31 @@ export default function DashboardPage() {
     { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-emerald-50 to-teal-50 text-emerald-900 ring-emerald-100' },
     { to: '/settings', icon: 'gavel', label: 'Законы', color: 'from-zinc-100 to-zinc-50 text-zinc-800 ring-zinc-200' },
   ] as const
+
+  if (isManager) {
+    return (
+      <div className="max-w-4xl space-y-6">
+        <div className="card-elevated p-6">
+          <h1 className="page-heading">Главная</h1>
+          <p className="mt-2 text-on-surface-variant">Виджет менеджера: новые задачи, сканы и отчёты команды.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Link to="/scan" className="card-elevated p-5 hover:bg-surface-container-low">
+            <p className="font-semibold">Загрузить скан</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Камера или файл документа</p>
+          </Link>
+          <Link to="/planner" className="card-elevated p-5 hover:bg-surface-container-low">
+            <p className="font-semibold">Создать задачу</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Поручение собственнику/бухгалтеру</p>
+          </Link>
+          <Link to="/planner" className="card-elevated p-5 hover:bg-surface-container-low">
+            <p className="font-semibold">Подготовить отчёт</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Ответить на запрос в планере</p>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl space-y-6 sm:space-y-8">
