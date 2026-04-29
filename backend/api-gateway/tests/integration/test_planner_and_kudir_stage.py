@@ -37,6 +37,14 @@ async def test_planner_comments_flow(client: AsyncClient, auth_headers: dict):
     assert isinstance(data, list)
     assert any("Принято" in c["content"] for c in data)
 
+    notifications = await client.get("/api/v1/notifications", headers=auth_headers)
+    assert notifications.status_code == 200
+    assert isinstance(notifications.json(), list)
+
+    mark_all = await client.post("/api/v1/notifications/read-all", headers=auth_headers)
+    assert mark_all.status_code == 200
+    assert mark_all.json().get("ok") is True
+
 
 @pytest.mark.asyncio
 async def test_scanner_upload_to_kudir_creates_transaction(client: AsyncClient, auth_headers: dict):
@@ -79,6 +87,10 @@ async def test_bank_oauth_import_to_kudir(client: AsyncClient, auth_headers: dic
         headers=auth_headers,
     )
     assert callback.status_code == 200
+
+    status = await client.get("/api/v1/bank/oauth/status", params={"account_id": account_id}, headers=auth_headers)
+    assert status.status_code == 200
+    assert status.json()["connected"] is True
 
     imported = await client.post(
         "/api/v1/bank/oauth/import",
