@@ -40,7 +40,25 @@ function resolveEnvApiBase(fromEnv: unknown): string | null {
   return null
 }
 
+function resolveRuntimeOverrideBase(): string | null {
+  if (typeof window === 'undefined') return null
+  const raw = window.__FINKLIK_API_BASE__
+  if (!raw || !String(raw).trim()) return null
+  const candidate = String(raw).trim().replace(/\/$/, '')
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return candidate
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
 export function resolveApiBase(): string {
+  const override = resolveRuntimeOverrideBase()
+  if (override) return override
   const envBase = resolveEnvApiBase(import.meta.env.VITE_API_URL)
   if (envBase) return envBase
   if (typeof window !== 'undefined') {
@@ -51,8 +69,6 @@ export function resolveApiBase(): string {
   }
   return 'http://localhost:8000'
 }
-
-const BASE = resolveApiBase()
 type RetryableRequestConfig = {
   _retry?: boolean
   headers?: Record<string, string>
@@ -61,12 +77,13 @@ type RetryableRequestConfig = {
 let refreshPromise: Promise<string> | null = null
 
 export const api = axios.create({
-  baseURL: `${BASE}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
+  const base = resolveApiBase()
+  config.baseURL = `${base}/api/v1`
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   // Default Content-Type: application/json ломает multipart: браузер должен сам подставить boundary.
@@ -99,7 +116,7 @@ api.interceptors.response.use(
         if (!refreshPromise) {
           refreshPromise = axios
             .post(
-              `${BASE}/api/v1/auth/refresh`,
+              `${resolveApiBase()}/api/v1/auth/refresh`,
               {},
               { withCredentials: true },
             )

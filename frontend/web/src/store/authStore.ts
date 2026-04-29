@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { authApi } from '../api/client'
+import { authApi, resolveApiBase } from '../api/client'
 
 interface User {
   id: string
@@ -41,9 +41,10 @@ export const useAuthStore = create<AuthStore>()(
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
           const detail = e.response?.data?.detail
+          const apiHint = resolveApiBase()
           const fallback =
             e.code === 'ERR_NETWORK' || !e.response
-              ? 'Не удалось связаться с API. Убедитесь, что VITE_API_URL указывает на бэкенд при сборке. Если URL верный, проверьте CORS на сервере (должен быть разрешён Origin этого сайта).'
+              ? `Не удалось связаться с API (${apiHint}). Проверьте сеть и блокировщики расширений. Если URL сборки неверный — задайте VITE_API_URL на backend; при верном URL проверьте CORS для Origin этого сайта.`
               : 'Ошибка входа'
           set({ error: detail || fallback, isLoading: false })
           throw e

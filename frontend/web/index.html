@@ -19,6 +19,16 @@
         document.documentElement.classList.remove('dark');
       }
     </script>
+    <script>
+      (function () {
+        try {
+          var h = location.hostname || '';
+          if (h.endsWith('.github.io') || h.endsWith('.vercel.app')) {
+            window.__FINKLIK_API_BASE__ = 'https://finklik-api.onrender.com';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="description" content="ФинКлик — бухгалтерия и финансы для ИП и компаний на УСН в Беларуси" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
