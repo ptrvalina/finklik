@@ -18,6 +18,7 @@ from app.schemas.planner import (
     PlannerTaskResponse,
 )
 from app.services.planner_notifications import send_planner_email, send_planner_telegram
+from app.internal.audit.service import safe_log_audit
 
 router = APIRouter(prefix="/planner", tags=["planner"])
 
@@ -82,6 +83,14 @@ async def create_task(
         f"Вам назначена задача «{task.title}».",
     )
     await send_planner_telegram(f"Планер: новая задача «{task.title}» для {assignee_user.full_name}.")
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="planner_task_created",
+        entity_type="planner_task",
+        entity_id=str(task.id),
+        metadata={"assignee_id": str(task.assignee_id), "status": task.status},
+    )
     await db.flush()
     return _task_payload(task)
 
@@ -139,6 +148,14 @@ async def close_task(
 
     task.status = "closed"
     task.closed_at = datetime.utcnow()
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="planner_task_closed",
+        entity_type="planner_task",
+        entity_id=str(task.id),
+        metadata={"closed_at": task.closed_at.isoformat() if task.closed_at else None},
+    )
     await db.flush()
     return _task_payload(task)
 
@@ -186,6 +203,14 @@ async def create_report(
             f"По задаче «{task.title}» подготовлен отчет.",
         )
     await send_planner_telegram(f"Планер: подготовлен отчет по задаче «{task.title}».")
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="planner_report_created",
+        entity_type="planner_report",
+        entity_id=str(report.id),
+        metadata={"task_id": str(task.id)},
+    )
     await db.flush()
     return PlannerReportResponse(
         id=report.id,
@@ -241,5 +266,13 @@ async def add_comment(
         content=body.content.strip(),
     )
     db.add(comment)
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="planner_comment_created",
+        entity_type="planner_comment",
+        entity_id=str(comment.id),
+        metadata={"task_id": str(task_id)},
+    )
     await db.flush()
     return comment

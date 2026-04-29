@@ -16,6 +16,7 @@ from app.security.ssrf import validate_outbound_http_url
 from app.models.user import User
 from app.models.bank_account import BankAccount
 from app.schemas.bank_import import StatementImportPayload
+from app.internal.audit.service import safe_log_audit
 
 router = APIRouter(
     prefix="/bank",
@@ -115,6 +116,14 @@ async def create_account(
     )
     db.add(account)
     await db.flush()
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_account_created",
+        entity_type="bank_account",
+        entity_id=str(account.id),
+        metadata={"bank_bic": account.bank_bic, "is_primary": bool(account.is_primary)},
+    )
     return _account_to_dict(account)
 
 
@@ -145,6 +154,14 @@ async def update_account(
     if body.is_active is not None:
         account.is_active = body.is_active
 
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_account_updated",
+        entity_type="bank_account",
+        entity_id=str(account.id),
+        metadata={"is_primary": bool(account.is_primary), "is_active": bool(account.is_active)},
+    )
     await db.flush()
     return _account_to_dict(account)
 
@@ -164,6 +181,14 @@ async def delete_account(
     account = result.scalar_one_or_none()
     if not account:
         raise HTTPException(404, "Счёт не найден")
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_account_deleted",
+        entity_type="bank_account",
+        entity_id=str(account.id),
+        metadata={"bank_bic": account.bank_bic},
+    )
     await db.delete(account)
 
 
@@ -265,6 +290,14 @@ async def create_payment(
         status="confirmed",
     )
     db.add(tx)
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_payment_created",
+        entity_type="transaction",
+        entity_id=str(tx.id),
+        metadata={"amount": float(body.amount)},
+    )
     await db.flush()
     await cache.invalidate_org(str(current_user.organization_id))
 
@@ -326,6 +359,14 @@ async def import_bank_statement(
         created += 1
     await db.flush()
     await cache.invalidate_org(str(org_id))
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_statement_imported",
+        entity_type="organization",
+        entity_id=str(org_id),
+        metadata={"created": created, "skipped_duplicates": skipped, "lines": len(body.lines)},
+    )
     return {"created": created, "skipped_duplicates": skipped, "total_lines": len(body.lines)}
 
 
@@ -365,6 +406,14 @@ async def oauth_callback(
     account.oauth_refresh_token = token_data.get("refresh_token")
     account.oauth_token_expires_at = token_data.get("expires_at")
     account.oauth_connected_at = datetime.now(timezone.utc)
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="bank_oauth_connected",
+        entity_type="bank_account",
+        entity_id=str(account.id),
+        metadata={"provider": account.oauth_provider},
+    )
     await db.flush()
     return {"ok": True, "account_id": account.id, "provider": account.oauth_provider}
 

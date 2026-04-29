@@ -42,13 +42,46 @@ python -m alembic current
 | `sprint12_regulatory_reporting` | `20260418_regulatory_reporting_tables.py` | Регламентные обновления и `report_submissions` |
 | `submission_archive_snapshot` | `20260419_report_submission_snapshot.py` | Колонка `submission_snapshot_json` (архив на момент подачи) |
 
-Head репозитория: **`submission_archive_snapshot`**.
+## 2.1 Актуальные migration head'ы (stage planner/KUDiR/OAuth2)
+
+Проверить, что в `alembic_version` применены последние ревизии:
+
+- `planner_notifications_roles`
+- `transactions_kudir_fields`
+- `bank_oauth2_fields`
+- `planner_comments`
+
+Команда:
+
+```bash
+cd backend/api-gateway
+python -m alembic current
+python -m alembic upgrade head
+```
+
+## 2.2 Обязательные env для новых фич
+
+- Planner notifications:
+  - `EMAIL_API_KEY`, `EMAIL_API_URL`, `EMAIL_FROM`
+  - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_DEFAULT_CHAT_ID` (опционально, если нужен Telegram-канал)
+- Bank OAuth2:
+  - `BANK_OAUTH_CLIENT_ID`
+  - `BANK_OAUTH_CLIENT_SECRET`
+  - `BANK_OAUTH_AUTHORIZE_URL`
+  - `BANK_OAUTH_TOKEN_URL`
+  - `BANK_OAUTH_CALLBACK_URL`
+
+Если OAuth2 URL не заданы, backend использует mock-поведение для локального dev-потока.
 
 ## 3. После выката
 
 - `GET /health` — 200.
 - Смоук по [`PRE_DEMO_SMOKE.md`](PRE_DEMO_SMOKE.md) (в т.ч. сканер и подача отчётов при использовании).
 - Убедиться, что фронт указывает на новый API (`VITE_API_URL` / GitHub Pages).
+- Проверить новые потоки:
+  - `POST /api/v1/scanner/upload-to-kudir`
+  - `POST /api/v1/bank/oauth/import`
+  - `POST /api/v1/notifications/read-all`
 
 ## 4. Откат
 

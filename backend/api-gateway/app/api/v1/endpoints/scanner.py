@@ -13,6 +13,7 @@ from app.models.document import ScannedDocument
 from app.models.transaction import Transaction
 from app.services.ocr_service import tesseract_ocr_process, parse_text_document
 from app.services.expense_ai_classifier import classify_expense_category
+from app.internal.audit.service import safe_log_audit
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -76,6 +77,14 @@ async def upload_and_scan(
     )
     db.add(doc)
     await db.commit()
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="scan_uploaded",
+        entity_type="scanned_document",
+        entity_id=str(doc.id),
+        metadata={"doc_type": doc.doc_type, "filename": doc.filename},
+    )
     await db.refresh(doc)
 
     return {
@@ -146,6 +155,14 @@ async def upload_to_kudir(
     await db.flush()
 
     doc.transaction_id = tx.id
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="scan_uploaded_to_kudir",
+        entity_type="transaction",
+        entity_id=str(tx.id),
+        metadata={"document_id": str(doc.id), "source": tx.source, "category": tx.category},
+    )
     return {
         "document_id": doc.id,
         "transaction_id": tx.id,

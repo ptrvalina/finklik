@@ -44,7 +44,10 @@ make dev                    # Docker: API, фронт, mock-банк, mock-1С
 | `REFRESH_COOKIE_SAMESITE` | `lax` / `strict` / `none` — для фронта на другом домене с HTTPS обычно `none` |
 | `MOCK_BANK_URL`, `ONEC_MOCK_URL` | URL мок-сервисов в dev |
 | `EMAIL_API_KEY`, `EMAIL_FROM`, `FRONTEND_URL` | Почта и ссылки в письмах |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_DEFAULT_CHAT_ID` | Telegram-уведомления (планер) |
 | `OPENAI_API_KEY` | Чат-ассистент (пусто — демо-ответы) |
+| `BANK_OAUTH_CLIENT_ID`, `BANK_OAUTH_CLIENT_SECRET` | OAuth2 клиента банка |
+| `BANK_OAUTH_AUTHORIZE_URL`, `BANK_OAUTH_TOKEN_URL`, `BANK_OAUTH_CALLBACK_URL` | OAuth2 endpoint'ы банка |
 | `PAYMENT_WEBHOOK_SECRET` | Секрет вебхука оплаты счёта (`X-Payment-Webhook-Secret`) |
 | `PROVISION_ADMIN_TOKEN`, `PROVISION_WEBHOOK_SECRET` | Админ- и вебхук-провижин 1С |
 | `SUBMISSION_PORTAL_MODE`, `SUBMISSION_PORTAL_BASE_URL` | Режим подачи отчётов: `mock` или `http` |
@@ -72,6 +75,27 @@ make verify-like-ci
 Фронт: `cd frontend/web && npm run build` (или `npm run typecheck` — только TypeScript).
 
 Миграции: `cd backend/api-gateway && alembic upgrade head`.
+
+### Новые API (роли manager/planner/KUDiR automation)
+
+- Планер:
+  - `POST /api/v1/planner/tasks`
+  - `GET /api/v1/planner/tasks`
+  - `POST /api/v1/planner/tasks/:id/close`
+  - `POST /api/v1/planner/tasks/:id/report`
+  - `GET /api/v1/planner/tasks/:id/comments`
+  - `POST /api/v1/planner/tasks/:id/comments`
+- Уведомления:
+  - `GET /api/v1/notifications`
+  - `POST /api/v1/notifications/:id/read`
+  - `POST /api/v1/notifications/read-all`
+- КУДиР/сканы:
+  - `POST /api/v1/scanner/upload-to-kudir`
+- Банк OAuth2 и автозагрузка:
+  - `GET /api/v1/bank/oauth/url`
+  - `POST /api/v1/bank/oauth/callback`
+  - `GET /api/v1/bank/oauth/status`
+  - `POST /api/v1/bank/oauth/import`
 
 Демо-smoke: `make demo-smoke` → [`docs/dev/PRE_DEMO_SMOKE.md`](docs/dev/PRE_DEMO_SMOKE.md).
 
