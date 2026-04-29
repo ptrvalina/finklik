@@ -17,15 +17,24 @@ function isCloudStaticHost(host: string): boolean {
   return host.endsWith('.github.io') || host.endsWith('.vercel.app')
 }
 
-export function resolveApiBase(): string {
-  const fromEnv = import.meta.env.VITE_API_URL
-  if (fromEnv && String(fromEnv).trim()) {
-    const candidate = String(fromEnv).replace(/\/$/, '')
-    if (isGithubPagesOrigin(candidate)) {
-      return PRODUCTION_API_BASE
+function resolveEnvApiBase(fromEnv: unknown): string | null {
+  if (!fromEnv || !String(fromEnv).trim()) return null
+  const candidate = String(fromEnv).trim().replace(/\/$/, '')
+  if (isGithubPagesOrigin(candidate)) return PRODUCTION_API_BASE
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return candidate
     }
-    return candidate
+  } catch {
+    // Ignore malformed env value and use stable fallbacks below.
   }
+  return null
+}
+
+export function resolveApiBase(): string {
+  const envBase = resolveEnvApiBase(import.meta.env.VITE_API_URL)
+  if (envBase) return envBase
   if (typeof window !== 'undefined') {
     const host = window.location.hostname
     if (isCloudStaticHost(host)) {
