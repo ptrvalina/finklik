@@ -35,6 +35,10 @@ router = APIRouter(
     tags=["primary-documents"],
     dependencies=[Depends(require_roles("admin", "accountant"))],
 )
+public_router = APIRouter(
+    prefix="/primary-documents",
+    tags=["primary-documents"],
+)
 log = structlog.get_logger(__name__)
 
 
@@ -507,7 +511,7 @@ async def primary_document_mark_paid(
     }
 
 
-@router.post("/webhooks/payment")
+@public_router.post("/webhooks/payment")
 async def payment_webhook(
     body: PaymentWebhookPayload,
     x_secret: str | None = Header(None, alias="X-Payment-Webhook-Secret"),

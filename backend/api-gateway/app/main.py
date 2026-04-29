@@ -32,7 +32,10 @@ from app.api.v1.endpoints.regulatory import router as regulatory_router
 from app.api.v1.endpoints.report_submission import router as submission_router
 from app.api.v1.endpoints.assistant import router as assistant_router
 from app.api.v1.endpoints.billing import router as billing_router
-from app.api.v1.endpoints.primary_documents import router as primary_documents_router
+from app.api.v1.endpoints.primary_documents import (
+    router as primary_documents_router,
+    public_router as primary_documents_public_router,
+)
 from app.api.v1.endpoints.fx_nbrb import router as fx_nbrb_router
 from app.api.v1.endpoints.workforce import router as workforce_router
 from app.api.v1.endpoints.planner import router as planner_router
@@ -213,6 +216,7 @@ app.include_router(submission_router, prefix="/api/v1")
 app.include_router(assistant_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(primary_documents_router, prefix="/api/v1")
+app.include_router(primary_documents_public_router, prefix="/api/v1")
 app.include_router(fx_nbrb_router, prefix="/api/v1")
 app.include_router(workforce_router, prefix="/api/v1")
 app.include_router(planner_router, prefix="/api/v1")
