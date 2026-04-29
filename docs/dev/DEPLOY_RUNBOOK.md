@@ -77,11 +77,19 @@ python -m alembic upgrade head
 
 - `GET /health` — 200.
 - Смоук по [`PRE_DEMO_SMOKE.md`](PRE_DEMO_SMOKE.md) (в т.ч. сканер и подача отчётов при использовании).
+- Автосмоук stage8: `make smoke-stage8` (генерирует `artifacts/smoke-stage8-summary.md`).
 - Убедиться, что фронт указывает на новый API (`VITE_API_URL` / GitHub Pages).
 - Проверить новые потоки:
   - `POST /api/v1/scanner/upload-to-kudir`
   - `POST /api/v1/bank/oauth/import`
   - `POST /api/v1/notifications/read-all`
+
+### 3.1 Что покрывает `smoke-stage8`
+
+- RBAC для роли `manager` (запрет на финансово-админ API + доступ к planner/scanner/notifications).
+- Planner/KUDiR/OAuth2 потоки из интеграционных тестов stage.
+- Защиту `bank oauth callback` по `state` (включая негативный кейс invalid state).
+- Production build фронтенда (`npm run build`).
 
 ## 4. Откат
 
