@@ -15,23 +15,24 @@ export default function BankOAuthCallbackPage() {
   const [done, setDone] = useState(false)
 
   const code = params.get('code')
+  const state = params.get('state')
   const accountId = useMemo(() => {
-    const fromState = extractAccountId(params.get('state'))
+    const fromState = extractAccountId(state)
     if (fromState) return fromState
     if (typeof window !== 'undefined') {
       return localStorage.getItem('bank_oauth_account_id')
     }
     return null
-  }, [params])
+  }, [params, state])
 
   useEffect(() => {
     async function run() {
-      if (!code || !accountId) {
-        setError('Не хватает параметров OAuth callback (code/account_id)')
+      if (!code || !accountId || !state) {
+        setError('Не хватает параметров OAuth callback (code/state/account_id)')
         return
       }
       try {
-        await bankApi.oauthCallback({ account_id: accountId, code })
+        await bankApi.oauthCallback({ account_id: accountId, code, state })
         if (typeof window !== 'undefined') localStorage.removeItem('bank_oauth_account_id')
         setDone(true)
         setTimeout(() => navigate('/bank', { replace: true }), 1200)
@@ -40,7 +41,7 @@ export default function BankOAuthCallbackPage() {
       }
     }
     void run()
-  }, [accountId, code, navigate])
+  }, [accountId, code, navigate, state])
 
   return (
     <section className="card-elevated mx-auto max-w-xl p-6">

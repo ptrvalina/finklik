@@ -80,10 +80,11 @@ async def test_bank_oauth_import_to_kudir(client: AsyncClient, auth_headers: dic
     oauth_url = await client.get("/api/v1/bank/oauth/url", params={"account_id": account_id}, headers=auth_headers)
     assert oauth_url.status_code == 200
     assert "oauth_url" in oauth_url.json()
+    oauth_state = oauth_url.json()["state"]
 
     callback = await client.post(
         "/api/v1/bank/oauth/callback",
-        json={"account_id": account_id, "code": "test-code"},
+        json={"account_id": account_id, "code": "test-code", "state": oauth_state},
         headers=auth_headers,
     )
     assert callback.status_code == 200
@@ -99,3 +100,30 @@ async def test_bank_oauth_import_to_kudir(client: AsyncClient, auth_headers: dic
     )
     assert imported.status_code == 200
     assert imported.json()["import_result"]["created"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_bank_oauth_callback_rejects_invalid_state(client: AsyncClient, auth_headers: dict):
+    settings.BANK_OAUTH_AUTHORIZE_URL = "https://example-bank.test/oauth/authorize"
+    settings.BANK_OAUTH_TOKEN_URL = ""
+
+    acc = await client.post(
+        "/api/v1/bank/accounts",
+        json={
+            "bank_name": "Белинвестбанк",
+            "bank_bic": "BLBBBY2X",
+            "account_number": "BY00TEST00000000000000000011",
+            "currency": "BYN",
+            "is_primary": False,
+        },
+        headers=auth_headers,
+    )
+    assert acc.status_code == 201
+    account_id = acc.json()["id"]
+
+    callback = await client.post(
+        "/api/v1/bank/oauth/callback",
+        json={"account_id": account_id, "code": "test-code", "state": "bad-state"},
+        headers=auth_headers,
+    )
+    assert callback.status_code == 400

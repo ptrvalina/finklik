@@ -41,6 +41,7 @@ export default function BankPage() {
   )
   const [oauthAccountId, setOauthAccountId] = useState('')
   const [oauthCode, setOauthCode] = useState('')
+  const [oauthState, setOauthState] = useState('')
 
   const { data: balanceData } = useQuery({ queryKey: ['bank-balance'], queryFn: () => bankApi.getBalance().then(r => r.data), refetchInterval: 15000 })
   const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
@@ -92,7 +93,7 @@ export default function BankPage() {
     onError: () => flash('error', 'Не удалось получить OAuth URL'),
   })
   const oauthCallbackMutation = useMutation({
-    mutationFn: (data: { account_id: string; code: string }) => bankApi.oauthCallback(data),
+    mutationFn: (data: { account_id: string; code: string; state: string }) => bankApi.oauthCallback(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bank-accounts'] })
       flash('success', 'Банк подключен через OAuth2')
@@ -313,7 +314,7 @@ export default function BankPage() {
           )}
           <div className="mt-5 rounded-xl border border-zinc-200/80 bg-surface p-4">
             <p className="mb-2 text-sm font-semibold">OAuth2 подключение банка</p>
-            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
               <select className="input" value={oauthAccountId} onChange={(e) => setOauthAccountId(e.target.value)}>
                 <option value="">Выберите счёт</option>
                 {accounts.map((a) => (
@@ -321,11 +322,12 @@ export default function BankPage() {
                 ))}
               </select>
               <input className="input" placeholder="code из callback" value={oauthCode} onChange={(e) => setOauthCode(e.target.value)} />
+              <input className="input" placeholder="state из callback" value={oauthState} onChange={(e) => setOauthState(e.target.value)} />
               <button
                 type="button"
                 className="btn-primary"
-                disabled={!oauthAccountId || !oauthCode || oauthCallbackMutation.isPending}
-                onClick={() => oauthCallbackMutation.mutate({ account_id: oauthAccountId, code: oauthCode })}
+                disabled={!oauthAccountId || !oauthCode || !oauthState || oauthCallbackMutation.isPending}
+                onClick={() => oauthCallbackMutation.mutate({ account_id: oauthAccountId, code: oauthCode, state: oauthState })}
               >
                 Подтвердить
               </button>

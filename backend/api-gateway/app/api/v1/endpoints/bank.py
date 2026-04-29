@@ -2,6 +2,8 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from urllib.parse import urlencode
 import secrets
+import hmac
+import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,6 +63,7 @@ class PaymentRequest(BaseModel):
 class OAuthCallbackPayload(BaseModel):
     account_id: str
     code: str = Field(min_length=3)
+    state: str = Field(min_length=8)
     provider: str = Field(default="bank_oauth")
 
 
@@ -380,7 +383,7 @@ async def get_oauth_url(
     if not settings.BANK_OAUTH_AUTHORIZE_URL:
         raise HTTPException(400, "BANK_OAUTH_AUTHORIZE_URL не задан")
 
-    state = f"{account.id}:{secrets.token_urlsafe(12)}"
+    state = _make_oauth_state(account_id=str(account.id), organization_id=str(current_user.organization_id))
     redirect_uri = settings.BANK_OAUTH_CALLBACK_URL or f"{settings.FRONTEND_URL.rstrip('/')}/bank/oauth/callback"
     params = {
         "response_type": "code",
@@ -400,6 +403,12 @@ async def oauth_callback(
     db: AsyncSession = Depends(get_db),
 ):
     account = await _get_account_or_404(db, current_user.organization_id, body.account_id)
+    if not _is_valid_oauth_state(
+        state=body.state,
+        account_id=str(account.id),
+        organization_id=str(current_user.organization_id),
+    ):
+        raise HTTPException(400, "Некорректный OAuth state")
     token_data = await _exchange_oauth_code(body.code)
     account.oauth_provider = body.provider
     account.oauth_access_token = token_data["access_token"]
@@ -688,3 +697,32 @@ def _account_to_dict(a: BankAccount) -> dict:
         "color": bank_info["color"] if bank_info else "#6B7280",
         "created_at": a.created_at.isoformat(),
     }
+
+
+def _make_oauth_state(*, account_id: str, organization_id: str) -> str:
+    nonce = secrets.token_urlsafe(16)
+    payload = f"{account_id}:{organization_id}:{nonce}"
+    secret = settings.JWT_SECRET_KEY or "dev-secret"
+    signature = hmac.new(
+        secret.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()[:24]
+    return f"{account_id}:{nonce}:{signature}"
+
+
+def _is_valid_oauth_state(*, state: str, account_id: str, organization_id: str) -> bool:
+    try:
+        state_account_id, nonce, signature = state.split(":", 2)
+    except ValueError:
+        return False
+    if state_account_id != account_id:
+        return False
+    payload = f"{account_id}:{organization_id}:{nonce}"
+    secret = settings.JWT_SECRET_KEY or "dev-secret"
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()[:24]
+    return hmac.compare_digest(signature, expected)

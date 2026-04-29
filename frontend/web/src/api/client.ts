@@ -176,7 +176,7 @@ export const bankApi = {
     api.get('/bank/reconciliation', { params: { date_from, date_to } }),
   externalStatementPreview: () => api.get('/bank/external-statement'),
   oauthUrl: (account_id: string) => api.get('/bank/oauth/url', { params: { account_id } }),
-  oauthCallback: (data: { account_id: string; code: string; provider?: string }) => api.post('/bank/oauth/callback', data),
+  oauthCallback: (data: { account_id: string; code: string; state: string; provider?: string }) => api.post('/bank/oauth/callback', data),
   oauthStatus: (account_id: string) => api.get('/bank/oauth/status', { params: { account_id } }),
   oauthImport: (data: { account_id: string; date_from: string; date_to: string }) => api.post('/bank/oauth/import', data),
 }
