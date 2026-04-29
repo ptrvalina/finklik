@@ -70,6 +70,8 @@ python scripts/verify_like_ci.py
 make verify-like-ci
 # регрессионный пакет автопилота (pipeline + OCR + sync queue recovery):
 make test-autopilot-regression
+# статус CI + Deploy Pages без gh CLI:
+make check-deploy-status
 ```
 
 Зависимости для линта и полного pytest: `pip install -r backend/api-gateway/requirements.txt -r backend/api-gateway/requirements-dev.txt`.

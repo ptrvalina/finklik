@@ -23,6 +23,7 @@ router = APIRouter(
     dependencies=[Depends(require_roles("admin", "accountant"))],
 )
 
+
 def _serialize_transaction(tx: Transaction) -> TransactionResponse:
     return TransactionResponse(
         id=tx.id,
