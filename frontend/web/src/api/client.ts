@@ -152,11 +152,67 @@ api.interceptors.response.use(
   },
 )
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Render free tier «спит» 15 минут: первый запрос может вернуть ERR_NETWORK / 5xx
+ *  (Render proxy не отдаёт CORS-заголовки на cold start). Делаем тёплый GET и пару повторов. */
+async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
+  const attempts = 3
+  const delays = [0, 1500, 4000]
+  let lastErr: any
+  for (let i = 0; i < attempts; i++) {
+    if (delays[i]) await sleep(delays[i])
+    try {
+      return await fn()
+    } catch (e: any) {
+      lastErr = e
+      const code = e?.code
+      const status = e?.response?.status
+      const isTransient =
+        code === 'ERR_NETWORK' ||
+        code === 'ECONNABORTED' ||
+        status === 502 ||
+        status === 503 ||
+        status === 504
+      if (!isTransient) throw e
+      try {
+        await axios.get(`${resolveApiBase()}/api/v1/health`, {
+          timeout: 8000,
+          withCredentials: false,
+        })
+      } catch {
+        /* прогрев best-effort */
+      }
+    }
+  }
+  throw lastErr
+}
+
+export async function pingApi(): Promise<boolean> {
+  try {
+    await axios.get(`${resolveApiBase()}/api/v1/health`, {
+      timeout: 8000,
+      withCredentials: false,
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export const authApi = {
   // Без cookies: кросс-доменный вход (Pages→Render) надёжнее; refresh-cookie всё равно часто
   // режется как third-party — токен доступа приходит в JSON.
-  register: (data: any) => api.post('/auth/register', data, { withCredentials: false }),
-  login: (data: any) => api.post('/auth/login', data, { withCredentials: false }),
+  register: (data: any) =>
+    withColdStartRetry(() =>
+      api.post('/auth/register', data, { withCredentials: false }),
+    ),
+  login: (data: any) =>
+    withColdStartRetry(() =>
+      api.post('/auth/login', data, { withCredentials: false }),
+    ),
   me: () => api.get('/auth/me'),
 }
 

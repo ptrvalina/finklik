@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { pingApi, resolveApiBase } from '../api/client'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -9,6 +10,17 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 export default function LoginPage() {
   const { login, isLoading, error, clearError } = useAuthStore()
   const [form, setForm] = useState({ email: '', password: '' })
+  const [apiReachable, setApiReachable] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    pingApi().then((ok) => {
+      if (!cancelled) setApiReachable(ok)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,9 +47,18 @@ export default function LoginPage() {
             Войти в аккаунт
           </h2>
 
+          {apiReachable === false && !error && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+              <Icon name="warning" className="text-base mt-0.5" />
+              <span>
+                API ({resolveApiBase()}) сейчас недоступен из вашей сети. Откройте его в новой вкладке —
+                если страница не открывается, дело в провайдере / VPN / расширениях браузера.
+              </span>
+            </div>
+          )}
           {error && (
-            <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error flex items-center gap-2">
-              <Icon name="error" className="text-lg" /> {error}
+            <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error flex items-start gap-2">
+              <Icon name="error" className="text-lg mt-0.5" /> <span>{error}</span>
             </div>
           )}
 

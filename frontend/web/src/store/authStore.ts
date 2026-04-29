@@ -58,9 +58,10 @@ export const useAuthStore = create<AuthStore>()(
                   ? 'Слишком много попыток. Повторите позже.'
                   : null
           const apiHint = resolveApiBase()
+          const code = e.code || (e.message ? String(e.message).slice(0, 60) : '')
           const fallback =
             e.code === 'ERR_NETWORK' || !e.response
-              ? `Не удалось связаться с API (${apiHint}). Проверьте сеть, VPN и блокировщики расширений.`
+              ? `Не удалось связаться с API (${apiHint})${code ? ` [${code}]` : ''}. Проверьте интернет, отключите VPN и блокировщики (uBlock, AdGuard) или попробуйте инкогнито.`
               : 'Ошибка входа'
           set({ error: detail || fallback, isLoading: false })
           throw e
