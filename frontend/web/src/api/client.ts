@@ -108,9 +108,19 @@ api.interceptors.response.use(
     const detail = String(error.response?.data?.detail || '').toLowerCase()
     const isAuthError =
       status === 401 || (status === 403 && detail.includes('not authenticated'))
-    const isRefreshRequest = String(original.url || '').includes('/auth/refresh')
+    const url = String(original.url || '')
+    const isRefreshRequest = url.includes('/auth/refresh')
+    // Не уводим пользователя на /login и не пробуем refresh для самого логина/регистрации:
+    // 401 здесь означает "неверные данные", его нужно показать как есть.
+    const isAuthEntryRequest =
+      url.includes('/auth/login') || url.includes('/auth/register')
 
-    if (isAuthError && !isRefreshRequest && !original._retry) {
+    if (
+      isAuthError &&
+      !isRefreshRequest &&
+      !isAuthEntryRequest &&
+      !original._retry
+    ) {
       original._retry = true
       try {
         if (!refreshPromise) {

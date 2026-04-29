@@ -33,6 +33,13 @@ export const useAuthStore = create<AuthStore>()(
       error: null,
 
       login: async (data) => {
+        // Стали с прошлой сессии access_token может протухнуть и сбить interceptor:
+        // на форме логина его нужно убрать до запроса.
+        try {
+          localStorage.removeItem('access_token')
+        } catch {
+          /* localStorage недоступен — игнорируем */
+        }
         set({ isLoading: true, error: null })
         try {
           const { data: tokens } = await authApi.login(data)
@@ -40,11 +47,20 @@ export const useAuthStore = create<AuthStore>()(
           const { data: user } = await authApi.me()
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
-          const detail = e.response?.data?.detail
+          const status = e.response?.status
+          const rawDetail = e.response?.data?.detail
+          const detail =
+            typeof rawDetail === 'string' && rawDetail.trim()
+              ? rawDetail
+              : status === 401
+                ? 'Неверный email или пароль'
+                : status === 429
+                  ? 'Слишком много попыток. Повторите позже.'
+                  : null
           const apiHint = resolveApiBase()
           const fallback =
             e.code === 'ERR_NETWORK' || !e.response
-              ? `Не удалось связаться с API (${apiHint}). Проверьте сеть и блокировщики расширений. Если URL сборки неверный — задайте VITE_API_URL на backend; при верном URL проверьте CORS для Origin этого сайта.`
+              ? `Не удалось связаться с API (${apiHint}). Проверьте сеть, VPN и блокировщики расширений.`
               : 'Ошибка входа'
           set({ error: detail || fallback, isLoading: false })
           throw e
@@ -52,6 +68,11 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       register: async (data) => {
+        try {
+          localStorage.removeItem('access_token')
+        } catch {
+          /* localStorage недоступен — игнорируем */
+        }
         set({ isLoading: true, error: null })
         try {
           const { data: tokens } = await authApi.register(data)
@@ -59,7 +80,17 @@ export const useAuthStore = create<AuthStore>()(
           const { data: user } = await authApi.me()
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
-          set({ error: e.response?.data?.detail || 'Ошибка регистрации', isLoading: false })
+          const rawDetail = e.response?.data?.detail
+          const detail =
+            typeof rawDetail === 'string' && rawDetail.trim()
+              ? rawDetail
+              : null
+          const apiHint = resolveApiBase()
+          const fallback =
+            e.code === 'ERR_NETWORK' || !e.response
+              ? `Не удалось связаться с API (${apiHint}). Проверьте сеть и попробуйте ещё раз.`
+              : 'Ошибка регистрации'
+          set({ error: detail || fallback, isLoading: false })
           throw e
         }
       },
