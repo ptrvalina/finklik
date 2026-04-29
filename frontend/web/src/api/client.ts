@@ -13,6 +13,10 @@ function isGithubPagesOrigin(url: string): boolean {
   }
 }
 
+function isCloudStaticHost(host: string): boolean {
+  return host.endsWith('.github.io') || host.endsWith('.vercel.app')
+}
+
 export function resolveApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL
   if (fromEnv && String(fromEnv).trim()) {
@@ -24,7 +28,7 @@ export function resolveApiBase(): string {
   }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname
-    if (host === 'finklik.vercel.app' || host === 'ptrvalina.github.io') {
+    if (isCloudStaticHost(host)) {
       return PRODUCTION_API_BASE
     }
   }
