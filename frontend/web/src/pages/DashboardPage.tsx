@@ -22,9 +22,11 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const isManager = (user?.role || '').toLowerCase() === 'manager'
   const qc = useQueryClient()
-  const { data: metrics, isLoading } = useQuery({
+  const { data: metrics, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => dashboardApi.getMetrics().then((r) => r.data),
+    enabled: !isManager,
+    retry: 1,
   })
 
   const seedMutation = useMutation({
@@ -39,12 +41,14 @@ export default function DashboardPage() {
   const { data: txData } = useQuery({
     queryKey: ['transactions', 'recent'],
     queryFn: () => dashboardApi.getTransactions({ per_page: 5 }).then((r) => r.data),
+    enabled: !isManager,
   })
 
   const dashboardYear = new Date().getFullYear()
   const { data: summaryData } = useQuery({
     queryKey: ['monthly-summary-dashboard', dashboardYear],
     queryFn: () => reportsApi.monthlySummary(dashboardYear).then((r) => r.data),
+    enabled: !isManager,
   })
 
   const chartData = (summaryData?.months ?? [])
@@ -53,12 +57,28 @@ export default function DashboardPage() {
 
   const transactions = txData?.items ?? []
 
-  if (isLoading) {
+  if (!isManager && isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center gap-3 text-on-surface-variant">
           <Icon name="hourglass_empty" className="animate-spin" />
           <span className="font-headline font-medium">Загружаем данные...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isManager && isError) {
+    return (
+      <div className="max-w-3xl">
+        <div className="card-elevated p-6">
+          <h1 className="page-heading">Главная</h1>
+          <p className="mt-2 text-on-surface-variant">
+            Не удалось загрузить данные дашборда. Проверьте подключение к API и повторите попытку.
+          </p>
+          <button type="button" className="btn-primary mt-4" onClick={() => refetch()}>
+            Повторить
+          </button>
         </div>
       </div>
     )

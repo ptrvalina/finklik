@@ -1,19 +1,15 @@
 """Unit tests for security module."""
-import sys
 
 import pytest
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 14),
-    reason="bcrypt/passlib unstable on Python 3.14+ — CI uses 3.11 (DEVELOPER_GUIDE).",
-)
 class TestPasswordHashing:
     def test_hash_and_verify(self):
         from app.core.security import hash_password, verify_password
         hashed = hash_password("TestPass123")
         assert hashed != "TestPass123"
-        assert hashed.startswith(("$2a$", "$2b$", "$2y$"))
+        # New hashes are PBKDF2-SHA256; legacy bcrypt is still supported in verify_password.
+        assert hashed.startswith("$pbkdf2-sha256$")
         assert verify_password("TestPass123", hashed) is True
         assert verify_password("WrongPass", hashed) is False
 
