@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { api, taxApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
 
@@ -25,18 +25,6 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 
 interface CalEvent { id: string; title: string; event_date: string; event_type: string; color: string; is_auto: boolean }
 
-function generateTaxEvents(year: number, month: number): CalEvent[] {
-  const m = month + 1, y = year, events: CalEvent[] = []
-  events.push({ id: `auto-nds-${y}-${m}`, title: 'Декларация НДС', event_date: `${y}-${String(m).padStart(2,'0')}-20`, event_type: 'report', color: EVENT_COLORS.report, is_auto: true })
-  events.push({ id: `auto-salary-${y}-${m}`, title: 'Выплата зарплаты', event_date: `${y}-${String(m).padStart(2,'0')}-15`, event_type: 'salary', color: EVENT_COLORS.salary, is_auto: true })
-  if ([3, 6, 9, 12].includes(m)) {
-    const nextM = m === 12 ? 1 : m + 1, nextY = m === 12 ? y + 1 : y
-    events.push({ id: `auto-usn-${y}-${m}`, title: 'Уплата УСН', event_date: `${nextY}-${String(nextM).padStart(2,'0')}-25`, event_type: 'tax', color: EVENT_COLORS.tax, is_auto: true })
-    events.push({ id: `auto-fsszn-${y}-${m}`, title: 'Уплата ФСЗН', event_date: `${nextY}-${String(nextM).padStart(2,'0')}-15`, event_type: 'deadline', color: EVENT_COLORS.deadline, is_auto: true })
-  }
-  return events
-}
-
 export default function CalendarPage() {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -51,7 +39,10 @@ export default function CalendarPage() {
   let startDow = firstDay.getDay() - 1
   if (startDow < 0) startDow = 6
 
-  const autoEvents = generateTaxEvents(year, month)
+  const { data: taxCalendarData } = useQuery({
+    queryKey: ['calendar-tax-events', year],
+    queryFn: () => taxApi.calendar(year).then((r) => r.data),
+  })
   const { data: userEventsData } = useQuery({
     queryKey: ['calendar', year, month],
     queryFn: () => {
@@ -62,6 +53,14 @@ export default function CalendarPage() {
   })
 
   const userEvents: CalEvent[] = userEventsData || []
+  const autoEvents: CalEvent[] = (taxCalendarData?.events || []).map((event: any, idx: number) => ({
+    id: `tax-${year}-${idx}-${event.event_type}`,
+    title: event.title,
+    event_date: event.event_date,
+    event_type: event.event_type,
+    color: event.color || EVENT_COLORS[event.event_type] || EVENT_COLORS.deadline,
+    is_auto: true,
+  }))
   const allEvents = [...autoEvents, ...userEvents]
 
   const addMutation = useMutation({

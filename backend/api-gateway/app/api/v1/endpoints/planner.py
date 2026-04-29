@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_, select
@@ -147,7 +147,7 @@ async def close_task(
         raise HTTPException(status_code=403, detail="Недостаточно прав для закрытия задачи")
 
     task.status = "closed"
-    task.closed_at = datetime.utcnow()
+    task.closed_at = datetime.now(timezone.utc)
     await safe_log_audit(
         db,
         user_id=str(current_user.id),

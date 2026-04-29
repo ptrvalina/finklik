@@ -234,6 +234,18 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
     },
     onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка отправки'),
   })
+  const autoSubmitMutation = useMutation({
+    mutationFn: () => submissionsApi.autoSubmit(30),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['submissions'] })
+      const payload = res.data || {}
+      flash(
+        'success',
+        `Автоподача: отправлено ${payload.submitted ?? 0}, пропущено ${payload.skipped ?? 0}`,
+      )
+    },
+    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка автоподачи'),
+  })
 
   const rejectMutation = useMutation({
     mutationFn: (args: { id: string; reason?: string; returnToDraftFromRejected?: boolean }) =>
@@ -251,6 +263,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   }
 
   const submissions = data?.submissions ?? []
+  const confirmedCount = submissions.filter((s: any) => s.status === 'confirmed').length
   const statsKeys = authorityFilter ? [authorityFilter] : AUTH_KEYS
   const currentAuthorityTypes = reportTypes[createForm.authority] || {}
 
@@ -274,10 +287,27 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
           <p className="mt-0.5 text-xs text-on-surface-variant">
             {authorityFilter ? `Орган: ${authorityShortLabel(authorityFilter)}` : 'ФСЗН · ИМНС · Белгосстрах · Белстат'}
           </p>
+          <p className="mt-1 text-[11px] text-secondary">
+            Готово к автоподаче: {confirmedCount}
+          </p>
         </div>
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowCreate(true)}>
-          <Icon name="add" className="text-lg" /> Сформировать отчёт
-        </button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowCreate(true)}>
+            <Icon name="add" className="text-lg" /> Сформировать отчёт
+          </button>
+          <button
+            type="button"
+            className="btn-secondary w-full sm:w-auto"
+            onClick={() => autoSubmitMutation.mutate()}
+            disabled={autoSubmitMutation.isPending || confirmedCount === 0}
+          >
+            <Icon name="auto_mode" className="text-lg" />
+            {autoSubmitMutation.isPending ? 'Автоподача...' : 'Автоподать готовые'}
+          </button>
+        </div>
+      </div>
+      <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
+        Автоподача работает только для валидных и подтверждённых пакетов; ошибки автоматически возвращаются в контур проверки.
       </div>
 
       <div className="rounded-xl bg-surface-container-low p-3 sm:p-4">

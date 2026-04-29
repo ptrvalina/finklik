@@ -18,6 +18,11 @@ from app.schemas.employee import (
     SalaryResponse,
 )
 from app.services.tax_calculator import calculate_salary
+from app.services.workforce_automation import (
+    create_workforce_calendar_event,
+    create_workforce_followup_task,
+    payroll_followup_date,
+)
 from app.internal.audit.service import safe_log_audit
 from app.internal.crypto.encrypt import get_aes_gcm_encryptor
 from app.security import get_encryptor
@@ -167,6 +172,23 @@ async def create_employee(
         "employee",
         str(emp.id),
     )
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title=f"Онбординг сотрудника: {body.full_name}",
+        description="Проверьте кадровые документы, ПУ-2 и стартовые настройки начислений.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title=f"Кадровый контроль: {body.full_name}",
+        description="Автоматическое событие после приёма сотрудника.",
+        event_date=body.hire_date,
+        event_type="report",
+        color="#0D9488",
+    )
     return _employee_to_response(enc, pii_enc, emp)
 
 
@@ -249,8 +271,27 @@ async def fire_employee(
 
     emp.is_active = False
     emp.fire_date = fire_date or date.today()
+    fire_dt = emp.fire_date or date.today()
     await db.flush()
     await safe_log_audit(db, str(current_user.id), "employee_terminate", "employee", str(emp.id))
+    full_name = _safe_decrypt(get_encryptor(), emp.full_name_enc) or "Сотрудник"
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title=f"Оффбординг сотрудника: {full_name}",
+        description="Проверьте увольнение, расчёт и отправку кадровой отчётности.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title=f"Увольнение: {full_name}",
+        description="Автоматическое событие контроля закрытия кадрового цикла.",
+        event_date=fire_dt,
+        event_type="deadline",
+        color="#C026D3",
+    )
 
 
 @router.post("/salary/calculate", response_model=SalaryResponse)
@@ -317,6 +358,23 @@ async def calculate_employee_salary(
             "period_year": body.period_year,
             "period_month": body.period_month,
         },
+    )
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title=f"Проверка начисления зарплаты ({body.period_month:02d}.{body.period_year})",
+        description="Проверьте расчёт, после чего отправьте регламентные формы и закройте выплату.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title=f"Дедлайн payroll ({body.period_month:02d}.{body.period_year})",
+        description="Автоматическое напоминание по payroll после расчёта.",
+        event_date=payroll_followup_date(),
+        event_type="salary",
+        color="#059669",
     )
     return record
 

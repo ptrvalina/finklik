@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -109,7 +109,7 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
                 break
 
             job.status = "running"
-            job.started_at = datetime.utcnow()
+            job.started_at = datetime.now(timezone.utc)
             job.attempts += 1
             await session.commit()
 
@@ -123,7 +123,7 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
             if not tx:
                 job.status = "failed"
                 job.last_error = "Транзакция не найдена"
-                job.finished_at = datetime.utcnow()
+                job.finished_at = datetime.now(timezone.utc)
                 await session.commit()
                 processed += 1
                 continue
@@ -149,13 +149,13 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
                 job.status = "success"
                 job.external_id = external_id
                 job.last_error = None
-                job.finished_at = datetime.utcnow()
+                job.finished_at = datetime.now(timezone.utc)
                 await session.commit()
             except Exception as exc:
                 job.last_error = str(exc)
                 if job.attempts >= job.max_attempts:
                     job.status = "failed"
-                    job.finished_at = datetime.utcnow()
+                    job.finished_at = datetime.now(timezone.utc)
                 else:
                     job.status = "retry"
                 await session.commit()
@@ -164,10 +164,37 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
     return processed
 
 
+async def recover_stuck_sync_jobs(stuck_after_minutes: int = 15) -> int:
+    recovered = 0
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=max(1, stuck_after_minutes))
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(OneCSyncJob).where(
+                OneCSyncJob.status == "running",
+                OneCSyncJob.started_at.is_not(None),
+                OneCSyncJob.started_at < cutoff,
+            )
+        )
+        jobs = result.scalars().all()
+        for job in jobs:
+            if job.attempts >= job.max_attempts:
+                job.status = "failed"
+                job.finished_at = datetime.now(timezone.utc)
+                job.last_error = "Задача зависла в running и переведена в failed"
+            else:
+                job.status = "retry"
+                job.last_error = "Задача зависла в running и возвращена в retry"
+            recovered += 1
+        if recovered:
+            await session.commit()
+    return recovered
+
+
 async def process_onec_sync_jobs_forever() -> None:
     poll_interval = 2 if settings.DEBUG else 5
     batch_size = 20
     while True:
+        await recover_stuck_sync_jobs(stuck_after_minutes=15)
         processed = await process_onec_sync_jobs_once(batch_size=batch_size)
         if processed == 0:
             await asyncio.sleep(poll_interval)

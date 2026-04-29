@@ -68,6 +68,8 @@ make dev                    # Docker: API, фронт, mock-банк, mock-1С
 python scripts/verify_like_ci.py
 # или из корня с make:
 make verify-like-ci
+# регрессионный пакет автопилота (pipeline + OCR + sync queue recovery):
+make test-autopilot-regression
 ```
 
 Зависимости для линта и полного pytest: `pip install -r backend/api-gateway/requirements.txt -r backend/api-gateway/requirements-dev.txt`.

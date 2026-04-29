@@ -217,7 +217,7 @@ export default function TaxesPage() {
                 <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-on-surface">{event.title}</p>
-                  <p className="text-[10px] text-on-surface-variant">{event.date}</p>
+                  <p className="text-[10px] text-on-surface-variant">{event.event_date}</p>
                 </div>
               </div>
             ))}

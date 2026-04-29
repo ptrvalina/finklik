@@ -1,6 +1,6 @@
 """Models for regulatory updates monitoring and automated report submissions."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
@@ -19,7 +19,7 @@ class RegulatoryUpdate(Base):
     effective_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class RegulatoryNotification(Base):
@@ -31,7 +31,7 @@ class RegulatoryNotification(Base):
     organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     read_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class ReportSubmission(Base):
@@ -57,5 +57,9 @@ class ReportSubmission(Base):
     # Снимок report_data + метаданные на момент POST /submit (архив без внешнего API).
     submission_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )

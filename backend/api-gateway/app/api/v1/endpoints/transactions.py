@@ -12,11 +12,35 @@ from app.schemas.transaction import (
     PaginatedTransactions, DashboardMetrics,
 )
 from app.cache.redis_cache import cache
+from app.services.pipeline_status import (
+    get_transaction_pipeline_status,
+    get_transaction_validation_issues,
+)
+from app.services.categorization_service import auto_categorize_transaction
 
 router = APIRouter(
     tags=["transactions"],
     dependencies=[Depends(require_roles("admin", "accountant"))],
 )
+
+def _serialize_transaction(tx: Transaction) -> TransactionResponse:
+    return TransactionResponse(
+        id=tx.id,
+        type=tx.type,
+        amount=tx.amount,
+        vat_amount=tx.vat_amount,
+        counterparty_id=tx.counterparty_id,
+        category=tx.category,
+        description=tx.description,
+        source=tx.source,
+        ai_category_confidence=tx.ai_category_confidence,
+        receipt_image_url=tx.receipt_image_url,
+        transaction_date=tx.transaction_date,
+        status=tx.status,
+        pipeline_status=get_transaction_pipeline_status(tx),
+        validation_issues=get_transaction_validation_issues(tx),
+        created_at=tx.created_at,
+    )
 
 
 @router.get("/dashboard", response_model=DashboardMetrics)
@@ -154,7 +178,12 @@ async def list_transactions(
         .limit(per_page)
     )
     items = result.scalars().all()
-    return PaginatedTransactions(items=list(items), total=total, page=page, per_page=per_page)
+    return PaginatedTransactions(
+        items=[_serialize_transaction(tx) for tx in items],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 @router.post("/transactions", response_model=TransactionResponse, status_code=201)
@@ -187,10 +216,11 @@ async def create_transaction(
         receipt_image_url=body.receipt_image_url,
         transaction_date=body.transaction_date,
     )
+    await auto_categorize_transaction(db, tx)
     db.add(tx)
     await db.flush()
     await cache.invalidate_org(str(current_user.organization_id))
-    return tx
+    return _serialize_transaction(tx)
 
 
 @router.put("/transactions/{tx_id}", response_model=TransactionResponse)
@@ -230,9 +260,10 @@ async def update_transaction(
     tx.ai_category_confidence = body.ai_category_confidence
     tx.receipt_image_url = body.receipt_image_url
     tx.transaction_date = body.transaction_date
+    await auto_categorize_transaction(db, tx)
     await db.flush()
     await cache.invalidate_org(str(current_user.organization_id))
-    return tx
+    return _serialize_transaction(tx)
 
 
 @router.delete("/transactions/{tx_id}", status_code=204)
@@ -269,7 +300,7 @@ async def get_transaction(
     tx = result.scalar_one_or_none()
     if not tx:
         raise HTTPException(status_code=404, detail="Транзакция не найдена")
-    return tx
+    return _serialize_transaction(tx)
 
 
 @router.get("/reports/counterparty-turnover")

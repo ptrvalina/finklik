@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from sqlalchemy import String, Numeric, Boolean, DateTime, Date, ForeignKey, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -45,7 +45,7 @@ class Employee(Base):
     id_document_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
     id_document_payload_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     salaries: Mapped[list["SalaryRecord"]] = relationship("SalaryRecord", back_populates="employee")
 
@@ -86,7 +86,7 @@ class SalaryRecord(Base):
 
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft/paid
     paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     employee: Mapped["Employee"] = relationship("Employee", back_populates="salaries")
 
@@ -110,7 +110,7 @@ class CalendarEvent(Base):
     recurrence_rule: Mapped[str | None] = mapped_column(String(50), nullable=True)
     # monthly / quarterly / yearly
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class AuditLog(Base):
@@ -126,4 +126,4 @@ class AuditLog(Base):
     ip_address: Mapped[str] = mapped_column(String(45), nullable=False)
     success: Mapped[bool] = mapped_column(Boolean, default=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

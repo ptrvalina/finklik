@@ -71,6 +71,10 @@ export default function ScannerPage() {
     queryKey: ['scanner-history'],
     queryFn: () => scannerApi.list({ limit: 20 }).then((r) => r.data),
   })
+  const { data: reviewQueueData } = useQuery({
+    queryKey: ['scanner-review-queue'],
+    queryFn: () => scannerApi.reviewQueue(50).then((r) => r.data as { items: any[] }),
+  })
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => scannerApi.upload(file),
@@ -180,6 +184,9 @@ export default function ScannerPage() {
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Загрузка</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Распознавание</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Операция</span>
+          <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-amber-300">
+            Нужна проверка: {reviewQueueData?.items?.length ?? 0}
+          </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link to="/transactions" className="btn-secondary !py-2 text-xs">
@@ -545,6 +552,7 @@ export default function ScannerPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
         {[
           { icon: 'account_tree', color: 'primary', label: 'Сканировано', value: String(history.length) },
+          { icon: 'rule', color: 'tertiary', label: 'В очереди проверки', value: String(reviewQueueData?.items?.length ?? 0) },
           { icon: 'bolt', color: 'secondary', label: 'Время обработки', value: '~1.2s' },
           { icon: 'verified', color: 'tertiary', label: 'Точность OCR', value: '99.8%' },
           { icon: 'security', color: 'error', label: 'Хранение', value: 'AES-256' },

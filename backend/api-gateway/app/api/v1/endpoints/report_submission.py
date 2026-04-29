@@ -46,6 +46,41 @@ log = structlog.get_logger()
 _PERIOD_RE = re.compile(r"^(\d{4})-(Q([1-4])|M(0[1-9]|1[0-2]))$")
 
 
+async def _count_pipeline_inconsistencies(
+    db: AsyncSession,
+    organization_id: str,
+    period_start: date,
+    period_end: date,
+) -> int:
+    missing_description = await db.execute(
+        select(func.count(Transaction.id)).where(
+            Transaction.organization_id == organization_id,
+            Transaction.transaction_date >= period_start,
+            Transaction.transaction_date <= period_end,
+            func.trim(func.coalesce(Transaction.description, "")) == "",
+        )
+    )
+    missing_category = await db.execute(
+        select(func.count(Transaction.id)).where(
+            Transaction.organization_id == organization_id,
+            Transaction.transaction_date >= period_start,
+            Transaction.transaction_date <= period_end,
+            Transaction.type == "expense",
+            Transaction.category.is_(None),
+        )
+    )
+    scan_without_receipt = await db.execute(
+        select(func.count(Transaction.id)).where(
+            Transaction.organization_id == organization_id,
+            Transaction.transaction_date >= period_start,
+            Transaction.transaction_date <= period_end,
+            Transaction.source == "scan",
+            Transaction.receipt_image_url.is_(None),
+        )
+    )
+    return int(missing_description.scalar() or 0) + int(missing_category.scalar() or 0) + int(scan_without_receipt.scalar() or 0)
+
+
 def _mock_portal_accepts(submission_id: str, reject_rate: float) -> bool:
     """True if mock portal accepts. Deterministic from UUID and reject_rate in [0, 1]."""
     rr = max(0.0, min(1.0, float(reject_rate)))
@@ -56,6 +91,27 @@ def _mock_portal_accepts(submission_id: str, reject_rate: float) -> bool:
     h = int(hashlib.sha256(submission_id.encode()).hexdigest(), 16)
     bucket = (h % 10_000) / 10_000.0
     return bucket >= rr
+
+
+async def _readiness_issues_for_submission(
+    db: AsyncSession,
+    submission: ReportSubmission,
+) -> list[str]:
+    issues: list[str] = []
+    try:
+        period_start, period_end, _ = _parse_report_period(submission.report_period)
+    except Exception as exc:
+        return [f"Некорректный период отчёта: {exc}"]
+
+    inconsistencies = await _count_pipeline_inconsistencies(
+        db=db,
+        organization_id=submission.organization_id,
+        period_start=period_start,
+        period_end=period_end,
+    )
+    if inconsistencies > 0:
+        issues.append(f"Несогласованные операции в учёте: {inconsistencies}")
+    return issues
 
 
 def _build_submission_snapshot_json(
@@ -552,6 +608,18 @@ async def confirm_submission(
 
     if submission.status != "pending_review":
         raise HTTPException(400, f"Невозможно подтвердить отчёт в статусе '{submission.status}'")
+    period_start, period_end, _ = _parse_report_period(submission.report_period)
+    inconsistencies = await _count_pipeline_inconsistencies(
+        db=db,
+        organization_id=current_user.organization_id,
+        period_start=period_start,
+        period_end=period_end,
+    )
+    if inconsistencies > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Найдены несогласованные данные учёта ({inconsistencies}). Исправьте операции перед подтверждением отчёта.",
+        )
 
     submission.status = "confirmed"
     submission.confirmed_by = current_user.id
@@ -585,6 +653,9 @@ async def submit_report(
 
     if submission.status != "confirmed":
         raise HTTPException(400, "Отчёт должен быть подтверждён перед отправкой")
+    issues = await _readiness_issues_for_submission(db=db, submission=submission)
+    if issues:
+        raise HTTPException(status_code=409, detail="; ".join(issues))
 
     org_row = await db.execute(
         select(Organization).where(Organization.id == current_user.organization_id)
@@ -710,6 +781,71 @@ async def submit_report(
         summary_message=msg,
     )
     return out
+
+
+@router.get("/{submission_id}/readiness")
+async def submission_readiness(
+    submission_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(ReportSubmission).where(
+            ReportSubmission.id == submission_id,
+            ReportSubmission.organization_id == current_user.organization_id,
+        )
+    )
+    submission = result.scalar_one_or_none()
+    if not submission:
+        raise HTTPException(404, "Отчёт не найден")
+    issues = await _readiness_issues_for_submission(db=db, submission=submission)
+    return {
+        "ready": len(issues) == 0,
+        "issues": issues,
+        "status": submission.status,
+    }
+
+
+@router.post("/auto-submit")
+async def auto_submit_confirmed(
+    background_tasks: BackgroundTasks,
+    limit: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(ReportSubmission)
+        .where(
+            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.status == "confirmed",
+        )
+        .order_by(desc(ReportSubmission.confirmed_at), desc(ReportSubmission.created_at))
+        .limit(limit)
+    )
+    submissions = result.scalars().all()
+    submitted = 0
+    skipped = 0
+    skipped_items: list[dict] = []
+    for s in submissions:
+        issues = await _readiness_issues_for_submission(db=db, submission=s)
+        if issues:
+            skipped += 1
+            skipped_items.append({"id": s.id, "issues": issues})
+            continue
+        await submit_report(
+            submission_id=s.id,
+            background_tasks=background_tasks,
+            portal_sim=None,
+            current_user=current_user,
+            db=db,
+        )
+        submitted += 1
+    return {
+        "processed": len(submissions),
+        "submitted": submitted,
+        "skipped": skipped,
+        "skipped_items": skipped_items,
+    }
 
 
 @router.post("/{submission_id}/reject")

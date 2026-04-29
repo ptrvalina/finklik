@@ -24,6 +24,7 @@ class TextParseRequest(BaseModel):
 
 MAX_SIZE = 25 * 1024 * 1024  # 25 MB (как в UI сканера)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"}
+LOW_CONFIDENCE_THRESHOLD = 75
 
 
 def _normalize_upload_content_type(content_type: str | None, filename: str) -> str | None:
@@ -46,6 +47,44 @@ def _normalize_upload_content_type(content_type: str | None, filename: str) -> s
     return ct
 
 
+def _to_decimal(value: object, default: Decimal = Decimal("0")) -> Decimal:
+    try:
+        return Decimal(str(value))
+    except Exception:
+        return default
+
+
+async def _find_duplicate_or_linked_transaction(
+    db: AsyncSession,
+    organization_id: str,
+    parsed: dict,
+) -> tuple[str | None, bool]:
+    amount = _to_decimal(parsed.get("amount"))
+    tx_date_raw = parsed.get("transaction_date")
+    if amount <= 0 or not tx_date_raw:
+        return None, False
+    try:
+        tx_date = date.fromisoformat(str(tx_date_raw))
+    except Exception:
+        return None, False
+    result = await db.execute(
+        select(Transaction)
+        .where(
+            Transaction.organization_id == organization_id,
+            Transaction.transaction_date == tx_date,
+            Transaction.amount == amount,
+        )
+        .order_by(desc(Transaction.created_at))
+        .limit(1)
+    )
+    tx = result.scalar_one_or_none()
+    if not tx:
+        return None, False
+    if tx.source == "scan":
+        return tx.id, True
+    return tx.id, False
+
+
 @router.post("/upload")
 async def upload_and_scan(
     file: UploadFile = File(...),
@@ -64,16 +103,23 @@ async def upload_and_scan(
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 
     ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    parsed = ocr_result.get("parsed", {}) or {}
+    linked_tx_id, is_duplicate = await _find_duplicate_or_linked_transaction(
+        db=db,
+        organization_id=current_user.organization_id,
+        parsed=parsed,
+    )
 
     doc = ScannedDocument(
         organization_id=current_user.organization_id,
         user_id=current_user.id,
         filename=file.filename or "unknown",
         doc_type=ocr_result["doc_type"],
-        status="done",
+        status="needs_review" if int(ocr_result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD else "done",
         ocr_text=ocr_result.get("ocr_text", ""),
-        parsed_data=json.dumps(ocr_result.get("parsed", {}), ensure_ascii=False),
+        parsed_data=json.dumps(parsed, ensure_ascii=False),
         confidence=ocr_result.get("confidence", 0),
+        transaction_id=linked_tx_id,
     )
     db.add(doc)
     await db.commit()
@@ -94,8 +140,10 @@ async def upload_and_scan(
         "status": doc.status,
         "confidence": doc.confidence,
         "ocr_text": doc.ocr_text,
-        "parsed": ocr_result.get("parsed", {}),
+        "parsed": parsed,
         "warnings": ocr_result.get("warnings", []),
+        "is_duplicate": is_duplicate,
+        "linked_transaction_id": linked_tx_id,
         "created_at": doc.created_at.isoformat(),
     }
 
@@ -131,7 +179,7 @@ async def upload_to_kudir(
         user_id=current_user.id,
         filename=file.filename or "unknown",
         doc_type=ocr_result["doc_type"],
-        status="done",
+        status="needs_review" if int(ocr_result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD else "done",
         ocr_text=ocr_result.get("ocr_text", ""),
         parsed_data=json.dumps(parsed, ensure_ascii=False),
         confidence=ocr_result.get("confidence", 0),
@@ -170,6 +218,37 @@ async def upload_to_kudir(
         "ai_category_confidence": confidence,
         "amount": str(tx.amount),
         "source": tx.source,
+    }
+
+
+@router.get("/review-queue")
+async def review_queue(
+    limit: int = Query(50, ge=1, le=200),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(ScannedDocument)
+        .where(
+            ScannedDocument.organization_id == current_user.organization_id,
+            ScannedDocument.status == "needs_review",
+        )
+        .order_by(desc(ScannedDocument.created_at))
+        .limit(limit)
+    )
+    docs = result.scalars().all()
+    return {
+        "items": [
+            {
+                "id": d.id,
+                "filename": d.filename,
+                "confidence": d.confidence,
+                "doc_type": d.doc_type,
+                "created_at": d.created_at.isoformat(),
+                "transaction_id": d.transaction_id,
+            }
+            for d in docs
+        ]
     }
 
 

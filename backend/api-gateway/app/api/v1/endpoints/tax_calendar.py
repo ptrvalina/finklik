@@ -31,6 +31,60 @@ tax_rules_fallback_counter = Counter(
 )
 
 
+async def _sync_auto_calendar_obligations(
+    db: AsyncSession,
+    organization_id: str,
+    year: int,
+    tax_regime: str,
+    legal_form: str,
+) -> int:
+    generated = generate_tax_calendar(year, tax_regime=tax_regime, legal_form=legal_form)
+    existing_result = await db.execute(
+        select(CalendarEvent).where(
+            CalendarEvent.organization_id == organization_id,
+            CalendarEvent.is_auto == True,  # noqa: E712
+            CalendarEvent.event_date >= date(year, 1, 1),
+            CalendarEvent.event_date <= date(year, 12, 31),
+        )
+    )
+    existing = existing_result.scalars().all()
+    existing_keys = {(e.title, e.event_type, e.event_date.isoformat()): e for e in existing}
+    touched: set[tuple[str, str, str]] = set()
+    created = 0
+
+    for item in generated:
+        key = (str(item["title"]), str(item["event_type"]), str(item["event_date"]))
+        touched.add(key)
+        if key in existing_keys:
+            ev = existing_keys[key]
+            ev.color = str(item.get("color") or ev.color)
+            ev.remind_days_before = 5
+            continue
+        db.add(
+            CalendarEvent(
+                organization_id=organization_id,
+                title=str(item["title"]),
+                description="Автоматически создано системой налоговых обязательств",
+                event_date=date.fromisoformat(str(item["event_date"])),
+                event_type=str(item["event_type"]),
+                color=str(item.get("color") or "#D97706"),
+                is_auto=True,
+                remind_days_before=5,
+                is_recurring=False,
+                recurrence_rule=None,
+            )
+        )
+        created += 1
+
+    for ev in existing:
+        key = (ev.title, ev.event_type, ev.event_date.isoformat())
+        if key not in touched:
+            await db.delete(ev)
+
+    await db.flush()
+    return created
+
+
 # ── Налоговые эндпоинты ───────────────────────────────────────────────────────
 
 @tax_router.get("/calculate", response_model=TaxCalculationResult)
@@ -187,6 +241,14 @@ async def get_tax_calendar(
         org = result.scalar_one_or_none()
     tax_regime = org.tax_regime if org else "usn_no_vat"
     legal_form = org.legal_form if org else "ip"
+    if current_user.organization_id:
+        await _sync_auto_calendar_obligations(
+            db=db,
+            organization_id=current_user.organization_id,
+            year=year,
+            tax_regime=tax_regime,
+            legal_form=legal_form,
+        )
     events = generate_tax_calendar(year, tax_regime=tax_regime, legal_form=legal_form)
     return {"year": year, "tax_regime": tax_regime, "legal_form": legal_form, "events": events, "total": len(events)}
 

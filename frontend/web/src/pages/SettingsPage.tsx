@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi } from '../api/client'
+import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -43,7 +43,7 @@ export default function SettingsPage() {
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">Настройки</h1>
-        <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции 1С, команда и законодательство</p>
+        <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции, команда и законодательство</p>
         <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Профиль</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Интеграции</span>
@@ -158,6 +158,10 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
   const [llmKey, setLlmKey] = useState('')
   const [llmBase, setLlmBase] = useState('')
   const [llmModel, setLlmModel] = useState('')
+  const [automationMode, setAutomationMode] = useState<'assist' | 'checkpoints' | 'autopilot'>('assist')
+  const [autoReporting, setAutoReporting] = useState(false)
+  const [autoWorkforce, setAutoWorkforce] = useState(false)
+  const [autoSubmitLimit, setAutoSubmitLimit] = useState(20)
 
   const { data: cfg, isLoading } = useQuery({
     queryKey: ['onec-config'],
@@ -167,6 +171,16 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
   const { data: llmStatus } = useQuery({
     queryKey: ['assistant-status'],
     queryFn: () => assistantApi.status().then((r) => r.data),
+    enabled: isOwner,
+  })
+  const { data: automationPolicy } = useQuery({
+    queryKey: ['automation-policy'],
+    queryFn: () => automationApi.policy().then((r) => r.data as any),
+    enabled: isOwner,
+  })
+  const { data: automationScenarios } = useQuery({
+    queryKey: ['automation-scenarios'],
+    queryFn: () => automationApi.scenarios().then((r) => r.data as any),
     enabled: isOwner,
   })
 
@@ -184,6 +198,22 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
     },
     onError: (e: any) =>
       setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения ключа ИИ' }),
+  })
+  const saveAutomationMutation = useMutation({
+    mutationFn: () =>
+      automationApi.updatePolicy({
+        mode: automationMode,
+        allow_auto_reporting: autoReporting,
+        allow_auto_workforce: autoWorkforce,
+        max_auto_submissions_per_run: autoSubmitLimit,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['automation-policy'] })
+      qc.invalidateQueries({ queryKey: ['automation-scenarios'] })
+      setMessage({ type: 'success', text: 'Политика автоматизации сохранена' })
+    },
+    onError: (e: any) =>
+      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения политики автоматизации' }),
   })
 
   const clearLlmMutation = useMutation({
@@ -206,7 +236,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['onec-config'] })
       setToken('')
-      setMessage({ type: 'success', text: 'Подключение 1С сохранено' })
+      setMessage({ type: 'success', text: 'Подключение сохранено' })
     },
     onError: (e: any) =>
       setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения' }),
@@ -218,6 +248,13 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       setProtocol(cfg.protocol || 'custom-http')
     }
   }, [cfg?.configured, cfg?.endpoint, cfg?.protocol])
+  useEffect(() => {
+    if (!automationPolicy) return
+    setAutomationMode((automationPolicy.mode || 'assist') as 'assist' | 'checkpoints' | 'autopilot')
+    setAutoReporting(Boolean(automationPolicy.allow_auto_reporting))
+    setAutoWorkforce(Boolean(automationPolicy.allow_auto_workforce))
+    setAutoSubmitLimit(Number(automationPolicy.max_auto_submissions_per_run || 20))
+  }, [automationPolicy])
 
   if (isLoading) {
     return <p className="text-sm text-zinc-500">Загрузка…</p>
@@ -235,9 +272,9 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
       <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
-        <h3 className="mb-1 text-sm font-bold text-on-surface">1С: HTTP-сервис</h3>
+        <h3 className="mb-1 text-sm font-bold text-on-surface">Внешний HTTP-сервис</h3>
         <p className="mb-4 text-[11px] text-on-surface-variant">
-          Endpoint и токен для обмена с конфигурацией 1С (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
+          Endpoint и токен для обмена через внешний API (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
         </p>
         {cfg?.configured && (
           <p className="mb-3 text-xs text-primary">
@@ -251,7 +288,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               className="input min-h-11 w-full rounded-xl font-mono text-sm"
               value={endpoint}
               onChange={(e) => setEndpoint(e.target.value)}
-              placeholder="https://1c.example.com/api/finklik/"
+              placeholder="https://api.example.com/finklik/"
             />
           </div>
           <div>
@@ -353,10 +390,57 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
           </div>
         </div>
       )}
+      {isOwner && (
+        <div className="rounded-xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+          <h3 className="mb-1 text-sm font-bold text-on-surface">Центр автопилота</h3>
+          <p className="mb-4 text-[11px] text-on-surface-variant">
+            Режимы: Assist, Checkpoints, Autopilot. Включайте только те сценарии, которые готовы к полностью автоматическому циклу.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="label">Режим</label>
+              <select className="input min-h-11 w-full rounded-xl" value={automationMode} onChange={(e) => setAutomationMode(e.target.value as any)}>
+                <option value="assist">Assist</option>
+                <option value="checkpoints">Auto with checkpoints</option>
+                <option value="autopilot">Autopilot</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
+              <input type="checkbox" className="rounded" checked={autoReporting} onChange={(e) => setAutoReporting(e.target.checked)} />
+              Автоотчётность (автоподача подтверждённых отчётов)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
+              <input type="checkbox" className="rounded" checked={autoWorkforce} onChange={(e) => setAutoWorkforce(e.target.checked)} />
+              Автосценарии workforce (кадровые follow-up задачи)
+            </label>
+            <div>
+              <label className="label">Лимит автоподач за запуск</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                className="input min-h-11 w-full rounded-xl"
+                value={autoSubmitLimit}
+                onChange={(e) => setAutoSubmitLimit(Math.max(1, Math.min(100, Number(e.target.value || 20))))}
+              />
+            </div>
+            {Array.isArray(automationScenarios?.items) && automationScenarios.items.length > 0 && (
+              <div className="rounded-lg border border-outline-variant/20 bg-surface p-3 text-xs text-on-surface-variant">
+                {automationScenarios.items.map((s: any) => (
+                  <p key={s.id}>
+                    {s.enabled ? '●' : '○'} {s.title} ({s.schedule})
+                  </p>
+                ))}
+              </div>
+            )}
+            <button type="button" className="btn-primary min-h-11" disabled={saveAutomationMutation.isPending} onClick={() => saveAutomationMutation.mutate()}>
+              {saveAutomationMutation.isPending ? 'Сохраняем…' : 'Сохранить политику автоматизации'}
+            </button>
+          </div>
+        </div>
+      )}
 
-      <p className="text-[11px] text-zinc-600">
-        Реестр контура и health: раздел «Контур 1С» в меню. Очередь синхронизации — «Синхронизация 1С».
-      </p>
+      <p className="text-[11px] text-zinc-600">Интеграции можно временно отключить, оставив пустой endpoint.</p>
     </div>
   )
 }

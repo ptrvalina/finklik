@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column
@@ -18,7 +18,7 @@ class PlannerTask(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     attachments: Mapped[list | None] = mapped_column(JSON, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
@@ -30,7 +30,7 @@ class PlannerReport(Base):
     author_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     attachments: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 class PlannerComment(Base):
@@ -40,4 +40,4 @@ class PlannerComment(Base):
     task_id: Mapped[str] = mapped_column(String(36), ForeignKey("planner_tasks.id"), nullable=False, index=True)
     author_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

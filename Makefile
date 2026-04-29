@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web test-autopilot-regression
 
 # Windows Store / Git Bash: часто есть только `python`; CI/Linux обычно — `python3`.
 ifeq ($(OS),Windows_NT)
@@ -70,6 +70,9 @@ test-unit: ## Только юнит-тесты
 
 test-integration: ## Только интеграционные тесты
 	cd backend/api-gateway && $(PYTHON) -m pytest tests/integration/ -v --tb=short
+
+test-autopilot-regression: ## Регрессия автопилота: ключевые E2E/integration цепочки
+	cd backend/api-gateway && $(PYTHON) -m pytest tests/integration/test_automation_pipeline.py tests/integration/test_onec_sync_smoke.py tests/integration/test_scanner.py -v --tb=short
 
 demo-smoke: ## Быстрый pre-demo smoke (backend+frontend)
 	@$(PYTHON) scripts/pre_demo_smoke.py

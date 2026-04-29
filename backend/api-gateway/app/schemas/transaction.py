@@ -40,6 +40,8 @@ class TransactionResponse(BaseModel):
     receipt_image_url: str | None = None
     transaction_date: date
     status: str
+    pipeline_status: str | None = None
+    validation_issues: list[str] = []
     created_at: datetime
 
     model_config = {"from_attributes": True}

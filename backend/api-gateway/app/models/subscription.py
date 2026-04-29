@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
@@ -32,4 +32,4 @@ class Subscription(Base):
     trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     current_period_start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

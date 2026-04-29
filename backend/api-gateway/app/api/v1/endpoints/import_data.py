@@ -12,6 +12,7 @@ from app.core.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.cache.redis_cache import cache
+from app.services.categorization_service import auto_categorize_transaction
 
 router = APIRouter(
     prefix="/import",
@@ -161,6 +162,7 @@ async def import_csv(
             transaction_date=row["transaction_date"],
             status="draft",
         )
+        await auto_categorize_transaction(db, tx)
         db.add(tx)
         imported += 1
 

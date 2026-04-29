@@ -137,6 +137,8 @@ export const workforceApi = {
   calculateSalary: (data: { employee_id: string; period_start: string; period_end: string }) =>
     api.post('/salary/calculate', data),
   listSalaryCalculations: () => api.get('/salary/calculations'),
+  runMonthlyPayroll: (data: { period_year: number; period_month: number; work_days_plan?: number }) =>
+    api.post('/salary/run-month', data),
 }
 
 export const taxApi = {
@@ -192,6 +194,8 @@ export const onecApi = {
   syncTransaction: (data: any) => api.post('/onec/sync-transaction', data),
   listSyncJobs: (status?: string) => api.get('/onec/sync-jobs', { params: { status } }),
   retrySyncJob: (jobId: string) => api.post(`/onec/sync-jobs/${jobId}/retry`),
+  processSyncJobs: (batch_size = 20, recover_stuck = true) =>
+    api.post('/onec/sync-jobs/process', null, { params: { batch_size, recover_stuck } }),
 }
 
 export const scannerApi = {
@@ -204,6 +208,7 @@ export const scannerApi = {
   parseText: (text: string, doc_type?: string) =>
     api.post('/scanner/parse-text', { text, doc_type }),
   list: (params?: any) => api.get('/scanner/documents', { params }),
+  reviewQueue: (limit?: number) => api.get('/scanner/review-queue', { params: { limit } }),
   remove: (id: string) => api.delete(`/scanner/documents/${id}`),
   uploadToKudir: (file: File) => {
     const form = new FormData()
@@ -242,6 +247,23 @@ export const importApi = {
   },
 }
 
+export const categorizationRulesApi = {
+  list: () => api.get('/categorization-rules'),
+  create: (data: {
+    name: string
+    category: string
+    transaction_type?: string | null
+    counterparty_id?: string | null
+    description_pattern?: string | null
+    min_amount?: number | null
+    max_amount?: number | null
+    vat_required?: boolean | null
+    priority?: number
+    is_active?: boolean
+  }) => api.post('/categorization-rules', data),
+  remove: (id: string) => api.delete(`/categorization-rules/${id}`),
+}
+
 export const demoApi = {
   seed: () => api.post('/demo/seed'),
 }
@@ -277,6 +299,8 @@ export const submissionsApi = {
     api.post(`/submissions/${id}/submit`, null, { params: opts }),
   reject: (id: string, reason?: string) =>
     api.post(`/submissions/${id}/reject`, null, { params: { reason } }),
+  readiness: (id: string) => api.get(`/submissions/${id}/readiness`),
+  autoSubmit: (limit = 20) => api.post('/submissions/auto-submit', null, { params: { limit } }),
 }
 
 export type AssistantSource = {
@@ -373,6 +397,22 @@ export const fxApi = {
   nbrbRates: () => api.get<NbrbRatesPayload>('/fx/nbrb/rates'),
   nbrbConvert: (params: { amount: string; from: string; to: string }) =>
     api.get<NbrbConvertPayload>('/fx/nbrb/convert', { params }),
+}
+
+export const automationApi = {
+  issues: (limit = 100) => api.get('/automation/issues', { params: { limit } }),
+  policy: () => api.get('/automation/policy'),
+  updatePolicy: (data: {
+    mode: 'assist' | 'checkpoints' | 'autopilot'
+    allow_auto_reporting: boolean
+    allow_auto_workforce: boolean
+    max_auto_submissions_per_run: number
+  }) => api.put('/automation/policy', data),
+  scenarios: () => api.get('/automation/scenarios'),
+  health: () => api.get('/automation/health'),
+  audit: (limit = 100) => api.get('/automation/audit', { params: { limit } }),
+  kpi: () => api.get('/automation/kpi'),
+  dataQuality: () => api.get('/automation/data-quality'),
 }
 
 export const primaryDocumentsApi = {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { dashboardApi, onecApi } from '../api/client'
+import { categorizationRulesApi, counterpartiesApi, dashboardApi, onecApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
 
@@ -18,6 +18,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 const PER_PAGE = 20
 type TxType = 'income' | 'expense' | 'refund' | 'writeoff'
+type PipelineStatus = 'new' | 'parsed' | 'categorized' | 'verified' | 'reported'
 
 const TX_META: Record<TxType, { label: string; icon: string; color: string; badge: string }> = {
   income:   { label: 'Доход',    icon: 'arrow_downward', color: 'text-secondary',       badge: 'bg-secondary/10 text-secondary border border-secondary/20' },
@@ -56,8 +57,20 @@ export default function TransactionsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [showRulesModal, setShowRulesModal] = useState(false)
   const [editingTx, setEditingTx] = useState<any | null>(null)
   const [form, setForm] = useState({ ...emptyForm })
+  const [ruleForm, setRuleForm] = useState({
+    name: '',
+    category: 'services',
+    transaction_type: 'expense',
+    counterparty_id: '',
+    description_pattern: '',
+    min_amount: '',
+    max_amount: '',
+    vat_required: 'any',
+    priority: '100',
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['transactions', filter, page, search, dateFrom, dateTo],
@@ -78,6 +91,14 @@ export default function TransactionsPage() {
     queryKey: ['onec-sync-jobs'],
     queryFn: () => onecApi.listSyncJobs().then((r) => r.data),
     refetchInterval: 5000,
+  })
+  const { data: rulesData } = useQuery({
+    queryKey: ['categorization-rules'],
+    queryFn: () => categorizationRulesApi.list().then((r) => r.data as any[]),
+  })
+  const { data: counterpartiesData } = useQuery({
+    queryKey: ['counterparties', 'for-rules'],
+    queryFn: () => counterpartiesApi.list().then((r) => r.data as any[]),
   })
 
   const invalidate = () => {
@@ -129,6 +150,39 @@ export default function TransactionsPage() {
       qc.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
+  const createRuleMutation = useMutation({
+    mutationFn: () =>
+      categorizationRulesApi.create({
+        name: ruleForm.name.trim(),
+        category: ruleForm.category,
+        transaction_type: ruleForm.transaction_type || null,
+        counterparty_id: ruleForm.counterparty_id || null,
+        description_pattern: ruleForm.description_pattern.trim() || null,
+        min_amount: ruleForm.min_amount ? Number(ruleForm.min_amount) : null,
+        max_amount: ruleForm.max_amount ? Number(ruleForm.max_amount) : null,
+        vat_required: ruleForm.vat_required === 'any' ? null : ruleForm.vat_required === 'yes',
+        priority: Number(ruleForm.priority || 100),
+        is_active: true,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categorization-rules'] })
+      setRuleForm({
+        name: '',
+        category: 'services',
+        transaction_type: 'expense',
+        counterparty_id: '',
+        description_pattern: '',
+        min_amount: '',
+        max_amount: '',
+        vat_required: 'any',
+        priority: '100',
+      })
+    },
+  })
+  const deleteRuleMutation = useMutation({
+    mutationFn: (id: string) => categorizationRulesApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categorization-rules'] }),
+  })
 
   function openCreate() { setEditingTx(null); setForm({ ...emptyForm }); setShowModal(true) }
 
@@ -165,10 +219,26 @@ export default function TransactionsPage() {
     if (job?.status === 'running') return 'Синк: в работе'
     if (job?.status === 'retry') return 'Синк: повтор'
     if (job?.status === 'failed') return 'Синк: ошибка'
-    if (job?.status === 'success' || tx.status === 'synced') return 'Синк: 1С'
+    if (job?.status === 'success' || tx.status === 'synced') return 'Синк: выполнен'
     if (job?.status === 'pending') return 'Синк: в очереди'
     if (tx.status === 'confirmed') return 'Подтв.'
     return 'Черновик'
+  }
+
+  function pipelineLabel(status?: PipelineStatus) {
+    if (status === 'parsed') return 'parsed'
+    if (status === 'categorized') return 'categorized'
+    if (status === 'verified') return 'verified'
+    if (status === 'reported') return 'reported'
+    return 'new'
+  }
+
+  function pipelineBadgeClass(status?: PipelineStatus) {
+    if (status === 'reported') return 'bg-secondary/10 text-secondary border border-secondary/20'
+    if (status === 'verified') return 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+    if (status === 'categorized') return 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+    if (status === 'parsed') return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+    return 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
   }
 
   function getSyncBadgeClass(tx: any) {
@@ -189,14 +259,19 @@ export default function TransactionsPage() {
       <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h1 className="page-heading">Операции</h1>
-          <p className="mt-1 text-sm text-zinc-500">{total} операций · единый журнал доходов/расходов и синка с 1С</p>
+          <p className="mt-1 text-sm text-zinc-500">{total} операций · единый журнал доходов/расходов</p>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">1) Добавить</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">2) Подтвердить</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">3) Синхронизировать</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">new</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">parsed</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">categorized</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">verified</span>
+            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">reported</span>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
+            <Icon name="auto_fix_high" className="text-lg" /> Правила
+          </button>
           <Link to="/documents" className="btn-secondary w-full sm:w-auto">
             <Icon name="upload_file" className="text-lg" /> Импорт
           </Link>
@@ -291,8 +366,14 @@ export default function TransactionsPage() {
                           <span className={`text-[9px] font-bold uppercase rounded-md px-2 py-0.5 ${getSyncBadgeClass(tx)}`}>
                             {getSyncBadge(tx)}
                           </span>
+                          <span className={`text-[9px] font-bold uppercase rounded-md px-2 py-0.5 ${pipelineBadgeClass(tx.pipeline_status)}`}>
+                            {pipelineLabel(tx.pipeline_status)}
+                          </span>
                           {tx.category && (
                             <span className="text-[10px] text-zinc-500">{tx.category}</span>
+                          )}
+                          {Array.isArray(tx.validation_issues) && tx.validation_issues.length > 0 && (
+                            <span className="text-[10px] text-amber-400">{tx.validation_issues[0]}</span>
                           )}
                         </div>
                       </div>
@@ -340,9 +421,9 @@ export default function TransactionsPage() {
                             <button
                               type="button"
                               className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10 text-secondary"
-                              disabled={syncMutation.isPending}
+                              disabled={syncMutation.isPending || (Array.isArray(tx.validation_issues) && tx.validation_issues.length > 0)}
                               onClick={() => syncMutation.mutate(tx.id)}
-                              aria-label="Синхронизировать с 1С"
+                              aria-label="Синхронизировать"
                             >
                               <Icon name="sync" className="text-lg" />
                             </button>
@@ -391,9 +472,14 @@ export default function TransactionsPage() {
                           {fmt(tx.amount)} BYN
                         </td>
                         <td className="px-4 py-3 text-center sm:px-6 sm:py-4">
-                          <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${getSyncBadgeClass(tx)}`}>
-                            {getSyncBadge(tx)}
-                          </span>
+                          <div className="flex flex-wrap items-center justify-center gap-1">
+                            <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${getSyncBadgeClass(tx)}`}>
+                              {getSyncBadge(tx)}
+                            </span>
+                            <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${pipelineBadgeClass(tx.pipeline_status)}`}>
+                              {pipelineLabel(tx.pipeline_status)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4">
                           <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
@@ -403,7 +489,7 @@ export default function TransactionsPage() {
                                 className="btn-ghost !px-2 !py-1 !text-xs text-amber-800 hover:text-amber-950"
                                 disabled={retrySyncMutation.isPending}
                                 onClick={() => retrySyncMutation.mutate(syncJobByTx.get(tx.id).id)}
-                                title="Повторить синк в 1С"
+                                title="Повторить синк"
                               >
                                 <Icon name="refresh" className="text-sm" />
                               </button>
@@ -411,9 +497,9 @@ export default function TransactionsPage() {
                               <button
                                 type="button"
                                 className="btn-ghost !px-2 !py-1 !text-xs text-secondary hover:text-secondary"
-                                disabled={syncMutation.isPending}
+                                disabled={syncMutation.isPending || (Array.isArray(tx.validation_issues) && tx.validation_issues.length > 0)}
                                 onClick={() => syncMutation.mutate(tx.id)}
-                                title="Синхронизировать в 1С"
+                                title="Синхронизировать"
                               >
                                 <Icon name="sync" className="text-sm" />
                               </button>
@@ -556,6 +642,90 @@ export default function TransactionsPage() {
                 value={form.transaction_date}
                 onChange={(e) => setForm({ ...form, transaction_date: e.target.value })}
               />
+            </div>
+          </div>
+        </AppModal>
+      )}
+      {showRulesModal && (
+        <AppModal
+          title="Правила автокатегоризации"
+          wide
+          onClose={() => setShowRulesModal(false)}
+          footer={
+            <div className="app-form-actions -mx-4 px-4 sm:mx-0 sm:px-0">
+              <button type="button" className="btn-secondary min-h-12 w-full" onClick={() => setShowRulesModal(false)}>
+                Закрыть
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input className="input" placeholder="Название правила" value={ruleForm.name} onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })} />
+              <select className="input" value={ruleForm.category} onChange={(e) => setRuleForm({ ...ruleForm, category: e.target.value })}>
+                {CATEGORIES.filter((c) => c.value).map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <select className="input" value={ruleForm.transaction_type} onChange={(e) => setRuleForm({ ...ruleForm, transaction_type: e.target.value })}>
+                <option value="">Любой тип</option>
+                <option value="expense">Расход</option>
+                <option value="income">Доход</option>
+                <option value="refund">Возврат</option>
+                <option value="writeoff">Списание</option>
+              </select>
+              <select className="input" value={ruleForm.counterparty_id} onChange={(e) => setRuleForm({ ...ruleForm, counterparty_id: e.target.value })}>
+                <option value="">Любой контрагент</option>
+                {(Array.isArray(counterpartiesData) ? counterpartiesData : []).map((c: any) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <input className="input sm:col-span-2" placeholder="Фрагмент назначения платежа" value={ruleForm.description_pattern} onChange={(e) => setRuleForm({ ...ruleForm, description_pattern: e.target.value })} />
+              <input type="number" min="0" step="0.01" className="input" placeholder="Сумма от" value={ruleForm.min_amount} onChange={(e) => setRuleForm({ ...ruleForm, min_amount: e.target.value })} />
+              <input type="number" min="0" step="0.01" className="input" placeholder="Сумма до" value={ruleForm.max_amount} onChange={(e) => setRuleForm({ ...ruleForm, max_amount: e.target.value })} />
+              <select className="input" value={ruleForm.vat_required} onChange={(e) => setRuleForm({ ...ruleForm, vat_required: e.target.value })}>
+                <option value="any">НДС: не важно</option>
+                <option value="yes">Только с НДС</option>
+                <option value="no">Только без НДС</option>
+              </select>
+              <input type="number" min="1" max="1000" className="input" placeholder="Приоритет (меньше = выше)" value={ruleForm.priority} onChange={(e) => setRuleForm({ ...ruleForm, priority: e.target.value })} />
+            </div>
+            <button
+              type="button"
+              className="btn-primary min-h-11 w-full"
+              disabled={!ruleForm.name.trim() || createRuleMutation.isPending}
+              onClick={() => createRuleMutation.mutate()}
+            >
+              {createRuleMutation.isPending ? 'Сохраняем...' : 'Добавить правило'}
+            </button>
+            <div className="space-y-2">
+              {(rulesData ?? []).length === 0 ? (
+                <p className="text-xs text-zinc-500">Правил пока нет. Будут применяться базовые автоэвристики.</p>
+              ) : (
+                (rulesData ?? []).map((rule: any) => (
+                  <div key={rule.id} className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-3 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-on-surface">{rule.name}</p>
+                      <button
+                        type="button"
+                        className="btn-ghost !px-2 !py-1 !text-xs text-error hover:text-error"
+                        disabled={deleteRuleMutation.isPending}
+                        onClick={() => deleteRuleMutation.mutate(rule.id)}
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                    <p className="mt-1 text-on-surface-variant">
+                      Категория: {rule.category} · приоритет: {rule.priority}
+                      {rule.description_pattern ? ` · текст: "${rule.description_pattern}"` : ''}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </AppModal>

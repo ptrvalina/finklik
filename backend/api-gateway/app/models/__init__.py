@@ -10,6 +10,8 @@ from app.models.onec import OneCConnection, OneCAccount, OneCContour
 from app.models.onec_sync import OneCSyncJob
 from app.models.planner import PlannerTask, PlannerReport, PlannerComment
 from app.models.notification import Notification
+from app.models.categorization_rule import CategorizationRule
+from app.models.automation_policy import AutomationPolicy
 
 __all__ = [
     "Organization", "User", "Invitation", "Transaction",
@@ -18,4 +20,6 @@ __all__ = [
     "RegulatoryUpdate", "RegulatoryNotification", "ReportSubmission",
     "Plan", "Subscription", "OneCConnection", "OneCAccount", "OneCContour", "OneCSyncJob",
     "PlannerTask", "PlannerReport", "PlannerComment", "Notification",
+    "CategorizationRule",
+    "AutomationPolicy",
 ]

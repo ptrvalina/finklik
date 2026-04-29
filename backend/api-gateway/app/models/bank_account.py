@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from sqlalchemy import String, Numeric, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -24,4 +24,4 @@ class BankAccount(Base):
     oauth_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     oauth_connected_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

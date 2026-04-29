@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy import String, Numeric, DateTime, Date, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
@@ -29,6 +29,6 @@ class Transaction(Base):
     receipt_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     transaction_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="draft")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="transactions")

@@ -14,7 +14,13 @@ from app.models.onec import OneCAccount, OneCConnection
 from app.models.onec_sync import OneCSyncJob
 from app.models.transaction import Transaction
 from app.models.user import User
-from app.services.onec_sync_service import enqueue_sync_job, reset_sync_job_for_retry
+from app.services.pipeline_status import get_transaction_validation_issues
+from app.services.onec_sync_service import (
+    enqueue_sync_job,
+    process_onec_sync_jobs_once,
+    recover_stuck_sync_jobs,
+    reset_sync_job_for_retry,
+)
 
 router = APIRouter(
     prefix="/onec",
@@ -394,6 +400,15 @@ async def sync_transaction_to_1c(
     tx = result.scalar_one_or_none()
     if not tx:
         raise HTTPException(404, "Транзакция не найдена")
+    issues = get_transaction_validation_issues(tx)
+    if issues:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Транзакция не готова к автодействию",
+                "validation_issues": issues,
+            },
+        )
 
     job, created = await enqueue_sync_job(
         db=db,
@@ -472,4 +487,21 @@ async def retry_sync_job(
         "job_id": job.id,
         "transaction_id": job.transaction_id,
         "status": job.status,
+    }
+
+
+@router.post("/sync-jobs/process")
+async def process_sync_jobs_now(
+    batch_size: int = Query(20, ge=1, le=200),
+    recover_stuck: bool = Query(True),
+    current_user: User = Depends(get_current_user),
+):
+    # current_user is kept for auth/tenant-level access control.
+    _ = current_user.id
+    recovered = await recover_stuck_sync_jobs(stuck_after_minutes=15) if recover_stuck else 0
+    processed = await process_onec_sync_jobs_once(batch_size=batch_size)
+    return {
+        "processed": processed,
+        "recovered_stuck": recovered,
+        "batch_size": batch_size,
     }

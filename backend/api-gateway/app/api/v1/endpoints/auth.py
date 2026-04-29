@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token
@@ -120,7 +120,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
         raise HTTPException(status_code=403, detail="Аккаунт деактивирован")
 
     record_successful_login(body.email)
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     org_id = str(user.organization_id) if user.organization_id else ""
     access_token = create_access_token(str(user.id), org_id, user.role)
     refresh_token = create_refresh_token(str(user.id))

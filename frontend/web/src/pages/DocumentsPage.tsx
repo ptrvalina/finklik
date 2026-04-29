@@ -72,6 +72,12 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  useEffect(() => {
+    if (!message) return
+    const id = window.setTimeout(() => setMessage(null), 5000)
+    return () => window.clearTimeout(id)
+  }, [message])
+
   async function download(handler: () => Promise<any>, name: string, key: string) {
     try { setLoading(key); const r = await handler(); saveBlob(r.data, name); setMessage({ type: 'success', text: `"${name}" скачан` }) }
     catch { setMessage({ type: 'error', text: 'Не удалось скачать файл' }) }
@@ -462,6 +468,9 @@ export default function DocumentsPage() {
           </Link>
         </div>
       </div>
+      <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
+        Документы автоматически обогащают учёт; ручная проверка нужна только для низкой уверенности распознавания.
+      </div>
 
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
@@ -689,7 +698,7 @@ export default function DocumentsPage() {
       <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h3 className="text-sm font-bold text-on-surface">Список документов</h3>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <select className="input" value={docTypeFilter} onChange={(e) => setDocTypeFilter(e.target.value)}>
               <option value="">Все типы</option>
               <option value="invoice">Invoice</option>
@@ -703,6 +712,16 @@ export default function DocumentsPage() {
               <option value="paid">Оплачен</option>
               <option value="cancelled">Отменён</option>
             </select>
+            <button
+              type="button"
+              className="btn-ghost min-h-11 whitespace-nowrap"
+              onClick={() => {
+                setDocTypeFilter('')
+                setDocStatusFilter('')
+              }}
+            >
+              Сбросить
+            </button>
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 """Нумерация первичных документов по организации (год + тип)."""
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ async def _get_or_create_sequence_row(
 
 async def peek_next_document_number(db: AsyncSession, organization_id: str, doc_type: str) -> str:
     """Следующий номер без резервирования (для подсказки в UI)."""
-    year = datetime.utcnow().year
+    year = datetime.now(timezone.utc).year
     q = await db.execute(
         select(PrimaryDocumentSequence).where(
             PrimaryDocumentSequence.organization_id == organization_id,
@@ -57,7 +57,7 @@ async def peek_next_document_number(db: AsyncSession, organization_id: str, doc_
 
 async def allocate_next_document_number(db: AsyncSession, organization_id: str, doc_type: str) -> str:
     """Атомарно увеличивает счётчик и возвращает номер документа."""
-    year = datetime.utcnow().year
+    year = datetime.now(timezone.utc).year
     row = await _get_or_create_sequence_row(db, organization_id, doc_type, year)
     row.last_number += 1
     await db.flush()

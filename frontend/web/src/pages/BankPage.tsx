@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { bankApi, onecApi } from '../api/client'
+import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 
 function fmt(n: any) {
@@ -18,7 +17,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 type BankAccount = { id: string; bank_name: string; bank_bic: string; account_number: string; currency: string; is_primary: boolean; is_active: boolean; color: string }
 type BankInfo = { name: string; bic: string; color: string }
-type Tab = 'overview' | 'accounts' | 'payments' | 'reconciliation' | '1c'
+type Tab = 'overview' | 'accounts' | 'payments' | 'reconciliation'
 
 export default function BankPage() {
   const qc = useQueryClient()
@@ -28,8 +27,6 @@ export default function BankPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [accountForm, setAccountForm] = useState({ bank_name: '', bank_bic: '', account_number: '', is_primary: false })
   const [paymentForm, setPaymentForm] = useState({ amount: '', recipient_name: '', description: '' })
-  const [unpLookup, setUnpLookup] = useState('')
-  const [lookupResult, setLookupResult] = useState<any>(null)
   const todayStr = new Date().toISOString().slice(0, 10)
   const monthStartStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
   const [recDateFrom, setRecDateFrom] = useState(monthStartStr)
@@ -47,7 +44,6 @@ export default function BankPage() {
   const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
   const { data: accountsData } = useQuery({ queryKey: ['bank-accounts'], queryFn: () => bankApi.listAccounts().then(r => r.data) })
   const { data: banksData } = useQuery({ queryKey: ['available-banks'], queryFn: () => bankApi.listBanks().then(r => r.data) })
-  const { data: onecStatus } = useQuery({ queryKey: ['onec-health'], queryFn: () => onecApi.health().then(r => r.data), refetchInterval: 30000 })
   const { data: recData, isLoading: recLoading, refetch: refetchRec } = useQuery({
     queryKey: ['bank-reconciliation', recDateFrom, recDateTo],
     queryFn: () => bankApi.reconciliation(recDateFrom, recDateTo).then((r) => r.data),
@@ -66,7 +62,6 @@ export default function BankPage() {
     onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['bank-balance'] }); qc.invalidateQueries({ queryKey: ['bank-statements'] }); setShowPayment(false); setPaymentForm({ amount: '', recipient_name: '', description: '' }); flash('success', `Платёж: ${res.data.payment_id?.slice(0, 8)}…`) },
     onError: () => flash('error', 'Ошибка платежа'),
   })
-  const lookupMutation = useMutation({ mutationFn: () => onecApi.lookupCounterparty(unpLookup), onSuccess: (res) => setLookupResult(res.data) })
   const importStatementMutation = useMutation({
     mutationFn: (lines: any[]) => bankApi.importStatement(lines),
     onSuccess: (res) => {
@@ -120,12 +115,21 @@ export default function BankPage() {
   const banks: BankInfo[] = banksData?.banks ?? []
   const statements = statementsData?.transactions ?? []
 
+  useEffect(() => {
+    if (!accounts.length) return
+    if (oauthAccountId) return
+    if (typeof window === 'undefined') return
+    const remembered = localStorage.getItem('bank_oauth_account_id')
+    if (remembered && accounts.some((a) => a.id === remembered)) {
+      setOauthAccountId(remembered)
+    }
+  }, [accounts, oauthAccountId])
+
   const tabItems: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', icon: 'monitoring', label: 'Обзор' },
     { key: 'accounts', icon: 'account_balance', label: 'Счета' },
     { key: 'payments', icon: 'payments', label: 'Платежи' },
     { key: 'reconciliation', icon: 'compare_arrows', label: 'Сверка' },
-    { key: '1c', icon: 'integration_instructions', label: '1С' },
   ]
 
   return (
@@ -134,15 +138,11 @@ export default function BankPage() {
       <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div>
           <h1 className="page-heading">Банк</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Мульти-банк, платежи и интеграция с 1С
-            {onecStatus?.connected && <span className="ml-2 text-xs text-secondary">● 1С ({onecStatus.mode})</span>}
-          </p>
+          <p className="mt-1 text-sm text-zinc-500">Мульти-банк, платежи и сверка операций</p>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
             <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Счета</span>
             <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Платежи</span>
             <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Сверка</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">1С</span>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
@@ -153,6 +153,9 @@ export default function BankPage() {
             <Icon name="add" className="text-lg" /> Добавить счёт
           </button>
         </div>
+      </div>
+      <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
+        Автопайплайн: банковские движения подхватываются в учёт, затем проходят статусы `new → parsed → categorized → verified → reported`.
       </div>
 
       {message && (
@@ -314,6 +317,9 @@ export default function BankPage() {
           )}
           <div className="mt-5 rounded-xl border border-zinc-200/80 bg-surface p-4">
             <p className="mb-2 text-sm font-semibold">OAuth2 подключение банка</p>
+            <p className="mb-2 text-[11px] text-on-surface-variant">
+              После авторизации в банке вставьте `code` и `state` из callback URL и подтвердите привязку.
+            </p>
             <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
               <select className="input" value={oauthAccountId} onChange={(e) => setOauthAccountId(e.target.value)}>
                 <option value="">Выберите счёт</option>
@@ -466,71 +472,6 @@ export default function BankPage() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 1C */}
-      {tab === '1c' && (
-        <div className="space-y-6">
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className={`w-4 h-4 rounded-full ${onecStatus?.connected ? 'bg-secondary' : 'bg-error'}`} />
-              <div>
-                <h3 className="text-sm font-bold text-on-surface">Бэкенд 1С — {onecStatus?.connected ? 'Подключён' : 'Нет связи'}</h3>
-                {onecStatus?.connected ? (
-                  <p className="text-xs text-on-surface-variant">{onecStatus.platform} · «{onecStatus.infobase}» · {onecStatus.mode === 'mock' ? 'Заглушка' : 'Production'}</p>
-                ) : (
-                  <p className="text-xs text-error">Сервис 1С недоступен</p>
-                )}
-              </div>
-            </div>
-            <p className="mb-3 text-xs text-zinc-500">
-              Endpoint и токен:{' '}
-              <Link to="/settings" className="text-teal-400 underline-offset-2 hover:underline">
-                Настройки → Интеграции
-              </Link>
-              .
-            </p>
-            {onecStatus?.mode === 'mock' && (
-              <div className="bg-tertiary/10 border border-tertiary/20 text-on-surface text-xs px-4 py-3 rounded-xl">
-                Используется заглушка 1С. После лицензии замените <code className="bg-tertiary/10 px-1 rounded">ONEC_MOCK_URL</code>.
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft sm:p-6">
-            <h3 className="text-sm font-bold text-on-surface mb-4">Проверка контрагента по УНП</h3>
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-              <input
-                className="input min-h-11 flex-1 rounded-xl"
-                placeholder="123456789"
-                maxLength={9}
-                value={unpLookup}
-                onChange={(e) => setUnpLookup(e.target.value.replace(/\D/g, ''))}
-              />
-              <button
-                type="button"
-                className="btn-primary min-h-11 w-full sm:w-auto"
-                disabled={unpLookup.length !== 9 || lookupMutation.isPending}
-                onClick={() => lookupMutation.mutate()}
-              >
-                <Icon name="search" /> {lookupMutation.isPending ? '...' : 'Найти'}
-              </button>
-            </div>
-            {lookupResult && (
-              <div className={`mt-4 p-4 rounded-xl text-sm ${lookupResult.found ? 'bg-secondary/10 border border-secondary/20' : 'bg-surface-container-high'}`}>
-                {lookupResult.found ? (
-                  <div className="space-y-1">
-                    <p className="font-bold text-secondary">{lookupResult.name}</p>
-                    <p className="text-xs text-on-surface-variant">УНП: {lookupResult.unp}</p>
-                    <p className="text-xs text-on-surface-variant">НДС: {lookupResult.vat_registered ? 'Плательщик' : 'Не плательщик'}</p>
-                  </div>
-                ) : (
-                  <p className="text-on-surface-variant">{lookupResult.message}</p>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}

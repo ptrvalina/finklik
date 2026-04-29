@@ -20,8 +20,6 @@ import DocumentsPage from './pages/DocumentsPage'
 import BankPage from './pages/BankPage'
 import BankOAuthCallbackPage from './pages/BankOAuthCallbackPage'
 import ScannerPage from './pages/ScannerPage'
-import OnecSyncPage from './pages/OnecSyncPage'
-import OnecContourPage from './pages/OnecContourPage'
 import SettingsPage from './pages/SettingsPage'
 import ReportingPage from './features/reporting/ReportingPage'
 import CurrencyPage from './features/currency/CurrencyPage'
@@ -31,12 +29,16 @@ import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
+  const user = useAuthStore((s) => s.user)
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token')
+  return isAuthenticated && hasToken && user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>
+  const user = useAuthStore((s) => s.user)
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token')
+  return isAuthenticated && hasToken && user ? <Navigate to="/" replace /> : <>{children}</>
 }
 
 function RoleRoute({
@@ -113,8 +115,6 @@ function AppRoutes() {
           <Route path="legacy/scanner" element={<ScannerPage />} />
           <Route path="legacy/reporting" element={<ReportingPage />} />
           <Route path="legacy/currency" element={<CurrencyPage />} />
-          <Route path="legacy/onec-contour" element={<OnecContourPage />} />
-          <Route path="legacy/onec-sync" element={<OnecSyncPage />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<RoleRoute allow={['admin', 'accountant']}><SettingsPage /></RoleRoute>} />
         </Route>

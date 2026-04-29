@@ -4,7 +4,7 @@ import {
   BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { reportsApi } from '../api/client'
+import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
 
 function fmt(n: any) {
@@ -46,6 +46,14 @@ export default function AnalyticsPage() {
   const { data: catData } = useQuery({
     queryKey: ['expense-categories'],
     queryFn: () => reportsApi.expenseCategories().then(r => r.data),
+  })
+  const { data: automationKpi } = useQuery({
+    queryKey: ['automation-kpi'],
+    queryFn: () => automationApi.kpi().then((r) => r.data),
+  })
+  const { data: dataQuality } = useQuery({
+    queryKey: ['automation-data-quality'],
+    queryFn: () => automationApi.dataQuality().then((r) => r.data),
   })
 
   const monthlyData = (summary?.months ?? []).map((m: any) => ({
@@ -117,6 +125,62 @@ export default function AnalyticsPage() {
           <p className="mt-2 text-xs text-on-surface-variant">Рентабельность {margin}%</p>
         </div>
       </div>
+      {automationKpi && (
+        <div className="rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6">
+          <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { key: 'operations_auto_rate', label: 'Операции auto %' },
+              { key: 'ocr_auto_rate', label: 'OCR без ручного %' },
+              { key: 'reporting_ready_rate', label: 'Отчёты ready %' },
+              { key: 'payroll_auto_rate', label: 'Payroll auto %' },
+            ].map((m: any) => {
+              const value = Number(automationKpi?.[m.key] ?? 0)
+              const target = Number(automationKpi?.targets?.[m.key] ?? 0)
+              const ok = value >= target
+              return (
+                <div key={m.key} className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+                  <p className="text-xs text-on-surface-variant">{m.label}</p>
+                  <p className={`mt-1 text-lg font-extrabold ${ok ? 'text-secondary' : 'text-amber-500'}`}>{value.toFixed(1)}%</p>
+                  <p className="text-[10px] text-on-surface-variant">target {target.toFixed(1)}%</p>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+              <p className="text-xs text-on-surface-variant">Цикл operation → report ready</p>
+              <p className="mt-1 text-lg font-extrabold text-on-surface">
+                {Number(automationKpi?.cycle_hours_operation_to_report_ready ?? 0).toFixed(1)}ч
+              </p>
+            </div>
+            <div className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+              <p className="text-xs text-on-surface-variant">Сокращение цикла</p>
+              <p className={`mt-1 text-lg font-extrabold ${
+                Number(automationKpi?.cycle_reduction_progress_x ?? 0) >= Number(automationKpi?.targets?.cycle_reduction_target_x ?? 3)
+                  ? 'text-secondary'
+                  : 'text-amber-500'
+              }`}>
+                x{Number(automationKpi?.cycle_reduction_progress_x ?? 0).toFixed(2)}
+              </p>
+              <p className="text-[10px] text-on-surface-variant">
+                target x{Number(automationKpi?.targets?.cycle_reduction_target_x ?? 3).toFixed(1)}
+              </p>
+            </div>
+          </div>
+          {dataQuality && (
+            <div className="mt-4 rounded-lg border border-outline-variant/20 bg-surface p-3">
+              <p className="text-xs text-on-surface-variant">Контроль качества данных</p>
+              <p className={`mt-1 text-sm font-bold ${dataQuality.status === 'ok' ? 'text-secondary' : 'text-amber-500'}`}>
+                {dataQuality.status === 'ok' ? 'Данные консистентны' : 'Нужна проверка данных'}
+              </p>
+              <p className="text-[10px] text-on-surface-variant">
+                дубли: {Number(dataQuality.duplicate_operations ?? 0)} / несогласованности: {Number(dataQuality.inconsistent_operations ?? 0)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         <div className="col-span-12 rounded-xl border border-zinc-200/80 bg-surface-container-low p-4 shadow-soft sm:p-6 lg:col-span-8 lg:p-8">

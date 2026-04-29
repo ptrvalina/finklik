@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import date
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_roles
@@ -21,6 +25,11 @@ from app.schemas.workforce import (
     SalaryCalculationRequest,
     TerminateEmployeeRequest,
 )
+from app.services.workforce_automation import (
+    create_workforce_calendar_event,
+    create_workforce_followup_task,
+    payroll_followup_date,
+)
 
 router = APIRouter(
     tags=["workforce"],
@@ -28,6 +37,12 @@ router = APIRouter(
     responses={401: {"description": "Unauthorized"}, 403: {"description": "Forbidden"}},
 )
 log = structlog.get_logger()
+
+
+class PayrollRunRequest(BaseModel):
+    period_year: int = Field(ge=2020, le=2100)
+    period_month: int = Field(ge=1, le=12)
+    work_days_plan: int = Field(default=21, ge=1, le=31)
 
 
 @router.post(
@@ -56,6 +71,23 @@ async def terminate_employee(
         entity_type="employee",
         entity_id=employee_id,
         metadata={"termination_date": req.termination_date.isoformat()},
+    )
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title="Оффбординг сотрудника",
+        description=f"Проверьте кадровое закрытие сотрудника {employee_id} и подготовку ПУ-2/ПУ-3.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title="Контроль оффбординга сотрудника",
+        description=f"Автоматическое событие после увольнения сотрудника {employee_id}.",
+        event_date=req.termination_date,
+        event_type="deadline",
+        color="#C026D3",
     )
     log.info("employee_terminated", employee_id=employee_id, user_id=str(current_user.id))
     return {"status": "ok"}
@@ -183,6 +215,23 @@ async def calculate_salary(
         entity_id=result["id"],
         metadata={"employee_id": req.employee_id},
     )
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title="Проверка payroll-расчёта",
+        description=f"Проверьте расчёт для сотрудника {req.employee_id} и подготовьте формы в ФСЗН.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title="Дедлайн payroll проверки",
+        description=f"Автоматическое событие после расчёта зарплаты для сотрудника {req.employee_id}.",
+        event_date=payroll_followup_date(),
+        event_type="salary",
+        color="#059669",
+    )
     log.info("salary_calculation_completed", calculation_id=result["id"], employee_id=req.employee_id)
     return SalaryCalculationDTO(**result)
 
@@ -226,3 +275,119 @@ async def list_salary_calculations(
             )
         )
     return result
+
+
+@router.post("/salary/run-month")
+async def run_month_payroll(
+    req: PayrollRunRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    calculator = SalaryCalculator(db)
+    active_rows = await db.execute(
+        text(
+            """
+            SELECT id
+            FROM employees
+            WHERE organization_id = :tenant_id
+              AND is_active = 1
+            """
+        ),
+        {"tenant_id": current_user.organization_id},
+    )
+    employee_ids = [str(r["id"]) for r in active_rows.mappings().all()]
+    created = 0
+    updated = 0
+    errors: list[dict] = []
+
+    for employee_id in employee_ids:
+        existing = await db.execute(
+            text(
+                """
+                SELECT id
+                FROM salary_records
+                WHERE organization_id = :tenant_id
+                  AND employee_id = :employee_id
+                  AND period_year = :year
+                  AND period_month = :month
+                LIMIT 1
+                """
+            ),
+            {
+                "tenant_id": current_user.organization_id,
+                "employee_id": employee_id,
+                "year": req.period_year,
+                "month": req.period_month,
+            },
+        )
+        existing_row = existing.mappings().first()
+        try:
+            result = await calculator.CalculateSalary(
+                current_user.organization_id,
+                employee_id,
+                date(req.period_year, req.period_month, 1),
+                date(req.period_year, req.period_month, min(28, req.work_days_plan)),
+            )
+            if existing_row:
+                await db.execute(
+                    text(
+                        """
+                        UPDATE salary_records
+                        SET gross_salary = :gross_salary,
+                            net_salary = :net_salary,
+                            income_tax = :income_tax,
+                            fsszn_employee = :fsszn_employee,
+                            fsszn_employer = :fsszn_employer,
+                            status = 'draft'
+                        WHERE id = :id
+                        """
+                    ),
+                    {
+                        "id": existing_row["id"],
+                        "gross_salary": result.get("net_salary", 0) + result.get("taxes", 0),
+                        "net_salary": result.get("net_salary", 0),
+                        "income_tax": result.get("taxes", 0),
+                        "fsszn_employee": 0,
+                        "fsszn_employer": 0,
+                    },
+                )
+                updated += 1
+            else:
+                created += 1
+        except Exception as exc:
+            errors.append({"employee_id": employee_id, "error": str(exc)})
+
+    await db.execute(
+        text(
+            """
+            INSERT INTO planner_tasks (id, tenant_id, author_id, assignee_id, title, description, attachments, status, created_at, closed_at)
+            VALUES (:id, :tenant_id, :author_id, :assignee_id, :title, :description, :attachments, :status, CURRENT_TIMESTAMP, NULL)
+            """
+        ),
+        {
+            "id": str(uuid.uuid4()),
+            "tenant_id": current_user.organization_id,
+            "author_id": str(current_user.id),
+            "assignee_id": str(current_user.id),
+            "title": f"Payroll run {req.period_month:02d}.{req.period_year}",
+            "description": "Автоматический monthly payroll-run завершён. Проверьте расчёты и отправьте регламентные формы.",
+            "attachments": "[]",
+            "status": "open",
+        },
+    )
+    await safe_log_audit(
+        db=db,
+        user_id=str(current_user.id),
+        action="salary_run_month",
+        entity_type="payroll",
+        entity_id=f"{req.period_year}-{req.period_month:02d}",
+        metadata={"created": created, "updated": updated, "errors": len(errors)},
+    )
+    return {
+        "period_year": req.period_year,
+        "period_month": req.period_month,
+        "employees_total": len(employee_ids),
+        "created": created,
+        "updated": updated,
+        "errors": errors[:50],
+    }
