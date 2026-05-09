@@ -2,7 +2,7 @@ import axios from 'axios'
 import { resolveAppPath } from '../appBase'
 
 /** Продакшен API; используется, если VITE_API_URL не задан при сборке (частая причина запросов на localhost). */
-const PRODUCTION_API_BASE = 'https://finklik-api.onrender.com'
+export const PRODUCTION_API_BASE = 'https://finklik-api.onrender.com'
 
 /** GitHub Pages отдаёт только статику: POST на тот же origin даёт 405. Частая ошибка — указать URL Pages в VITE_API_URL. */
 function isGithubPagesOrigin(url: string): boolean {
@@ -65,6 +65,10 @@ export function resolveApiBase(): string {
     const host = window.location.hostname
     if (isCloudStaticHost(host)) {
       return PRODUCTION_API_BASE
+    }
+    // SPA раздаётся с того же хоста, что и API (Docker на Render) — без cross-origin к другому домену.
+    if (host.endsWith('.onrender.com')) {
+      return window.location.origin
     }
   }
   return 'http://localhost:8000'

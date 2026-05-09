@@ -29,6 +29,7 @@ frontend/web/dist/
 # БД и артефакты dev
 *.db
 *.sqlite3
+backend/api-gateway/static/spa/
 
 # IDE / OS
 .idea/

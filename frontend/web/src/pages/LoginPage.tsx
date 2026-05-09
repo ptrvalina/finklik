@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { pingApi, resolveApiBase } from '../api/client'
+import { pingApi, PRODUCTION_API_BASE, resolveApiBase } from '../api/client'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -46,6 +46,19 @@ export default function LoginPage() {
           <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
             Войти в аккаунт
           </h2>
+
+          {typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io' && (
+            <div className="mb-4 p-3 rounded-lg border border-primary/25 bg-primary/[0.06] text-xs text-on-surface leading-snug">
+              <span className="font-semibold text-primary">Рекомендуемый адрес:</span>{' '}
+              фронт и API на одном домене (без блокировок cross-origin). Откройте{' '}
+              <a
+                className="font-mono text-primary underline break-all font-semibold"
+                href={`${PRODUCTION_API_BASE}/login`}
+              >
+                {PRODUCTION_API_BASE}/login
+              </a>
+            </div>
+          )}
 
           {apiReachable === false && !error && (
             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">

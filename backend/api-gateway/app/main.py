@@ -1,12 +1,13 @@
 from pathlib import Path
 import asyncio
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 from contextlib import asynccontextmanager
 import structlog
 
@@ -68,10 +69,16 @@ log = structlog.get_logger()
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _STATIC_SWAGGER = _REPO_ROOT / "static" / "swagger-ui"
-_STATIC_REDOC = _REPO_ROOT / "static" / "redoc"
+STATIC_REDOC = _REPO_ROOT / "static" / "redoc"
 USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
-    _STATIC_REDOC / "redoc.standalone.js"
+    STATIC_REDOC / "redoc.standalone.js"
 ).is_file()
+
+_SPA_DIR = _REPO_ROOT / "static" / "spa"
+
+
+def _spa_available() -> bool:
+    return (_SPA_DIR / "index.html").is_file()
 
 
 @asynccontextmanager
@@ -175,7 +182,7 @@ if USE_LOCAL_DOCS:
     )
     app.mount(
         "/static/redoc",
-        StaticFiles(directory=str(_STATIC_REDOC)),
+        StaticFiles(directory=str(STATIC_REDOC)),
         name="redoc_static",
     )
 
@@ -230,7 +237,9 @@ app.include_router(ws_router)
 
 @app.get("/", tags=["system"])
 async def root():
-    """Корень — подсказка для проверки деплоя (Render/Vercel открывают именно /)."""
+    """Корень: SPA при сборке Docker (тот же хост, что и API на Render), иначе JSON для проверки деплоя."""
+    if _spa_available():
+        return FileResponse(_SPA_DIR / "index.html")
     return {
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
@@ -238,6 +247,7 @@ async def root():
         "health": "/health",
         "docs": "/docs",
         "api": "/api/v1",
+        "spa_hint": "При деплое фронта в образ откройте этот же URL для входа без cross-origin на другой домен.",
     }
 
 
@@ -265,3 +275,52 @@ async def health(db: AsyncSession = Depends(get_db)):
 @app.get("/api/v1/health", tags=["system"])
 async def api_health():
     return {"status": "ok"}
+
+
+def _spa_safe_path(rel: str) -> Path:
+    """Путь внутри каталога SPA без выхода за пределы."""
+    base = _SPA_DIR.resolve()
+    target = (base / rel).resolve()
+    try:
+        target.relative_to(base)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Not found") from exc
+    return target
+
+
+if _spa_available():
+
+    @app.get("/assets/{resource_path:path}", include_in_schema=False)
+    async def spa_assets(resource_path: str):
+        target = _spa_safe_path(str(Path("assets") / resource_path))
+        if not target.is_file():
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(target)
+
+    @app.get("/manifest.webmanifest", include_in_schema=False)
+    async def spa_manifest():
+        p = _spa_safe_path("manifest.webmanifest")
+        if not p.is_file():
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(p, media_type="application/manifest+json")
+
+    @app.get("/pwa-icon.svg", include_in_schema=False)
+    async def spa_pwa_icon():
+        p = _spa_safe_path("pwa-icon.svg")
+        if not p.is_file():
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(p, media_type="image/svg+xml")
+
+    @app.get("/{spa_route:path}", include_in_schema=False)
+    async def spa_history_fallback(spa_route: str):
+        """Client-side routes (React Router); не перехватываем API и служебные пути."""
+        if (
+            spa_route.startswith("api/")
+            or spa_route.startswith("static/")
+            or spa_route in {"health", "metrics", "openapi.json"}
+            or spa_route.startswith("docs")
+            or spa_route.startswith("redoc")
+            or spa_route == "ws"
+        ):
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(_SPA_DIR / "index.html")
