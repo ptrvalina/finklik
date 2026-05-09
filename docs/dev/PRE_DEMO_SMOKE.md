@@ -51,6 +51,7 @@ The command writes summary to `artifacts/pre-demo-smoke-summary.md`. Automated b
 5. Optional: WebSocket **`report_status`** after submit (same tab / another client); email only if **`EMAIL_API_KEY`** is set in API env.
 6. In **Просмотр** for a submission: optional **Скачать файл** buttons (same exports as **Документы**) load without error for ИМНС УСН/НДС or ФСЗН ПУ-3 when applicable.
 7. After **Отправить**, API stores an archive snapshot. In **Просмотр** for **accepted/rejected** with `has_submission_snapshot`, the UI loads the archive and shows export + preview; optional raw check: `GET /api/v1/submissions/{id}?include_snapshot=true`.
+8. **Settings → Интеграции**: card **«Сводка контуров API»** loads (portal mode, NBRB FX cache, `SUBMISSION_ASYNC`, signing digest path). On failure, **Повторить** refetches. Same data as `GET /api/v1/integrations/capabilities`.
 
 ## 4) Backup Branches
 

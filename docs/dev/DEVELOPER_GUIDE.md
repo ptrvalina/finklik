@@ -103,6 +103,12 @@ make typecheck-web   # Только проверка типов фронта (`t
 
 Задачи, требующие реальных API/ЭЦП/S3 и прочих внешних сервисов: [`SPRINT_DEFERRED_EXTERNAL.md`](SPRINT_DEFERRED_EXTERNAL.md). Упорядоченный техбэклог без внешних зависимостей: [`TECH_CATCHUP_ORDERED.md`](TECH_CATCHUP_ORDERED.md).
 
+### Диагностика контуров и подпись отчёта
+
+- **`GET /api/v1/integrations/capabilities`** (auth) — сводка без секретов: режим портала подачи (`mock` / `http`), задан ли `SUBMISSION_PORTAL_BASE_URL`, **`SUBMISSION_ASYNC`**, опрос курсов НБ РБ, пометки по органам (прямой госAPI пока **stub**).
+- **`GET /api/v1/signing/submissions/{submission_id}/digest`** — SHA-256 канонического пакета для внешнего модуля ЭЦП; ключи в API не хранятся.
+- В UI: **Настройки → Интеграции** — карточка **«Сводка контуров API»** (те же данные, что и у эндпоинта выше).
+
 ---
 
 ## Версии Python (backend)
