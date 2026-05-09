@@ -127,6 +127,7 @@ export default function Planner() {
   const [formRemindEmail, setFormRemindEmail] = useState(false)
   const [formRemindTg, setFormRemindTg] = useState(false)
   const [formDesc, setFormDesc] = useState('')
+  const [calendarSaveError, setCalendarSaveError] = useState<string | null>(null)
 
   const range = useMemo(() => monthBounds(viewYear, viewMonth), [viewYear, viewMonth])
   const weeks = useMemo(() => buildMonthWeeks(viewYear, viewMonth), [viewYear, viewMonth])
@@ -266,10 +267,21 @@ export default function Planner() {
       }
     },
     onSuccess: () => {
+      setCalendarSaveError(null)
       qc.invalidateQueries({ queryKey: ['calendar-events'] })
       qc.invalidateQueries({ queryKey: ['calendar-productivity'] })
       setModalOpen(false)
       setEditing(null)
+    },
+    onError: (e: any) => {
+      const d = e?.response?.data?.detail
+      const msg =
+        typeof d === 'string'
+          ? d
+          : Array.isArray(d)
+            ? d.map((x: any) => x?.msg || x).join('; ')
+            : e?.message || 'Не удалось сохранить событие'
+      setCalendarSaveError(msg)
     },
   })
 
@@ -563,6 +575,15 @@ export default function Planner() {
               </select>
             </label>
             <textarea className="input min-h-[72px]" placeholder="Описание" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
+            {!user?.organization_id ? (
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Нет привязки к организации — события календаря недоступны. Выполните вход под пользователем с организацией или обновите БД (
+                <code className="font-mono text-[10px]">alembic upgrade head</code>).
+              </p>
+            ) : null}
+            {calendarSaveError ? (
+              <p className="rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">{calendarSaveError}</p>
+            ) : null}
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={formRemindEmail} onChange={(e) => setFormRemindEmail(e.target.checked)} />
               Напоминание на e-mail (при сохранении отправится тестовое уведомление, если почта настроена на сервере)
@@ -589,7 +610,12 @@ export default function Planner() {
               <button
                 type="button"
                 className="btn-primary"
-                disabled={!formTitle.trim() || saveEventMutation.isPending || (editing?.is_auto === true)}
+                disabled={
+                  !user?.organization_id ||
+                  !formTitle.trim() ||
+                  saveEventMutation.isPending ||
+                  editing?.is_auto === true
+                }
                 onClick={() => saveEventMutation.mutate()}
               >
                 {saveEventMutation.isPending ? 'Сохранение…' : 'Сохранить'}

@@ -385,7 +385,11 @@ export const reportsApi = {
 }
 
 export const counterpartiesApi = {
-  list: (params?: any) => api.get('/counterparties', { params }),
+  list: (params?: { q?: string; active_only?: boolean; include_stats?: boolean }) =>
+    api.get('/counterparties', { params }),
+  quickUnp: (data: { unp: string; name?: string | null }) => api.post('/counterparties/quick-unp', data),
+  reconciliationCsv: (id: string, params: { date_from: string; date_to: string }) =>
+    api.get(`/counterparties/${id}/reconciliation`, { params, responseType: 'blob' }),
   create: (data: any) => api.post('/counterparties', data),
   update: (id: string, data: any) => api.put(`/counterparties/${id}`, data),
   remove: (id: string) => api.delete(`/counterparties/${id}`),
@@ -521,6 +525,10 @@ export const teamApi = {
     api.post('/team/accept-invite', data),
   deactivateMember: (userId: string) => api.delete(`/team/members/${userId}`),
   cancelInvitation: (inviteId: string) => api.delete(`/team/invitations/${inviteId}`),
+  getOrgRequisites: () => api.get('/team/organization/requisites'),
+  patchOrgRequisites: (data: { legal_address?: string | null; ceo_name?: string | null }) =>
+    api.patch('/team/organization/requisites', data),
+  exportOrgRequisites: () => api.get('/team/organization/requisites-export', { responseType: 'blob' }),
 }
 
 export const regulatoryApi = {

@@ -30,6 +30,15 @@ tax_router = APIRouter(prefix="/tax", tags=["tax"])
 calendar_router = APIRouter(prefix="/calendar", tags=["calendar"])
 log = structlog.get_logger(__name__)
 
+
+def _require_org_id(user: User) -> str:
+    if not user.organization_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Нет привязки к организации — события календаря недоступны. Проверьте вход или миграции БД (alembic upgrade head).",
+        )
+    return str(user.organization_id)
+
 tax_rules_fallback_counter = Counter(
     "tax_rules_validate_fallback_total",
     "Number of tax rules validation requests that used fallback values.",
@@ -290,10 +299,11 @@ async def list_events(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = _require_org_id(current_user)
     result = await db.execute(
         select(CalendarEvent).where(
             and_(
-                CalendarEvent.organization_id == current_user.organization_id,
+                CalendarEvent.organization_id == org_id,
                 CalendarEvent.event_date >= date_from,
                 CalendarEvent.event_date <= date_to,
             )
@@ -308,8 +318,9 @@ async def create_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = _require_org_id(current_user)
     event = CalendarEvent(
-        organization_id=current_user.organization_id,
+        organization_id=org_id,
         title=body.title,
         description=body.description,
         event_date=body.event_date,
@@ -339,10 +350,11 @@ async def update_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = _require_org_id(current_user)
     result = await db.execute(
         select(CalendarEvent).where(
             CalendarEvent.id == event_id,
-            CalendarEvent.organization_id == current_user.organization_id,
+            CalendarEvent.organization_id == org_id,
             CalendarEvent.is_auto == False,
         )
     )
@@ -367,10 +379,11 @@ async def complete_calendar_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = _require_org_id(current_user)
     result = await db.execute(
         select(CalendarEvent).where(
             CalendarEvent.id == event_id,
-            CalendarEvent.organization_id == current_user.organization_id,
+            CalendarEvent.organization_id == org_id,
         )
     )
     event = result.scalar_one_or_none()
@@ -397,9 +410,7 @@ async def calendar_productivity_summary(
 ):
     if period_end < period_start:
         raise HTTPException(status_code=400, detail="Неверный период")
-    org_id = current_user.organization_id
-    if not org_id:
-        raise HTTPException(status_code=400, detail="Нет организации")
+    org_id = _require_org_id(current_user)
 
     start_dt = datetime.combine(period_start, dt_time.min, tzinfo=timezone.utc)
     end_dt = datetime.combine(period_end, dt_time(23, 59, 59), tzinfo=timezone.utc)
@@ -473,10 +484,11 @@ async def delete_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = _require_org_id(current_user)
     result = await db.execute(
         select(CalendarEvent).where(
             CalendarEvent.id == event_id,
-            CalendarEvent.organization_id == current_user.organization_id,
+            CalendarEvent.organization_id == org_id,
             CalendarEvent.is_auto == False,
         )
     )

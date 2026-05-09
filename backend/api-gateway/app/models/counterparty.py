@@ -19,5 +19,8 @@ class Counterparty(Base):
     bank_account: Mapped[str | None] = mapped_column(String(34), nullable=True)
     bank_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: supplier | customer | both
+    cp_kind: Mapped[str] = mapped_column(String(20), default="both")
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

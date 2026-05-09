@@ -26,6 +26,10 @@ class Organization(Base):
     llm_base_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     llm_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
+    #: Реквизиты для договоров / печатных форм (в т.ч. выгрузка для контрагентов).
+    legal_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ceo_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     users: Mapped[list["User"]] = relationship("User", back_populates="organization")
     transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="organization")
     invitations: Mapped[list["Invitation"]] = relationship("Invitation", back_populates="organization")

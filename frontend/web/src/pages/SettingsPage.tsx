@@ -341,6 +341,122 @@ function ProfileSection() {
           {saveTgMutation.isPending ? 'Сохранение…' : 'Сохранить Telegram'}
         </button>
       </div>
+
+      <OrgRequisitesCard />
+    </div>
+  )
+}
+
+function OrgRequisitesCard() {
+  const user = useAuthStore((s) => s.user)
+  const qc = useQueryClient()
+  const role = (user?.role || '').toLowerCase()
+  const allowed = role === 'owner' || role === 'admin' || role === 'accountant'
+  const [legalAddress, setLegalAddress] = useState('')
+  const [ceoName, setCeoName] = useState('')
+  const [orgMsg, setOrgMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const reqQuery = useQuery({
+    queryKey: ['org-requisites'],
+    queryFn: () => teamApi.getOrgRequisites().then((r) => r.data as any),
+    enabled: allowed,
+  })
+
+  useEffect(() => {
+    const d = reqQuery.data
+    if (!d) return
+    setLegalAddress(d.legal_address || '')
+    setCeoName(d.ceo_name || '')
+  }, [reqQuery.data])
+
+  const saveOrgMutation = useMutation({
+    mutationFn: () =>
+      teamApi.patchOrgRequisites({
+        legal_address: legalAddress.trim() || null,
+        ceo_name: ceoName.trim() || null,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['org-requisites'] })
+      setOrgMsg({ type: 'success', text: 'Реквизиты сохранены' })
+    },
+    onError: (e: any) =>
+      setOrgMsg({ type: 'error', text: formatApiDetail(e?.response?.data?.detail) || 'Ошибка' }),
+  })
+
+  async function downloadExport() {
+    try {
+      const res = await teamApi.exportOrgRequisites()
+      const blob = new Blob([res.data], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'rekvizity-organizacii.txt'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      setOrgMsg({ type: 'error', text: formatApiDetail(e?.response?.data?.detail) || 'Не удалось скачать' })
+    }
+  }
+
+  if (!allowed) return null
+
+  return (
+    <div className="page-section p-5">
+      <h3 className="text-sm font-bold text-on-surface mb-1">Реквизиты для контрагентов</h3>
+      <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
+        Юридический адрес и ФИО руководителя для договоров и счетов. Банковские счета подтягиваются из раздела «Банк» (активные счета организации).
+      </p>
+      {orgMsg && (
+        <p
+          className={`mb-3 text-xs ${orgMsg.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-error'}`}
+          role="status"
+        >
+          {orgMsg.text}
+        </p>
+      )}
+      {reqQuery.isLoading ? (
+        <p className="text-xs text-on-surface-variant">Загрузка…</p>
+      ) : (
+        <>
+          <label className="block">
+            <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Юридический адрес</span>
+            <textarea
+              className="mt-1 w-full max-w-xl rounded-lg border border-outline bg-surface px-3 py-2 text-sm text-on-surface"
+              rows={2}
+              value={legalAddress}
+              onChange={(e) => setLegalAddress(e.target.value)}
+            />
+          </label>
+          <label className="mt-3 block">
+            <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">
+              Руководитель (ФИО){' '}
+              {reqQuery.data?.director_fallback && (
+                <span className="font-normal text-on-surface-variant">подсказка: {reqQuery.data.director_fallback}</span>
+              )}
+            </span>
+            <input
+              type="text"
+              className="mt-1 w-full max-w-xl rounded-lg border border-outline bg-surface px-3 py-2 text-sm text-on-surface"
+              value={ceoName}
+              onChange={(e) => setCeoName(e.target.value)}
+              placeholder="Как в ЕГР"
+            />
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              disabled={saveOrgMutation.isPending}
+              onClick={() => saveOrgMutation.mutate()}
+            >
+              {saveOrgMutation.isPending ? 'Сохранение…' : 'Сохранить реквизиты'}
+            </button>
+            <button type="button" className="btn-primary text-xs" onClick={() => downloadExport()}>
+              Скачать текстовый файл
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

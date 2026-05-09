@@ -1,5 +1,6 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { dashboardApi, documentsApi, scannerApi } from '../api/client'
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
@@ -19,6 +20,7 @@ function suggestCategory(text: string) {
 
 export default function Accounting() {
   const qc = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
   const monthStartStr = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
@@ -35,8 +37,31 @@ export default function Accounting() {
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all')
   const [filterSearch, setFilterSearch] = useState('')
+  const [linkedCounterpartyId, setLinkedCounterpartyId] = useState<string | null>(null)
 
   const aiSuggestion = useMemo(() => suggestCategory(description), [description])
+
+  useEffect(() => {
+    const cid = searchParams.get('counterparty_id')
+    const cname = searchParams.get('counterparty_name')
+    const preset = searchParams.get('preset')
+    if (!cid && !cname && !preset) return
+
+    if (preset === 'income' || preset === 'expense') setType(preset)
+    if (cid) setLinkedCounterpartyId(cid)
+    if (cname && cname.trim()) {
+      setDescription((d) => d || `Операция с контрагентом: ${decodeURIComponent(cname)}`)
+    }
+    const next = new URLSearchParams(searchParams)
+    let changed = false
+    ;['counterparty_id', 'counterparty_name', 'preset'].forEach((k) => {
+      if (next.has(k)) {
+        next.delete(k)
+        changed = true
+      }
+    })
+    if (changed) setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const txQuery = useQuery({
     queryKey: ['transactions', 'accounting'],
@@ -93,6 +118,7 @@ export default function Accounting() {
         ai_category_confidence: aiSuggestion.confidence,
         receipt_image_url: receiptUrl || null,
         transaction_date: transactionDate,
+        counterparty_id: linkedCounterpartyId || undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
@@ -100,6 +126,7 @@ export default function Accounting() {
       setDescription('')
       setReceiptUrl('')
       setSource('manual')
+      setLinkedCounterpartyId(null)
     },
   })
 
@@ -128,6 +155,11 @@ export default function Accounting() {
           <div>
             <h1 className="text-2xl font-semibold text-on-surface">Учет (КУДиР)</h1>
             <p className="mt-2 text-on-surface-variant">Автозаполнение из сканов/банка и AI-классификация расходов.</p>
+            {linkedCounterpartyId ? (
+              <p className="mt-2 text-xs font-medium text-primary">
+                Привязка к контрагенту активна для следующей операции (из раздела «Контрагенты»).
+              </p>
+            ) : null}
           </div>
           <button className="btn-secondary" onClick={downloadKudir}>Скачать КУДиР</button>
         </div>
