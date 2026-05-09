@@ -68,6 +68,7 @@ def _stub_submission_settings(**kw):
         "SUBMISSION_PORTAL_BASE_URL": "",
         "SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC": 30.0,
         "SUBMISSION_PORTAL_HTTP_RETRIES": 2,
+        "SUBMISSION_ASYNC": False,
     }
     d.update(kw)
     return type("S", (), d)()
@@ -172,3 +173,34 @@ async def test_submission_get_include_snapshot_after_submit(
     assert data.get("has_submission_snapshot") is True
     assert "submission_snapshot" in data
     assert data["submission_snapshot"].get("portal_outcome") == "accepted"
+
+
+@pytest.mark.asyncio
+async def test_submit_async_returns_pending(client: AsyncClient, auth_headers: dict, monkeypatch):
+    async def noop_submit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.report_submission.get_settings",
+        lambda: _stub_submission_settings(SUBMISSION_ASYNC=True),
+    )
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.report_submission._async_finish_submission",
+        noop_submit,
+    )
+    sid = await _create_confirmed_submission(client, auth_headers)
+    r = await client.post(f"/api/v1/submissions/{sid}/submit", headers=auth_headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "submitting"
+    assert body["portal_outcome"] == "pending"
+
+
+@pytest.mark.asyncio
+async def test_integrations_capabilities_ok(client: AsyncClient, auth_headers: dict):
+    r = await client.get("/api/v1/integrations/capabilities", headers=auth_headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert "submission_portal" in data
+    assert data["submission_portal"]["async_submit_enabled"] is False
+    assert "nbrb_fx" in data

@@ -47,7 +47,7 @@ class ReportSubmission(Base):
     report_period: Mapped[str] = mapped_column(String(20), nullable=False)  # e.g. "2026-Q1"
     report_data_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Workflow: draft → pending_review → confirmed → submitted → accepted / rejected
+    # Workflow: draft → pending_review → confirmed → [submitting] → accepted / rejected (submitting при SUBMISSION_ASYNC)
     status: Mapped[str] = mapped_column(String(30), default="draft")
     confirmed_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

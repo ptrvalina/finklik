@@ -116,6 +116,12 @@ class Settings(BaseSettings):
     SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC: float = 30.0
     SUBMISSION_PORTAL_HTTP_RETRIES: int = 2
 
+    #: Если True — POST /submissions/{id}/submit ставит статус submitting и завершает подачу в фоне (WS/email по готовности).
+    SUBMISSION_ASYNC: bool = False
+
+    #: Для ответа GET /signing/.../digest — добавить демонстрационную подпись (не для prod).
+    SIGNING_INCLUDE_MOCK_SIGNATURE: bool = False
+
     # Курсы валют НБ РБ (фоновое обновление в API-процессе)
     NBRB_FX_REFRESH_SECONDS: int = Field(
         default=3600,

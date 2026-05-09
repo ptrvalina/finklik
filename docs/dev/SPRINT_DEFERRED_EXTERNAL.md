@@ -25,6 +25,8 @@
 
 **Уже сделано без внешних API** (не дублировать как «хвост»): мок/`http`-адаптер подачи, WS+email, архивный снимок `submission_snapshot_json`, UI подачи и просмотра — см. [`PRODUCT_SPRINT_ALIGNMENT.md`](PRODUCT_SPRINT_ALIGNMENT.md).
 
+Дополнительно в коде (интеграционная «обвязка», не замена контрактов с органами): **`GET /api/v1/integrations/capabilities`** — сводка режимов портала/НБ РБ; **`GET /api/v1/signing/submissions/{id}/digest`** — SHA-256 канонического пакета для внешней ЭЦП; опционально **`SUBMISSION_ASYNC=true`** — статус `submitting` и фоновое завершение подачи с тем же WS/email.
+
 ---
 
 ## Инфраструктура и масштаб (чекбоксы фаз 1–3 в `scaling-plan.md`)

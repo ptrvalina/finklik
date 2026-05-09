@@ -18,6 +18,7 @@ const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-surface-variant text-on-surface-variant',
   pending_review: 'border-amber-200/90 bg-amber-50 text-amber-950',
   confirmed: 'border-blue-200/90 bg-blue-50 text-blue-900',
+  submitting: 'border-violet-300/90 bg-violet-50 text-violet-950 animate-pulse',
   submitted: 'border-violet-200/90 bg-violet-50 text-violet-900',
   accepted: 'border-emerald-200/90 bg-emerald-50 text-emerald-900',
   rejected: 'border-red-200/90 bg-red-50 text-red-800',
@@ -227,10 +228,11 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['submissions'] })
       const rejected = res.data?.status === 'rejected'
-      flash(
-        rejected ? 'error' : 'success',
-        res.data?.message || (rejected ? 'Портал отклонил отчёт' : 'Отчёт отправлен'),
-      )
+      const pending = res.data?.portal_outcome === 'pending'
+      const msg =
+        res.data?.message ||
+        (pending ? 'Отправка запущена в фоне' : rejected ? 'Портал отклонил отчёт' : 'Отчёт отправлен')
+      flash(rejected ? 'error' : 'success', msg)
     },
     onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка отправки'),
   })
@@ -358,7 +360,11 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                   {s.rejection_reason && <p className="mt-1 text-xs text-error">Причина: {s.rejection_reason}</p>}
                 </div>
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                  {(s.status === 'pending_review' || s.status === 'confirmed' || s.status === 'accepted' || s.status === 'rejected') && (
+                  {(s.status === 'pending_review' ||
+                    s.status === 'confirmed' ||
+                    s.status === 'submitting' ||
+                    s.status === 'accepted' ||
+                    s.status === 'rejected') && (
                     <button type="button" onClick={() => setPreviewData(s)} className="btn-ghost !text-xs">
                       <Icon name="visibility" className="text-sm" /> Просмотр
                     </button>
@@ -392,6 +398,17 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                         <Icon name="close" className="text-sm" />
                       </button>
                     </>
+                  )}
+                  {s.status === 'submitting' && (
+                    <button
+                      type="button"
+                      onClick={() => rejectMutation.mutate({ id: s.id })}
+                      className="btn-secondary !py-1.5 !text-xs"
+                      disabled={rejectMutation.isPending}
+                      title="Отменить фоновую отправку и вернуть в черновик"
+                    >
+                      <Icon name="cancel_schedule_send" className="text-sm" /> Отменить отправку
+                    </button>
                   )}
                   {s.status === 'confirmed' && (
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">

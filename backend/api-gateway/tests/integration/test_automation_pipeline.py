@@ -10,6 +10,7 @@ def _stub_submission_settings(**kw):
         "SUBMISSION_PORTAL_BASE_URL": "",
         "SUBMISSION_PORTAL_HTTP_TIMEOUT_SEC": 30.0,
         "SUBMISSION_PORTAL_HTTP_RETRIES": 2,
+        "SUBMISSION_ASYNC": False,
     }
     payload.update(kw)
     return type("S", (), payload)()

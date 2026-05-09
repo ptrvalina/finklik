@@ -24,7 +24,7 @@ from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
 from app.core.deps import get_current_user, require_roles
 from app.models.employee import Employee, SalaryRecord
 from app.models.regulatory import ReportSubmission
@@ -91,6 +91,193 @@ def _mock_portal_accepts(submission_id: str, reject_rate: float) -> bool:
     h = int(hashlib.sha256(submission_id.encode()).hexdigest(), 16)
     bucket = (h % 10_000) / 10_000.0
     return bucket >= rr
+
+
+async def _compute_portal_acceptance(
+    settings,
+    submission_id: str,
+    portal_sim: Literal["accept", "reject"] | None,
+    submission: ReportSubmission,
+    report_payload,
+) -> tuple[bool, str | None, str | None]:
+    """Исход портала: (принят?, внешняя причина отказа, замена submission_ref с портала)."""
+    sim = portal_sim if (portal_sim is not None and settings.DEBUG) else None
+    if sim == "reject":
+        return False, None, None
+    if sim == "accept":
+        return True, None, None
+    if settings.SUBMISSION_PORTAL_MODE == "http":
+        if not settings.SUBMISSION_PORTAL_BASE_URL.strip():
+            raise HTTPException(
+                status_code=503,
+                detail="SUBMISSION_PORTAL_BASE_URL не задан при SUBMISSION_PORTAL_MODE=http",
+            )
+        http_res = await submit_to_http_portal(
+            settings,
+            submission_id=submission_id,
+            organization_id=submission.organization_id,
+            authority=submission.authority,
+            report_type=submission.report_type,
+            report_period=submission.report_period,
+            local_reference=submission.submission_ref or "",
+            report_data=report_payload,
+        )
+        ref_override = http_res.portal_reference
+        return http_res.accepted, http_res.reason, ref_override
+    accepted = _mock_portal_accepts(submission_id, settings.MOCK_SUBMISSION_REJECT_RATE)
+    return accepted, None, None
+
+
+async def _async_finish_submission(
+    submission_id: str,
+    portal_sim: Literal["accept", "reject"] | None,
+) -> None:
+    """Фоновое завершение после статуса submitting (SUBMISSION_ASYNC)."""
+    settings = get_settings()
+    async with AsyncSessionLocal() as db:
+        try:
+            result = await db.execute(select(ReportSubmission).where(ReportSubmission.id == submission_id))
+            submission = result.scalar_one_or_none()
+            if not submission or submission.status != "submitting":
+                return
+
+            user_result = await db.execute(select(User).where(User.id == submission.user_id))
+            user = user_result.scalar_one_or_none()
+            if not user:
+                log.error("submission_async.user_missing", submission_id=submission_id)
+                return
+
+            org_row = await db.execute(select(Organization).where(Organization.id == submission.organization_id))
+            org = org_row.scalar_one_or_none()
+            org_name = org.name if org else ""
+
+            report_payload = json.loads(submission.report_data_json) if submission.report_data_json else None
+            auth_label = _authority_name(submission.authority)
+
+            try:
+                portal_accepts, external_reason, ref_override = await _compute_portal_acceptance(
+                    settings,
+                    submission_id,
+                    portal_sim,
+                    submission,
+                    report_payload,
+                )
+            except HTTPException as exc:
+                submission.status = "rejected"
+                det = exc.detail
+                submission.rejection_reason = det if isinstance(det, str) else json.dumps(det, ensure_ascii=False)
+                submission.submission_snapshot_json = _build_submission_snapshot_json(
+                    submission,
+                    settings=settings,
+                    portal_outcome="error",
+                    report_payload=report_payload,
+                )
+                await db.commit()
+                await notify_submission_portal_result(
+                    org_id=str(submission.organization_id),
+                    user_email=user.email,
+                    org_name=org_name,
+                    authority_label=auth_label,
+                    report_period=submission.report_period,
+                    submission_id=submission.id,
+                    status=submission.status,
+                    submission_ref=submission.submission_ref,
+                    rejection_reason=submission.rejection_reason,
+                    portal_outcome="rejected",
+                    summary_message=f"Ошибка портала: {submission.rejection_reason}",
+                )
+                return
+            except Exception as exc:
+                log.exception("submission_async.portal_failed", submission_id=submission_id)
+                submission.status = "rejected"
+                submission.rejection_reason = f"Портал недоступен: {exc}"
+                submission.submission_snapshot_json = _build_submission_snapshot_json(
+                    submission,
+                    settings=settings,
+                    portal_outcome="error",
+                    report_payload=report_payload,
+                )
+                await db.commit()
+                await notify_submission_portal_result(
+                    org_id=str(submission.organization_id),
+                    user_email=user.email,
+                    org_name=org_name,
+                    authority_label=auth_label,
+                    report_period=submission.report_period,
+                    submission_id=submission.id,
+                    status=submission.status,
+                    submission_ref=submission.submission_ref,
+                    rejection_reason=submission.rejection_reason,
+                    portal_outcome="rejected",
+                    summary_message=f"{auth_label}: ошибка подачи ({exc})",
+                )
+                return
+
+            if ref_override:
+                submission.submission_ref = ref_override
+
+            if portal_accepts:
+                submission.status = "accepted"
+                submission.rejection_reason = None
+                submission.submission_snapshot_json = _build_submission_snapshot_json(
+                    submission,
+                    settings=settings,
+                    portal_outcome="accepted",
+                    report_payload=report_payload,
+                )
+                await db.commit()
+                msg = (
+                    f"Отчёт принят {auth_label}. "
+                    f"Референс: {submission.submission_ref}"
+                )
+                await notify_submission_portal_result(
+                    org_id=str(submission.organization_id),
+                    user_email=user.email,
+                    org_name=org_name,
+                    authority_label=auth_label,
+                    report_period=submission.report_period,
+                    submission_id=submission.id,
+                    status=submission.status,
+                    submission_ref=submission.submission_ref,
+                    rejection_reason=None,
+                    portal_outcome="accepted",
+                    summary_message=msg,
+                )
+                return
+
+            submission.status = "rejected"
+            submission.rejection_reason = external_reason or (
+                "Мок портала: отчёт не принят (валидация). "
+                "Настройка MOCK_SUBMISSION_REJECT_RATE или portal_sim=reject (DEBUG)."
+            )
+            submission.submission_snapshot_json = _build_submission_snapshot_json(
+                submission,
+                settings=settings,
+                portal_outcome="rejected",
+                report_payload=report_payload,
+            )
+            await db.commit()
+            msg = (
+                f"{auth_label} отклонил отчёт. "
+                f"Референс: {submission.submission_ref}. "
+                "Верните в черновик или создайте новую заявку."
+            )
+            await notify_submission_portal_result(
+                org_id=str(submission.organization_id),
+                user_email=user.email,
+                org_name=org_name,
+                authority_label=auth_label,
+                report_period=submission.report_period,
+                submission_id=submission.id,
+                status=submission.status,
+                submission_ref=submission.submission_ref,
+                rejection_reason=submission.rejection_reason,
+                portal_outcome="rejected",
+                summary_message=msg,
+            )
+        except Exception:
+            await db.rollback()
+            log.exception("submission_async.fatal", submission_id=submission_id)
 
 
 async def _readiness_issues_for_submission(
@@ -671,41 +858,35 @@ async def submit_report(
 
     report_payload = json.loads(submission.report_data_json) if submission.report_data_json else None
 
-    portal_accepts: bool
-    external_reason: str | None = None
+    if settings.SUBMISSION_ASYNC:
+        submission.status = "submitting"
+        await db.flush()
+        background_tasks.add_task(_async_finish_submission, submission.id, sim)
+        return {
+            **_serialize(submission),
+            "portal_outcome": "pending",
+            "message": (
+                "Отправка выполняется в фоне. Результат придёт по WebSocket и email "
+                "(если настроен почтовый провайдер)."
+            ),
+        }
 
-    if sim == "reject":
-        portal_accepts = False
-    elif sim == "accept":
-        portal_accepts = True
-    elif settings.SUBMISSION_PORTAL_MODE == "http":
-        if not settings.SUBMISSION_PORTAL_BASE_URL.strip():
-            raise HTTPException(
-                status_code=503,
-                detail="SUBMISSION_PORTAL_BASE_URL не задан при SUBMISSION_PORTAL_MODE=http",
-            )
-        try:
-            http_res = await submit_to_http_portal(
-                settings,
-                submission_id=submission.id,
-                organization_id=submission.organization_id,
-                authority=submission.authority,
-                report_type=submission.report_type,
-                report_period=submission.report_period,
-                local_reference=submission.submission_ref,
-                report_data=report_payload,
-            )
-            portal_accepts = http_res.accepted
-            if http_res.portal_reference:
-                submission.submission_ref = http_res.portal_reference
-            external_reason = http_res.reason
-        except HTTPException:
-            raise
-        except Exception as exc:
-            log.exception("submission_portal.http_failed", submission_id=submission.id)
-            raise HTTPException(status_code=502, detail=f"Портал недоступен: {exc}") from exc
-    else:
-        portal_accepts = _mock_portal_accepts(submission_id, settings.MOCK_SUBMISSION_REJECT_RATE)
+    try:
+        portal_accepts, external_reason, ref_override = await _compute_portal_acceptance(
+            settings,
+            submission_id,
+            sim,
+            submission,
+            report_payload,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception("submission_portal.http_failed", submission_id=submission.id)
+        raise HTTPException(status_code=502, detail=f"Портал недоступен: {exc}") from exc
+
+    if ref_override:
+        submission.submission_ref = ref_override
 
     auth_label = _authority_name(submission.authority)
 
@@ -866,10 +1047,10 @@ async def reject_submission(
     if not submission:
         raise HTTPException(404, "Отчёт не найден")
 
-    if submission.status not in ("pending_review", "confirmed", "rejected"):
+    if submission.status not in ("pending_review", "confirmed", "rejected", "submitting"):
         raise HTTPException(400, "Невозможно отклонить отчёт в текущем статусе")
 
-    if submission.status == "rejected":
+    if submission.status in ("rejected", "submitting"):
         submission.submission_ref = None
         submission.submitted_at = None
 
@@ -917,6 +1098,7 @@ def _status_label(status: str) -> str:
         "draft": "Черновик",
         "pending_review": "На проверке",
         "confirmed": "Подтверждён",
+        "submitting": "Отправляется",
         "submitted": "Отправлен",
         "accepted": "Принят",
         "rejected": "Отклонён",
