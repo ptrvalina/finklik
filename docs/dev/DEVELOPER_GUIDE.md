@@ -81,6 +81,7 @@ make clean        # Полная очистка
 make verify-pre-release  # Alembic heads + unit tests (api-gateway); на Unix также: `bash scripts/verify_pre_release.sh`
 make verify-like-ci      # Как job «Backend Tests» в CI: alembic + unit + integration (metrics, submissions, scanner)
 make verify-like-ci-script  # То же через `python scripts/verify_like_ci.py` (подхватывает `backend/api-gateway/.venv311` при наличии)
+make demo-smoke      # Быстрый pre-demo: alembic + pytest (tax/OCR/metrics) + `npm run build`; Python как у verify-like-ci
 make typecheck-web   # Только проверка типов фронта (`tsc --noEmit`), без полной сборки
 ```
 

@@ -1,12 +1,30 @@
 #!/usr/bin/env python3
-"""Run quick pre-demo smoke checks and write a markdown summary."""
+"""Run quick pre-demo smoke checks and write a markdown summary.
+
+Интерпретатор backend: как в `verify_like_ci.py` — `backend/api-gateway/.venv311`
+при наличии, иначе `PYTHON_EXE`, иначе тот же Python, что запустил скрипт.
+"""
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+def _find_gateway_python() -> list[str]:
+    root = Path(__file__).resolve().parent.parent
+    gw = root / "backend" / "api-gateway"
+    env = os.environ.get("PYTHON_EXE", "").strip()
+    if env:
+        return [env]
+    for rel in (".venv311/Scripts/python.exe", ".venv311/bin/python", ".venv/Scripts/python.exe", ".venv/bin/python"):
+        p = gw / rel
+        if p.is_file():
+            return [str(p)]
+    return [sys.executable]
 
 
 def _run(cmd: list[str], cwd: Path) -> None:
@@ -23,10 +41,13 @@ def main() -> int:
     artifacts.mkdir(exist_ok=True)
     summary = artifacts / "pre-demo-smoke-summary.md"
 
-    _run([sys.executable, "-m", "alembic", "heads"], cwd=backend)
+    py = _find_gateway_python()
+    py_display = py[0]
+
+    _run(py + ["-m", "alembic", "heads"], cwd=backend)
     _run(
-        [
-            sys.executable,
+        py
+        + [
             "-m",
             "pytest",
             "tests/unit/test_tax_calculator.py",
@@ -49,6 +70,7 @@ def main() -> int:
                 "",
                 "## Checks",
                 "",
+                f"- Backend Python: `{py_display}`",
                 "- Alembic heads (single chain): PASS",
                 "- Backend unit/tax + OCR parse + metrics smoke: PASS",
                 "- Frontend production build: PASS",
@@ -62,6 +84,7 @@ def main() -> int:
         encoding="utf-8",
     )
     print("Pre-demo smoke passed.")
+    print(f"Backend Python: {py_display}")
     print(f"Summary: {summary}")
     return 0
 
