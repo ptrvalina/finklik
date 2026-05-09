@@ -44,6 +44,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+    #: Личный chat_id в Telegram (бот должен получить /start от пользователя).
+    telegram_chat_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     organization: Mapped["Organization | None"] = relationship("Organization", back_populates="users")
 
 

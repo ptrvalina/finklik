@@ -55,5 +55,32 @@ class UserResponse(BaseModel):
     org_name: str | None
     legal_form: str | None = None
     tax_regime: str | None = None
+    telegram_chat_id: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class UserNotificationsPatch(BaseModel):
+    """Обновление каналов уведомлений. Пустая строка снимает привязку Telegram."""
+
+    telegram_chat_id: str | None = None
+
+    @field_validator("telegram_chat_id", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
+    @field_validator("telegram_chat_id")
+    @classmethod
+    def validate_telegram_chat_id(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        s = v.strip()
+        if not re.fullmatch(r"-?\d{5,20}", s):
+            raise ValueError(
+                "Укажите chat_id из Telegram: только цифры (для групп допускается минус в начале). "
+                "Напишите боту /start и скопируйте id из ответа или из @userinfobot."
+            )
+        return s

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi } from '../api/client'
+import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi, authApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -252,6 +252,31 @@ export default function SettingsPage() {
 
 function ProfileSection() {
   const user = useAuthStore(s => s.user)
+  const qc = useQueryClient()
+  const [tgChatId, setTgChatId] = useState('')
+  const [tgMsg, setTgMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    setTgChatId(user?.telegram_chat_id?.trim() || '')
+  }, [user?.telegram_chat_id])
+
+  const saveTgMutation = useMutation({
+    mutationFn: () =>
+      authApi.patchNotifications({
+        telegram_chat_id: tgChatId.trim() === '' ? null : tgChatId.trim(),
+      }),
+    onSuccess: async () => {
+      setTgMsg({ type: 'success', text: 'Telegram сохранён' })
+      const { data } = await authApi.me()
+      useAuthStore.setState({ user: data })
+      qc.invalidateQueries({ queryKey: ['auth-me'] })
+    },
+    onError: (e: any) =>
+      setTgMsg({
+        type: 'error',
+        text: e?.response?.data?.detail || 'Не удалось сохранить chat_id',
+      }),
+  })
 
   const rows = [
     { icon: 'person', label: 'Владелец', value: user?.full_name },
@@ -279,6 +304,42 @@ function ProfileSection() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="page-section p-5">
+        <h3 className="text-sm font-bold text-on-surface mb-1">Telegram для напоминаний</h3>
+        <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
+          Укажите ваш личный chat_id, чтобы напоминания календаря и уведомления планера приходили в личку бота, а не только в общий чат.
+          Откройте бота в Telegram, отправьте команду /start, затем узнайте chat_id (например через @userinfobot) и вставьте сюда только цифры.
+        </p>
+        {tgMsg && (
+          <p
+            className={`mb-3 text-xs ${tgMsg.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-error'}`}
+            role="status"
+          >
+            {tgMsg.text}
+          </p>
+        )}
+        <label className="block">
+          <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">chat_id</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            className="mt-1 w-full max-w-md rounded-lg border border-outline bg-surface px-3 py-2 text-sm text-on-surface"
+            placeholder="Например 123456789"
+            value={tgChatId}
+            onChange={(e) => setTgChatId(e.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="btn-primary mt-3 text-xs"
+          disabled={saveTgMutation.isPending}
+          onClick={() => saveTgMutation.mutate()}
+        >
+          {saveTgMutation.isPending ? 'Сохранение…' : 'Сохранить Telegram'}
+        </button>
       </div>
     </div>
   )

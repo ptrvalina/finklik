@@ -316,6 +316,7 @@ class CalendarEventResponse(BaseModel):
     completed_at: datetime | None = None
     remind_email: bool = False
     remind_telegram: bool = False
+    created_by_user_id: str | None = None
 
     model_config = {"from_attributes": True}
 

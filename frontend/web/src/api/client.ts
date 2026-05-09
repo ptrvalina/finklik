@@ -308,6 +308,8 @@ export const authApi = {
   register: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/register', data)),
   login: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/login', data)),
   me: () => api.get('/auth/me'),
+  patchNotifications: (data: { telegram_chat_id?: string | null }) =>
+    api.patch('/auth/me/notifications', data),
 }
 
 export const dashboardApi = {

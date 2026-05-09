@@ -12,7 +12,7 @@ from app.core.deps import get_current_user
 from app.core.config import settings
 from app.models.user import User, Organization
 from app.services.onec_contour_service import ensure_onec_contour_record
-from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, TokenResponse, UserResponse
+from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, TokenResponse, UserResponse, UserNotificationsPatch
 from app.security import check_brute_force, record_failed_login, record_successful_login, audit_log
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -189,4 +189,35 @@ async def get_me(current_user: User = Depends(get_current_user), db: AsyncSessio
         org_name=org_name,
         legal_form=org.legal_form if org else None,
         tax_regime=org.tax_regime if org else None,
+        telegram_chat_id=current_user.telegram_chat_id,
+    )
+
+
+@router.patch("/me/notifications", response_model=UserResponse)
+async def patch_me_notifications(
+    body: UserNotificationsPatch,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Сохранить личный Telegram chat_id для напоминаний и уведомлений."""
+    patch = body.model_dump(exclude_unset=True)
+    if "telegram_chat_id" in patch:
+        current_user.telegram_chat_id = patch["telegram_chat_id"]
+    await db.flush()
+    org_name = None
+    org = None
+    if current_user.organization_id:
+        result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+        org = result.scalar_one_or_none()
+        org_name = org.name if org else None
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        full_name=current_user.full_name,
+        role=current_user.role,
+        organization_id=str(current_user.organization_id) if current_user.organization_id else None,
+        org_name=org_name,
+        legal_form=org.legal_form if org else None,
+        tax_regime=org.tax_regime if org else None,
+        telegram_chat_id=current_user.telegram_chat_id,
     )

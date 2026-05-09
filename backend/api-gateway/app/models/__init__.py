@@ -13,6 +13,7 @@ from app.models.notification import Notification
 from app.models.categorization_rule import CategorizationRule
 from app.models.automation_policy import AutomationPolicy
 from app.models.user_note import UserNote
+from app.models.calendar_reminder import CalendarReminderDelivery
 
 __all__ = [
     "Organization", "User", "Invitation", "Transaction",
@@ -24,4 +25,5 @@ __all__ = [
     "CategorizationRule",
     "AutomationPolicy",
     "UserNote",
+    "CalendarReminderDelivery",
 ]

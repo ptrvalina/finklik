@@ -21,7 +21,7 @@ from app.schemas.employee import (
     CalendarEventResponse,
     CalendarProductivitySummary,
 )
-from app.services.planner_notifications import send_planner_email, send_planner_telegram
+from app.services.calendar_reminder_service import delete_pending_for_event, sync_calendar_deliveries
 from app.services.tax_calculator import (
     calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year, validate_tax_rules_config
 )
@@ -324,19 +324,11 @@ async def create_event(
         time_end=body.time_end,
         remind_email=body.remind_email,
         remind_telegram=body.remind_telegram,
+        created_by_user_id=str(current_user.id),
     )
     db.add(event)
     await db.flush()
-    if body.remind_email and current_user.email:
-        await send_planner_email(
-            current_user.email,
-            f"Календарь: «{body.title}»",
-            f"Событие на {body.event_date.isoformat()}. Напоминание по e-mail включено.",
-        )
-    if body.remind_telegram:
-        await send_planner_telegram(
-            f"Календарь: «{body.title}» на {body.event_date.isoformat()}. Напоминание в Telegram включено."
-        )
+    await sync_calendar_deliveries(db, event)
     return event
 
 
@@ -364,6 +356,7 @@ async def update_event(
             setattr(event, key, patch[key])
 
     await db.flush()
+    await sync_calendar_deliveries(db, event)
     return event
 
 
@@ -386,9 +379,11 @@ async def complete_calendar_event(
     if body.done:
         event.is_completed = True
         event.completed_at = datetime.now(timezone.utc)
+        await delete_pending_for_event(db, event.id)
     else:
         event.is_completed = False
         event.completed_at = None
+        await sync_calendar_deliveries(db, event)
     await db.flush()
     return event
 

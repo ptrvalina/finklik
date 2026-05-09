@@ -83,7 +83,11 @@ async def create_task(
         "Новая задача в планере",
         f"Вам назначена задача «{title}».",
     )
-    await send_planner_telegram(f"Планер: новая задача «{title}» для {assignee_user.full_name}.")
+    tg_chat = (assignee_user.telegram_chat_id or "").strip() or None
+    await send_planner_telegram(
+        f"Планер: новая задача «{title}» для {assignee_user.full_name}.",
+        chat_id=tg_chat,
+    )
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
@@ -203,7 +207,11 @@ async def create_report(
             "Отчет по задаче готов",
             f"По задаче «{task.title}» подготовлен отчет.",
         )
-    await send_planner_telegram(f"Планер: подготовлен отчет по задаче «{task.title}».")
+    author_chat = (author.telegram_chat_id or "").strip() if author else None
+    await send_planner_telegram(
+        f"Планер: подготовлен отчет по задаче «{task.title}».",
+        chat_id=author_chat or None,
+    )
     await safe_log_audit(
         db,
         user_id=str(current_user.id),

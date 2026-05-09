@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, date, timezone
 from decimal import Decimal
@@ -123,6 +125,15 @@ class CalendarEvent(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     remind_email: Mapped[bool] = mapped_column(Boolean, default=False)
     remind_telegram: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    #: Автор пользовательского события (для адресации напоминаний). Авто-события — без автора.
+    created_by_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True, index=True)
+
+    reminder_deliveries: Mapped[list["CalendarReminderDelivery"]] = relationship(
+        "CalendarReminderDelivery",
+        back_populates="event",
+        cascade="all, delete-orphan",
+    )
 
 
 class AuditLog(Base):

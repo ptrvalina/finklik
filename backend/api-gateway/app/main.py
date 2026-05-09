@@ -49,6 +49,7 @@ from app.api.v1.endpoints.integrations import router as integrations_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
+from app.services.calendar_reminder_worker import process_calendar_reminders_forever
 from app.services.nbrb_fx_service import start_nbrb_background_loop, stop_nbrb_background_loop
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -104,6 +105,7 @@ async def lifespan(application: FastAPI):
         refresh_cookie_samesite=settings.REFRESH_COOKIE_SAMESITE,
     )
     sync_poller_task: asyncio.Task | None = None
+    calendar_reminder_task: asyncio.Task | None = None
     nbrb_task = start_nbrb_background_loop()
     if nbrb_task:
         log.info("nbrb_fx_background_started", interval_sec=settings.NBRB_FX_REFRESH_SECONDS)
@@ -116,6 +118,8 @@ async def lifespan(application: FastAPI):
             # Render free plan fallback: run 1C sync poller in API process.
             sync_poller_task = asyncio.create_task(process_onec_sync_jobs_forever())
             log.info("onec_sync_poller_started", mode="in_process")
+            calendar_reminder_task = asyncio.create_task(process_calendar_reminders_forever())
+            log.info("calendar_reminder_worker_started", mode="in_process")
             break
         except Exception as exc:
             if attempt == max_attempts:
@@ -130,6 +134,12 @@ async def lifespan(application: FastAPI):
             await asyncio.sleep(2)
     yield
     await stop_nbrb_background_loop()
+    if calendar_reminder_task:
+        calendar_reminder_task.cancel()
+        try:
+            await calendar_reminder_task
+        except asyncio.CancelledError:
+            pass
     if sync_poller_task:
         sync_poller_task.cancel()
         try:

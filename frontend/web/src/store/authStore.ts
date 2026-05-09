@@ -11,6 +11,7 @@ interface User {
   organization_id: string | null
   legal_form: string | null
   tax_regime: string | null
+  telegram_chat_id?: string | null
 }
 
 interface AuthStore {
