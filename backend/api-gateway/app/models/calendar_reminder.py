@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.datetime_utils import utc_now_naive
 
 
 class CalendarReminderDelivery(Base):
@@ -26,7 +27,7 @@ class CalendarReminderDelivery(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
     sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
     event = relationship("CalendarEvent", back_populates="reminder_deliveries")
     user = relationship("User")
