@@ -1,5 +1,9 @@
+import io
 import json
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from datetime import date
@@ -17,6 +21,7 @@ from app.schemas.employee import (
     SalaryCalculateRequest,
     SalaryResponse,
 )
+from app.services.hr_order_docx import build_hire_order_mapping, render_hire_order_docx
 from app.services.tax_calculator import calculate_salary
 from app.services.workforce_automation import (
     create_workforce_calendar_event,
@@ -198,6 +203,66 @@ async def employee_salary_records_range(
         .order_by(SalaryRecord.period_year, SalaryRecord.period_month)
     )
     return result.scalars().all()
+
+
+@router.get("/{emp_id}/documents/order-hire")
+async def download_hire_order_document(
+    emp_id: str,
+    city: str = Query("", max_length=200),
+    director_initials: str = Query("", max_length=200),
+    employee_initials: str = Query("", max_length=200),
+    application_number: str | None = Query(None, max_length=80),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """DOCX приказ о приёме по шаблону `resources/hr_templates/order_hire.docx`."""
+    enc = get_encryptor()
+    er = await db.execute(
+        select(Employee).where(
+            Employee.id == emp_id,
+            Employee.organization_id == current_user.organization_id,
+        )
+    )
+    emp = er.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Сотрудник не найден")
+    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org = org_r.scalar_one_or_none()
+    org_name = (org.name if org else "") or ""
+
+    meta: dict = {}
+    if getattr(emp, "hr_meta_json", None):
+        try:
+            meta = json.loads(emp.hr_meta_json)
+        except json.JSONDecodeError:
+            meta = {}
+
+    full_name = enc.decrypt(emp.full_name_enc)
+    position_title = (emp.position_name or emp.position or "").strip()
+
+    mapping = build_hire_order_mapping(
+        organization_short_name=org_name,
+        employee_full_name=full_name,
+        position_title=position_title,
+        hire_date=emp.hire_date,
+        hr_meta=meta,
+        city=city,
+        director_initials=director_initials,
+        employee_initials=employee_initials or None,
+        application_number=application_number,
+    )
+    try:
+        raw = render_hire_order_docx(mapping)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    fn = f"prikaz_o_prieme_{emp_id[:8]}.docx"
+    cd = f"attachment; filename=\"{fn}\"; filename*=UTF-8''{quote(fn)}"
+    return StreamingResponse(
+        io.BytesIO(raw),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": cd},
+    )
 
 
 @router.get("/{emp_id}", response_model=EmployeeResponse)

@@ -331,6 +331,11 @@ export const employeesApi = {
     id: string,
     params: { year_from: number; month_from: number; year_to: number; month_to: number },
   ) => api.get(`/employees/${id}/salary-records`, { params }),
+  downloadHireOrder: (
+    id: string,
+    params?: { city?: string; director_initials?: string; employee_initials?: string; application_number?: string },
+  ) =>
+    api.get(`/employees/${id}/documents/order-hire`, { params, responseType: 'blob' }),
 }
 
 export const workforceApi = {

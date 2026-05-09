@@ -267,6 +267,15 @@ export default function EmployeesHire() {
     }
   }
 
+  async function downloadOrderDocx(employeeId: string) {
+    try {
+      const { data } = await employeesApi.downloadHireOrder(employeeId)
+      saveBlob(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `prikaz_o_prieme_${employeeId.slice(0, 8)}.docx`)
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Не удалось сформировать приказ')
+    }
+  }
+
   async function exportPayroll() {
     if (!exportRange.employeeId) {
       alert('Выберите сотрудника для выписки')
@@ -411,9 +420,12 @@ export default function EmployeesHire() {
                   <td className="px-3 py-2">{r.position}</td>
                   <td className="px-3 py-2">{r.is_active ? 'Активен' : 'Уволен'}</td>
                   <td className="px-3 py-2 text-xs">{pu2Map[r.id] || '—'}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 flex flex-wrap gap-1">
                     <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => void openEdit(r.id)}>
                       Карточка
+                    </button>
+                    <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => void downloadOrderDocx(r.id)}>
+                      Приказ DOCX
                     </button>
                   </td>
                 </tr>
