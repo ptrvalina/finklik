@@ -5,12 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_roles
 from app.models.automation_policy import AutomationPolicy
-from app.models.employee import AuditLog
-from app.models.employee import CalendarEvent
+from app.models.employee import AuditLog, CalendarEvent, SalaryRecord
 from app.models.onec_sync import OneCSyncJob
 from app.models.regulatory import ReportSubmission
 from app.models.document import ScannedDocument
-from app.models.employee import SalaryRecord
 from app.models.transaction import Transaction
 from app.services.pipeline_status import get_transaction_validation_issues
 from app.models.user import User
@@ -48,6 +46,13 @@ async def automation_issues(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not current_user.organization_id:
+        return {
+            "items": [],
+            "total": 0,
+            "summary": {"high": 0, "medium": 0, "low": 0},
+        }
+
     issues: list[dict] = []
 
     sync_result = await db.execute(

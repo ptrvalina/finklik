@@ -99,6 +99,8 @@ async def upload_and_scan(
         )
 
     contents = await file.read()
+    if not contents:
+        raise HTTPException(400, "Пустой файл")
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 
@@ -159,6 +161,8 @@ async def upload_to_kudir(
         raise HTTPException(400, "Неподдерживаемый формат файла")
 
     contents = await file.read()
+    if not contents:
+        raise HTTPException(400, "Пустой файл")
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 

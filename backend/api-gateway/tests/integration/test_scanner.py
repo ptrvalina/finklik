@@ -57,6 +57,14 @@ async def test_parse_text_too_short(client: AsyncClient, auth_headers: dict):
 
 
 @pytest.mark.asyncio
+async def test_upload_empty_file_rejected(client: AsyncClient, auth_headers: dict):
+    files = {"file": ("empty.jpg", b"", "image/jpeg")}
+    resp = await client.post("/api/v1/scanner/upload", files=files, headers=auth_headers)
+    assert resp.status_code == 400
+    assert "Пустой" in resp.json().get("detail", "")
+
+
+@pytest.mark.asyncio
 async def test_list_scanned_documents(client: AsyncClient, auth_headers: dict):
     resp = await client.get("/api/v1/scanner/documents", headers=auth_headers)
     assert resp.status_code == 200

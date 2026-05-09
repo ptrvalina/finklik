@@ -58,11 +58,12 @@ async def create_task(
     if not assignee_user:
         raise HTTPException(status_code=404, detail="Назначенный пользователь не найден")
 
+    title = body.title.strip()
     task = PlannerTask(
         tenant_id=str(current_user.organization_id),
         author_id=str(current_user.id),
         assignee_id=body.assignee_id,
-        title=body.title.strip(),
+        title=title,
         description=body.description,
         attachments=body.attachments,
         status="open",
@@ -74,15 +75,15 @@ async def create_task(
         Notification(
             user_id=str(assignee_user.id),
             type="planner_task_created",
-            message=f"Новая задача: {task.title}",
+            message=f"Новая задача: {title}",
         )
     )
     await send_planner_email(
         assignee_user.email,
         "Новая задача в планере",
-        f"Вам назначена задача «{task.title}».",
+        f"Вам назначена задача «{title}».",
     )
-    await send_planner_telegram(f"Планер: новая задача «{task.title}» для {assignee_user.full_name}.")
+    await send_planner_telegram(f"Планер: новая задача «{title}» для {assignee_user.full_name}.")
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
