@@ -19,6 +19,13 @@ const CP_KIND_LABEL: Record<string, string> = {
   both: 'Поставщик / клиент',
 }
 
+type CpKind = 'both' | 'supplier' | 'customer'
+
+function normalizeCpKind(v: string | undefined | null): CpKind {
+  if (v === 'supplier' || v === 'customer' || v === 'both') return v
+  return 'both'
+}
+
 type CpRow = {
   id: string
   name: string
@@ -51,7 +58,17 @@ export default function CounterpartiesPage() {
   const [editing, setEditing] = useState<CpRow | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const emptyForm = {
+  const emptyForm: {
+    name: string
+    unp: string
+    address: string
+    phone: string
+    email: string
+    bank_account: string
+    bank_name: string
+    notes: string
+    cp_kind: CpKind
+  } = {
     name: '',
     unp: '',
     address: '',
@@ -60,9 +77,9 @@ export default function CounterpartiesPage() {
     bank_account: '',
     bank_name: '',
     notes: '',
-    cp_kind: 'both' as const,
+    cp_kind: 'both',
   }
-  const [form, setForm] = useState({ ...emptyForm })
+  const [form, setForm] = useState(emptyForm)
 
   const { data, isLoading } = useQuery({
     queryKey: ['counterparties', search],
@@ -141,7 +158,7 @@ export default function CounterpartiesPage() {
       bank_account: cp.bank_account || '',
       bank_name: cp.bank_name || '',
       notes: cp.notes || '',
-      cp_kind: (cp.cp_kind as 'both' | 'supplier' | 'customer') || 'both',
+      cp_kind: normalizeCpKind(cp.cp_kind),
     })
     setShowModal(true)
   }
@@ -507,7 +524,7 @@ export default function CounterpartiesPage() {
               <select
                 className="input min-h-11 rounded-xl"
                 value={form.cp_kind}
-                onChange={(e) => setForm({ ...form, cp_kind: e.target.value as 'both' | 'supplier' | 'customer' })}
+                onChange={(e) => setForm({ ...form, cp_kind: normalizeCpKind(e.target.value) })}
               >
                 <option value="both">Поставщик и клиент</option>
                 <option value="supplier">Поставщик</option>
