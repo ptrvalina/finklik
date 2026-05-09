@@ -156,11 +156,13 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** Render free tier «спит» 15 минут: первый запрос может вернуть ERR_NETWORK / 5xx
- *  (Render proxy не отдаёт CORS-заголовки на cold start). Делаем тёплый GET и пару повторов. */
+/** Render free tier «спит» ~15 мин: прокси может рвать соединение или долго отвечать.
+ *  Делаем несколько попыток с паузами и длинным таймаутом на login/health. */
+const COLD_START_LOGIN_TIMEOUT_MS = 120_000
+
 async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
-  const attempts = 3
-  const delays = [0, 1500, 4000]
+  const attempts = 5
+  const delays = [0, 2000, 5000, 10000, 15000]
   let lastErr: any
   for (let i = 0; i < attempts; i++) {
     if (delays[i]) await sleep(delays[i])
@@ -179,7 +181,7 @@ async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
       if (!isTransient) throw e
       try {
         await axios.get(`${resolveApiBase()}/api/v1/health`, {
-          timeout: 8000,
+          timeout: 45_000,
           withCredentials: false,
         })
       } catch {
@@ -191,15 +193,21 @@ async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export async function pingApi(): Promise<boolean> {
-  try {
-    await axios.get(`${resolveApiBase()}/api/v1/health`, {
-      timeout: 8000,
-      withCredentials: false,
-    })
-    return true
-  } catch {
-    return false
+  const attempts = 4
+  const delays = [0, 2500, 6000, 12_000]
+  for (let i = 0; i < attempts; i++) {
+    if (delays[i]) await sleep(delays[i])
+    try {
+      await axios.get(`${resolveApiBase()}/api/v1/health`, {
+        timeout: 45_000,
+        withCredentials: false,
+      })
+      return true
+    } catch {
+      /* следующая попытка — Render может ещё подниматься */
+    }
   }
+  return false
 }
 
 export const authApi = {
@@ -207,11 +215,17 @@ export const authApi = {
   // режется как third-party — токен доступа приходит в JSON.
   register: (data: any) =>
     withColdStartRetry(() =>
-      api.post('/auth/register', data, { withCredentials: false }),
+      api.post('/auth/register', data, {
+        withCredentials: false,
+        timeout: COLD_START_LOGIN_TIMEOUT_MS,
+      }),
     ),
   login: (data: any) =>
     withColdStartRetry(() =>
-      api.post('/auth/login', data, { withCredentials: false }),
+      api.post('/auth/login', data, {
+        withCredentials: false,
+        timeout: COLD_START_LOGIN_TIMEOUT_MS,
+      }),
     ),
   me: () => api.get('/auth/me'),
 }
