@@ -607,6 +607,10 @@ export const fxApi = {
     api.get<NbrbConvertPayload>('/fx/nbrb/convert', { params }),
 }
 
+export const integrationsApi = {
+  capabilities: () => api.get('/integrations/capabilities'),
+}
+
 export const automationApi = {
   issues: (limit = 100) => api.get('/automation/issues', { params: { limit } }),
   policy: () => api.get('/automation/policy'),

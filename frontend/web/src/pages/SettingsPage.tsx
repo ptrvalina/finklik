@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi } from '../api/client'
+import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -31,6 +31,141 @@ const TAX_REGIME_LABELS: Record<string, string> = {
   usn_vat: 'УСН с НДС',
   osn_vat: 'Общая с НДС',
   usn_6: 'УСН (6%)',
+}
+
+type DeploymentCaps = {
+  queried_at?: string
+  organization_id?: string | null
+  submission_portal?: {
+    mode?: string
+    base_url_configured?: boolean
+    async_submit_enabled?: boolean
+    http_timeout_sec?: number
+  }
+  signing?: {
+    digest_endpoint?: string
+    mock_signature_in_digest?: boolean
+  }
+  nbrb_fx?: Record<string, unknown>
+  authorities?: Array<{
+    code: string
+    label: string
+    submission_adapter?: string
+    direct_api?: string
+    detail?: string
+  }>
+}
+
+function DeploymentOverviewSection({
+  data,
+  loading,
+  error,
+  onRetry,
+}: {
+  data?: DeploymentCaps | null
+  loading: boolean
+  error: boolean
+  onRetry: () => void
+}) {
+  if (loading && !data) {
+    return (
+      <div className="page-section p-5">
+        <p className="text-sm text-on-surface-variant">Загрузка сводки развёртывания API…</p>
+      </div>
+    )
+  }
+  if (error && !data) {
+    return (
+      <div className="page-section border border-error/25 bg-error/5 p-5">
+        <p className="text-sm font-bold text-error">Не удалось загрузить сводку интеграций</p>
+        <button type="button" className="btn-secondary mt-2 text-xs" onClick={onRetry}>
+          Повторить
+        </button>
+      </div>
+    )
+  }
+  if (!data) return null
+
+  const sp = data.submission_portal || {}
+  const nbrb = data.nbrb_fx || {}
+  const sig = data.signing || {}
+  const modeLabel = sp.mode === 'http' ? 'HTTP-адаптер' : sp.mode === 'mock' ? 'Мок-портал' : String(sp.mode || '—')
+  const nbrbCount =
+    typeof nbrb.currencies_count === 'number' ? nbrb.currencies_count : null
+  const nbrbErr = typeof nbrb.stale_error === 'string' ? nbrb.stale_error : null
+
+  return (
+    <div className="page-section p-5">
+      <h3 className="mb-1 text-sm font-bold text-on-surface">Сводка контуров API</h3>
+      <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
+        Режимы на стороне сервера (без секретов). Полезно при проверке деплоя и подачи отчётов.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-outline/70 bg-surface-container-low p-4">
+          <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Подача отчётов</p>
+          <p className="mt-1 text-sm font-bold text-on-surface">{modeLabel}</p>
+          <ul className="mt-2 space-y-1 text-[11px] text-on-surface-variant">
+            <li>URL адаптера задан: {sp.base_url_configured ? 'да' : 'нет'}</li>
+            <li>Фоновая подача (SUBMISSION_ASYNC): {sp.async_submit_enabled ? 'включена' : 'выключена'}</li>
+            {typeof sp.http_timeout_sec === 'number' && <li>Таймаут HTTP: {sp.http_timeout_sec} с</li>}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-outline/70 bg-surface-container-low p-4">
+          <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Курсы НБ РБ</p>
+          <p className="mt-1 text-sm font-bold text-on-surface">
+            {nbrb.enabled === false ? 'Отключено' : 'Опрос API'}
+          </p>
+          <ul className="mt-2 space-y-1 text-[11px] text-on-surface-variant">
+            {nbrb.last_fetch_at && (
+              <li>Последний снимок: {new Date(String(nbrb.last_fetch_at)).toLocaleString('ru-BY')}</li>
+            )}
+            {nbrbCount !== null && <li>Валют в кэше: {nbrbCount}</li>}
+            {nbrbErr && (
+              <li className="text-amber-800 dark:text-amber-300">Предупреждение: {nbrbErr}</li>
+            )}
+            {nbrb.note && typeof nbrb.note === 'string' && <li>{nbrb.note}</li>}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-outline/70 bg-surface-container-low p-4 sm:col-span-2">
+          <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Подпись отчётов (ЭЦП)</p>
+          <p className="mt-1 break-all font-mono text-[11px] text-on-surface">
+            {sig.digest_endpoint || '—'}
+          </p>
+          <p className="mt-2 text-[11px] text-on-surface-variant">
+            Дайджест SHA-256 для внешнего модуля подписи. Демо-подпись в ответе:{' '}
+            {sig.mock_signature_in_digest ? 'включена (только отладка)' : 'выключена'}.
+          </p>
+        </div>
+      </div>
+      {data.authorities && data.authorities.length > 0 && (
+        <div className="mt-4 overflow-x-auto rounded-xl border border-outline/60">
+          <table className="w-full min-w-[480px] border-collapse text-left text-[11px]">
+            <thead>
+              <tr className="border-b border-outline/50 bg-surface-container-high text-on-surface-variant">
+                <th className="px-3 py-2 font-semibold">Орган</th>
+                <th className="px-3 py-2 font-semibold">Подача (режим)</th>
+                <th className="px-3 py-2 font-semibold">Прямой API</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.authorities.map((a) => (
+                <tr key={a.code} className="border-b border-outline/40 last:border-0">
+                  <td className="px-3 py-2 font-bold text-on-surface">{a.label}</td>
+                  <td className="px-3 py-2 text-on-surface-variant">{a.submission_adapter || '—'}</td>
+                  <td className="px-3 py-2 text-on-surface-variant">{a.direct_api || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {data.queried_at && (
+        <p className="mt-3 text-[10px] text-on-surface-variant/80">
+          Запрос сводки: {new Date(data.queried_at).toLocaleString('ru-BY')}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export default function SettingsPage() {
@@ -184,6 +319,12 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
     enabled: isOwner,
   })
 
+  const { data: deployCaps, isLoading: capsLoading, isError: capsError, refetch: refetchCaps } = useQuery({
+    queryKey: ['integrations-capabilities'],
+    queryFn: () => integrationsApi.capabilities().then((r) => r.data as DeploymentCaps),
+    staleTime: 60_000,
+  })
+
   const saveLlmMutation = useMutation({
     mutationFn: () =>
       assistantApi.setOrganizationKey({
@@ -256,12 +397,14 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
     setAutoSubmitLimit(Number(automationPolicy.max_auto_submissions_per_run || 20))
   }, [automationPolicy])
 
-  if (isLoading) {
-    return <p className="text-sm text-zinc-500">Загрузка…</p>
-  }
-
   return (
     <div className="space-y-4">
+      <DeploymentOverviewSection
+        data={deployCaps}
+        loading={capsLoading}
+        error={capsError}
+        onRetry={() => refetchCaps()}
+      />
       {message && (
         <div
           className={`rounded-xl px-4 py-3 text-sm font-bold ${
@@ -276,6 +419,9 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         <p className="mb-4 text-[11px] text-on-surface-variant">
           Endpoint и токен для обмена через внешний API (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
         </p>
+        {isLoading && (
+          <p className="mb-3 text-xs text-on-surface-variant">Загрузка параметров подключения 1С…</p>
+        )}
         {cfg?.configured && (
           <p className="mb-3 text-xs text-primary">
             Сейчас: подключено · токен: {cfg.token_masked || '***'}
