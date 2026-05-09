@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from decimal import Decimal
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time as dt_time, timezone
 from pathlib import Path
 import structlog
 from prometheus_client import Counter
@@ -12,10 +12,16 @@ from app.core.deps import get_current_user
 from app.models.user import User, Organization
 from app.models.transaction import Transaction
 from app.models.employee import CalendarEvent, SalaryRecord
+from app.models.planner import PlannerTask
 from app.schemas.employee import (
     TaxCalculationResult,
-    CalendarEventCreate, CalendarEventUpdate, CalendarEventResponse,
+    CalendarEventCompleteBody,
+    CalendarEventCreate,
+    CalendarEventUpdate,
+    CalendarEventResponse,
+    CalendarProductivitySummary,
 )
+from app.services.planner_notifications import send_planner_email, send_planner_telegram
 from app.services.tax_calculator import (
     calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year, validate_tax_rules_config
 )
@@ -313,9 +319,24 @@ async def create_event(
         remind_days_before=body.remind_days_before,
         is_recurring=body.is_recurring,
         recurrence_rule=body.recurrence_rule,
+        all_day=body.all_day,
+        time_start=body.time_start,
+        time_end=body.time_end,
+        remind_email=body.remind_email,
+        remind_telegram=body.remind_telegram,
     )
     db.add(event)
     await db.flush()
+    if body.remind_email and current_user.email:
+        await send_planner_email(
+            current_user.email,
+            f"Календарь: «{body.title}»",
+            f"Событие на {body.event_date.isoformat()}. Напоминание по e-mail включено.",
+        )
+    if body.remind_telegram:
+        await send_planner_telegram(
+            f"Календарь: «{body.title}» на {body.event_date.isoformat()}. Напоминание в Telegram включено."
+        )
     return event
 
 
@@ -337,19 +358,118 @@ async def update_event(
     if not event:
         raise HTTPException(status_code=404, detail="Событие не найдено")
 
-    if body.title is not None:
-        event.title = body.title
-    if body.description is not None:
-        event.description = body.description
-    if body.event_date is not None:
-        event.event_date = body.event_date
-    if body.color is not None:
-        event.color = body.color
-    if body.remind_days_before is not None:
-        event.remind_days_before = body.remind_days_before
+    patch = body.model_dump(exclude_unset=True)
+    for key in ("title", "description", "event_date", "color", "remind_days_before", "all_day", "time_start", "time_end", "remind_email", "remind_telegram"):
+        if key in patch:
+            setattr(event, key, patch[key])
 
     await db.flush()
     return event
+
+
+@calendar_router.post("/events/{event_id}/complete", response_model=CalendarEventResponse)
+async def complete_calendar_event(
+    event_id: str,
+    body: CalendarEventCompleteBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(CalendarEvent).where(
+            CalendarEvent.id == event_id,
+            CalendarEvent.organization_id == current_user.organization_id,
+        )
+    )
+    event = result.scalar_one_or_none()
+    if not event:
+        raise HTTPException(status_code=404, detail="Событие не найдено")
+    if body.done:
+        event.is_completed = True
+        event.completed_at = datetime.now(timezone.utc)
+    else:
+        event.is_completed = False
+        event.completed_at = None
+    await db.flush()
+    return event
+
+
+@calendar_router.get("/productivity-summary", response_model=CalendarProductivitySummary)
+async def calendar_productivity_summary(
+    period_start: date = Query(...),
+    period_end: date = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if period_end < period_start:
+        raise HTTPException(status_code=400, detail="Неверный период")
+    org_id = current_user.organization_id
+    if not org_id:
+        raise HTTPException(status_code=400, detail="Нет организации")
+
+    start_dt = datetime.combine(period_start, dt_time.min, tzinfo=timezone.utc)
+    end_dt = datetime.combine(period_end, dt_time(23, 59, 59), tzinfo=timezone.utc)
+
+    ce_completed_r = await db.execute(
+        select(func.count()).select_from(CalendarEvent).where(
+            CalendarEvent.organization_id == org_id,
+            CalendarEvent.is_completed.is_(True),
+            CalendarEvent.completed_at.isnot(None),
+            CalendarEvent.completed_at >= start_dt,
+            CalendarEvent.completed_at <= end_dt,
+        )
+    )
+    ce_completed = int(ce_completed_r.scalar_one() or 0)
+
+    pt_completed_r = await db.execute(
+        select(func.count()).select_from(PlannerTask).where(
+            PlannerTask.tenant_id == str(org_id),
+            PlannerTask.status == "closed",
+            PlannerTask.closed_at.isnot(None),
+            PlannerTask.closed_at >= start_dt,
+            PlannerTask.closed_at <= end_dt,
+        )
+    )
+    pt_completed = int(pt_completed_r.scalar_one() or 0)
+
+    ce_total_r = await db.execute(
+        select(func.count()).select_from(CalendarEvent).where(
+            CalendarEvent.organization_id == org_id,
+            CalendarEvent.event_date >= period_start,
+            CalendarEvent.event_date <= period_end,
+        )
+    )
+    ce_total = int(ce_total_r.scalar_one() or 0)
+
+    pt_created_r = await db.execute(
+        select(func.count()).select_from(PlannerTask).where(
+            PlannerTask.tenant_id == str(org_id),
+            PlannerTask.created_at >= start_dt,
+            PlannerTask.created_at <= end_dt,
+        )
+    )
+    pt_created = int(pt_created_r.scalar_one() or 0)
+
+    open_tasks_r = await db.execute(
+        select(func.count()).select_from(PlannerTask).where(
+            PlannerTask.tenant_id == str(org_id),
+            PlannerTask.status != "closed",
+        )
+    )
+    open_tasks = int(open_tasks_r.scalar_one() or 0)
+
+    denom = ce_total + pt_created
+    done = ce_completed + pt_completed
+    ratio = round(done / max(1, denom), 3)
+
+    return CalendarProductivitySummary(
+        period_start=period_start,
+        period_end=period_end,
+        completed_calendar_events=ce_completed,
+        completed_planner_tasks=pt_completed,
+        total_calendar_events_in_period=ce_total,
+        open_planner_tasks_at_end=open_tasks,
+        productivity_ratio=ratio,
+    )
 
 
 @calendar_router.delete("/events/{event_id}", status_code=204)

@@ -1,8 +1,64 @@
 import { FormEvent, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { plannerApi, teamApi } from '../api/client'
+import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+
+const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+const IMPORTANCE = [
+  { label: 'Низкая', color: '#94A3B8' },
+  { label: 'Обычная', color: '#2563EB' },
+  { label: 'Высокая', color: '#EA580C' },
+  { label: 'Срочная', color: '#DC2626' },
+]
+
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
+
+function fmtLocalDate(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function monthBounds(y: number, m: number) {
+  const from = fmtLocalDate(new Date(y, m - 1, 1))
+  const to = fmtLocalDate(new Date(y, m, 0))
+  return { date_from: from, date_to: to }
+}
+
+/** Неделя пн–вс для произвольной даты. */
+function weekBoundsAround(ref: Date) {
+  const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate())
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const mon = new Date(d)
+  mon.setDate(d.getDate() + diff)
+  const sun = new Date(mon)
+  sun.setDate(mon.getDate() + 6)
+  return { period_start: fmtLocalDate(mon), period_end: fmtLocalDate(sun) }
+}
+
+function buildMonthWeeks(year: number, month: number): (number | null)[][] {
+  const first = new Date(year, month - 1, 1)
+  const last = new Date(year, month, 0).getDate()
+  let startDow = first.getDay()
+  startDow = startDow === 0 ? 6 : startDow - 1
+  const weeks: (number | null)[][] = []
+  let cur: (number | null)[] = Array(7).fill(null)
+  let pos = startDow
+  for (let day = 1; day <= last; day++) {
+    cur[pos] = day
+    pos++
+    if (pos === 7) {
+      weeks.push(cur)
+      cur = Array(7).fill(null)
+      pos = 0
+    }
+  }
+  if (cur.some((x) => x !== null)) weeks.push(cur)
+  return weeks
+}
 
 type PlannerTask = {
   id: string
@@ -12,7 +68,9 @@ type PlannerTask = {
   author_id: string
   status: string
   created_at: string
+  closed_at?: string | null
 }
+
 type PlannerComment = {
   id: string
   task_id: string
@@ -21,11 +79,32 @@ type PlannerComment = {
   created_at: string
 }
 
+type CalEvent = {
+  id: string
+  title: string
+  description?: string | null
+  event_date: string
+  event_type: string
+  color: string
+  is_auto: boolean
+  all_day?: boolean
+  time_start?: string | null
+  time_end?: string | null
+  is_completed?: boolean
+  remind_email?: boolean
+  remind_telegram?: boolean
+}
+
 export default function Planner() {
   const user = useAuthStore((s) => s.user)
   const role = (user?.role || '').toLowerCase()
   const canRequestReport = role === 'owner' || role === 'admin'
   const qc = useQueryClient()
+
+  const now = new Date()
+  const [viewYear, setViewYear] = useState(now.getFullYear())
+  const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
+
   const [viewMode, setViewMode] = useState<'mine' | 'assigned'>('mine')
   const [taskKind, setTaskKind] = useState<'task' | 'report_request'>('task')
   const [title, setTitle] = useState('')
@@ -34,6 +113,49 @@ export default function Planner() {
   const [assigneeId, setAssigneeId] = useState('')
   const [reportText, setReportText] = useState<Record<string, string>>({})
   const [commentText, setCommentText] = useState<Record<string, string>>({})
+
+  const [prodTab, setProdTab] = useState<'week' | 'month'>('month')
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState<CalEvent | null>(null)
+  const [formTitle, setFormTitle] = useState('')
+  const [formDate, setFormDate] = useState('')
+  const [formAllDay, setFormAllDay] = useState(true)
+  const [formTimeStart, setFormTimeStart] = useState('09:00')
+  const [formTimeEnd, setFormTimeEnd] = useState('10:00')
+  const [formColor, setFormColor] = useState(IMPORTANCE[1].color)
+  const [formRemindEmail, setFormRemindEmail] = useState(false)
+  const [formRemindTg, setFormRemindTg] = useState(false)
+  const [formDesc, setFormDesc] = useState('')
+
+  const range = useMemo(() => monthBounds(viewYear, viewMonth), [viewYear, viewMonth])
+  const weeks = useMemo(() => buildMonthWeeks(viewYear, viewMonth), [viewYear, viewMonth])
+
+  const eventsQuery = useQuery({
+    queryKey: ['calendar-events', viewYear, viewMonth],
+    queryFn: () => calendarApi.listEvents(range).then((r) => r.data as CalEvent[]),
+  })
+
+  const allTasksQuery = useQuery({
+    queryKey: ['planner', 'all'],
+    queryFn: () => plannerApi.listTasks('all').then((r) => r.data as PlannerTask[]),
+  })
+
+  const prodRange = useMemo(() => {
+    if (prodTab === 'month') {
+      const { date_from, date_to } = monthBounds(viewYear, viewMonth)
+      return { period_start: date_from, period_end: date_to }
+    }
+    return weekBoundsAround(new Date())
+  }, [prodTab, viewYear, viewMonth])
+
+  const productivityQuery = useQuery({
+    queryKey: ['calendar-productivity', prodRange.period_start, prodRange.period_end],
+    queryFn: () =>
+      calendarApi
+        .productivitySummary({ period_start: prodRange.period_start, period_end: prodRange.period_end })
+        .then((r) => r.data as any),
+  })
 
   const myTasksQuery = useQuery({
     queryKey: ['planner', 'mine'],
@@ -54,6 +176,30 @@ export default function Planner() {
     [members],
   )
 
+  const eventsByDay = useMemo(() => {
+    const m: Record<string, CalEvent[]> = {}
+    for (const e of eventsQuery.data ?? []) {
+      const k = e.event_date.slice(0, 10)
+      if (!m[k]) m[k] = []
+      m[k].push(e)
+    }
+    return m
+  }, [eventsQuery.data])
+
+  const tasksByDay = useMemo(() => {
+    const m: Record<string, PlannerTask[]> = {}
+    const y = viewYear
+    const mo = viewMonth
+    for (const t of allTasksQuery.data ?? []) {
+      const c = new Date(t.created_at)
+      if (c.getFullYear() !== y || c.getMonth() + 1 !== mo) continue
+      const k = fmtLocalDate(c)
+      if (!m[k]) m[k] = []
+      m[k].push(t)
+    }
+    return m
+  }, [allTasksQuery.data, viewYear, viewMonth])
+
   const createTaskMutation = useMutation({
     mutationFn: () =>
       plannerApi.createTask({
@@ -68,7 +214,6 @@ export default function Planner() {
     onSuccess: () => {
       setTitle('')
       setDescription('')
-      setAttachments('')
       qc.invalidateQueries({ queryKey: ['planner'] })
     },
   })
@@ -94,22 +239,380 @@ export default function Planner() {
     },
   })
 
+  const saveEventMutation = useMutation({
+    mutationFn: async () => {
+      const payload: Record<string, unknown> = {
+        title: formTitle.trim(),
+        description: formDesc.trim() || undefined,
+        event_date: formDate,
+        event_type: 'custom',
+        color: formColor,
+        remind_days_before: 1,
+        all_day: formAllDay,
+        remind_email: formRemindEmail,
+        remind_telegram: formRemindTg,
+      }
+      if (formAllDay) {
+        payload.time_start = null
+        payload.time_end = null
+      } else {
+        payload.time_start = formTimeStart
+        payload.time_end = formTimeEnd || null
+      }
+      if (editing?.id) {
+        await calendarApi.updateEvent(editing.id, payload)
+      } else {
+        await calendarApi.createEvent(payload)
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calendar-events'] })
+      qc.invalidateQueries({ queryKey: ['calendar-productivity'] })
+      setModalOpen(false)
+      setEditing(null)
+    },
+  })
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: string) => calendarApi.deleteEvent(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calendar-events'] })
+      qc.invalidateQueries({ queryKey: ['calendar-productivity'] })
+      setModalOpen(false)
+      setEditing(null)
+    },
+  })
+
+  const completeEventMutation = useMutation({
+    mutationFn: ({ id, done }: { id: string; done: boolean }) => calendarApi.completeEvent(id, done),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calendar-events'] })
+      qc.invalidateQueries({ queryKey: ['calendar-productivity'] })
+    },
+  })
+
+  function openCreate(prefDate?: string) {
+    setEditing(null)
+    setFormTitle('')
+    setFormDesc('')
+    setFormDate(prefDate || fmtLocalDate(new Date(viewYear, viewMonth - 1, 15)))
+    setFormAllDay(true)
+    setFormTimeStart('09:00')
+    setFormTimeEnd('10:00')
+    setFormColor(IMPORTANCE[1].color)
+    setFormRemindEmail(false)
+    setFormRemindTg(false)
+    setModalOpen(true)
+  }
+
+  function openEdit(ev: CalEvent) {
+    setEditing(ev)
+    setFormTitle(ev.title)
+    setFormDesc(ev.description || '')
+    setFormDate(ev.event_date.slice(0, 10))
+    setFormAllDay(ev.all_day !== false)
+    setFormTimeStart(ev.time_start || '09:00')
+    setFormTimeEnd(ev.time_end || '10:00')
+    setFormColor(ev.color || IMPORTANCE[1].color)
+    setFormRemindEmail(!!ev.remind_email)
+    setFormRemindTg(!!ev.remind_telegram)
+    setModalOpen(true)
+  }
+
   function onCreateTask(e: FormEvent) {
     e.preventDefault()
     if (!title.trim() || !assigneeId) return
     createTaskMutation.mutate()
   }
 
+  function prevMonth() {
+    if (viewMonth === 1) {
+      setViewMonth(12)
+      setViewYear((y) => y - 1)
+    } else setViewMonth((m) => m - 1)
+  }
+
+  function nextMonth() {
+    if (viewMonth === 12) {
+      setViewMonth(1)
+      setViewYear((y) => y + 1)
+    } else setViewMonth((m) => m + 1)
+  }
+
+  const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
+
   return (
     <section className="space-y-6">
-      <div className="card-elevated p-6">
-        <h1 className="text-2xl font-semibold text-on-surface">Планер</h1>
-        <p className="mt-2 text-on-surface-variant">Задачи и отчёты по документам, платежам и запросам владельца.</p>
+      <div className="card-elevated flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-on-surface">Планер</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Календарь событий и задачи организации. Задачи из списка ниже отображаются в сетке месяца по дате создания.
+          </p>
+        </div>
+        <button type="button" className="btn-primary shrink-0" onClick={() => openCreate()}>
+          + Добавить событие
+        </button>
       </div>
+
+      <div className="card-elevated space-y-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn-secondary px-2 py-1 text-sm" onClick={prevMonth}>
+              ←
+            </button>
+            <h2 className="min-w-[200px] text-center text-lg font-semibold capitalize">{monthLabel}</h2>
+            <button type="button" className="btn-secondary px-2 py-1 text-sm" onClick={nextMonth}>
+              →
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label className="text-on-surface-variant">
+              Год
+              <input
+                className="input ml-1 w-24 py-1"
+                type="number"
+                value={viewYear}
+                onChange={(e) => setViewYear(Number(e.target.value))}
+              />
+            </label>
+            <label className="text-on-surface-variant">
+              Месяц
+              <select className="input ml-1 w-28 py-1" value={viewMonth} onChange={(e) => setViewMonth(Number(e.target.value))}>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {new Date(2000, i, 1).toLocaleString('ru-RU', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => {
+                const t = new Date()
+                setViewYear(t.getFullYear())
+                setViewMonth(t.getMonth() + 1)
+              }}
+            >
+              Сегодня
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-on-surface-variant">
+          {WEEKDAYS.map((w) => (
+            <div key={w} className="py-2">
+              {w}
+            </div>
+          ))}
+        </div>
+
+        {eventsQuery.isLoading ? (
+          <p className="text-sm text-on-surface-variant">Загрузка календаря…</p>
+        ) : (
+          <div className="space-y-1">
+            {weeks.map((row, wi) => (
+              <div key={wi} className="grid grid-cols-7 gap-1">
+                {row.map((day, di) => {
+                  if (day === null) return <div key={di} className="min-h-[100px] rounded-lg bg-surface-container-low/30" />
+                  const key = `${viewYear}-${pad(viewMonth)}-${pad(day)}`
+                  const evs = eventsByDay[key] || []
+                  const tks = tasksByDay[key] || []
+                  const isToday =
+                    new Date().toDateString() === new Date(viewYear, viewMonth - 1, day).toDateString()
+                  return (
+                    <div
+                      role="presentation"
+                      key={key}
+                      onClick={() => openCreate(key)}
+                      className={`min-h-[100px] cursor-pointer rounded-lg border border-outline/50 p-1 text-left align-top transition hover:border-primary/50 ${
+                        isToday ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-surface-container-low/40'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold text-on-surface">{day}</span>
+                      <div className="mt-1 flex max-h-[72px] flex-col gap-0.5 overflow-hidden">
+                        {evs.slice(0, 3).map((ev) => (
+                          <span
+                            key={ev.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openEdit(ev)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.stopPropagation()
+                                openEdit(ev)
+                              }
+                            }}
+                            className={`truncate rounded px-1 py-0.5 text-[10px] text-white ${
+                              ev.is_completed ? 'opacity-50 line-through' : ''
+                            }`}
+                            style={{ backgroundColor: ev.color || '#2563EB' }}
+                            title={ev.title}
+                          >
+                            {ev.is_auto ? '★ ' : ''}
+                            {ev.all_day === false && ev.time_start ? `${ev.time_start} ` : ''}
+                            {ev.title}
+                          </span>
+                        ))}
+                        {evs.length > 3 ? <span className="text-[10px] text-on-surface-variant">+{evs.length - 3} событ.</span> : null}
+                        {tks.slice(0, 2).map((tk) => (
+                          <span
+                            key={tk.id}
+                            className="truncate rounded border border-emerald-600/40 bg-emerald-500/15 px-1 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200"
+                            title={tk.title}
+                          >
+                            ▢ {tk.title}
+                          </span>
+                        ))}
+                        {tks.length > 2 ? <span className="text-[10px] text-on-surface-variant">+{tks.length - 2} задач</span> : null}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card-elevated space-y-3 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-lg font-semibold">Продуктивность</h3>
+          <div className="inline-flex rounded-xl border border-outline/70 p-1">
+            <button
+              type="button"
+              className={`rounded-lg px-3 py-1 text-sm font-medium ${prodTab === 'week' ? 'bg-primary text-on-primary' : ''}`}
+              onClick={() => setProdTab('week')}
+            >
+              Неделя
+            </button>
+            <button
+              type="button"
+              className={`rounded-lg px-3 py-1 text-sm font-medium ${prodTab === 'month' ? 'bg-primary text-on-primary' : ''}`}
+              onClick={() => setProdTab('month')}
+            >
+              Месяц (на экране)
+            </button>
+          </div>
+        </div>
+        {productivityQuery.isLoading ? (
+          <p className="text-sm text-on-surface-variant">Считаем…</p>
+        ) : productivityQuery.data ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-outline/60 p-3">
+              <p className="text-xs text-on-surface-variant">Завершено событий</p>
+              <p className="text-2xl font-semibold">{productivityQuery.data.completed_calendar_events}</p>
+            </div>
+            <div className="rounded-xl border border-outline/60 p-3">
+              <p className="text-xs text-on-surface-variant">Закрыто задач планера</p>
+              <p className="text-2xl font-semibold">{productivityQuery.data.completed_planner_tasks}</p>
+            </div>
+            <div className="rounded-xl border border-outline/60 p-3">
+              <p className="text-xs text-on-surface-variant">Событий в периоде</p>
+              <p className="text-2xl font-semibold">{productivityQuery.data.total_calendar_events_in_period}</p>
+            </div>
+            <div className="rounded-xl border border-outline/60 p-3">
+              <p className="text-xs text-on-surface-variant">Индекс ({prodTab === 'week' ? 'неделя' : 'месяц'})</p>
+              <p className="text-2xl font-semibold">{Math.round((productivityQuery.data.productivity_ratio || 0) * 100)}%</p>
+            </div>
+          </div>
+        ) : null}
+        <p className="text-xs text-on-surface-variant">
+          Период: {prodRange.period_start} — {prodRange.period_end}. Индекс = (завершённые события + закрытые задачи) / (события в периоде +
+          новые задачи в периоде).
+        </p>
+      </div>
+
+      {modalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog">
+          <div className="card-elevated max-h-[90vh] w-full max-w-lg overflow-y-auto space-y-3 p-6">
+            <h3 className="text-lg font-semibold">{editing ? 'Событие' : 'Новое событие'}</h3>
+            <input className="input" placeholder="Название" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+            <label className="block text-sm text-on-surface-variant">
+              Дата
+              <input className="input mt-1" type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={formAllDay} onChange={(e) => setFormAllDay(e.target.checked)} />
+              Весь день
+            </label>
+            {!formAllDay ? (
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-on-surface-variant">
+                  Начало
+                  <input className="input mt-1" type="time" value={formTimeStart} onChange={(e) => setFormTimeStart(e.target.value)} />
+                </label>
+                <label className="text-xs text-on-surface-variant">
+                  Конец
+                  <input className="input mt-1" type="time" value={formTimeEnd} onChange={(e) => setFormTimeEnd(e.target.value)} />
+                </label>
+              </div>
+            ) : null}
+            <label className="block text-sm text-on-surface-variant">
+              Важность (цвет)
+              <select className="input mt-1" value={formColor} onChange={(e) => setFormColor(e.target.value)}>
+                {IMPORTANCE.map((x) => (
+                  <option key={x.color} value={x.color}>
+                    {x.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <textarea className="input min-h-[72px]" placeholder="Описание" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={formRemindEmail} onChange={(e) => setFormRemindEmail(e.target.checked)} />
+              Напоминание на e-mail (при сохранении отправится тестовое уведомление, если почта настроена на сервере)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={formRemindTg} onChange={(e) => setFormRemindTg(e.target.checked)} />
+              Уведомление в Telegram (нужен TELEGRAM_BOT_TOKEN и chat id на сервере)
+            </label>
+            {editing?.id ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={!!editing.is_completed}
+                  onChange={(e) => {
+                    const done = e.target.checked
+                    completeEventMutation.mutate({ id: editing.id, done })
+                    setEditing((prev) => (prev ? { ...prev, is_completed: done } : prev))
+                  }}
+                />
+                Отметить выполненным
+              </label>
+            ) : null}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={!formTitle.trim() || saveEventMutation.isPending || (editing?.is_auto === true)}
+                onClick={() => saveEventMutation.mutate()}
+              >
+                {saveEventMutation.isPending ? 'Сохранение…' : 'Сохранить'}
+              </button>
+              {editing?.id && !editing.is_auto ? (
+                <button type="button" className="btn-secondary text-rose-600" onClick={() => deleteEventMutation.mutate(editing.id)}>
+                  Удалить
+                </button>
+              ) : null}
+              <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>
+                Закрыть
+              </button>
+            </div>
+            {editing?.is_auto ? (
+              <p className="text-xs text-on-surface-variant">Автособытие налогового календаря нельзя изменить или удалить; можно отметить выполненным.</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <form onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2">
         <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Новая задача</h2>
+          <h2 className="text-lg font-semibold">Новая задача планера</h2>
           {canRequestReport && (
             <div className="inline-flex rounded-xl border border-outline/70 p-1">
               <button
@@ -216,7 +719,20 @@ function TaskList(props: {
   setCommentText: Dispatch<SetStateAction<Record<string, string>>>
   onComment: (taskId: string, content: string) => void
 }) {
-  const { title, tasks, loading, canClose, onClose, userId, onReport, reportText, setReportText, commentText, setCommentText, onComment } = props
+  const {
+    title,
+    tasks,
+    loading,
+    canClose,
+    onClose,
+    userId,
+    onReport,
+    reportText,
+    setReportText,
+    commentText,
+    setCommentText,
+    onComment,
+  } = props
   return (
     <div className="card-elevated p-5">
       <h3 className="mb-3 text-lg font-semibold">{title}</h3>
@@ -266,62 +782,58 @@ function TaskCard(props: {
   })
   return (
     <article className="rounded-xl border border-outline/60 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold">{task.title}</p>
-                  <p className="text-xs text-on-surface-variant">{task.description || 'Без описания'}</p>
-                </div>
-                <span className={`text-xs ${task.status === 'closed' ? 'text-emerald-600' : 'text-amber-600'}`}>{task.status}</span>
-              </div>
-              {task.status !== 'closed' && canClose && (
-                <button className="btn-secondary mt-3 mr-2" onClick={() => onClose(task.id)}>
-                  Закрыть
-                </button>
-              )}
-              <div className="mt-3 space-y-2 rounded-lg bg-surface-container-low/40 p-2">
-                <p className="text-xs font-semibold text-on-surface-variant">Комментарии</p>
-                <div className="space-y-1">
-                  {(commentsQuery.data || []).map((c) => (
-                    <div key={c.id} className="rounded-md border border-outline/40 px-2 py-1 text-xs">
-                      <p>{c.content}</p>
-                      <p className="text-on-surface-variant">{new Date(c.created_at).toLocaleString('ru-RU')}</p>
-                    </div>
-                  ))}
-                  {commentsQuery.data?.length === 0 && <p className="text-xs text-on-surface-variant">Пока нет комментариев</p>}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    className="input h-9 text-sm"
-                    placeholder="Добавить комментарий"
-                    value={commentText[task.id] || ''}
-                    onChange={(e) => setCommentText((prev) => ({ ...prev, [task.id]: e.target.value }))}
-                  />
-                  <button
-                    className="btn-secondary"
-                    onClick={() => onComment(task.id, commentText[task.id] || '')}
-                    disabled={!(commentText[task.id] || '').trim()}
-                  >
-                    Комментировать
-                  </button>
-                </div>
-              </div>
-              {task.status !== 'closed' && (
-                <div className="mt-3 space-y-2">
-                  <textarea
-                    className="input min-h-[70px]"
-                    placeholder="Подготовить отчёт..."
-                    value={reportText[task.id] || ''}
-                    onChange={(e) => setReportText((prev) => ({ ...prev, [task.id]: e.target.value }))}
-                  />
-                  <button
-                    className="btn-primary"
-                    onClick={() => onReport(task.id, reportText[task.id] || '')}
-                    disabled={!(reportText[task.id] || '').trim() || (task.assignee_id !== userId && task.author_id !== userId)}
-                  >
-                    Подготовить отчёт
-                  </button>
-                </div>
-              )}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-semibold">{task.title}</p>
+          <p className="text-xs text-on-surface-variant">{task.description || 'Без описания'}</p>
+        </div>
+        <span className={`text-xs ${task.status === 'closed' ? 'text-emerald-600' : 'text-amber-600'}`}>{task.status}</span>
+      </div>
+      {task.status !== 'closed' && canClose && (
+        <button className="btn-secondary mt-3 mr-2" onClick={() => onClose(task.id)}>
+          Закрыть
+        </button>
+      )}
+      <div className="mt-3 space-y-2 rounded-lg bg-surface-container-low/40 p-2">
+        <p className="text-xs font-semibold text-on-surface-variant">Комментарии</p>
+        <div className="space-y-1">
+          {(commentsQuery.data || []).map((c) => (
+            <div key={c.id} className="rounded-md border border-outline/40 px-2 py-1 text-xs">
+              <p>{c.content}</p>
+              <p className="text-on-surface-variant">{new Date(c.created_at).toLocaleString('ru-RU')}</p>
+            </div>
+          ))}
+          {commentsQuery.data?.length === 0 && <p className="text-xs text-on-surface-variant">Пока нет комментариев</p>}
+        </div>
+        <div className="flex gap-2">
+          <input
+            className="input h-9 text-sm"
+            placeholder="Добавить комментарий"
+            value={commentText[task.id] || ''}
+            onChange={(e) => setCommentText((prev) => ({ ...prev, [task.id]: e.target.value }))}
+          />
+          <button className="btn-secondary" onClick={() => onComment(task.id, commentText[task.id] || '')} disabled={!(commentText[task.id] || '').trim()}>
+            Комментировать
+          </button>
+        </div>
+      </div>
+      {task.status !== 'closed' && (
+        <div className="mt-3 space-y-2">
+          <textarea
+            className="input min-h-[70px]"
+            placeholder="Подготовить отчёт..."
+            value={reportText[task.id] || ''}
+            onChange={(e) => setReportText((prev) => ({ ...prev, [task.id]: e.target.value }))}
+          />
+          <button
+            className="btn-primary"
+            onClick={() => onReport(task.id, reportText[task.id] || '')}
+            disabled={!(reportText[task.id] || '').trim() || (task.assignee_id !== userId && task.author_id !== userId)}
+          >
+            Подготовить отчёт
+          </button>
+        </div>
+      )}
     </article>
   )
 }

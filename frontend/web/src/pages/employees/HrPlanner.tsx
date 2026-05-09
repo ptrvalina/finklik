@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 
 export default function EmployeesHrPlanner() {
@@ -51,7 +52,14 @@ export default function EmployeesHrPlanner() {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="space-y-4">
+      <p className="text-sm">
+        <Link className="font-medium text-primary underline" to="/planner">
+          Открыть общий календарь планера
+        </Link>{' '}
+        — там же отображаются задачи планера и все события организации.
+      </p>
+      <div className="grid gap-6 md:grid-cols-2">
       <div className="card-elevated space-y-3 p-6">
         <h2 className="text-lg font-semibold text-on-surface">ПУ-2 ФСЗН</h2>
         <label className="text-sm text-on-surface-variant block">
@@ -77,7 +85,8 @@ export default function EmployeesHrPlanner() {
         <button type="button" className="btn-primary" disabled={busy} onClick={() => void addDocReminder()}>
           Добавить в календарь
         </button>
-        <p className="text-xs text-on-surface-variant">Полный планер доступен в разделе «Планер» в главном меню.</p>
+        <p className="text-xs text-on-surface-variant">События попадают в общий календарь в разделе «Планер».</p>
+      </div>
       </div>
     </div>
   )

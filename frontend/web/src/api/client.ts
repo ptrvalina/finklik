@@ -453,6 +453,16 @@ export const plannerApi = {
   addComment: (id: string, data: { content: string }) => api.post(`/planner/tasks/${id}/comments`, data),
 }
 
+export const calendarApi = {
+  listEvents: (params: { date_from: string; date_to: string }) => api.get('/calendar/events', { params }),
+  createEvent: (data: any) => api.post('/calendar/events', data),
+  updateEvent: (id: string, data: any) => api.put(`/calendar/events/${id}`, data),
+  deleteEvent: (id: string) => api.delete(`/calendar/events/${id}`),
+  completeEvent: (id: string, done: boolean) => api.post(`/calendar/events/${id}/complete`, { done }),
+  productivitySummary: (params: { period_start: string; period_end: string }) =>
+    api.get('/calendar/productivity-summary', { params }),
+}
+
 export const notificationsApi = {
   list: (limit = 20) => api.get('/notifications', { params: { limit } }),
   markRead: (id: string) => api.post(`/notifications/${id}/read`),

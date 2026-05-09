@@ -237,6 +237,9 @@ class TaxCalculationResult(BaseModel):
 
 # ── Календарь ─────────────────────────────────────────────────────────────────
 
+_TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
 class CalendarEventCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
@@ -246,6 +249,26 @@ class CalendarEventCreate(BaseModel):
     remind_days_before: int = Field(default=3, ge=0, le=30)
     is_recurring: bool = False
     recurrence_rule: str | None = None
+    all_day: bool = True
+    time_start: str | None = Field(None, max_length=5)
+    time_end: str | None = Field(None, max_length=5)
+    remind_email: bool = False
+    remind_telegram: bool = False
+
+    @field_validator("time_start", "time_end")
+    @classmethod
+    def validate_time_hhmm(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not _TIME_RE.match(v.strip()):
+            raise ValueError("Время укажите как ЧЧ:ММ (например 09:30)")
+        return v.strip()
+
+    @model_validator(mode="after")
+    def times_when_not_allday(self):
+        if not self.all_day and not self.time_start:
+            raise ValueError("Для события с временем укажите время начала")
+        return self
 
 
 class CalendarEventUpdate(BaseModel):
@@ -254,6 +277,26 @@ class CalendarEventUpdate(BaseModel):
     event_date: date | None = None
     color: str | None = None
     remind_days_before: int | None = None
+    all_day: bool | None = None
+    time_start: str | None = None
+    time_end: str | None = None
+    remind_email: bool | None = None
+    remind_telegram: bool | None = None
+
+    @field_validator("time_start", "time_end")
+    @classmethod
+    def validate_time_hhmm_upd(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        if v == "":
+            return None
+        if not _TIME_RE.match(v.strip()):
+            raise ValueError("Время укажите как ЧЧ:ММ")
+        return v.strip()
+
+
+class CalendarEventCompleteBody(BaseModel):
+    done: bool = True
 
 
 class CalendarEventResponse(BaseModel):
@@ -266,5 +309,22 @@ class CalendarEventResponse(BaseModel):
     is_auto: bool
     remind_days_before: int
     is_recurring: bool
+    all_day: bool = True
+    time_start: str | None = None
+    time_end: str | None = None
+    is_completed: bool = False
+    completed_at: datetime | None = None
+    remind_email: bool = False
+    remind_telegram: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class CalendarProductivitySummary(BaseModel):
+    period_start: date
+    period_end: date
+    completed_calendar_events: int
+    completed_planner_tasks: int
+    total_calendar_events_in_period: int
+    open_planner_tasks_at_end: int
+    productivity_ratio: float

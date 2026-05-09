@@ -115,6 +115,15 @@ class CalendarEvent(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    #: Весь день или интервал времени (локальное время «ЧЧ:ММ»).
+    all_day: Mapped[bool] = mapped_column(Boolean, default=True)
+    time_start: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    time_end: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    remind_email: Mapped[bool] = mapped_column(Boolean, default=False)
+    remind_telegram: Mapped[bool] = mapped_column(Boolean, default=False)
+
 
 class AuditLog(Base):
     """Журнал всех действий пользователей."""
