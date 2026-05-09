@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timezone
 
+from app.core.datetime_utils import utc_now_naive
+
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token
 from app.core.deps import get_current_user
@@ -120,7 +122,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
         raise HTTPException(status_code=403, detail="Аккаунт деактивирован")
 
     record_successful_login(body.email)
-    user.last_login = datetime.now(timezone.utc)
+    user.last_login = utc_now_naive()
     org_id = str(user.organization_id) if user.organization_id else ""
     access_token = create_access_token(str(user.id), org_id, user.role)
     refresh_token = create_refresh_token(str(user.id))
