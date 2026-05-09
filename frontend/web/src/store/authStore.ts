@@ -61,7 +61,7 @@ export const useAuthStore = create<AuthStore>()(
           const code = e.code || (e.message ? String(e.message).slice(0, 60) : '')
           const fallback =
             e.code === 'ERR_NETWORK' || !e.response
-              ? `Не удалось связаться с API (${apiHint})${code ? ` [${code}]` : ''}. Проверьте интернет, VPN и блокировщики; откройте ${apiHint}/docs в новой вкладке. На бесплатном Render первый запрос после простоя может занять 1–2 минуты — нажмите «Войти» ещё раз.`
+              ? `Не удалось связаться с API (${apiHint})${code ? ` [${code}]` : ''}. Откройте ${apiHint}/docs в новой вкладке. Если не открывается — попробуйте мобильный интернет (раздача с телефона), другой браузер или VPN: часть провайдеров режет доступ к зарубежным хостингам (Render). Блокировщики рекламы отключите для этой страницы.`
               : 'Ошибка входа'
           set({ error: detail || fallback, isLoading: false })
           throw e

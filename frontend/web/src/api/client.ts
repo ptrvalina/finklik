@@ -160,6 +160,97 @@ function sleep(ms: number): Promise<void> {
  *  Делаем несколько попыток с паузами и длинным таймаутом на login/health. */
 const COLD_START_LOGIN_TIMEOUT_MS = 120_000
 
+type TokenBundle = { access_token: string; refresh_token?: string; expires_in?: number }
+
+function parseFastApiDetail(parsed: unknown): string | undefined {
+  if (!parsed || typeof parsed !== 'object') return undefined
+  const p = parsed as { detail?: unknown }
+  const d = p.detail
+  if (typeof d === 'string') return d
+  if (Array.isArray(d))
+    return d
+      .map((x: unknown) =>
+        typeof x === 'object' && x && 'msg' in x ? String((x as { msg: string }).msg) : String(x),
+      )
+      .join('; ')
+  return undefined
+}
+
+/** Вход/регистрация через fetch: на части сетей axios даёт ERR_NETWORK, тогда как fetch проходит. */
+async function fetchAuthTokens(path: '/auth/login' | '/auth/register', body: unknown): Promise<{ data: TokenBundle }> {
+  const base = resolveApiBase()
+  const url = `${base}/api/v1${path}`
+  const controller = new AbortController()
+  const tid = window.setTimeout(() => controller.abort(), COLD_START_LOGIN_TIMEOUT_MS)
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+      credentials: 'omit',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+    const text = await res.text()
+    let parsed: unknown = {}
+    try {
+      parsed = text ? JSON.parse(text) : {}
+    } catch {
+      parsed = { detail: text?.slice(0, 200) || 'Некорректный ответ сервера' }
+    }
+    if (!res.ok) {
+      const err: any = new Error(parseFastApiDetail(parsed) || res.statusText || 'Ошибка запроса')
+      err.response = { status: res.status, data: parsed }
+      throw err
+    }
+    return { data: parsed as TokenBundle }
+  } catch (e: any) {
+    if (e?.response) throw e
+    const name = e?.name
+    const msg = String(e?.message || e || '')
+    const wrapped: any = new Error(msg)
+    wrapped.code = name === 'AbortError' ? 'ECONNABORTED' : 'ERR_NETWORK'
+    throw wrapped
+  } finally {
+    window.clearTimeout(tid)
+  }
+}
+
+async function fetchHealthWarmup(): Promise<void> {
+  const base = resolveApiBase()
+  const controller = new AbortController()
+  const tid = window.setTimeout(() => controller.abort(), 45_000)
+  try {
+    await fetch(`${base}/api/v1/health`, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+  } finally {
+    window.clearTimeout(tid)
+  }
+}
+
+function isTransientNetworkError(e: any): boolean {
+  const code = e?.code
+  const status = e?.response?.status
+  const msg = String(e?.message || '').toLowerCase()
+  return (
+    code === 'ERR_NETWORK' ||
+    code === 'ECONNABORTED' ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('load failed') ||
+    msg.includes('network request failed')
+  )
+}
+
 async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
   const attempts = 5
   const delays = [0, 2000, 5000, 10000, 15000]
@@ -170,20 +261,9 @@ async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
       return await fn()
     } catch (e: any) {
       lastErr = e
-      const code = e?.code
-      const status = e?.response?.status
-      const isTransient =
-        code === 'ERR_NETWORK' ||
-        code === 'ECONNABORTED' ||
-        status === 502 ||
-        status === 503 ||
-        status === 504
-      if (!isTransient) throw e
+      if (!isTransientNetworkError(e)) throw e
       try {
-        await axios.get(`${resolveApiBase()}/api/v1/health`, {
-          timeout: 45_000,
-          withCredentials: false,
-        })
+        await fetchHealthWarmup()
       } catch {
         /* прогрев best-effort */
       }
@@ -195,16 +275,24 @@ async function withColdStartRetry<T>(fn: () => Promise<T>): Promise<T> {
 export async function pingApi(): Promise<boolean> {
   const attempts = 4
   const delays = [0, 2500, 6000, 12_000]
+  const base = resolveApiBase()
   for (let i = 0; i < attempts; i++) {
     if (delays[i]) await sleep(delays[i])
+    const controller = new AbortController()
+    const tid = window.setTimeout(() => controller.abort(), 45_000)
     try {
-      await axios.get(`${resolveApiBase()}/api/v1/health`, {
-        timeout: 45_000,
-        withCredentials: false,
+      const res = await fetch(`${base}/api/v1/health`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal: controller.signal,
       })
-      return true
+      if (res.ok) return true
     } catch {
-      /* следующая попытка — Render может ещё подниматься */
+      /* следующая попытка */
+    } finally {
+      window.clearTimeout(tid)
     }
   }
   return false
@@ -213,20 +301,8 @@ export async function pingApi(): Promise<boolean> {
 export const authApi = {
   // Без cookies: кросс-доменный вход (Pages→Render) надёжнее; refresh-cookie всё равно часто
   // режется как third-party — токен доступа приходит в JSON.
-  register: (data: any) =>
-    withColdStartRetry(() =>
-      api.post('/auth/register', data, {
-        withCredentials: false,
-        timeout: COLD_START_LOGIN_TIMEOUT_MS,
-      }),
-    ),
-  login: (data: any) =>
-    withColdStartRetry(() =>
-      api.post('/auth/login', data, {
-        withCredentials: false,
-        timeout: COLD_START_LOGIN_TIMEOUT_MS,
-      }),
-    ),
+  register: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/register', data)),
+  login: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/login', data)),
   me: () => api.get('/auth/me'),
 }
 

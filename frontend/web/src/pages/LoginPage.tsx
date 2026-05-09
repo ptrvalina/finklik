@@ -51,9 +51,8 @@ export default function LoginPage() {
             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
               <Icon name="warning" className="text-base mt-0.5" />
               <span>
-                API ({resolveApiBase()}) пока не ответил на проверку (часто после простоя на Render нужно до ~1–2 мин).
-                Откройте в новой вкладке <span className="font-mono break-all">{resolveApiBase()}/docs</span> и подождите загрузку —
-                затем снова «Войти». Если вкладка не открывается, проверьте VPN и блокировщики.
+                API ({resolveApiBase()}) пока не ответил на проверку (простой Render 1–2 мин или ограничение сети).
+                Откройте <span className="font-mono break-all">{resolveApiBase()}/docs</span> — если не грузится, попробуйте интернет с телефона или VPN (иногда провайдер режет зарубежные хостинги).
               </span>
             </div>
           )}
