@@ -17,6 +17,10 @@ class Organization(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    #: Порядковые номера кадровых приказов (приём / увольнение) в рамках организации.
+    hr_hire_order_seq: Mapped[int] = mapped_column(Integer, default=0)
+    hr_fire_order_seq: Mapped[int] = mapped_column(Integer, default=0)
+
     # BYOK ИИ: ключ провайдера (OpenAI-совместимый) в зашифрованном виде; не смешивается с другими организациями.
     llm_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
     llm_base_url: Mapped[str | None] = mapped_column(String(512), nullable=True)

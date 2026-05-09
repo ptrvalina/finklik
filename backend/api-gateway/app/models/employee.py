@@ -45,6 +45,9 @@ class Employee(Base):
     id_document_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
     id_document_payload_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    #: Расширенные кадровые поля (JSON): приказы, подразделение, совместительство, выписки сканов и т.д.
+    hr_meta_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     salaries: Mapped[list["SalaryRecord"]] = relationship("SalaryRecord", back_populates="employee")

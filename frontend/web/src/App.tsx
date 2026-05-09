@@ -8,6 +8,12 @@ import DashboardPage from './pages/DashboardPage'
 import Bank from './pages/Bank'
 import Reports from './pages/Reports'
 import Employees from './pages/Employees'
+import EmployeesHub from './pages/employees/Hub'
+import EmployeesHire from './pages/employees/Hire'
+import EmployeesDismiss from './pages/employees/Dismiss'
+import EmployeesTimesheet from './pages/employees/Timesheet'
+import EmployeesStaffing from './pages/employees/Staffing'
+import EmployeesHrPlanner from './pages/employees/HrPlanner'
 import Accounting from './pages/Accounting'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
@@ -89,7 +95,14 @@ function AppRoutes() {
           <Route path="bank/oauth/callback" element={<RoleRoute allow={['admin', 'accountant']}><BankOAuthCallbackPage /></RoleRoute>} />
           <Route path="reports/:authority" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
           <Route path="reports" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
-          <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>} />
+          <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>}>
+            <Route index element={<EmployeesHub />} />
+            <Route path="hire" element={<EmployeesHire />} />
+            <Route path="dismiss" element={<EmployeesDismiss />} />
+            <Route path="timesheet" element={<EmployeesTimesheet />} />
+            <Route path="staffing" element={<EmployeesStaffing />} />
+            <Route path="planner" element={<EmployeesHrPlanner />} />
+          </Route>
           <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Websites />} />

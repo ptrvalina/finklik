@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date, datetime, timezone
 
 import structlog
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.internal.crypto.encrypt import get_aes_gcm_encryptor
 from app.models.employee import Employee
+from app.models.user import Organization
 from app.schemas.workforce import EmployeeCreateRequest
 from app.security import get_encryptor
 
@@ -46,14 +48,105 @@ class EmployeeService:
         self.log.info("employee_create_completed", tenant_id=tenant_id, employee_id=str(employee.id))
         return employee
 
-    async def TerminateEmployee(self, tenant_id: str, employee_id: str, termination_date: date) -> None:
-        """Mark employee as terminated by setting fire_date and terminated_at."""
-        employee = await self.GetEmployeeByID(tenant_id, employee_id)
+    async def _get_org(self, tenant_id: str) -> Organization:
+        r = await self.db.execute(select(Organization).where(Organization.id == tenant_id))
+        org = r.scalar_one_or_none()
+        if org is None:
+            raise ValueError("organization_not_found")
+        return org
+
+    def _merge_hr_meta(self, employee: Employee, patch: dict) -> None:
+        meta: dict = {}
+        if employee.hr_meta_json:
+            try:
+                meta = json.loads(employee.hr_meta_json)
+            except json.JSONDecodeError:
+                meta = {}
+        meta.update(patch)
+        employee.hr_meta_json = json.dumps(meta, ensure_ascii=False, default=str)
+
+    async def _terminate_employee_core(
+        self,
+        employee: Employee,
+        termination_date: date,
+        fire_order_number: str,
+        fire_seq: int,
+        dismissal_reason_code: str | None,
+        dismissal_reason_label: str | None,
+    ) -> None:
         employee.is_active = False
         employee.fire_date = termination_date
         employee.terminated_at = datetime.now(timezone.utc)
+        patch = {
+            "termination_date": termination_date.isoformat(),
+            "fire_order_number": fire_order_number,
+            "fire_order_seq_auto": str(fire_seq),
+        }
+        if dismissal_reason_code:
+            patch["dismissal_reason_code"] = dismissal_reason_code
+        if dismissal_reason_label:
+            patch["dismissal_reason_label"] = dismissal_reason_label
+        self._merge_hr_meta(employee, patch)
+
+    async def TerminateEmployee(
+        self,
+        tenant_id: str,
+        employee_id: str,
+        termination_date: date,
+        *,
+        dismissal_reason_code: str | None = None,
+        dismissal_reason_label: str | None = None,
+        fire_order_number_override: str | None = None,
+    ) -> None:
+        """Увольнение одного сотрудника; номер приказа — следующий в организации."""
+        employee = await self.GetEmployeeByID(tenant_id, employee_id)
+        org = await self._get_org(tenant_id)
+        org.hr_fire_order_seq = (org.hr_fire_order_seq or 0) + 1
+        seq = org.hr_fire_order_seq
+        num = fire_order_number_override if fire_order_number_override is not None else str(seq)
+        await self._terminate_employee_core(
+            employee,
+            termination_date,
+            num,
+            seq,
+            dismissal_reason_code,
+            dismissal_reason_label,
+        )
         await self.db.flush()
-        self.log.info("employee_terminated", tenant_id=tenant_id, employee_id=employee_id)
+        self.log.info("employee_terminated", tenant_id=tenant_id, employee_id=employee_id, fire_seq=seq)
+
+    async def TerminateEmployeesBulk(
+        self,
+        tenant_id: str,
+        employee_ids: list[str],
+        termination_date: date,
+        *,
+        dismissal_reason_code: str | None = None,
+        dismissal_reason_label: str | None = None,
+        fire_order_number_override: str | None = None,
+    ) -> None:
+        """Несколько сотрудников одним приказом (один порядковый номер)."""
+        org = await self._get_org(tenant_id)
+        org.hr_fire_order_seq = (org.hr_fire_order_seq or 0) + 1
+        seq = org.hr_fire_order_seq
+        num = fire_order_number_override if fire_order_number_override is not None else str(seq)
+        for eid in employee_ids:
+            employee = await self.GetEmployeeByID(tenant_id, eid)
+            await self._terminate_employee_core(
+                employee,
+                termination_date,
+                num,
+                seq,
+                dismissal_reason_code,
+                dismissal_reason_label,
+            )
+        await self.db.flush()
+        self.log.info(
+            "employees_bulk_terminated",
+            tenant_id=tenant_id,
+            count=len(employee_ids),
+            fire_seq=seq,
+        )
 
     async def GetEmployees(self, tenant_id: str) -> list[Employee]:
         """Return all employees for tenant ordered by creation date."""

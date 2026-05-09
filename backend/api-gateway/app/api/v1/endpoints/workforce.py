@@ -19,6 +19,7 @@ from app.internal.fszn.client import FsznClient
 from app.internal.salary.calculator import SalaryCalculator
 from app.models.user import User
 from app.schemas.workforce import (
+    BulkTerminateEmployeeRequest,
     FsznRequest,
     FsznResponse,
     SalaryCalculationDTO,
@@ -46,6 +47,67 @@ class PayrollRunRequest(BaseModel):
 
 
 @router.post(
+    "/employees/bulk-terminate",
+    summary="Terminate several employees with one order",
+    description="Увольняет нескольких сотрудников одним порядковым номером приказа (общий ПУ-2).",
+)
+async def bulk_terminate_employees(
+    req: BulkTerminateEmployeeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    service = EmployeeService(db)
+    log.info(
+        "employee_bulk_terminate_requested",
+        count=len(req.employee_ids),
+        user_id=str(current_user.id),
+    )
+    try:
+        await service.TerminateEmployeesBulk(
+            current_user.organization_id,
+            req.employee_ids,
+            req.termination_date,
+            dismissal_reason_code=req.dismissal_reason_code,
+            dismissal_reason_label=req.dismissal_reason_label,
+            fire_order_number_override=req.fire_order_number,
+        )
+    except ValueError as e:
+        if str(e) == "organization_not_found":
+            raise HTTPException(status_code=400, detail="Организация не найдена")
+        raise HTTPException(status_code=404, detail="Employee not found")
+    await safe_log_audit(
+        db=db,
+        user_id=str(current_user.id),
+        action="employee_bulk_terminate",
+        entity_type="employee",
+        entity_id=req.employee_ids[0],
+        metadata={
+            "termination_date": req.termination_date.isoformat(),
+            "employee_ids": req.employee_ids,
+            "dismissal_reason_code": req.dismissal_reason_code,
+        },
+    )
+    await create_workforce_followup_task(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        author_user_id=str(current_user.id),
+        assignee_user_id=str(current_user.id),
+        title="Оффбординг: групповой приказ",
+        description=f"Проверьте ПУ-2 для сотрудников: {', '.join(req.employee_ids)}.",
+    )
+    await create_workforce_calendar_event(
+        db=db,
+        organization_id=str(current_user.organization_id),
+        title="Контроль группового увольнения",
+        description="Автоматическое событие после массового увольнения.",
+        event_date=req.termination_date,
+        event_type="deadline",
+        color="#C026D3",
+    )
+    return {"status": "ok", "terminated": len(req.employee_ids)}
+
+
+@router.post(
     "/employees/{employee_id}/terminate",
     summary="Terminate employee",
     description="Sets termination date and marks employee as inactive for current tenant.",
@@ -61,8 +123,17 @@ async def terminate_employee(
     service = EmployeeService(db)
     log.info("employee_terminate_requested", employee_id=employee_id, user_id=str(current_user.id))
     try:
-        await service.TerminateEmployee(current_user.organization_id, employee_id, req.termination_date)
-    except ValueError:
+        await service.TerminateEmployee(
+            current_user.organization_id,
+            employee_id,
+            req.termination_date,
+            dismissal_reason_code=req.dismissal_reason_code,
+            dismissal_reason_label=req.dismissal_reason_label,
+            fire_order_number_override=req.fire_order_number,
+        )
+    except ValueError as e:
+        if str(e) == "organization_not_found":
+            raise HTTPException(status_code=400, detail="Организация не найдена")
         raise HTTPException(status_code=404, detail="Employee not found")
     await safe_log_audit(
         db=db,
@@ -70,7 +141,11 @@ async def terminate_employee(
         action="employee_terminate",
         entity_type="employee",
         entity_id=employee_id,
-        metadata={"termination_date": req.termination_date.isoformat()},
+        metadata={
+            "termination_date": req.termination_date.isoformat(),
+            "dismissal_reason_code": req.dismissal_reason_code,
+            "fire_order_number": req.fire_order_number,
+        },
     )
     await create_workforce_followup_task(
         db=db,

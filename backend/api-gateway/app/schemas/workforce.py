@@ -58,10 +58,38 @@ class EmployeeDTO(BaseModel):
 
 class TerminateEmployeeRequest(BaseModel):
     termination_date: date
+    dismissal_reason_code: str | None = Field(
+        None,
+        max_length=80,
+        description="Код основания увольнения (справочник ТК РБ на клиенте)",
+    )
+    dismissal_reason_label: str | None = Field(None, max_length=500)
+    fire_order_number: str | None = Field(
+        None,
+        max_length=40,
+        description="Если не указан — присваивается автоматически по счётчику организации",
+    )
 
     @field_validator("termination_date")
     @classmethod
     def termination_not_future(cls, v: date) -> date:
+        from datetime import date as date_cls
+
+        if v > date_cls.today():
+            raise ValueError("Дата увольнения не может быть в будущем")
+        return v
+
+
+class BulkTerminateEmployeeRequest(BaseModel):
+    employee_ids: list[str] = Field(min_length=1, max_length=50)
+    termination_date: date
+    dismissal_reason_code: str | None = Field(None, max_length=80)
+    dismissal_reason_label: str | None = Field(None, max_length=500)
+    fire_order_number: str | None = Field(None, max_length=40)
+
+    @field_validator("termination_date")
+    @classmethod
+    def termination_not_future_bulk(cls, v: date) -> date:
         from datetime import date as date_cls
 
         if v > date_cls.today():

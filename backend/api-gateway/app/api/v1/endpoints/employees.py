@@ -6,7 +6,7 @@ from datetime import date
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_roles
-from app.models.user import User
+from app.models.user import User, Organization
 from app.models.employee import Employee, SalaryRecord
 from app.schemas.employee import (
     EmployeeCreate,
@@ -85,11 +85,19 @@ def _employee_to_response(enc, pii_enc, e: Employee) -> EmployeeResponse:
     phone = _safe_decrypt(pii_enc, e.phone)
     email = _safe_decrypt(pii_enc, e.email)
     address = _safe_decrypt(pii_enc, e.address)
+    hr_meta: dict | None = None
+    if getattr(e, "hr_meta_json", None):
+        try:
+            hr_meta = json.loads(e.hr_meta_json)
+        except json.JSONDecodeError:
+            hr_meta = None
     return EmployeeResponse(
         id=e.id,
         full_name=enc.decrypt(e.full_name_enc),
         identification_number=id_num,
         position=e.position,
+        position_code=e.position_code,
+        position_name=e.position_name,
         salary=e.salary,
         hire_date=e.hire_date,
         fire_date=e.fire_date,
@@ -106,6 +114,7 @@ def _employee_to_response(enc, pii_enc, e: Employee) -> EmployeeResponse:
         phone=phone,
         email=email,
         address=address,
+        hr_meta=hr_meta,
         created_at=e.created_at,
     )
 
@@ -130,6 +139,87 @@ async def list_employees(
     return [_employee_to_response(enc, pii_enc, e) for e in employees]
 
 
+@router.get("/hr/sequences")
+async def hr_order_sequences(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Следующие порядковые номера приказов (после инкремента при сохранении)."""
+    if not current_user.organization_id:
+        raise HTTPException(400, detail="Нет организации")
+    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org = org_r.scalar_one_or_none()
+    if not org:
+        raise HTTPException(404, detail="Организация не найдена")
+    h = org.hr_hire_order_seq or 0
+    f = org.hr_fire_order_seq or 0
+    return {
+        "hire_next_index": h + 1,
+        "fire_next_index": f + 1,
+        "hire_next_label": f"Приказ о приёме № {h + 1}",
+        "fire_next_label": f"Приказ об увольнении № {f + 1}",
+    }
+
+
+@router.get("/{emp_id}/salary-records", response_model=list[SalaryResponse])
+async def employee_salary_records_range(
+    emp_id: str,
+    year_from: int = Query(..., ge=2000, le=2100),
+    month_from: int = Query(..., ge=1, le=12),
+    year_to: int = Query(..., ge=2000, le=2100),
+    month_to: int = Query(..., ge=1, le=12),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Выписка из расчётной ведомости (salary_records) по сотруднику за период."""
+    er = await db.execute(
+        select(Employee).where(
+            Employee.id == emp_id,
+            Employee.organization_id == current_user.organization_id,
+        )
+    )
+    if er.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Сотрудник не найден")
+
+    from_key = year_from * 12 + month_from
+    to_key = year_to * 12 + month_to
+    if from_key > to_key:
+        raise HTTPException(status_code=400, detail="Неверный диапазон периодов")
+
+    period_expr = SalaryRecord.period_year * 12 + SalaryRecord.period_month
+    result = await db.execute(
+        select(SalaryRecord)
+        .where(
+            SalaryRecord.organization_id == current_user.organization_id,
+            SalaryRecord.employee_id == emp_id,
+            period_expr >= from_key,
+            period_expr <= to_key,
+        )
+        .order_by(SalaryRecord.period_year, SalaryRecord.period_month)
+    )
+    return result.scalars().all()
+
+
+@router.get("/{emp_id}", response_model=EmployeeResponse)
+async def get_employee(
+    emp_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    enc = get_encryptor()
+    pii_enc = get_aes_gcm_encryptor()
+    result = await db.execute(
+        select(Employee).where(
+            Employee.id == emp_id,
+            Employee.organization_id == current_user.organization_id,
+        )
+    )
+    emp = result.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Сотрудник не найден")
+    return _employee_to_response(enc, pii_enc, emp)
+
+
 @router.post("", response_model=EmployeeResponse, status_code=201)
 async def create_employee(
     body: EmployeeCreate,
@@ -142,14 +232,37 @@ async def create_employee(
     id_doc_enc = None
     if body.id_document and body.id_document_type:
         id_doc_enc = enc.encrypt(_id_doc_to_json(body.id_document))
+    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org = org_r.scalar_one_or_none()
+    if not org:
+        raise HTTPException(400, detail="Организация не найдена")
+
+    meta_dict: dict = {}
+    if body.hr:
+        meta_dict = body.hr.model_dump(exclude_none=True)
+    org.hr_hire_order_seq = (org.hr_hire_order_seq or 0) + 1
+    auto_seq = org.hr_hire_order_seq
+    if not meta_dict.get("hire_order_number"):
+        meta_dict["hire_order_number"] = str(auto_seq)
+    meta_dict["hire_order_seq_auto"] = str(auto_seq)
+
+    children = body.has_children
+    if body.hr and body.hr.dependents_children is not None:
+        children = max(children, body.hr.dependents_children)
+
+    pos_name = body.position_name or body.position
+    pos_code = body.position_code
+
     emp = Employee(
         organization_id=current_user.organization_id,
         full_name_enc=enc.encrypt(body.full_name),
         identification_number_enc=id_num_enc,
         position=body.position,
+        position_code=pos_code,
+        position_name=pos_name,
         salary=body.salary,
         hire_date=body.hire_date,
-        has_children=body.has_children,
+        has_children=children,
         disability_group=body.disability_group,
         is_pensioner=body.is_pensioner,
         citizenship=body.citizenship,
@@ -161,6 +274,7 @@ async def create_employee(
         phone=pii_enc.encrypt(body.phone) if body.phone else None,
         email=pii_enc.encrypt(str(body.email)) if body.email else None,
         address=pii_enc.encrypt(body.address) if body.address else None,
+        hr_meta_json=json.dumps(meta_dict, ensure_ascii=False, default=str),
     )
     db.add(emp)
     await db.flush()
@@ -212,12 +326,20 @@ async def update_employee(
         raise HTTPException(status_code=404, detail="Сотрудник не найден")
 
     patch = body.model_dump(exclude_unset=True)
+    if body.full_name is not None:
+        emp.full_name_enc = enc.encrypt(body.full_name)
     if body.position is not None:
         emp.position = body.position
+    if body.position_code is not None:
+        emp.position_code = body.position_code.strip() if body.position_code else None
+    if body.position_name is not None:
+        emp.position_name = body.position_name.strip() if body.position_name else None
     if body.salary is not None:
         emp.salary = body.salary
     if body.identification_number is not None:
-        emp.identification_number_enc = enc.encrypt(body.identification_number)
+        emp.identification_number_enc = (
+            enc.encrypt(body.identification_number) if body.identification_number else None
+        )
     if body.has_children is not None:
         emp.has_children = body.has_children
     if "disability_group" in patch:
@@ -230,6 +352,14 @@ async def update_employee(
         emp.work_hours_per_day = body.work_hours_per_day
     if "work_hours_per_week" in patch:
         emp.work_hours_per_week = body.work_hours_per_week
+    if body.passport_data is not None:
+        emp.passport_data = pii_enc.encrypt(body.passport_data) if body.passport_data.strip() else None
+    if body.phone is not None:
+        emp.phone = pii_enc.encrypt(body.phone.strip()) if body.phone.strip() else None
+    if body.email is not None:
+        emp.email = pii_enc.encrypt(str(body.email)) if body.email else None
+    if body.address is not None:
+        emp.address = pii_enc.encrypt(body.address.strip()) if body.address.strip() else None
     if "id_document_type" in patch or "id_document" in patch:
         if body.id_document_type and body.id_document:
             emp.id_document_type = body.id_document_type
@@ -242,6 +372,17 @@ async def update_employee(
                 status_code=400,
                 detail="Укажите вид документа и все реквизиты или очистите оба поля",
             )
+    if body.hr_meta_patch is not None:
+        meta: dict = {}
+        if emp.hr_meta_json:
+            try:
+                meta = json.loads(emp.hr_meta_json)
+            except json.JSONDecodeError:
+                meta = {}
+        meta.update(body.hr_meta_patch)
+        emp.hr_meta_json = json.dumps(meta, ensure_ascii=False, default=str)
+        if isinstance(body.hr_meta_patch.get("dependents_children"), int):
+            emp.has_children = max(emp.has_children, body.hr_meta_patch["dependents_children"])
     if body.fire_date is not None:
         emp.fire_date = body.fire_date
         emp.is_active = False

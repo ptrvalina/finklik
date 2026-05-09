@@ -320,16 +320,36 @@ export const dashboardApi = {
 
 export const employeesApi = {
   list: (params?: any) => api.get('/employees', { params }),
+  get: (id: string) => api.get(`/employees/${id}`),
   create: (data: any) => api.post('/employees', data),
   update: (id: string, data: any) => api.put(`/employees/${id}`, data),
   fire: (id: string, fire_date?: string) => api.delete(`/employees/${id}`, { params: { fire_date } }),
   calculateSalary: (data: any) => api.post('/employees/salary/calculate', data),
   listSalary: (params: { year: number; month: number }) => api.get('/employees/salary/list', { params }),
+  hrSequences: () => api.get('/employees/hr/sequences'),
+  salaryRecords: (
+    id: string,
+    params: { year_from: number; month_from: number; year_to: number; month_to: number },
+  ) => api.get(`/employees/${id}/salary-records`, { params }),
 }
 
 export const workforceApi = {
-  terminate: (id: string, termination_date: string) =>
-    api.post(`/employees/${id}/terminate`, { termination_date }),
+  terminate: (
+    id: string,
+    body: {
+      termination_date: string
+      dismissal_reason_code?: string | null
+      dismissal_reason_label?: string | null
+      fire_order_number?: string | null
+    },
+  ) => api.post(`/employees/${id}/terminate`, body),
+  bulkTerminate: (body: {
+    employee_ids: string[]
+    termination_date: string
+    dismissal_reason_code?: string | null
+    dismissal_reason_label?: string | null
+    fire_order_number?: string | null
+  }) => api.post('/employees/bulk-terminate', body),
   sendPu2: (data: { employee_id?: string; period?: string; xml_data?: string }) =>
     api.post('/fszn/pu2', data),
   sendPu3: (data: { employee_id?: string; period?: string; xml_data?: string }) =>

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import re
 
@@ -27,10 +27,28 @@ class IdentityDocumentOut(BaseModel):
     expiry_date: date | None = None
 
 
+class HrMetaPayload(BaseModel):
+    """Доп. кадровые поля (хранятся в employees.hr_meta_json)."""
+
+    subdivision: str | None = Field(None, max_length=500)
+    employment_type: Literal["primary", "secondary"] | None = None
+    bank_account: str | None = Field(None, max_length=64)
+    contract_number: str | None = Field(None, max_length=80)
+    contract_date: date | None = None
+    hire_order_number: str | None = Field(None, max_length=40)
+    hire_order_date: date | None = None
+    bonuses_contract: str | None = Field(None, max_length=4000)
+    dependents_children: int | None = Field(None, ge=0, le=20)
+    dependents_other: int | None = Field(None, ge=0, le=20)
+    disability_certificate_text: str | None = Field(None, max_length=4000)
+
+
 class EmployeeCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     identification_number: str | None = Field(default=None, max_length=14)
     position: str = Field(min_length=2, max_length=255)
+    position_code: str | None = Field(None, max_length=80)
+    position_name: str | None = Field(None, max_length=255)
     salary: Decimal = Field(gt=0)
     hire_date: date
     has_children: int = Field(default=0, ge=0)
@@ -49,6 +67,14 @@ class EmployeeCreate(BaseModel):
     phone: str | None = Field(default=None, min_length=5, max_length=40)
     email: EmailStr | None = None
     address: str | None = Field(default=None, min_length=2, max_length=500)
+    hr: HrMetaPayload | None = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_str_email_none(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return None
+        return v
 
     @field_validator("id_document_type")
     @classmethod
@@ -78,6 +104,7 @@ class EmployeeCreate(BaseModel):
 
 
 class EmployeeUpdate(BaseModel):
+    full_name: str | None = Field(None, min_length=2, max_length=255)
     position: str | None = None
     salary: Decimal | None = None
     identification_number: str | None = None
@@ -90,6 +117,20 @@ class EmployeeUpdate(BaseModel):
     id_document_type: str | None = Field(None, max_length=40)
     id_document: IdentityDocumentPayload | None = None
     fire_date: date | None = None
+    passport_data: str | None = Field(None, max_length=2000)
+    phone: str | None = Field(None, max_length=40)
+    email: EmailStr | None = None
+    address: str | None = Field(None, max_length=500)
+    position_code: str | None = Field(None, max_length=80)
+    position_name: str | None = Field(None, max_length=255)
+    hr_meta_patch: dict[str, Any] | None = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_str_email_none_upd(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return None
+        return v
 
     @field_validator("id_document_type")
     @classmethod
@@ -104,6 +145,8 @@ class EmployeeResponse(BaseModel):
     full_name: str
     identification_number: str | None = None
     position: str
+    position_code: str | None = None
+    position_name: str | None = None
     salary: Decimal
     hire_date: date
     fire_date: date | None
@@ -120,6 +163,7 @@ class EmployeeResponse(BaseModel):
     phone: str | None = None
     email: str | None = None
     address: str | None = None
+    hr_meta: dict[str, Any] | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
