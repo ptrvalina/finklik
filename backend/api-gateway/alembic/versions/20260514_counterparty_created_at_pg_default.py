@@ -4,7 +4,7 @@ from typing import Sequence
 
 from alembic import op
 
-revision: str = "counterparty_created_at_pg_default"
+revision: str = "cp_created_pg_default"
 down_revision: str | None = "org_legal_cp_kind"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
