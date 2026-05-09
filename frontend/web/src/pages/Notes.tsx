@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AppModal from '../components/ui/AppModal'
+import { notesApi } from '../api/client'
 
 const STORAGE_KEY = 'finklik.notes.v1'
+const IMPORT_FLAG = 'finklik.notes.localImportDone.v1'
 
-type Note = { id: string; title: string; body: string; updatedAt: string }
+type LocalNote = { id: string; title: string; body: string; updatedAt: string }
 
-function loadNotes(): Note[] {
+type ApiNote = {
+  id: string
+  title: string
+  body: string
+  updated_at: string
+  created_at: string
+}
+
+function loadLocalNotes(): LocalNote[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
@@ -17,8 +28,8 @@ function loadNotes(): Note[] {
   }
 }
 
-function saveNotes(notes: Note[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes))
+function clearLocalNotes() {
+  localStorage.removeItem(STORAGE_KEY)
 }
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -26,20 +37,66 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 }
 
 export default function Notes() {
-  const [notes, setNotes] = useState<Note[]>(() => loadNotes())
+  const qc = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<Note | null>(null)
+  const [editing, setEditing] = useState<ApiNote | null>(null)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [importUi, setImportUi] = useState<{ count: number } | null>(null)
+
+  const notesQuery = useQuery({
+    queryKey: ['notes'],
+    queryFn: () => notesApi.list().then((r) => r.data as ApiNote[]),
+    retry: 1,
+  })
 
   useEffect(() => {
-    saveNotes(notes)
-  }, [notes])
+    if (!notesQuery.isSuccess) return
+    const remote = notesQuery.data ?? []
+    if (remote.length > 0) return
+    const local = loadLocalNotes()
+    if (local.length === 0) return
+    if (localStorage.getItem(IMPORT_FLAG) === '1') return
+    setImportUi({ count: local.length })
+  }, [notesQuery.isSuccess, notesQuery.data])
 
-  const sorted = useMemo(
-    () => [...notes].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)),
-    [notes],
-  )
+  const createMutation = useMutation({
+    mutationFn: (payload: { title: string; body: string }) => notesApi.create(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (args: { id: string; title: string; body: string }) =>
+      notesApi.update(args.id, { title: args.title, body: args.body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => notesApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  })
+
+  const importMutation = useMutation({
+    mutationFn: async (items: LocalNote[]) => {
+      for (const n of items) {
+        await notesApi.create({
+          title: n.title || 'Без названия',
+          body: n.body || '',
+        })
+      }
+    },
+    onSuccess: () => {
+      clearLocalNotes()
+      localStorage.setItem(IMPORT_FLAG, '1')
+      setImportUi(null)
+      qc.invalidateQueries({ queryKey: ['notes'] })
+    },
+  })
+
+  const sorted = useMemo(() => {
+    const items = notesQuery.data ?? []
+    return [...items].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
+  }, [notesQuery.data])
 
   const openCreate = useCallback(() => {
     setEditing(null)
@@ -48,7 +105,7 @@ export default function Notes() {
     setModalOpen(true)
   }, [])
 
-  const openEdit = useCallback((n: Note) => {
+  const openEdit = useCallback((n: ApiNote) => {
     setEditing(n)
     setTitle(n.title)
     setBody(n.body)
@@ -65,27 +122,42 @@ export default function Notes() {
   const handleSave = useCallback(() => {
     const t = title.trim() || 'Без названия'
     const b = body.trim()
-    const now = new Date().toISOString()
     if (editing) {
-      setNotes((prev) =>
-        prev.map((x) =>
-          x.id === editing.id ? { ...x, title: t, body: b, updatedAt: now } : x,
-        ),
-      )
+      updateMutation.mutate({ id: editing.id, title: t, body: b }, { onSuccess: closeModal })
     } else {
-      const id =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-      setNotes((prev) => [{ id, title: t, body: b, updatedAt: now }, ...prev])
+      createMutation.mutate({ title: t, body: b }, { onSuccess: closeModal })
     }
-    closeModal()
-  }, [body, closeModal, editing, title])
+  }, [body, closeModal, createMutation, editing, title, updateMutation])
 
-  const remove = useCallback((id: string) => {
-    if (!confirm('Удалить заметку?')) return
-    setNotes((prev) => prev.filter((x) => x.id !== id))
-  }, [])
+  const remove = useCallback(
+    (id: string) => {
+      if (!confirm('Удалить заметку?')) return
+      deleteMutation.mutate(id)
+    },
+    [deleteMutation],
+  )
+
+  const busy =
+    notesQuery.isLoading ||
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending
+
+  if (notesQuery.isError) {
+    return (
+      <div className="max-w-3xl">
+        <div className="card-elevated p-6">
+          <h1 className="page-heading">Заметки</h1>
+          <p className="mt-2 text-on-surface-variant">
+            Не удалось загрузить заметки. Проверьте сеть и попробуйте снова.
+          </p>
+          <button type="button" className="btn-primary mt-4" onClick={() => notesQuery.refetch()}>
+            Повторить
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl space-y-5">
@@ -93,17 +165,55 @@ export default function Notes() {
         <div>
           <h1 className="page-heading">Заметки</h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Личные заметки хранятся только в этом браузере (localStorage).
+            Сохраняются в вашем аккаунте и доступны с любого устройства.
           </p>
         </div>
-        <button type="button" className="btn-primary self-start sm:self-auto" onClick={openCreate}>
+        <button
+          type="button"
+          className="btn-primary self-start sm:self-auto"
+          onClick={openCreate}
+          disabled={busy}
+        >
           <Icon name="add" className="mr-1 align-middle text-lg" /> Новая заметка
         </button>
       </div>
 
-      {sorted.length === 0 ? (
+      {importUi && (
+        <div className="card-elevated flex flex-col gap-3 border border-secondary/30 bg-secondary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-on-surface">
+            В браузере есть {importUi.count}{' '}
+            {importUi.count === 1 ? 'старая заметка' : 'старых заметок'} (localStorage). Перенести в аккаунт?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-secondary text-sm"
+              onClick={() => {
+                localStorage.setItem(IMPORT_FLAG, '1')
+                setImportUi(null)
+              }}
+            >
+              Пропустить
+            </button>
+            <button
+              type="button"
+              className="btn-primary text-sm"
+              disabled={importMutation.isPending}
+              onClick={() => importMutation.mutate(loadLocalNotes())}
+            >
+              {importMutation.isPending ? 'Импорт…' : 'Импортировать'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {sorted.length === 0 && !notesQuery.isLoading ? (
         <div className="card-elevated border border-dashed border-outline/60 p-8 text-center text-sm text-on-surface-variant">
           Пока нет заметок — нажмите «Новая заметка».
+        </div>
+      ) : notesQuery.isLoading ? (
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          <Icon name="hourglass_empty" className="animate-spin text-2xl" />
         </div>
       ) : (
         <ul className="space-y-3">
@@ -136,7 +246,7 @@ export default function Notes() {
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-on-surface-variant line-clamp-4">{n.body || '—'}</p>
               <p className="mt-2 text-[11px] text-on-surface-variant/80">
-                Обновлено: {new Date(n.updatedAt).toLocaleString('ru-BY')}
+                Обновлено: {new Date(n.updated_at).toLocaleString('ru-BY')}
               </p>
             </li>
           ))}
@@ -153,7 +263,12 @@ export default function Notes() {
               <button type="button" className="btn-secondary" onClick={closeModal}>
                 Отмена
               </button>
-              <button type="button" className="btn-primary" onClick={handleSave}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
                 Сохранить
               </button>
             </div>

@@ -61,7 +61,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/accounting', label: 'Учет', icon: 'description', description: 'Операции, документы, бухгалтерия' },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', description: 'Клиенты и поставщики' },
   { to: '/websites', label: 'Сайты для работы', icon: 'language', description: 'Подборка рабочих сервисов' },
-  { to: '/notes', label: 'Заметки', icon: 'note_alt', description: 'Личные и командные заметки' },
+  { to: '/notes', label: 'Заметки', icon: 'note_alt', description: 'Личные заметки в организации' },
   { to: '/scan', label: 'Скан', icon: 'document_scanner', description: 'Сканирование и OCR' },
 ]
 

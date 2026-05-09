@@ -12,6 +12,7 @@ from app.models.planner import PlannerTask, PlannerReport, PlannerComment
 from app.models.notification import Notification
 from app.models.categorization_rule import CategorizationRule
 from app.models.automation_policy import AutomationPolicy
+from app.models.user_note import UserNote
 
 __all__ = [
     "Organization", "User", "Invitation", "Transaction",
@@ -22,4 +23,5 @@ __all__ = [
     "PlannerTask", "PlannerReport", "PlannerComment", "Notification",
     "CategorizationRule",
     "AutomationPolicy",
+    "UserNote",
 ]

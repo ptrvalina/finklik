@@ -434,6 +434,14 @@ export const notificationsApi = {
   markAllRead: () => api.post('/notifications/read-all'),
 }
 
+export const notesApi = {
+  list: () => api.get('/notes'),
+  create: (data: { title?: string; body?: string }) => api.post('/notes', data),
+  update: (id: string, data: { title?: string | null; body?: string | null }) =>
+    api.patch(`/notes/${id}`, data),
+  remove: (id: string) => api.delete(`/notes/${id}`),
+}
+
 export const importApi = {
   previewCsv: (file: File) => {
     const form = new FormData()

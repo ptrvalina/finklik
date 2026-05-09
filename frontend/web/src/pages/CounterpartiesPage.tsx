@@ -84,8 +84,8 @@ export default function CounterpartiesPage() {
           </div>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
-            <Icon name="description" className="text-lg" /> Документы
+          <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
+            <Icon name="description" className="text-lg" /> Учёт
           </Link>
           <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
             <Icon name="add" className="text-lg" /> Добавить
