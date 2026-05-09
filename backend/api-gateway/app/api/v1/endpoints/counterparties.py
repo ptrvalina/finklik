@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_roles
+from app.core.datetime_utils import utc_now_naive
 from app.models.counterparty import Counterparty
+from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.counterparty import (
     CounterpartyCreate,
@@ -121,9 +123,11 @@ async def create_counterparty_quick_unp(
         name=title,
         unp=body.unp,
         cp_kind="both",
+        created_at=utc_now_naive(),
     )
     db.add(cp)
     await db.flush()
+    await db.refresh(cp)
     return cp
 
 
@@ -204,9 +208,11 @@ async def create_counterparty(
     cp = Counterparty(
         organization_id=org_id,
         **body.model_dump(),
+        created_at=utc_now_naive(),
     )
     db.add(cp)
     await db.flush()
+    await db.refresh(cp)
     return cp
 
 

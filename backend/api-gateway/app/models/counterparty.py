@@ -25,4 +25,5 @@ class Counterparty(Base):
     cp_kind: Mapped[str] = mapped_column(String(20), default="both")
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    #: Naive UTC — TIMESTAMP WITHOUT TIME ZONE в PostgreSQL (asyncpg не принимает aware datetime).
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: utc_now_naive())
