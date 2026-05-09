@@ -1,0 +1,22 @@
+# Контекст = корень репозитория; не исключаем frontend/web (кроме тяжёлых артефактов).
+.git
+.github
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+artifacts
+job*_logs
+*.db
+frontend/web/node_modules
+frontend/web/dist
+backend/api-gateway/.venv*
+backend/api-gateway/venv
+backend/api-gateway/*.db
+backend/api-gateway/_tmp*.db
+ai
+docs
+onec-mock
+rpa-scripts
+reports
+tests
+infrastructure

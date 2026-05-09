@@ -1,6 +1,7 @@
 # FinKlik API на Render: New → Blueprint → выбрать этот репозиторий.
-# Веб-интерфейс открывайте на том же URL, что и API (SPA встроена в образ): https://<service>.onrender.com/
-# GitHub Pages при блокировке cross-origin → используйте этот URL. Для Pages/Vercel при необходимости задайте VITE_API_URL.
+# Docker: Dockerfile в корне репозитория; Build context обязательно `.` (иначе COPY frontend/ падает).
+# В Dashboard вручную: Settings → Build → Docker Context = корень репо, Dockerfile Path = ./Dockerfile
+# Веб-интерфейс на том же URL, что и API: https://<service>.onrender.com/
 # Web — free (засыпает без трафика); Postgres — платный план basic-256mb (см. цены на render.com).
 
 databases:
@@ -13,7 +14,7 @@ services:
     name: finklik-api
     runtime: docker
     plan: free
-    dockerfilePath: ./backend/api-gateway/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
     envVars:

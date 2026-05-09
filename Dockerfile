@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# Контекст сборки — корень репозитория (render.yaml: dockerContext: .).
-# Фронт собирается в образ и раздаётся с того же хоста, что и API (same-origin на Render).
+# Важно: контекст сборки — корень репозитория (иначе COPY frontend/... не найдёт файлов).
+# Локально: docker build -f Dockerfile .
+# Render Dashboard → Docker: Context = `.` (или пусто), Dockerfile = `./Dockerfile`
 
 FROM node:20-alpine AS web
 WORKDIR /web
@@ -8,6 +9,7 @@ COPY frontend/web/package.json frontend/web/package-lock.json ./
 RUN npm ci
 COPY frontend/web/ ./
 ENV VITE_BASE_PATH=/
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
 FROM python:3.11-slim
