@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 
@@ -11,17 +12,25 @@ function authorityTitle(a: ReportingAuthority) {
   return a === 'fsszn' ? 'ФСЗН' : a === 'imns' ? 'ИМНС' : a === 'belgosstrakh' ? 'Белгосстрах' : 'Белстат'
 }
 
-const HUB_LINKS: { to: string; label: string }[] = [
-  { to: '/reporting/imns', label: 'ИМНС' },
-  { to: '/reporting/fsszn', label: 'ФСЗН' },
-  { to: '/reporting/belgosstrakh', label: 'Белгосстрах' },
-  { to: '/reporting/belstat', label: 'Белстат' },
-]
+export type ReportingPageProps = {
+  /** Базовый путь меню: `/reports` (основной) или `/reporting` (legacy alias). */
+  basePath?: string
+}
 
-export default function ReportingPage() {
+export default function ReportingPage({ basePath = '/reporting' }: ReportingPageProps) {
+  const base = basePath.replace(/\/$/, '') || '/reporting'
+  const hubLinks = useMemo(
+    () =>
+      (['imns', 'fsszn', 'belgosstrakh', 'belstat'] as const).map((id) => ({
+        to: `${base}/${id}`,
+        label: authorityTitle(id),
+      })),
+    [base],
+  )
+
   const { authority } = useParams<{ authority?: string }>()
   if (authority !== undefined && !isReportingAuthority(authority)) {
-    return <Navigate to="/reporting" replace />
+    return <Navigate to={base} replace />
   }
   const filter = authority && isReportingAuthority(authority) ? authority : null
 
@@ -29,7 +38,7 @@ export default function ReportingPage() {
     <div className="max-w-7xl space-y-5 sm:space-y-6">
       <div className="card-elevated p-4 sm:p-5">
         <h1 className="page-heading">
-          {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Сдача отчётности'}
+          {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Отчетность'}
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
           {filter
@@ -47,7 +56,7 @@ export default function ReportingPage() {
       {!filter && (
         <div className="flex flex-wrap gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-3 shadow-soft sm:p-4">
           <span className="w-full text-[10px] font-bold uppercase tracking-widest text-zinc-500 lg:hidden">Органы</span>
-          {HUB_LINKS.map((l) => (
+          {hubLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
