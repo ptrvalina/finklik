@@ -354,7 +354,7 @@ export default function Planner() {
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
 
   return (
-    <section className="fc-page-shell">
+    <section className="fc-page-shell fc-page-shell-asymmetric">
       <div className="fc-hero flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex w-full flex-col gap-4 md:flex-row md:items-start md:justify-between">

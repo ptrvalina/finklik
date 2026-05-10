@@ -35,7 +35,7 @@ export default function ReportingPage({ basePath = '/reporting' }: ReportingPage
   const filter = authority && isReportingAuthority(authority) ? authority : null
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       <div className="card-elevated relative overflow-hidden rounded-[1.25rem] p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90" aria-hidden />
         <h1 className="page-heading">

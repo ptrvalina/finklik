@@ -81,7 +81,7 @@ export default function CalendarPage() {
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
 
   return (
-    <div className="fc-page-shell flex h-[calc(100vh-8rem)] flex-col">
+    <div className="fc-page-shell fc-page-shell-asymmetric flex h-[calc(100vh-8rem)] flex-col">
       <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

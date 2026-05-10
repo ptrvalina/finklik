@@ -27,11 +27,11 @@ export default {
           soft: '#00695c',
         },
         primary: {
-          DEFAULT: '#00a86b',
-          dim: '#007a5a',
-          fixed: '#00c896',
-          'fixed-dim': '#00a86b',
-          container: '#5ee9c0',
+          DEFAULT: '#10b981',
+          dim: '#059669',
+          fixed: '#34d399',
+          'fixed-dim': '#10b981',
+          container: '#a7f3d0',
         },
         'on-primary': {
           DEFAULT: '#ffffff',
@@ -91,9 +91,10 @@ export default {
       boxShadow: {
         xs: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
         soft: '0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.04)',
-        card: '0 2px 8px rgb(0 51 46 / 0.06), 0 12px 32px rgb(0 51 46 / 0.05)',
-        lift: '0 8px 24px rgb(0 51 46 / 0.08), 0 24px 48px -12px rgb(0 51 46 / 0.1)',
-        glow: '0 0 0 1px rgb(0 168 107 / 0.14), 0 10px 28px -10px rgb(0 168 107 / 0.22)',
+        card: '0 4px 24px rgb(0 77 64 / 0.06), 0 16px 48px -12px rgb(16 185 129 / 0.06)',
+        lift: '0 12px 40px rgb(0 77 64 / 0.1), 0 32px 64px -24px rgb(16 185 129 / 0.12)',
+        glow: '0 0 0 1px rgb(16 185 129 / 0.18), 0 16px 40px -12px rgb(16 185 129 / 0.28)',
+        float: '0 24px 80px -32px rgb(0 0 0 / 0.45), 0 8px 32px -12px rgb(16 185 129 / 0.15)',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',

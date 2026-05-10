@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AppModal from '../components/ui/AppModal'
+import { motion } from 'framer-motion'
 import { notesApi } from '../api/client'
 
 const STORAGE_KEY = 'finklik.notes.v1'
@@ -146,7 +147,7 @@ export default function Notes() {
   if (notesQuery.isError) {
     return (
       <div className="mx-auto max-w-3xl">
-        <div className="card-elevated rounded-[1.25rem] p-6 ring-1 ring-primary/[0.06]">
+        <div className="card-elevated p-6 ring-1 ring-primary/[0.06]">
           <h1 className="page-heading">Заметки</h1>
           <p className="mt-2 text-on-surface-variant">
             Не удалось загрузить заметки. Проверьте сеть и попробуйте снова.
@@ -160,7 +161,7 @@ export default function Notes() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
+    <div className="fc-page-shell-tight fc-page-shell-asymmetric">
       <div className="fc-hero flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1]">
@@ -171,7 +172,7 @@ export default function Notes() {
         </div>
         <button
           type="button"
-          className="btn-primary relative z-[1] self-start rounded-[1rem] sm:self-auto"
+          className="btn-primary relative z-[1] self-start sm:self-auto"
           onClick={openCreate}
           disabled={busy}
         >
@@ -180,7 +181,7 @@ export default function Notes() {
       </div>
 
       {importUi && (
-        <div className="card-elevated flex flex-col gap-3 rounded-[1.25rem] border border-secondary/30 bg-secondary/5 p-4 ring-1 ring-secondary/15 sm:flex-row sm:items-center sm:justify-between">
+        <div className="card-elevated flex flex-col gap-3 border border-secondary/30 bg-secondary/5 p-4 ring-1 ring-secondary/15 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-on-surface">
             В браузере есть {importUi.count}{' '}
             {importUi.count === 1 ? 'старая заметка' : 'старых заметок'} (localStorage). Перенести в аккаунт?
@@ -209,7 +210,7 @@ export default function Notes() {
       )}
 
       {sorted.length === 0 && !notesQuery.isLoading ? (
-        <div className="card-elevated rounded-[1.25rem] border border-dashed border-primary/25 bg-primary/[0.02] p-8 text-center text-sm text-on-surface-variant">
+        <div className="card-elevated border border-dashed border-primary/30 bg-gradient-to-br from-primary/[0.04] to-transparent p-10 text-center text-sm text-on-surface-variant backdrop-blur-sm">
           Пока нет заметок — нажмите «Новая заметка».
         </div>
       ) : notesQuery.isLoading ? (
@@ -217,9 +218,15 @@ export default function Notes() {
           <Icon name="hourglass_empty" className="animate-spin text-2xl" />
         </div>
       ) : (
-        <ul className="space-y-3">
-          {sorted.map((n) => (
-            <li key={n.id} className="card-elevated rounded-[1.25rem] border border-outline/70 p-4 shadow-card ring-1 ring-primary/[0.04] sm:p-5">
+        <ul className="space-y-4">
+          {sorted.map((n, idx) => (
+            <motion.li
+              key={n.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.04, type: 'spring', stiffness: 380, damping: 28 }}
+              className="card-elevated border border-outline/60 p-4 shadow-card ring-1 ring-primary/[0.05] sm:p-5"
+            >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <button
                   type="button"
@@ -249,7 +256,7 @@ export default function Notes() {
               <p className="mt-2 text-[11px] text-on-surface-variant/80">
                 Обновлено: {new Date(n.updated_at).toLocaleString('ru-BY')}
               </p>
-            </li>
+            </motion.li>
           ))}
         </ul>
       )}

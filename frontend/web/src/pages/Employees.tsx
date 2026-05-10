@@ -5,7 +5,7 @@ export default function Employees() {
   const subpage = /\/employees\/.+/.test(loc.pathname)
 
   return (
-    <section className="fc-page-shell">
+    <section className="fc-page-shell fc-page-shell-asymmetric">
       <header className="fc-hero">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex flex-wrap items-start justify-between gap-4">

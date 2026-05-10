@@ -196,8 +196,8 @@ export default function Layout() {
 
   return (
     <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      {/* Desktop sidebar — FinClick Premium (тёмный лес + изумруд) */}
-      <aside className="relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-emerald-950/35 bg-gradient-to-b from-[#021e1c] via-[#05352e] to-[#04241f] shadow-[4px_0_40px_-8px_rgb(0_0_0/0.4)] before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_100%_70%_at_0%_-5%,rgba(0,168,107,0.2),transparent_50%)] after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gradient-to-b after:from-emerald-400/25 after:via-white/5 after:to-transparent lg:flex">
+      {/* Desktop sidebar — floating glass rail */}
+      <aside className="fc-sidebar-glass relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_100%_70%_at_0%_-5%,rgba(16,185,129,0.22),transparent_52%)] after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gradient-to-b after:from-emerald-400/35 after:via-white/8 after:to-transparent lg:flex">
         <div className="relative z-[1] px-6 pb-6 pt-9">
           <div className="flex items-center gap-3.5">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/30 via-primary/20 to-white/5 shadow-lg ring-1 ring-white/15">
@@ -259,7 +259,7 @@ export default function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/50 bg-surface/90 px-3 shadow-[0_1px_0_rgb(0_168_107/0.06)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.92)] dark:shadow-none dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.85)] sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/45 bg-surface/88 px-3 shadow-soft backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/72 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.88)] dark:shadow-none dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.78)] sm:h-16 sm:gap-3 sm:px-6 lg:top-4 lg:mx-5 lg:mb-1 lg:rounded-[1.5rem] lg:border lg:border-white/10 lg:bg-surface/75 lg:px-7 lg:shadow-float lg:backdrop-blur-2xl lg:dark:border-white/[0.08] lg:dark:bg-[rgb(var(--color-surface)/0.55)]">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#053028] to-[#062f29] ring-1 ring-emerald-500/25 shadow-soft">
@@ -463,8 +463,8 @@ export default function Layout() {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/50 via-canvas to-canvas dark:from-[rgb(var(--color-surface))] dark:via-canvas dark:to-canvas">
-          <div className="mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
+        <main className="fc-main-atmosphere min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
             <Outlet />
           </div>
         </main>
@@ -472,10 +472,10 @@ export default function Layout() {
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/60 bg-surface/95 pb-[max(env(safe-area-inset-bottom,0px),6px)] shadow-[0_-8px_32px_-12px_rgb(0_51_46/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/85 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.95)] dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.45)] lg:hidden"
+        className="fixed bottom-3 left-3 right-3 z-[70] mx-auto max-w-lg rounded-[1.5rem] border border-white/12 bg-surface/88 pb-[max(env(safe-area-inset-bottom,0px),10px)] pt-1.5 shadow-float backdrop-blur-2xl supports-[backdrop-filter]:bg-surface/78 dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.82)] dark:shadow-[0_-24px_64px_-20px_rgba(0,0,0,0.55)] lg:hidden"
         aria-label="Основная навигация"
       >
-        <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
+        <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-1 pt-0.5">
           {mobileBarItems.map(({ to, label, icon, end }) => {
             const active = pathActive(location.pathname, to, end)
             return (
@@ -483,8 +483,8 @@ export default function Layout() {
                 key={to}
                 to={to}
                 end={end}
-                className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
-                  active ? 'text-primary' : 'text-on-surface-variant'
+                className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 transition ${
+                  active ? 'text-primary drop-shadow-[0_0_14px_rgba(16,185,129,0.45)]' : 'text-on-surface-variant'
                 }`}
               >
                 <Icon name={icon} filled={active} className="text-[22px]" />

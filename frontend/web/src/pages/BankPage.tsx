@@ -133,7 +133,7 @@ export default function BankPage() {
   ]
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       {/* Header */}
       <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />

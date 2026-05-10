@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import {
   BarChart, Bar, AreaChart, Area,
-  XAxis, YAxis, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
+import { useThemeStore } from '../store/themeStore'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -26,17 +28,22 @@ const CAT_COLORS: Record<string, string> = {
   other: 'bg-outline-variant',
 }
 
-const tooltipStyle = {
-  background: '#ffffff',
-  border: '1px solid #e4e4e7',
-  borderRadius: 8,
-  fontSize: 13,
-  color: '#18181b',
-  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.07)',
-}
-
 export default function AnalyticsPage() {
   const [year, setYear] = useState(new Date().getFullYear())
+  const theme = useThemeStore((s) => s.theme)
+  const tipStyle = useMemo(
+    () => ({
+      background: theme === 'dark' ? 'rgba(12,24,36,0.94)' : 'rgba(255,255,255,0.96)',
+      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(226,232,240,0.95)',
+      borderRadius: 14,
+      fontSize: 13,
+      color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+      boxShadow: theme === 'dark' ? '0 24px 48px -12px rgba(0,0,0,0.65)' : '0 16px 40px -12px rgba(0,77,64,0.15)',
+      backdropFilter: 'blur(12px)',
+    }),
+    [theme],
+  )
+  const axisFill = theme === 'dark' ? '#94a3b8' : '#64748b'
 
   const { data: summary, isLoading: loadingSummary } = useQuery({
     queryKey: ['monthly-summary', year],
@@ -68,7 +75,7 @@ export default function AnalyticsPage() {
   const categories = catData?.items ?? []
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -76,16 +83,21 @@ export default function AnalyticsPage() {
             <h1 className="page-heading">Аналитика</h1>
             <p className="mt-1 text-sm text-on-surface-variant">Финансовые показатели за {year} год</p>
             <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Динамика</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Структура</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Рекомендации</span>
+              {['Динамика', 'Структура', 'Рекомендации'].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-3 py-1 font-semibold text-emerald-800 shadow-soft backdrop-blur-md dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-200/95"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
               <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
             </Link>
-            <div className="flex rounded-md border border-outline/75 bg-surface-container-high p-1 shadow-soft">
+            <div className="flex rounded-full border border-white/20 bg-surface/80 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.5)]">
               <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
                 <Icon name="chevron_left" className="text-sm" />
               </button>
@@ -98,24 +110,24 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="metric-blade">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 lg:gap-8">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="metric-blade">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
           <div className="flex justify-between items-start mb-4">
             <span className="label !mb-0">Выручка (год)</span>
           </div>
           <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalIncome)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
-        </div>
+        </motion.div>
 
-        <div className="metric-blade">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="metric-blade">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-error" />
           <div className="flex justify-between items-start mb-4">
             <span className="label !mb-0">Расходы (год)</span>
           </div>
           <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalExpense)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
-        </div>
+        </motion.div>
 
-        <div className="metric-blade">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="metric-blade">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary" />
           <div className="flex justify-between items-start mb-4">
             <span className="label !mb-0">Чистая прибыль</span>
@@ -126,7 +138,7 @@ export default function AnalyticsPage() {
           </div>
           <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalProfit)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
           <p className="mt-2 text-xs text-on-surface-variant">Рентабельность {margin}%</p>
-        </div>
+        </motion.div>
       </div>
       {automationKpi && (
         <div className="page-section p-4 sm:p-6">
@@ -142,7 +154,10 @@ export default function AnalyticsPage() {
               const target = Number(automationKpi?.targets?.[m.key] ?? 0)
               const ok = value >= target
               return (
-                <div key={m.key} className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+                <div
+                  key={m.key}
+                  className="rounded-2xl border border-outline/50 bg-surface/80 p-3 shadow-xs backdrop-blur-md transition hover:border-emerald-400/25 dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]"
+                >
                   <p className="text-xs text-on-surface-variant">{m.label}</p>
                   <p className={`mt-1 text-lg font-extrabold ${ok ? 'text-secondary' : 'text-amber-500'}`}>{value.toFixed(1)}%</p>
                   <p className="text-[10px] text-on-surface-variant">target {target.toFixed(1)}%</p>
@@ -151,13 +166,13 @@ export default function AnalyticsPage() {
             })}
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+            <div className="rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
               <p className="text-xs text-on-surface-variant">Цикл operation → report ready</p>
               <p className="mt-1 text-lg font-extrabold text-on-surface">
                 {Number(automationKpi?.cycle_hours_operation_to_report_ready ?? 0).toFixed(1)}ч
               </p>
             </div>
-            <div className="rounded-lg border border-outline-variant/20 bg-surface p-3">
+            <div className="rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
               <p className="text-xs text-on-surface-variant">Сокращение цикла</p>
               <p className={`mt-1 text-lg font-extrabold ${
                 Number(automationKpi?.cycle_reduction_progress_x ?? 0) >= Number(automationKpi?.targets?.cycle_reduction_target_x ?? 3)
@@ -172,7 +187,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
           {dataQuality && (
-            <div className="mt-4 rounded-lg border border-outline-variant/20 bg-surface p-3">
+            <div className="mt-4 rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
               <p className="text-xs text-on-surface-variant">Контроль качества данных</p>
               <p className={`mt-1 text-sm font-bold ${dataQuality.status === 'ok' ? 'text-secondary' : 'text-amber-500'}`}>
                 {dataQuality.status === 'ok' ? 'Данные консистентны' : 'Нужна проверка данных'}
@@ -204,19 +219,30 @@ export default function AnalyticsPage() {
             <div className="h-[300px] flex items-center justify-center text-on-surface-variant text-sm">Загружаем...</div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-                <Bar dataKey="income" name="Доходы" fill="#00a86b" radius={[4, 4, 0, 0]} opacity={0.85} />
-                <Bar dataKey="expense" name="Расходы" fill="#dc2626" radius={[4, 4, 0, 0]} opacity={0.75} />
+              <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="barIncomeG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#059669" stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="barExpenseG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fca5a5" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#dc2626" stopOpacity={0.85} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.25)'} vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
+                <Bar dataKey="income" name="Доходы" fill="url(#barIncomeG)" radius={[8, 8, 0, 0]} opacity={0.92} />
+                <Bar dataKey="expense" name="Расходы" fill="url(#barExpenseG)" radius={[8, 8, 0, 0]} opacity={0.88} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
 
         <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="flex-1 rounded-xl border border-outline/75 bg-surface-container-high p-4 shadow-soft sm:p-6">
+          <div className="page-section flex-1 border-emerald-500/[0.06] p-4 sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <p className="text-sm text-on-surface-variant">Нет данных по расходам</p>
@@ -237,7 +263,7 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/10 to-transparent p-4 sm:p-6">
+          <div className="rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/15 via-primary/5 to-cyan-500/5 p-5 shadow-soft backdrop-blur-md sm:p-6 dark:from-emerald-500/10">
             <div className="flex items-center gap-3 mb-4">
               <Icon name="auto_awesome" filled className="text-primary" />
               <span className="text-sm font-bold text-primary">Insight AI</span>
@@ -258,18 +284,28 @@ export default function AnalyticsPage() {
 
         <div className="page-section col-span-12 p-4 sm:p-6 lg:p-8">
           <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={monthlyData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00a86b" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#00a86b" stopOpacity={0} />
+                  <stop offset="4%" stopColor="#10b981" stopOpacity={0.35} />
+                  <stop offset="92%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-              <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#00a86b" strokeWidth={2} fill="url(#gp)" />
+              <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.22)'} vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
+              <Area
+                type="natural"
+                dataKey="profit"
+                name="Прибыль"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                fill="url(#gp)"
+                dot={false}
+                activeDot={{ r: 5, strokeWidth: 0, fill: '#10b981', stroke: '#fff' }}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>

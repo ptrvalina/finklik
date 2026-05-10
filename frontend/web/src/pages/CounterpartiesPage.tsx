@@ -256,7 +256,7 @@ export default function CounterpartiesPage() {
   }
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -277,6 +277,46 @@ export default function CounterpartiesPage() {
             <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
               <Icon name="add" className="text-lg" /> Вручную
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-r from-[#004d40]/15 via-emerald-500/10 to-cyan-500/10 p-6 shadow-float backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0 opacity-50">
+          <svg className="h-full w-full" viewBox="0 0 520 140" preserveAspectRatio="none" aria-hidden>
+            <defs>
+              <linearGradient id="cp-flow" x1="0" x2="1">
+                <stop stopColor="#34d399" stopOpacity="0.9" />
+                <stop offset="1" stopColor="#22d3ee" stopOpacity="0.7" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M24 88 C120 24 200 120 280 64 S420 24 496 72"
+              fill="none"
+              stroke="url(#cp-flow)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <circle cx="96" cy="56" r="5" fill="#10b981" opacity="0.9" />
+            <circle cx="280" cy="64" r="5" fill="#2dd4bf" opacity="0.85" />
+            <circle cx="420" cy="48" r="5" fill="#22d3ee" opacity="0.85" />
+          </svg>
+        </div>
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Relationship layer</p>
+            <p className="mt-1 font-headline text-lg font-bold text-on-surface">Сеть контрагентов</p>
+            <p className="text-sm text-on-surface-variant">Визуальный слой доверия: активные связи и оборот за период.</p>
+          </div>
+          <div className="flex gap-2">
+            {['high', 'mid', 'new'].map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface backdrop-blur-md dark:bg-black/20"
+              >
+                {t === 'high' ? 'Топ' : t === 'mid' ? 'Стабильно' : 'Новые'}
+              </span>
+            ))}
           </div>
         </div>
       </div>

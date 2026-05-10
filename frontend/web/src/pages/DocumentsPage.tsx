@@ -448,7 +448,7 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       <div className="fc-hero">
         <div className="fc-hero-strip" aria-hidden />
         <h1 className="page-heading">Документы</h1>

@@ -254,7 +254,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       {/* Header */}
       <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="fc-hero-strip" aria-hidden />
@@ -263,11 +263,14 @@ export default function TransactionsPage() {
             <h1 className="page-heading">Операции</h1>
             <p className="mt-1 text-sm text-on-surface-variant">{total} операций · единый журнал доходов/расходов</p>
             <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">new</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">parsed</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">categorized</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">verified</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">reported</span>
+              {['new', 'parsed', 'categorized', 'verified', 'reported'].map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-2.5 py-1 font-semibold uppercase tracking-wide text-emerald-800 backdrop-blur-sm dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-200/90"
+                >
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -286,7 +289,7 @@ export default function TransactionsPage() {
 
       {/* Filter tabs — горизонтальный скролл на телефоне */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-full border border-white/25 bg-surface/85 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.55)] sm:inline-flex sm:min-w-0">
           {[
             { key: 'all', label: 'Все' },
             { key: 'income', label: 'Доходы' },
@@ -301,9 +304,9 @@ export default function TransactionsPage() {
                 setFilter(tab.key)
                 setPage(1)
               }}
-              className={`tap-highlight-none whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:py-1.5 ${
+              className={`tap-highlight-none whitespace-nowrap rounded-full px-3 py-2 text-xs font-bold transition-all sm:px-5 sm:py-1.5 ${
                 filter === tab.key
-                  ? 'bg-primary text-on-primary shadow-sm'
+                  ? 'bg-gradient-to-r from-emerald-500 to-primary text-on-primary shadow-glow'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -336,7 +339,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Список: карточки на мобиле, таблица с md */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
+      <div className="overflow-hidden rounded-3xl border border-outline/50 bg-surface/92 shadow-[0_16px_56px_-28px_rgba(0,77,64,0.14)] backdrop-blur-xl ring-1 ring-emerald-500/[0.05] dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.42)] dark:shadow-[0_28px_80px_-36px_rgba(0,0,0,0.55)]">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 p-12 text-sm text-on-surface-variant">
             <Icon name="hourglass_empty" className="animate-spin" /> Загружаем...

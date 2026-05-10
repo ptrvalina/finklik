@@ -149,9 +149,9 @@ export default function Accounting() {
   }
 
   return (
-    <section className="fc-page-shell">
-      <div className="card-elevated relative overflow-hidden rounded-[1.25rem] p-6 shadow-lift ring-1 ring-primary/[0.06]">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-[#004d40]" aria-hidden />
+    <section className="fc-page-shell fc-page-shell-asymmetric">
+      <div className="card-elevated relative overflow-hidden rounded-3xl p-6 shadow-lift ring-1 ring-primary/[0.06]">
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#004d40] via-emerald-500 to-cyan-400/90" aria-hidden />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="page-heading text-[1.65rem] sm:text-3xl">Учёт (КУДиР)</h1>
@@ -168,7 +168,7 @@ export default function Accounting() {
         </div>
       </div>
 
-      <form className="card-elevated grid gap-3 rounded-[1.25rem] p-6 shadow-card ring-1 ring-primary/[0.05] md:grid-cols-2" onSubmit={submit}>
+      <form className="card-elevated grid gap-4 rounded-3xl p-6 shadow-card ring-1 ring-primary/[0.05] md:grid-cols-2" onSubmit={submit}>
         <select className="input" value={type} onChange={(e) => setType(e.target.value as any)}>
           <option value="expense">Расход</option>
           <option value="income">Доход</option>
@@ -195,21 +195,34 @@ export default function Accounting() {
             <span className="text-on-surface-variant">({Math.round(aiSuggestion.confidence * 100)}%)</span>
           </div>
         </div>
-        <div className="md:col-span-2 grid gap-3 md:grid-cols-[1fr_auto_auto]">
-          <input type="file" className="input" onChange={(e) => setScanFile(e.target.files?.[0] || null)} />
-          <button type="button" className="btn-secondary" onClick={() => uploadScanMutation.mutate()} disabled={!scanFile || uploadScanMutation.isPending}>
-            OCR из скана
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => uploadToKudirMutation.mutate()} disabled={!scanFile || uploadToKudirMutation.isPending}>
-            OCR + AI + в КУДиР
-          </button>
-          <button type="submit" className="btn-primary rounded-[1rem]" disabled={createMutation.isPending}>
+        <div className="md:col-span-2 rounded-3xl border-2 border-dashed border-emerald-400/35 bg-gradient-to-br from-emerald-500/[0.07] via-transparent to-cyan-500/[0.05] p-5 shadow-inner backdrop-blur-sm dark:border-emerald-400/25">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <span className="material-symbols-outlined text-xl">document_scanner</span>
+            </span>
+            <div>
+              <p className="font-headline text-sm font-bold text-on-surface">OCR · загрузка скана</p>
+              <p className="text-xs text-on-surface-variant">AI извлечёт сумму, дату и текст — затем подставит в форму.</p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+            <input type="file" className="input border-dashed bg-surface/80" onChange={(e) => setScanFile(e.target.files?.[0] || null)} />
+            <button type="button" className="btn-secondary whitespace-nowrap" onClick={() => uploadScanMutation.mutate()} disabled={!scanFile || uploadScanMutation.isPending}>
+              OCR из скана
+            </button>
+            <button type="button" className="btn-secondary whitespace-nowrap" onClick={() => uploadToKudirMutation.mutate()} disabled={!scanFile || uploadToKudirMutation.isPending}>
+              OCR + AI + в КУДиР
+            </button>
+          </div>
+        </div>
+        <div className="md:col-span-2 flex justify-end">
+          <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
             Добавить в КУДиР
           </button>
         </div>
       </form>
 
-      <div className="card-elevated rounded-[1.25rem] p-5 shadow-card ring-1 ring-primary/[0.05]">
+      <div className="card-elevated rounded-3xl p-5 shadow-card ring-1 ring-primary/[0.05]">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-headline text-lg font-bold text-on-surface">Записи</h2>
           <div className="inline-flex gap-1 rounded-full border border-outline/70 bg-surface-container-low/80 p-1">

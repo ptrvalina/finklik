@@ -59,7 +59,7 @@ export default function OnecSyncPage() {
   }, [jobs])
 
   return (
-    <div className="fc-page-shell">
+    <div className="fc-page-shell fc-page-shell-asymmetric">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="page-heading">Синхронизация 1С</h1>
