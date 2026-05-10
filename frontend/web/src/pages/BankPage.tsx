@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -190,6 +192,29 @@ export default function BankPage() {
       {/* Overview */}
       {tab === 'overview' && (
         <div className="space-y-5 sm:space-y-6">
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.12] via-[rgb(var(--color-surface)/0.5)] to-cyan-500/[0.08] p-5 shadow-soft backdrop-blur-xl">
+            <div className="pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden />
+            <div className="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Ликвидность · операции</p>
+                <p className="mt-1 font-headline text-lg font-bold text-on-surface">
+                  Остаток {fmt(balanceData?.balance)} BYN · счетов {accounts.length}
+                </p>
+                <p className="mt-1 max-w-xl text-xs text-on-surface-variant">
+                  Сверка выписки с журналом снижает расхождения. Импортируйте движения и разрешайте расхождения в одном потоке.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link to="/accounting" className="btn-secondary min-h-11 px-4 text-sm font-bold">
+                  Журнал
+                </Link>
+                <button type="button" className="btn-primary min-h-11 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
+                  Сверка
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {/* Main balance */}
             <div className="metric-blade md:col-span-2">
@@ -231,17 +256,34 @@ export default function BankPage() {
           </div>
 
           {/* Statements */}
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
-            <div className="flex flex-col gap-1 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
+          <div className="fc-premium-surface shadow-soft">
+            <div className="flex flex-col gap-1 border-b border-white/[0.06] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6 dark:border-white/[0.06]">
               <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
               <span className="text-xs text-on-surface-variant">{statementsData?.total || 0} всего</span>
             </div>
             {statementsLoading ? (
-              <div className="empty-state text-sm">Загрузка...</div>
+              <TableSkeleton rows={6} cols={3} className="p-4 sm:p-6" />
             ) : statements.length === 0 ? (
-              <div className="empty-state">
-                <Icon name="receipt_long" className="text-4xl text-on-surface-variant/20" />
-                <p className="text-on-surface-variant text-sm mt-3">Операций пока нет</p>
+              <div className="p-4 sm:p-6">
+                <PremiumEmptyState
+                  variant="compact"
+                  icon="account_balance"
+                  title="Движений по счёту пока нет"
+                  description="Подключите счёт, импортируйте выписку JSON или синхронизируйте через OAuth — операции появятся здесь и в учёте."
+                  actions={
+                    <>
+                      <button type="button" className="btn-secondary min-h-11 px-5 text-sm" onClick={() => setTab('accounts')}>
+                        Счета и OAuth
+                      </button>
+                      <button type="button" className="btn-primary min-h-11 px-5 text-sm" onClick={() => setTab('reconciliation')}>
+                        Импорт выписки
+                      </button>
+                      <Link to="/accounting" className="btn-ghost min-h-11 px-4 text-sm">
+                        Журнал
+                      </Link>
+                    </>
+                  }
+                />
               </div>
             ) : (
               <div className="divide-y divide-outline-variant/5">

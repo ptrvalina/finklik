@@ -8,10 +8,13 @@ import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
 import ToastStack from '../ui/ToastStack'
 import { notificationsApi } from '../../api/client'
-import { flattenNavForSheetWithAssistant, getMobileBarItemsForRole, getNavItemsForRole, type NavItem } from './navConfig'
-
-/** Основные разделы; остальное — блок «Полезное» (как в премиум-макете). */
-const PRIMARY_NAV_TOS = new Set(['/', '/planner', '/bank', '/reports', '/employees', '/accounting', '/counterparties'])
+import {
+  ASSISTANT_SHEET_ITEM,
+  flattenNavForSheet,
+  getMobileBarItemsForRole,
+  getNavGroupsForRole,
+  type NavItem,
+} from './navConfig'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -48,9 +51,8 @@ export default function Layout() {
   const queryClient = useQueryClient()
   const role = (user?.role || '').toLowerCase()
   const isManager = role === 'manager'
-  const navItems = getNavItemsForRole(role)
+  const navGroups = getNavGroupsForRole(role)
   const mobileBarItems = getMobileBarItemsForRole(role)
-  const sheetItems = isManager ? navItems : flattenNavForSheetWithAssistant(navItems)
   const { data: plannerNotifications = [] } = useQuery({
     queryKey: ['notifications', 'list'],
     queryFn: () => notificationsApi.list(20).then((r) => r.data ?? []),
@@ -125,9 +127,6 @@ export default function Layout() {
   const roleLabel =
     user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : user?.role === 'viewer' ? 'Наблюдатель' : user?.role
 
-  const primaryNavItems = navItems.filter((i) => PRIMARY_NAV_TOS.has(i.to))
-  const utilityNavItems = navItems.filter((i) => !PRIMARY_NAV_TOS.has(i.to))
-
   function renderSidebarItems(items: NavItem[]) {
     return items.map((item) => {
       const { to, label, icon, end, flyout } = item
@@ -138,10 +137,10 @@ export default function Layout() {
           <div key={to} className="group relative">
             <NavLink
               to={to}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 active
-                  ? 'bg-white/[0.12] text-white shadow-sm ring-1 ring-white/15'
-                  : 'text-white/55 hover:bg-white/[0.06] hover:text-white'
+                  ? 'bg-white/[0.14] text-white shadow-[inset_0_0_0_1px_rgba(110,231,183,0.28),0_10px_36px_-16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/35'
+                  : 'text-white/55 hover:bg-white/[0.07] hover:text-white hover:shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)]'
               }`}
             >
               <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
@@ -180,10 +179,10 @@ export default function Layout() {
           key={to}
           to={to}
           end={end}
-          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
+          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             active
-              ? 'bg-white/[0.12] text-white shadow-sm ring-1 ring-white/15'
-              : 'text-white/55 hover:bg-white/[0.06] hover:text-white'
+              ? 'bg-white/[0.14] text-white shadow-[inset_0_0_0_1px_rgba(110,231,183,0.28),0_10px_36px_-16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/35'
+              : 'text-white/55 hover:bg-white/[0.07] hover:text-white hover:shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)]'
           }`}
         >
           <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
@@ -214,13 +213,14 @@ export default function Layout() {
         </div>
 
         <div className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-          <nav className="space-y-1">{renderSidebarItems(primaryNavItems)}</nav>
-          {utilityNavItems.length > 0 && (
-            <div className="mt-6">
-              <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Полезное</p>
-              <nav className="space-y-1">{renderSidebarItems(utilityNavItems)}</nav>
-            </div>
-          )}
+          <div className="space-y-5">
+            {navGroups.map((group) => (
+              <div key={group.id}>
+                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">{group.label}</p>
+                <nav className="space-y-1">{renderSidebarItems(group.items)}</nav>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="relative z-[1] mt-auto border-t border-white/10 bg-black/15 px-4 py-4 backdrop-blur-md">
@@ -429,7 +429,7 @@ export default function Layout() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     setSearchOpen(false)
-                    navigate('/transactions')
+                    navigate('/accounting')
                   }
                 }}
               />
@@ -535,33 +535,73 @@ export default function Layout() {
                 <Icon name="close" className="text-xl" />
               </button>
             </div>
-            <div className="grid max-h-[calc(88vh-4rem)] grid-cols-3 gap-2 overflow-y-auto p-4 sm:grid-cols-4">
-              {sheetItems.map(({ to, label, icon, end, description }) => {
-                const active = pathActive(location.pathname, to, end)
-                return (
-                  <NavLink
-                    key={to + label}
-                    to={to}
-                    end={end}
-                    onClick={() => setMoreOpen(false)}
-                    className={`tap-highlight-none flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-colors ${
-                      active
-                        ? 'bg-primary/8 ring-1 ring-primary/25 shadow-soft'
-                        : 'border border-outline/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-outline/40'
-                    }`}
-                  >
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                        active ? 'bg-primary/12 text-primary' : 'bg-surface text-on-surface-variant ring-1 ring-outline/75 dark:text-on-surface-variant dark:ring-outline/45'
-                      }`}
-                    >
-                      <Icon name={icon} filled={active} className="text-[26px]" />
-                    </div>
-                    <span className="text-[11px] font-bold leading-tight text-on-surface">{label}</span>
-                    {description && <span className="line-clamp-2 text-[9px] leading-tight text-on-surface-variant">{description}</span>}
-                  </NavLink>
-                )
-              })}
+            <div className="max-h-[calc(88vh-4rem)] space-y-5 overflow-y-auto p-4">
+              {navGroups.map((group) => (
+                <div key={`sheet-${group.id}`}>
+                  <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">{group.label}</p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {flattenNavForSheet(group.items).map(({ to, label, icon, end, description }) => {
+                      const active = pathActive(location.pathname, to, end)
+                      return (
+                        <NavLink
+                          key={`${group.id}-${to}-${label}`}
+                          to={to}
+                          end={end}
+                          onClick={() => setMoreOpen(false)}
+                          className={`tap-highlight-none flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-colors ${
+                            active
+                              ? 'bg-primary/8 ring-1 ring-primary/25 shadow-soft'
+                              : 'border border-outline/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-outline/40'
+                          }`}
+                        >
+                          <div
+                            className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                              active ? 'bg-primary/12 text-primary' : 'bg-surface text-on-surface-variant ring-1 ring-outline/75 dark:text-on-surface-variant dark:ring-outline/45'
+                            }`}
+                          >
+                            <Icon name={icon} filled={active} className="text-[26px]" />
+                          </div>
+                          <span className="text-[11px] font-bold leading-tight text-on-surface">{label}</span>
+                          {description && <span className="line-clamp-2 text-[9px] leading-tight text-on-surface-variant">{description}</span>}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+              {!isManager && (
+                <div>
+                  <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">ИИ</p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {[ASSISTANT_SHEET_ITEM].map(({ to, label, icon, end, description }) => {
+                      const active = pathActive(location.pathname, to, end)
+                      return (
+                        <NavLink
+                          key={to}
+                          to={to}
+                          end={end}
+                          onClick={() => setMoreOpen(false)}
+                          className={`tap-highlight-none flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-colors ${
+                            active
+                              ? 'bg-primary/8 ring-1 ring-primary/25 shadow-soft'
+                              : 'border border-outline/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-outline/40'
+                          }`}
+                        >
+                          <div
+                            className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                              active ? 'bg-primary/12 text-primary' : 'bg-surface text-on-surface-variant ring-1 ring-outline/75 dark:text-on-surface-variant dark:ring-outline/45'
+                            }`}
+                          >
+                            <Icon name={icon} filled={active} className="text-[26px]" />
+                          </div>
+                          <span className="text-[11px] font-bold leading-tight text-on-surface">{label}</span>
+                          {description && <span className="line-clamp-2 text-[9px] leading-tight text-on-surface-variant">{description}</span>}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

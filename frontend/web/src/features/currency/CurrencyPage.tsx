@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fxApi, type NbrbRateRow } from '../../api/client'
+import { TableSkeleton } from '../../components/premium'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -173,12 +174,7 @@ export default function CurrencyPage() {
             <Icon name="table_chart" className="text-tertiary" />
             Справочник курсов
           </h2>
-          {ratesQuery.isLoading && (
-            <p className="mt-4 text-sm text-on-surface-variant">
-              <Icon name="hourglass_empty" className="mr-2 inline animate-spin" />
-              Загружаем таблицу…
-            </p>
-          )}
+          {ratesQuery.isLoading && <TableSkeleton rows={10} cols={4} className="mt-4" />}
           {ratesQuery.data && (
             <>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant">

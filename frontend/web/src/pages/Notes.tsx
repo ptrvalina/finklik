@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AppModal from '../components/ui/AppModal'
 import { motion } from 'framer-motion'
 import { notesApi } from '../api/client'
+import { CardSkeleton } from '../components/premium'
 
 const STORAGE_KEY = 'finklik.notes.v1'
 const IMPORT_FLAG = 'finklik.notes.localImportDone.v1'
@@ -214,8 +215,10 @@ export default function Notes() {
           Пока нет заметок — нажмите «Новая заметка».
         </div>
       ) : notesQuery.isLoading ? (
-        <div className="flex items-center justify-center py-16 text-on-surface-variant">
-          <Icon name="hourglass_empty" className="animate-spin text-2xl" />
+        <div className="space-y-4 py-4" aria-busy="true" aria-label="Загрузка заметок">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : (
         <ul className="space-y-4">

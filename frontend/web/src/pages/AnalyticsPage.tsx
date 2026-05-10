@@ -8,6 +8,8 @@ import {
 import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { useThemeStore } from '../store/themeStore'
+import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
+import { InsightCard, RecommendationCard, WarningCard } from '../components/premium-os'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -94,7 +96,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+            <Link to="/reports" className="btn-secondary w-full sm:w-auto">
               <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
             </Link>
             <div className="flex rounded-full border border-white/20 bg-surface/80 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.5)]">
@@ -216,7 +218,23 @@ export default function AnalyticsPage() {
             </div>
           </div>
           {loadingSummary ? (
-            <div className="h-[300px] flex items-center justify-center text-on-surface-variant text-sm">Загружаем...</div>
+            <div
+              className="flex h-[300px] flex-col justify-end gap-2 rounded-2xl border border-white/[0.06] bg-surface-container-low/20 p-4"
+              aria-busy="true"
+              aria-label="Загрузка графика"
+            >
+              <LineSkeleton className="max-w-[45%]" />
+              <div className="flex h-[220px] items-end gap-1.5 pt-2">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="fc-skeleton-shimmer flex-1 rounded-t-md"
+                    style={{ height: `${30 + ((i * 19) % 58)}%` }}
+                    aria-hidden
+                  />
+                ))}
+              </div>
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
@@ -245,7 +263,17 @@ export default function AnalyticsPage() {
           <div className="page-section flex-1 border-emerald-500/[0.06] p-4 sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">Нет данных по расходам</p>
+              <PremiumEmptyState
+                variant="compact"
+                icon="pie_chart"
+                title="Структура расходов пока пуста"
+                description="Добавьте операции с категориями — здесь появится распределение затрат."
+                actions={
+                  <Link to="/accounting" className="btn-secondary text-xs">
+                    Журнал операций
+                  </Link>
+                }
+              />
             ) : (
               <div className="space-y-5">
                 {categories.map((cat: any) => (
@@ -263,19 +291,40 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/15 via-primary/5 to-cyan-500/5 p-5 shadow-soft backdrop-blur-md sm:p-6 dark:from-emerald-500/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Icon name="auto_awesome" filled className="text-primary" />
-              <span className="text-sm font-bold text-primary">Insight AI</span>
-            </div>
-            <p className="text-xs text-on-surface leading-relaxed">
-              {totalIncome > 0 && totalProfit > 0
-                ? `Рентабельность ${margin}% — выше среднего по отрасли. Рекомендуем увеличить резервный фонд.`
-                : totalIncome > 0
-                  ? 'Расходы превышают доходы. Рекомендуем пересмотреть структуру затрат.'
-                  : 'Добавьте транзакции для получения аналитических рекомендаций.'}
-            </p>
-          </div>
+          {totalIncome > 0 && totalProfit > 0 ? (
+            <InsightCard
+              title={`Маржа ${margin}%`}
+              action={
+                <Link to="/accounting" className="btn-secondary px-3 py-1.5 text-xs">
+                  Журнал
+                </Link>
+              }
+            >
+              Рентабельность в зелёной зоне — усильте устойчивость резервом на 1–2 месяца расходов.
+            </InsightCard>
+          ) : totalIncome > 0 ? (
+            <WarningCard
+              title="Расходы давят на маржу"
+              action={
+                <Link to="/accounting" className="btn-secondary px-3 py-1.5 text-xs">
+                  Разбор
+                </Link>
+              }
+            >
+              Доход есть, но прибыль отрицательная — пересмотрите статьи затрат и контрагентов.
+            </WarningCard>
+          ) : (
+            <RecommendationCard
+              title="Нет данных для выводов"
+              cta={
+                <Link to="/accounting" className="btn-primary px-4 py-2 text-sm">
+                  Открыть журнал
+                </Link>
+              }
+            >
+              Добавьте операции — появятся маржа, структура расходов и подсказки по оптимизации.
+            </RecommendationCard>
+          )}
         </div>
 
         <div className="page-section col-span-12 overflow-hidden p-0">
@@ -284,30 +333,41 @@ export default function AnalyticsPage() {
 
         <div className="page-section col-span-12 p-4 sm:p-6 lg:p-8">
           <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={monthlyData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="4%" stopColor="#10b981" stopOpacity={0.35} />
-                  <stop offset="92%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.22)'} vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-              <Area
-                type="natural"
-                dataKey="profit"
-                name="Прибыль"
-                stroke="#10b981"
-                strokeWidth={2.5}
-                fill="url(#gp)"
-                dot={false}
-                activeDot={{ r: 5, strokeWidth: 0, fill: '#10b981', stroke: '#fff' }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {loadingSummary ? (
+            <div
+              className="flex h-[220px] flex-col justify-center gap-3 rounded-2xl border border-white/[0.06] bg-surface-container-low/20 p-4"
+              aria-busy="true"
+              aria-label="Загрузка графика прибыли"
+            >
+              <LineSkeleton className="max-w-[40%]" />
+              <div className="h-[140px] rounded-xl fc-skeleton-shimmer" aria-hidden />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={monthlyData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="4%" stopColor="#10b981" stopOpacity={0.35} />
+                    <stop offset="92%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.22)'} vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
+                <Area
+                  type="natural"
+                  dataKey="profit"
+                  name="Прибыль"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  fill="url(#gp)"
+                  dot={false}
+                  activeDot={{ r: 5, strokeWidth: 0, fill: '#10b981', stroke: '#fff' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
@@ -327,19 +387,33 @@ function CounterpartyTurnover() {
     <>
       <div className="flex flex-col gap-2 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6 lg:px-8">
         <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Обороты по контрагентам</h3>
-        <button type="button" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
-          Подробнее
-        </button>
+        <Link to="/accounting" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
+          Журнал операций
+        </Link>
       </div>
       {isLoading ? (
-        <div className="p-8 text-center text-on-surface-variant text-sm">Загружаем...</div>
+        <TableSkeleton rows={6} cols={5} />
       ) : items.length === 0 ? (
-        <div className="p-12 text-center">
-          <Icon name="handshake" className="text-4xl text-on-surface-variant/30" />
-          <p className="text-on-surface-variant text-sm mt-3">Нет данных. Привяжите контрагентов к операциям.</p>
+        <div className="p-4 sm:p-6">
+          <PremiumEmptyState
+            variant="compact"
+            icon="handshake"
+            title="Контрагенты не связаны с операциями"
+            description="Укажите контрагента в журнале или при импорте — здесь появятся обороты и сальдо."
+            actions={
+              <>
+                <Link to="/accounting" className="btn-primary min-h-10 px-5 text-sm">
+                  Журнал
+                </Link>
+                <Link to="/scan" className="btn-secondary min-h-10 px-5 text-sm">
+                  Сканер
+                </Link>
+              </>
+            }
+          />
         </div>
       ) : (
-        <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <div className="fc-premium-table overflow-x-auto [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[640px] text-left">
             <thead>
               <tr className="table-head-row">

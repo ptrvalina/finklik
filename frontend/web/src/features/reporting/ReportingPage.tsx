@@ -13,12 +13,12 @@ function authorityTitle(a: ReportingAuthority) {
 }
 
 export type ReportingPageProps = {
-  /** Базовый путь меню: `/reports` (основной) или `/reporting` (legacy alias). */
+  /** Базовый путь хаба отчётности: по умолчанию `/reports`; для legacy — `/legacy/reporting`. */
   basePath?: string
 }
 
-export default function ReportingPage({ basePath = '/reporting' }: ReportingPageProps) {
-  const base = basePath.replace(/\/$/, '') || '/reporting'
+export default function ReportingPage({ basePath = '/reports' }: ReportingPageProps) {
+  const base = basePath.replace(/\/$/, '') || '/reports'
   const hubLinks = useMemo(
     () =>
       (['imns', 'fsszn', 'belgosstrakh', 'belstat'] as const).map((id) => ({

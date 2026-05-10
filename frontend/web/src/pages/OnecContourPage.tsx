@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { onecApi } from '../api/client'
+import { CardSkeleton } from '../components/premium'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -112,9 +113,8 @@ export default function OnecContourPage() {
       )}
 
       {isLoading && (
-        <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-          <Icon name="hourglass_empty" className="animate-spin" />
-          Загрузка реестра…
+        <div aria-busy="true" aria-label="Загрузка реестра контура">
+          <CardSkeleton className="border-outline-variant/15 bg-surface-container-low/40" />
         </div>
       )}
 

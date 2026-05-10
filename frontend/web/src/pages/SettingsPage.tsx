@@ -5,6 +5,7 @@ import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
+import { CardSkeleton, TableSkeleton } from '../components/premium'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
@@ -138,7 +139,7 @@ function DeploymentOverviewSection({
         </div>
       </div>
       {data.authorities && data.authorities.length > 0 && (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-outline/60">
+        <div className="fc-premium-table mt-4 overflow-x-auto">
           <table className="w-full min-w-[480px] border-collapse text-left text-[11px]">
             <thead>
               <tr className="border-b border-outline/50 bg-surface-container-high text-on-surface-variant">
@@ -809,7 +810,10 @@ function BillingSection() {
       )}
 
       {subLoading ? (
-        <div className="bg-surface-container-low rounded-xl p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
+        <div className="space-y-4" aria-busy="true" aria-label="Загрузка тарифа">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : (
         <>
           <div className="page-section p-5">
@@ -962,8 +966,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline/75 bg-surface-container-low shadow-soft">
-        <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+      <div className="fc-premium-table overflow-x-auto [-webkit-overflow-scrolling:touch] shadow-soft">
           <table className="w-full min-w-[640px]">
           <thead>
             <tr className="text-[10px] font-label text-on-surface-variant tracking-widest uppercase bg-surface-container-high/50">
@@ -976,7 +979,11 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
           </thead>
           <tbody className="divide-y divide-outline-variant/5">
             {isLoading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-on-surface-variant text-sm sm:px-6">Загрузка...</td></tr>
+              <tr>
+                <td colSpan={isOwner ? 5 : 4} className="p-0">
+                  <TableSkeleton rows={5} cols={isOwner ? 5 : 4} />
+                </td>
+              </tr>
             ) : members.map((m: any) => (
               <tr key={m.id} className="hover:bg-surface-container-high transition-colors">
                 <td className="px-4 py-3 sm:px-6 sm:py-4">
@@ -1016,7 +1023,6 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
             ))}
           </tbody>
         </table>
-        </div>
       </div>
 
       {invitations.length > 0 && (
@@ -1135,7 +1141,11 @@ function RegulatorySection() {
       </div>
 
       {isLoading ? (
-        <div className="bg-surface-container-low rounded-xl p-12 text-center text-on-surface-variant text-sm">Загрузка...</div>
+        <div className="space-y-3" aria-busy="true" aria-label="Загрузка обновлений">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : updates.length === 0 ? (
         <div className="bg-surface-container-low rounded-xl p-16 text-center">
           <Icon name="gavel" className="text-5xl text-on-surface-variant/20" />

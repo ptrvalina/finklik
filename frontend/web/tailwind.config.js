@@ -98,6 +98,10 @@ export default {
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        premium: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+      transitionDuration: {
+        fc: '260ms',
       },
     },
   },

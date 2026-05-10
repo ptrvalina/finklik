@@ -106,7 +106,7 @@ export default function CalendarPage() {
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
             <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
           </Link>
           <div className="-mx-1 flex overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mr-4 sm:overflow-visible sm:pb-0">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { employeesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 
 function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
@@ -297,12 +298,28 @@ export default function EmployeesPage() {
               </select>
             </div>
             <span className="pb-2 text-sm text-on-surface-variant">
-              {payrollLoading ? 'Загрузка...' : `${payroll.length} записей`}
+              {payrollLoading ? <LineSkeleton className="inline-block h-4 w-28 align-middle" aria-hidden /> : `${payroll.length} записей`}
             </span>
           </div>
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
+          <div className="fc-premium-surface shadow-soft">
             {payroll.length === 0 ? (
-              <div className="p-12 text-center text-sm text-on-surface-variant">{payrollLoading ? 'Загрузка...' : 'Нет расчётов'}</div>
+              payrollLoading ? (
+                <TableSkeleton rows={6} cols={11} />
+              ) : (
+                <div className="p-4 sm:p-6">
+                  <PremiumEmptyState
+                    variant="compact"
+                    icon="payments"
+                    title="Нет расчётов за этот период"
+                    description="Смените месяц или добавьте сотрудников — ведомость строится из карточек и начислений."
+                    actions={
+                      <Link to="/employees/hire" className="btn-primary min-h-11 px-5 text-sm">
+                        Добавить сотрудника
+                      </Link>
+                    }
+                  />
+                </div>
+              )
             ) : (
               <>
                 <ul className="divide-y divide-white/[0.05] md:hidden">
@@ -344,37 +361,39 @@ export default function EmployeesPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="text-[10px] font-label text-on-surface-variant tracking-widest uppercase bg-surface-container-high/50">
-                    {['Сотрудник','Оклад','Бонус','Больн.','Отпуск.','Начисл.','НДФЛ','ФСЗН 1%','К выдаче','ФСЗН 34%','Статус'].map(h => (
-                      <th key={h} className="px-4 py-3 whitespace-nowrap text-right first:text-left">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/5">
-                  {payroll.map(r => (
-                    <tr key={r.id} className="hover:bg-surface-container-high transition-colors">
-                      <td className="px-4 py-3 font-medium text-on-surface whitespace-nowrap">{r.employee_id.slice(0, 8)}…</td>
-                      <td className="px-4 py-3 text-right">{fmt(r.base_salary)}</td>
-                      <td className="px-4 py-3 text-right text-secondary">{fmt(r.bonus)}</td>
-                      <td className="px-4 py-3 text-right">{fmt(r.sick_pay)}</td>
-                      <td className="px-4 py-3 text-right">{fmt(r.vacation_pay)}</td>
-                      <td className="px-4 py-3 text-right font-bold">{fmt(r.gross_salary)}</td>
-                      <td className="px-4 py-3 text-right text-error">{fmt(r.income_tax)}</td>
-                      <td className="px-4 py-3 text-right text-error">{fmt(r.fsszn_employee)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-primary">{fmt(r.net_salary)}</td>
-                      <td className="px-4 py-3 text-right text-tertiary">{fmt(r.fsszn_employer)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold uppercase ${
-                          r.status === 'paid' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
-                        }`}>{r.status === 'paid' ? 'Выплачено' : 'Черновик'}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                <div className="hidden md:block border-t border-white/[0.06] p-2 dark:border-white/[0.06]">
+                  <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky max-h-[min(75vh,560px)] shadow-none ring-0">
+                    <table className="w-full min-w-[720px] text-sm">
+                      <thead>
+                        <tr className="table-head-row">
+                          {['Сотрудник','Оклад','Бонус','Больн.','Отпуск.','Начисл.','НДФЛ','ФСЗН 1%','К выдаче','ФСЗН 34%','Статус'].map(h => (
+                            <th key={h} className="px-4 py-3 whitespace-nowrap text-right first:text-left">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payroll.map(r => (
+                          <tr key={r.id}>
+                            <td className="px-4 py-3 font-medium text-on-surface whitespace-nowrap">{r.employee_id.slice(0, 8)}…</td>
+                            <td className="px-4 py-3 text-right">{fmt(r.base_salary)}</td>
+                            <td className="px-4 py-3 text-right text-secondary">{fmt(r.bonus)}</td>
+                            <td className="px-4 py-3 text-right">{fmt(r.sick_pay)}</td>
+                            <td className="px-4 py-3 text-right">{fmt(r.vacation_pay)}</td>
+                            <td className="px-4 py-3 text-right font-bold">{fmt(r.gross_salary)}</td>
+                            <td className="px-4 py-3 text-right text-error">{fmt(r.income_tax)}</td>
+                            <td className="px-4 py-3 text-right text-error">{fmt(r.fsszn_employee)}</td>
+                            <td className="px-4 py-3 text-right font-bold text-primary">{fmt(r.net_salary)}</td>
+                            <td className="px-4 py-3 text-right text-tertiary">{fmt(r.fsszn_employer)}</td>
+                            <td className="px-4 py-3 text-right">
+                              <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold uppercase ${
+                                r.status === 'paid' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
+                              }`}>{r.status === 'paid' ? 'Выплачено' : 'Черновик'}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </>
             )}
@@ -404,13 +423,28 @@ export default function EmployeesPage() {
             </label>
           </div>
 
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
+          <div className="fc-premium-surface shadow-soft">
             {isLoading ? (
-              <div className="p-12 text-center text-sm text-on-surface-variant">Загружаем...</div>
+              <TableSkeleton rows={8} cols={4} className="p-4 sm:p-5" />
             ) : filtered.length === 0 ? (
-              <div className="p-12 text-center sm:p-16">
-                <Icon name="group" className="text-5xl text-on-surface-variant/20" />
-                <p className="mt-4 text-sm text-on-surface-variant">{tab === 'fired' ? 'Уволенных нет' : 'Сотрудников пока нет'}</p>
+              <div className="p-6 sm:p-10">
+                <PremiumEmptyState
+                  variant="compact"
+                  icon="groups"
+                  title={tab === 'fired' ? 'Уволенных не найдено' : 'Команда пока пуста'}
+                  description={
+                    tab === 'fired'
+                      ? 'Здесь появятся бывшие сотрудники после оформления увольнения.'
+                      : 'Добавьте первого сотрудника — от этого строятся зарплата, табель и отчётность.'
+                  }
+                  actions={
+                    tab !== 'fired' ? (
+                      <Link to="/employees/hire" className="btn-primary min-h-11 px-6 text-sm">
+                        Нанять сотрудника
+                      </Link>
+                    ) : undefined
+                  }
+                />
               </div>
             ) : (
               <>
@@ -482,10 +516,11 @@ export default function EmployeesPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="text-[10px] font-label text-on-surface-variant tracking-widest uppercase bg-surface-container-high/50">
+                <div className="hidden border-t border-white/[0.06] p-2 lg:block dark:border-white/[0.06]">
+                  <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky max-h-[min(75vh,640px)] shadow-none ring-0">
+                    <table className="w-full min-w-[800px]">
+                      <thead>
+                        <tr className="table-head-row">
                     <th className="px-6 py-4 text-left">ФИО</th>
                     <th className="px-6 py-4 text-left">ИД номер</th>
                     <th className="px-6 py-4 text-left">Должность</th>
@@ -495,9 +530,9 @@ export default function EmployeesPage() {
                     <th className="px-6 py-4 text-right">Действия</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/5">
+                <tbody>
                   {filtered.map(emp => (
-                    <tr key={emp.id} className="hover:bg-surface-container-high transition-colors group">
+                    <tr key={emp.id} className="group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center">
@@ -537,6 +572,7 @@ export default function EmployeesPage() {
                   ))}
                 </tbody>
               </table>
+                  </div>
                 </div>
               </>
             )}

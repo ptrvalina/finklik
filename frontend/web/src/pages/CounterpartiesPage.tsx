@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { counterpartiesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { DataTableShell, useDataTableSelection } from '../components/datatable'
+import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import { formatApiDetail } from '../utils/apiError'
 
@@ -169,6 +171,15 @@ export default function CounterpartiesPage() {
   }
 
   const items = data ?? []
+  const visibleIds = useMemo(() => items.map((i) => i.id), [items])
+  const selection = useDataTableSelection(visibleIds)
+
+  function copySelectedUnps() {
+    const lines = items.filter((i) => selection.selected.has(i.id)).map((i) => i.unp)
+    if (lines.length === 0) return
+    void navigator.clipboard.writeText(lines.join('\n'))
+    setMessage({ type: 'success', text: `Скопировано УНП: ${lines.length}` })
+  }
 
   const frequent = useMemo(() => {
     const hot = items.filter((c) => (c.week_tx_count || 0) > 0)
@@ -351,27 +362,73 @@ export default function CounterpartiesPage() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-surface-container-low p-4 border border-outline/75 shadow-soft sm:p-5">
-        <label className="label">Поиск по названию или УНП (горячая клавиша /)</label>
-        <div className="relative">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
-          <input
-            ref={searchRef}
-            className="input min-h-11 rounded-xl pl-10"
-            placeholder="Начните вводить название или УНП..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
+      <DataTableShell
+        toolbar={
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+            <div className="min-w-0 flex-1">
+              <label className="label">Поиск по названию или УНП</label>
+              <div className="relative mt-1">
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+                <input
+                  ref={searchRef}
+                  className="input min-h-11 rounded-xl pl-10"
+                  placeholder="Начните вводить название или УНП..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-describedby="cp-search-hint"
+                />
+              </div>
+              <p id="cp-search-hint" className="mt-1.5 text-[10px] text-on-surface-variant">
+                Горячая клавиша <kbd className="rounded border border-outline/60 px-1">/</kbd> · Escape снимает выбор строк
+              </p>
+            </div>
+          </div>
+        }
+        bulkBar={
+          <>
+            <span className="text-xs font-semibold text-emerald-100">
+              Выбрано: {selection.selectedCount}
+            </span>
+            <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
+              Снять выбор
+            </button>
+            <button type="button" className="btn-secondary min-h-9 px-4 text-xs" onClick={() => copySelectedUnps()}>
+              Копировать УНП
+            </button>
+          </>
+        }
+        selectedCount={selection.selectedCount}
+      >
         {isLoading ? (
-          <div className="p-12 text-center text-sm text-on-surface-variant">Загружаем...</div>
+          <TableSkeleton rows={10} cols={5} />
         ) : items.length === 0 ? (
-          <div className="p-12 text-center sm:p-16">
-            <Icon name="handshake" className="text-5xl text-on-surface-variant/20" />
-            <p className="mt-4 text-sm text-on-surface-variant">{search ? 'Ничего не найдено' : 'Контрагентов пока нет'}</p>
+          <div className="p-4 sm:p-8">
+            <PremiumEmptyState
+              variant="compact"
+              icon="handshake"
+              title={search ? 'Ничего не найдено' : 'Контрагентов пока нет'}
+              description={
+                search
+                  ? 'Измените запрос или сбросьте фильтр — данные подтягиваются из справочника.'
+                  : 'Добавьте контрагента вручную, по УНП или из операций учёта.'
+              }
+              actions={
+                !search ? (
+                  <>
+                    <button type="button" className="btn-primary min-h-11 px-5 text-sm" onClick={openCreate}>
+                      Добавить вручную
+                    </button>
+                    <button type="button" className="btn-secondary min-h-11 px-5 text-sm" onClick={() => setShowQuickUnp(true)}>
+                      По УНП
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="btn-secondary min-h-11 px-5 text-sm" onClick={() => setSearch('')}>
+                    Очистить поиск
+                  </button>
+                )
+              }
+            />
           </div>
         ) : (
           <>
@@ -379,6 +436,13 @@ export default function CounterpartiesPage() {
               {items.map((cp) => (
                 <li key={cp.id} className="p-4">
                   <div className="flex gap-3">
+                    <input
+                      type="checkbox"
+                      className="tap-highlight-none mt-2 h-5 w-5 rounded border-outline/60 accent-primary"
+                      checked={selection.isSelected(cp.id)}
+                      onChange={() => selection.toggle(cp.id)}
+                      aria-label={`Выбрать ${cp.name}`}
+                    />
                     <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-high">
                       <Icon name="corporate_fare" className="text-xl text-primary" />
                     </div>
@@ -416,10 +480,19 @@ export default function CounterpartiesPage() {
               ))}
             </ul>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[900px] text-left">
+            <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky hidden max-h-[min(72vh,620px)] overflow-x-auto md:block">
+              <table className="w-full min-w-[920px] text-left">
                 <thead>
-                  <tr className="bg-surface-container-high/50 text-[10px] font-label uppercase tracking-widest text-on-surface-variant">
+                  <tr className="table-head-row">
+                    <th className="w-12 px-3 py-3 sm:px-4 sm:py-4">
+                      <input
+                        type="checkbox"
+                        className="tap-highlight-none h-4 w-4 rounded border-outline/60 accent-primary"
+                        checked={selection.allVisibleSelected}
+                        onChange={() => selection.toggleAllVisible()}
+                        aria-label="Выбрать все на странице"
+                      />
+                    </th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Название / тип</th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">УНП</th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Сальдо</th>
@@ -427,9 +500,18 @@ export default function CounterpartiesPage() {
                     <th className="px-4 py-3 text-right sm:px-6 sm:py-4">Действия</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/5">
+                <tbody>
                   {items.map((cp) => (
-                    <tr key={cp.id} className="group transition-colors hover:bg-surface-container-high">
+                    <tr key={cp.id} className="group">
+                      <td className="px-3 py-3 sm:px-4 sm:py-4">
+                        <input
+                          type="checkbox"
+                          className="tap-highlight-none h-4 w-4 rounded border-outline/60 accent-primary"
+                          checked={selection.isSelected(cp.id)}
+                          onChange={() => selection.toggle(cp.id)}
+                          aria-label={`Выбрать ${cp.name}`}
+                        />
+                      </td>
                       <td className="px-4 py-3 sm:px-6 sm:py-4">
                         <p className="text-sm font-bold text-on-surface">
                           {cp.is_pinned ? <Icon name="push_pin" className="mr-1 align-middle text-xs text-amber-600" /> : null}
@@ -455,7 +537,7 @@ export default function CounterpartiesPage() {
             </div>
           </>
         )}
-      </div>
+      </DataTableShell>
 
       {showQuickUnp && (
         <AppModal

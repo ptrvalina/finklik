@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { counterpartiesApi, documentsApi, importApi, primaryDocumentsApi } from '../api/client'
 import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -191,6 +192,22 @@ export default function DocumentsPage() {
         })
         .then((r) => r.data),
   })
+
+  const duplicatePrimaryDocIds = useMemo(() => {
+    const rows = Array.isArray(primaryDocsData) ? primaryDocsData : []
+    const buckets = new Map<string, string[]>()
+    for (const d of rows as any[]) {
+      const k = `${Number(d.amount_total || 0).toFixed(2)}|${String(d.issue_date || '')}`
+      const arr = buckets.get(k) || []
+      arr.push(d.id)
+      buckets.set(k, arr)
+    }
+    const dup = new Set<string>()
+    for (const ids of buckets.values()) {
+      if (ids.length > 1) ids.forEach((id) => dup.add(id))
+    }
+    return dup
+  }, [primaryDocsData])
 
   const { data: counterpartiesData } = useQuery({
     queryKey: ['counterparties', 'short'],
@@ -461,10 +478,10 @@ export default function DocumentsPage() {
           <p className="mt-1 text-xs text-on-surface-variant">Счёт → оплата → акт/накладная → архив/экспорт</p>
         </div>
         <div className="page-actions">
-          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
             <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
           </Link>
-          <Link to="/scanner" className="btn-primary w-full sm:w-auto">
+          <Link to="/scan" className="btn-primary w-full sm:w-auto">
             <Icon name="document_scanner" className="text-lg" /> В сканер
           </Link>
         </div>
@@ -532,7 +549,7 @@ export default function DocumentsPage() {
             </div>
 
             {csvPreview.preview?.length > 0 && (
-              <div className="overflow-x-auto max-h-64 rounded-lg border border-outline-variant/10">
+              <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky mt-2 max-h-64">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="bg-surface-container-high/50 text-[10px] text-on-surface-variant uppercase tracking-wider">
@@ -727,12 +744,29 @@ export default function DocumentsPage() {
         </div>
 
         {primaryDocsLoading ? (
-          <p className="mt-4 text-sm text-on-surface-variant">Загрузка документов...</p>
+          <TableSkeleton rows={7} cols={8} className="mt-4" />
         ) : (primaryDocsData?.length ?? 0) === 0 ? (
-          <p className="mt-4 text-sm text-on-surface-variant">Документов пока нет.</p>
+          <div className="mt-6">
+            <PremiumEmptyState
+              variant="compact"
+              icon="folder_off"
+              title="Первичных документов пока нет"
+              description="Создайте счёт из блока выше или добавьте операции через скан — так быстрее вырастет цепочка «счёт → оплата → акт»."
+              actions={
+                <>
+                  <Link to="/scan" className="btn-primary min-h-11 px-6 text-sm">
+                    Скан и OCR
+                  </Link>
+                  <Link to="/accounting" className="btn-secondary min-h-11 px-6 text-sm">
+                    Журнал учёта
+                  </Link>
+                </>
+              }
+            />
+          </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-xs">
+          <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky mt-4">
+            <table className="w-full min-w-[980px] text-left text-xs">
               <thead>
                 <tr className="table-head-row tracking-wider">
                   <th className="px-3 py-2">Тип</th>
@@ -741,6 +775,7 @@ export default function DocumentsPage() {
                   <th className="px-3 py-2">Дата</th>
                   <th className="px-3 py-2 text-right">Сумма</th>
                   <th className="px-3 py-2">Валюта</th>
+                  <th className="px-3 py-2 min-w-[140px]">Операционно</th>
                   <th className="px-3 py-2 text-right">Действия</th>
                 </tr>
               </thead>
@@ -773,6 +808,30 @@ export default function DocumentsPage() {
                     <td className="px-3 py-2 text-on-surface-variant">{doc.issue_date}</td>
                     <td className="px-3 py-2 text-right font-bold text-on-surface">{Number(doc.amount_total || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 text-on-surface-variant">{doc.currency}</td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        {duplicatePrimaryDocIds.has(doc.id) && (
+                          <span className="inline-flex max-w-[11rem] items-center gap-1 rounded-lg border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-[10px] font-bold leading-tight text-amber-100">
+                            <Icon name="warning" className="text-sm shrink-0" />
+                            Возможный дубликат суммы и даты
+                          </span>
+                        )}
+                        {doc.transaction_id ? (
+                          <Link
+                            to="/accounting"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
+                          >
+                            <Icon name="link" className="text-xs" />
+                            Связано с журналом
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-on-surface-variant/80">Нет связи с операцией</span>
+                        )}
+                        {doc.status === 'draft' && (
+                          <span className="text-[10px] font-semibold text-amber-300/90">Черновик — выпустите документ</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-2">
                       <div className="flex justify-end gap-2">
                         {doc.doc_type === 'invoice' && (

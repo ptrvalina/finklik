@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { onecApi } from '../api/client'
+import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -86,9 +88,21 @@ export default function OnecSyncPage() {
 
       <div className="overflow-hidden rounded-xl bg-surface-container-low border border-outline/75 shadow-soft">
         {isLoading ? (
-          <div className="p-10 text-center text-sm text-on-surface-variant">Загрузка...</div>
+          <TableSkeleton rows={8} cols={7} className="p-4 sm:p-6" />
         ) : jobs.length === 0 ? (
-          <div className="p-10 text-center text-sm text-on-surface-variant">Задачи не найдены</div>
+          <div className="p-6 sm:p-8">
+            <PremiumEmptyState
+              variant="compact"
+              icon="sync"
+              title="Задач синхронизации нет"
+              description="Проводки появятся здесь после отправки операций в 1С из журнала."
+              actions={
+                <Link to="/accounting" className="btn-primary min-h-11 px-6 text-sm">
+                  Журнал операций
+                </Link>
+              }
+            />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px]">

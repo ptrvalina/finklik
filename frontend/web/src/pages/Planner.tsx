@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+import { CardSkeleton } from '../components/premium'
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
@@ -424,7 +425,11 @@ export default function Planner() {
         </div>
 
         {eventsQuery.isLoading ? (
-          <p className="text-sm text-on-surface-variant">Загрузка календаря…</p>
+          <div className="grid grid-cols-7 gap-1" aria-busy="true" aria-label="Загрузка календаря">
+            {Array.from({ length: 42 }).map((_, i) => (
+              <div key={i} className="min-h-[72px] rounded-lg fc-skeleton-shimmer sm:min-h-[100px]" aria-hidden />
+            ))}
+          </div>
         ) : (
           <div className="space-y-1">
             {weeks.map((row, wi) => (
@@ -639,7 +644,7 @@ export default function Planner() {
         </div>
       ) : null}
 
-      <form onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2">
+      <form id="planner-new-task" onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2 scroll-mt-24">
         <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Новая задача планера</h2>
           {canRequestReport && (
@@ -766,9 +771,22 @@ function TaskList(props: {
     <div className="card-elevated p-5">
       <h3 className="mb-3 text-lg font-semibold">{title}</h3>
       {loading ? (
-        <p className="text-on-surface-variant">Загрузка...</p>
+        <div className="space-y-3" aria-busy="true" aria-label="Загрузка задач">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : tasks.length === 0 ? (
-        <p className="text-on-surface-variant">Пока нет задач</p>
+        <div className="rounded-xl border border-dashed border-outline-variant/40 bg-surface-container-low/40 px-4 py-6 text-center">
+          <p className="text-sm text-on-surface-variant">Задач нет — создайте первую в форме выше.</p>
+          <button
+            type="button"
+            className="btn-secondary mx-auto mt-4 min-h-10 px-5 text-sm"
+            onClick={() => document.getElementById('planner-new-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          >
+            К форме создания
+          </button>
+        </div>
       ) : (
         <div className="space-y-3">
           {tasks.map((task) => (

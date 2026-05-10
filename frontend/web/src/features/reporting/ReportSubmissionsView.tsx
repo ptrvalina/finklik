@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { submissionsApi } from '../../api/client'
 import { formatApiDetail } from '../../utils/apiError'
 import { buildSubmissionExportActions, parseReportPeriod } from '../../utils/submissionExport'
 import AppModal from '../../components/ui/AppModal'
+import { CardSkeleton, PremiumEmptyState } from '../../components/premium'
 
 export type ReportingAuthority = 'imns' | 'fsszn' | 'belgosstrakh' | 'belstat'
 
@@ -89,9 +91,10 @@ function ReportSubmissionPreview({ data }: { data: Record<string, unknown> | nul
             const rows = v as Record<string, unknown>[]
             const cols = Object.keys(rows[0])
             return (
-              <div key={k} className="overflow-x-auto rounded-xl bg-surface-container-low p-3">
+              <div key={k} className="rounded-xl p-3">
                 <p className="mb-2 font-bold text-on-surface">{k}</p>
-                <table className="w-full border-collapse text-left text-[11px]">
+                <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky max-h-72">
+                  <table className="w-full border-collapse text-left text-[11px]">
                   <thead>
                     <tr className="border-b border-outline-variant/30 text-on-surface-variant">
                       {cols.map((hk) => (
@@ -113,6 +116,7 @@ function ReportSubmissionPreview({ data }: { data: Record<string, unknown> | nul
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )
           }
@@ -332,11 +336,24 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
       </div>
 
       {isLoading ? (
-        <div className="page-section empty-state p-12 text-sm text-on-surface-variant">Загрузка...</div>
+        <div className="page-section space-y-3 p-4 sm:p-6" aria-busy="true" aria-label="Загрузка отправок">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : submissions.length === 0 ? (
-        <div className="page-section empty-state p-16">
-          <Icon name="send" className="text-5xl text-on-surface-variant/20" />
-          <p className="mt-4 text-sm text-on-surface-variant">Отчётов ещё нет</p>
+        <div className="page-section p-4 sm:p-6">
+          <PremiumEmptyState
+            variant="compact"
+            icon="send"
+            title="Отправок пока нет"
+            description="Сформируйте пакет в отчётности и отправьте в контролирующий орган."
+            actions={
+              <Link to="/reports" className="btn-primary min-h-11 px-6 text-sm">
+                К отчётности
+              </Link>
+            }
+          />
         </div>
       ) : (
         <div className="space-y-3">

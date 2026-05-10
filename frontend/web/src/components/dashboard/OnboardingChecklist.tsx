@@ -45,7 +45,7 @@ export default function OnboardingChecklist() {
         id: 'tx',
         label: 'Добавьте или импортируйте операции',
         done: totalTx > 0,
-        to: '/transactions',
+        to: '/accounting',
         icon: 'receipt_long',
       },
       {

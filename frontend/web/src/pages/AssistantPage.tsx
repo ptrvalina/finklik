@@ -74,7 +74,7 @@ export default function AssistantPage() {
           <Link to="/settings" className="btn-secondary !py-2 text-xs">
             <Icon name="vpn_key" className="text-base" /> Ключ ИИ
           </Link>
-          <Link to="/reporting" className="btn-secondary !py-2 text-xs">
+          <Link to="/reports" className="btn-secondary !py-2 text-xs">
             <Icon name="assignment_turned_in" className="text-base" /> Отчётность
           </Link>
         </div>

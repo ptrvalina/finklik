@@ -30,6 +30,14 @@
     --color-on-background: 7 17 26;
     --color-outline: 226 232 240;
     --color-outline-variant: 203 213 225;
+    /* Design system — motion / depth (Premium OS) */
+    --fc-motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --fc-motion-snappy: cubic-bezier(0.34, 1.02, 0.68, 1);
+    --fc-duration-fast: 160ms;
+    --fc-duration-medium: 260ms;
+    --fc-blur-glass: 20px;
+    --fc-radius-xl: 1.5rem;
+    --fc-glow-emerald: 0 0 40px -8px rgba(16, 185, 129, 0.35);
   }
 
   .dark {
@@ -101,6 +109,16 @@
 }
 
 @layer components {
+  /** Единый скрим для AppModal, WorkflowSidePanel и fullscreen-потоков */
+  .fc-modal-backdrop {
+    background-color: rgba(3, 9, 20, 0.78);
+    backdrop-filter: blur(14px);
+  }
+  @supports (backdrop-filter: blur(14px)) {
+    .fc-modal-backdrop {
+      background-color: rgba(3, 9, 20, 0.65);
+    }
+  }
   .btn-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-7 py-2.5
            font-headline text-sm font-semibold tracking-wide text-on-primary
@@ -311,6 +329,73 @@
   box-shadow: 4px 0 48px -12px rgb(0 0 0 / 0.55);
 }
 
+/* Стеклянная поверхность данных (списки, карточки-блоки без table) */
+.fc-premium-surface,
+.fc-premium-table {
+  overflow: hidden;
+  border-radius: var(--fc-radius-xl, 1.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 24px 64px -32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(var(--fc-blur-glass, 20px));
+  -webkit-backdrop-filter: blur(var(--fc-blur-glass, 20px));
+}
+.fc-premium-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fc-premium-table thead tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+.fc-premium-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition:
+    background-color var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease),
+    box-shadow var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease),
+    transform var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease);
+}
+.fc-premium-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.fc-premium-table tbody tr:last-child {
+  border-bottom: none;
+}
+/* Прокрутка длинных таблиц + липкий заголовок */
+.fc-premium-table-scroll {
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fc-premium-table--sticky thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+html:not(.dark) .fc-premium-table--sticky thead th {
+  box-shadow: 0 1px 0 rgba(0, 77, 64, 0.08);
+}
+html:not(.dark) .fc-premium-surface,
+html:not(.dark) .fc-premium-table {
+  border-color: rgba(0, 77, 64, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 20px 48px -28px rgba(0, 77, 64, 0.15);
+}
+html:not(.dark) .fc-premium-table thead tr {
+  background: rgba(241, 245, 249, 0.85);
+  border-bottom-color: rgba(0, 77, 64, 0.08);
+}
+html:not(.dark) .fc-premium-table tbody tr {
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+html:not(.dark) .fc-premium-table tbody tr:hover {
+  background: rgba(16, 185, 129, 0.055);
+}
+
 /* Экраны входа / регистрации — тот же атмосферный язык, что и основное приложение */
 .fc-auth-shell {
   background:
@@ -344,6 +429,34 @@
 }
 .dark .fc-auth-shell::after {
   background: radial-gradient(ellipse 85% 60% at 50% 100%, transparent 38%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+/* Premium skeleton — shimmer (Phase 3 loading system) */
+@keyframes fc-shimmer-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+.fc-skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgb(148 163 184 / 0.14);
+}
+.dark .fc-skeleton-shimmer {
+  background: rgba(255, 255, 255, 0.055);
+}
+.fc-skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: fc-shimmer-slide 1.25s ease-in-out infinite;
+}
+.dark .fc-skeleton-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
 }
 
 @media (pointer: coarse) {

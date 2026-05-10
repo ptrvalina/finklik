@@ -1,4 +1,4 @@
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { appBasePath } from './appBase'
 import { useAuthStore } from './store/authStore'
 import ThemeHydration from './components/ThemeHydration'
@@ -19,7 +19,6 @@ import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
 import Notes from './pages/Notes'
 import Planner from './pages/Planner'
-import TransactionsPage from './pages/TransactionsPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
 import DocumentsPage from './pages/DocumentsPage'
@@ -58,6 +57,13 @@ function RoleRoute({
   const role = (user?.role || '').toLowerCase()
   if (allow.includes('admin') && role === 'owner') return <>{children}</>
   return allow.includes(role as any) ? <>{children}</> : <Navigate to="/" replace />
+}
+
+/** Старые ссылки `/reporting/imns` → `/reports/imns` */
+function LegacyReportingRedirect() {
+  const { authority } = useParams<{ authority: string }>()
+  if (!authority) return <Navigate to="/reports" replace />
+  return <Navigate to={`/reports/${authority}`} replace />
 }
 
 export default function App() {
@@ -112,11 +118,11 @@ function AppRoutes() {
 
           {/* Legacy route aliases kept for compatibility */}
           <Route path="transactions" element={<Navigate to="/accounting" replace />} />
-          <Route path="analytics" element={<Navigate to="/reports" replace />} />
-          <Route path="calendar" element={<Navigate to="/reports" replace />} />
+          <Route path="analytics" element={<RoleRoute allow={['admin', 'accountant']}><AnalyticsPage /></RoleRoute>} />
+          <Route path="calendar" element={<RoleRoute allow={['admin', 'accountant']}><CalendarPage /></RoleRoute>} />
           <Route path="taxes" element={<Navigate to="/bank" replace />} />
           <Route path="reporting" element={<Navigate to="/reports" replace />} />
-          <Route path="reporting/:authority" element={<Navigate to="/reports" replace />} />
+          <Route path="reporting/:authority" element={<LegacyReportingRedirect />} />
           <Route path="documents" element={<Navigate to="/accounting" replace />} />
           <Route path="currency" element={<Navigate to="/bank" replace />} />
           <Route path="scanner" element={<Navigate to="/scan" replace />} />
@@ -127,7 +133,8 @@ function AppRoutes() {
           <Route path="legacy/bank" element={<BankPage />} />
           <Route path="legacy/documents" element={<DocumentsPage />} />
           <Route path="legacy/scanner" element={<ScannerPage />} />
-          <Route path="legacy/reporting" element={<ReportingPage />} />
+          <Route path="legacy/reporting/:authority" element={<ReportingPage basePath="/legacy/reporting" />} />
+          <Route path="legacy/reporting" element={<ReportingPage basePath="/legacy/reporting" />} />
           <Route path="legacy/currency" element={<CurrencyPage />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<RoleRoute allow={['admin', 'accountant']}><SettingsPage /></RoleRoute>} />

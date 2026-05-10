@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { categorizationRulesApi, counterpartiesApi, dashboardApi, onecApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
+import { DataTableShell, useDataTableSelection } from '../components/datatable'
+import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 
 function fmt(n: any) {
@@ -197,6 +199,16 @@ export default function TransactionsPage() {
   function handleSave() { editingTx ? editMutation.mutate() : addMutation.mutate() }
 
   const transactions = data?.items ?? []
+  const visibleIds = useMemo(() => transactions.map((t: any) => t.id as string), [transactions])
+  const selection = useDataTableSelection(visibleIds)
+  const headerSelectRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const el = headerSelectRef.current
+    if (!el) return
+    el.indeterminate = selection.selectedCount > 0 && !selection.allVisibleSelected
+  }, [selection.selectedCount, selection.allVisibleSelected])
+
   const syncJobs = syncJobsData?.jobs ?? []
   const syncJobByTx = new Map<string, any>()
   for (const job of syncJobs) {
@@ -253,6 +265,23 @@ export default function TransactionsPage() {
     return 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
   }
 
+  async function bulkDeleteSelected() {
+    if (selection.selectedCount === 0) return
+    if (!confirm(`Удалить ${selection.selectedCount} операций? Это действие необратимо.`)) return
+    const ids = [...selection.selected]
+    await Promise.all(ids.map((id) => dashboardApi.deleteTransaction(id)))
+    invalidate()
+    selection.clear()
+  }
+
+  function bulkSyncSelected() {
+    for (const id of selection.selected) {
+      const tx = transactions.find((t: any) => t.id === id)
+      if (!tx || (Array.isArray(tx.validation_issues) && tx.validation_issues.length > 0)) continue
+      syncMutation.mutate(id)
+    }
+  }
+
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric">
       {/* Header */}
@@ -277,7 +306,7 @@ export default function TransactionsPage() {
             <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
               <Icon name="auto_fix_high" className="text-lg" /> Правила
             </button>
-            <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+            <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
               <Icon name="upload_file" className="text-lg" /> Импорт
             </Link>
             <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
@@ -316,41 +345,115 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Search & filters */}
-      <div className="page-section grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 md:grid-cols-3">
-        <div>
-          <label className="label">Поиск</label>
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" />
-            <input className="input pl-10" placeholder="По описанию..." value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+      <DataTableShell
+        toolbar={
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="label">Поиск</label>
+                <div className="relative mt-1">
+                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+                  <input
+                    className="input min-h-11 rounded-xl pl-10"
+                    placeholder="По описанию..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="label">С даты</label>
+                <input
+                  type="date"
+                  className="input mt-1 min-h-11 rounded-xl"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value)
+                    setPage(1)
+                  }}
+                />
+              </div>
+              <div>
+                <label className="label">По дату</label>
+                <input
+                  type="date"
+                  className="input mt-1 min-h-11 rounded-xl"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value)
+                    setPage(1)
+                  }}
+                />
+              </div>
+            </div>
+            <p className="hidden max-w-[15rem] text-[10px] leading-snug text-on-surface-variant lg:block">
+              Escape снимает выбор строк. На странице доступны массовая синхронизация с 1С и удаление.
+            </p>
           </div>
-        </div>
-        <div>
-          <label className="label">С даты</label>
-          <input type="date" className="input" value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1) }} />
-        </div>
-        <div>
-          <label className="label">По дату</label>
-          <input type="date" className="input" value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1) }} />
-        </div>
-      </div>
-
-      {/* Список: карточки на мобиле, таблица с md */}
-      <div className="overflow-hidden rounded-3xl border border-outline/50 bg-surface/92 shadow-[0_16px_56px_-28px_rgba(0,77,64,0.14)] backdrop-blur-xl ring-1 ring-emerald-500/[0.05] dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.42)] dark:shadow-[0_28px_80px_-36px_rgba(0,0,0,0.55)]">
-        {isLoading ? (
-          <div className="flex items-center justify-center gap-2 p-12 text-sm text-on-surface-variant">
-            <Icon name="hourglass_empty" className="animate-spin" /> Загружаем...
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="p-12 text-center sm:p-16">
-            <Icon name="receipt_long" className="text-5xl text-on-surface-variant/20" />
-            <p className="mt-4 text-sm text-on-surface-variant">Операций нет</p>
-            <button type="button" className="btn-primary mt-4" onClick={openCreate}>
-              <Icon name="add" className="text-lg" /> Добавить первую
+        }
+        bulkBar={
+          <>
+            <span className="text-xs font-semibold text-emerald-100">Выбрано: {selection.selectedCount}</span>
+            <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
+              Снять выбор
             </button>
+            <button
+              type="button"
+              className="btn-secondary min-h-9 px-4 text-xs"
+              disabled={syncMutation.isPending || selection.selectedCount === 0}
+              onClick={() => bulkSyncSelected()}
+            >
+              <Icon name="sync" className="text-sm" /> Синхронизировать
+            </button>
+            <button
+              type="button"
+              className="btn-ghost min-h-9 px-4 text-xs text-error hover:text-error"
+              disabled={deleteMutation.isPending || selection.selectedCount === 0}
+              onClick={() => bulkDeleteSelected()}
+            >
+              Удалить выбранные
+            </button>
+          </>
+        }
+        selectedCount={selection.selectedCount}
+      >
+        {isLoading ? (
+          <TableSkeleton rows={10} cols={6} />
+        ) : transactions.length === 0 ? (
+          <div className="p-4 sm:p-6">
+            <PremiumEmptyState
+              icon="receipt_long"
+              title={search || dateFrom || dateTo ? 'Ничего не нашли' : 'Журнал операций пуст'}
+              description={
+                search || dateFrom || dateTo
+                  ? 'Попробуйте смягчить фильтры или изменить период.'
+                  : 'Добавьте первую операцию вручную или импортируйте из учёта.'
+              }
+              actions={
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {(search || dateFrom || dateTo) && (
+                    <button
+                      type="button"
+                      className="btn-secondary min-h-11 px-4"
+                      onClick={() => {
+                        setSearch('')
+                        setDateFrom('')
+                        setDateTo('')
+                        setPage(1)
+                      }}
+                    >
+                      Сбросить фильтры
+                    </button>
+                  )}
+                  <button type="button" className="btn-primary min-h-11 px-4" onClick={openCreate}>
+                    <Icon name="add" className="text-lg" /> Добавить операцию
+                  </button>
+                </div>
+              }
+            />
           </div>
         ) : (
           <>
@@ -360,6 +463,13 @@ export default function TransactionsPage() {
                 return (
                   <li key={tx.id} className="p-4">
                     <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="tap-highlight-none mt-2 h-4 w-4 shrink-0 rounded border-outline-variant text-secondary focus:ring-secondary"
+                        checked={selection.isSelected(tx.id)}
+                        onChange={() => selection.toggle(tx.id)}
+                        aria-label="Выбрать операцию"
+                      />
                       <div
                         className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-low ${meta.color}`}
                       >
@@ -442,10 +552,20 @@ export default function TransactionsPage() {
               })}
             </ul>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[640px] text-left">
+            <div className="fc-premium-table hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[720px] text-left">
                 <thead>
                   <tr className="table-head-row">
+                    <th className="w-12 px-3 py-3 sm:px-4 sm:py-4">
+                      <input
+                        ref={headerSelectRef}
+                        type="checkbox"
+                        className="tap-highlight-none h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary"
+                        checked={selection.allVisibleSelected}
+                        onChange={() => selection.toggleAllVisible()}
+                        aria-label="Выбрать все на странице"
+                      />
+                    </th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Описание</th>
                     <th className="px-4 py-3 sm:px-6 sm:py-4">Дата</th>
                     <th className="px-4 py-3 text-right sm:px-6 sm:py-4">Сумма</th>
@@ -458,6 +578,15 @@ export default function TransactionsPage() {
                     const meta = TX_META[tx.type as TxType] || TX_META.expense
                     return (
                       <tr key={tx.id} className="group transition-colors hover:bg-surface-container-high">
+                        <td className="px-3 py-3 sm:px-4 sm:py-4">
+                          <input
+                            type="checkbox"
+                            className="tap-highlight-none h-4 w-4 rounded border-outline-variant text-secondary focus:ring-secondary"
+                            checked={selection.isSelected(tx.id)}
+                            onChange={() => selection.toggle(tx.id)}
+                            aria-label="Выбрать операцию"
+                          />
+                        </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4">
                           <div className="flex items-center gap-3">
                             <div
@@ -533,7 +662,7 @@ export default function TransactionsPage() {
             </div>
           </>
         )}
-      </div>
+      </DataTableShell>
 
       {/* Pagination */}
       {totalPages > 1 && (

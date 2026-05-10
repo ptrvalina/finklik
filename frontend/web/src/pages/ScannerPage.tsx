@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi, dashboardApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
@@ -190,10 +191,10 @@ export default function ScannerPage() {
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/transactions" className="btn-secondary !py-2 text-xs">
+          <Link to="/accounting" className="btn-secondary !py-2 text-xs">
             <Icon name="receipt_long" className="text-base" /> В операции
           </Link>
-          <Link to="/documents" className="btn-secondary !py-2 text-xs">
+          <Link to="/accounting" className="btn-secondary !py-2 text-xs">
             <Icon name="description" className="text-base" /> В документы
           </Link>
         </div>
@@ -225,21 +226,42 @@ export default function ScannerPage() {
           </div>
 
           {activeTab === 'upload' ? (
-            <div
-              className={`relative rounded-xl overflow-hidden transition-all cursor-pointer ${dragOver ? 'ring-2 ring-primary' : ''}`}
+            <motion.div
+              layout
+              className={`relative cursor-pointer overflow-hidden rounded-2xl ${dragOver ? 'ring-2 ring-primary ring-offset-2 ring-offset-[rgb(var(--color-canvas))]' : ''}`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileRef.current?.click()}
+              animate={dragOver ? { scale: 1.008 } : { scale: 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 30 }}
             >
               <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
-              <div className={`flex h-[min(420px,55vh)] w-full min-h-[240px] flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all sm:h-[420px] ${
-                dragOver ? 'border-primary bg-primary/5' : 'border-primary/30 bg-surface-container-low/40 hover:bg-primary/5'
+              <div className={`fc-premium-surface flex h-[min(420px,55vh)] w-full min-h-[240px] flex-col items-center justify-center border-2 border-dashed transition-colors duration-300 sm:h-[420px] ${
+                dragOver ? 'border-emerald-400/60 bg-emerald-500/[0.08]' : 'border-primary/35 bg-[rgb(var(--color-surface)/0.35)] hover:border-primary/50 hover:bg-emerald-500/[0.06]'
               }`}>
                 {uploadMutation.isPending ? (
-                  <div className="space-y-4 text-center">
-                    <div className="w-16 h-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-on-surface-variant font-medium">Обработка документа...</p>
+                  <div className="space-y-6 px-6 text-center">
+                    <div className="relative mx-auto h-16 w-16">
+                      <div className="absolute inset-0 rounded-full border-2 border-white/10" />
+                      <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-emerald-400 border-r-emerald-400/40" />
+                    </div>
+                    <div>
+                      <p className="font-headline text-sm font-semibold text-on-surface">Распознаём документ</p>
+                      <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">OCR · классификация · извлечение суммы и реквизитов</p>
+                    </div>
+                    <div className="flex justify-center gap-1.5">
+                      {['Скан', 'Текст', 'Поля'].map((step, i) => (
+                        <span
+                          key={step}
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            i === 0 ? 'bg-emerald-500/25 text-emerald-100' : 'bg-white/[0.06] text-on-surface-variant'
+                          }`}
+                        >
+                          {step}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -254,7 +276,7 @@ export default function ScannerPage() {
                   </>
                 )}
               </div>
-            </div>
+            </motion.div>
           ) : (
             <div className="rounded-3xl border border-outline/75 bg-surface-container-low p-4 shadow-soft sm:p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -309,7 +331,12 @@ export default function ScannerPage() {
             const displayDoc = editDraft?.docType || scanResult.doc_type
             const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
             return (
-            <div className="mt-6 overflow-hidden rounded-3xl border border-outline/75 bg-surface-container-low shadow-soft">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              className="fc-premium-surface mt-6 overflow-hidden shadow-soft"
+            >
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
                   <Icon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
@@ -330,7 +357,12 @@ export default function ScannerPage() {
               </div>
 
               <div className="grid gap-0 md:grid-cols-2">
-                <div className="border-outline-variant/10 p-4 md:border-r sm:p-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.05 }}
+                  className="border-outline-variant/10 p-4 md:border-r sm:p-6"
+                >
                   {preview ? (
                     <img src={preview} alt="Preview" className="w-full rounded-lg object-contain max-h-80 bg-surface" />
                   ) : (
@@ -344,8 +376,17 @@ export default function ScannerPage() {
                       <pre className="mt-2 text-xs bg-surface p-3 rounded-lg whitespace-pre-wrap text-on-surface-variant max-h-40 overflow-auto">{scanResult.ocr_text}</pre>
                     </details>
                   )}
-                </div>
-                <div className="space-y-4 p-4 sm:p-6">
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.12 }}
+                  className="space-y-4 p-4 sm:p-6"
+                >
+                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-4 py-3 text-xs leading-relaxed text-on-surface-variant">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300">ИИ · разбор:</span> поля ниже извлечены из документа;
+                    при низкой уверенности сверьте сумму и контрагента с оригиналом слева.
+                  </div>
                   <div>
                     <h4 className="label">Данные для операции</h4>
                     <p className="mt-1 text-xs text-on-surface-variant">
@@ -460,13 +501,21 @@ export default function ScannerPage() {
                       <Icon name="add" /> {createTxMutation.isPending ? 'Сохраняем...' : 'Создать операцию'}
                     </button>
                   ) : (
-                    <div className="mt-4 bg-secondary/10 text-secondary border border-secondary/20 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
-                      <Icon name="check_circle" filled /> Операция создана
-                    </div>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key="saved"
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        className="mt-4 flex items-center gap-2 rounded-xl border border-secondary/25 bg-secondary/10 px-4 py-3 text-sm font-bold text-secondary"
+                      >
+                        <Icon name="check_circle" filled /> Операция создана
+                      </motion.div>
+                    </AnimatePresence>
                   )}
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
             )
           })()}
         </div>
