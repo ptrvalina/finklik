@@ -1,37 +1,44 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { dashboardApi, documentsApi, scannerApi } from '../api/client'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
+import { JournalCommandPalette } from '../components/journal/JournalCommandPalette'
+import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
+import {
+  JOURNAL_CATEGORY_KEYS,
+  JOURNAL_CATEGORY_LABELS,
+  suggestJournalCategory,
+} from '../lib/journalCategories'
 
-const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  rent: ['аренда', 'офис', 'помещение'],
-  tax: ['налог', 'фсзн', 'ндс'],
-  advertising: ['реклама', 'ads', 'маркетинг'],
-  goods: ['товар', 'закупка', 'склад'],
-}
-
-const CAT_LABELS: Record<string, string> = {
-  rent: 'Аренда',
-  tax: 'Налоги',
-  advertising: 'Реклама',
-  goods: 'Товары',
-  other: 'Прочее',
-}
-
+/** Совместимость: прежний экспорт для тестов / импортов */
 export function suggestCategory(text: string) {
-  const value = text.toLowerCase()
-  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    if (keywords.some((word) => value.includes(word))) return { category, confidence: 0.82 }
-  }
-  return { category: 'other', confidence: 0.51 }
+  return suggestJournalCategory(text)
 }
 
 function fmt(n: number) {
   return n.toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+/** Полное тело PUT /transactions для сохранения полей операции (инлайн и панель). */
+function buildTxUpdateBody(tx: any, patch: Partial<{ category: string; description: string; amount: number }>) {
+  return {
+    type: tx.type,
+    amount: patch.amount ?? Number(tx.amount),
+    vat_amount: Number(tx.vat_amount ?? 0),
+    counterparty_id: tx.counterparty_id ?? undefined,
+    category: patch.category ?? tx.category ?? undefined,
+    description: patch.description ?? tx.description ?? undefined,
+    source: tx.source || 'manual',
+    ai_category_confidence: tx.ai_category_confidence ?? undefined,
+    receipt_image_url: tx.receipt_image_url ?? undefined,
+    transaction_date: tx.transaction_date,
+    cost_center_id: tx.cost_center_id ?? undefined,
+    revenue_stream_id: tx.revenue_stream_id ?? undefined,
+  }
 }
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -61,11 +68,20 @@ function TransactionSideContent({
   onClose: () => void
 }) {
   const qc = useQueryClient()
-  const suggestion = useMemo(() => suggestCategory(String(tx.description || '')), [tx.description])
+  const suggestion = useMemo(() => suggestJournalCategory(String(tx.description || '')), [tx.description])
   const [category, setCategory] = useState(tx.category || 'other')
   const [description, setDescription] = useState(tx.description || '')
   const [amount, setAmount] = useState(String(tx.amount ?? ''))
   const duplicates = useMemo(() => findDuplicateTx(tx, allItems), [tx, allItems])
+
+  const aiStored = useMemo(() => {
+    if (!tx.ai_analysis_json) return null
+    try {
+      return JSON.parse(tx.ai_analysis_json) as { reasoning?: string; suggested_category?: string; confidence?: number }
+    } catch {
+      return null
+    }
+  }, [tx.ai_analysis_json])
 
   useEffect(() => {
     setCategory(tx.category || 'other')
@@ -75,13 +91,14 @@ function TransactionSideContent({
 
   const updateMutation = useMutation({
     mutationFn: () =>
-      dashboardApi.updateTransaction(tx.id, {
-        type: tx.type,
-        amount: parseFloat(amount || '0'),
-        category: category || undefined,
-        description: description || undefined,
-        transaction_date: tx.transaction_date,
-      }),
+      dashboardApi.updateTransaction(
+        tx.id,
+        buildTxUpdateBody(tx, {
+          amount: parseFloat(amount || '0'),
+          category,
+          description,
+        }),
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
       onClose()
@@ -108,11 +125,18 @@ function TransactionSideContent({
         </span>
       </div>
 
+      {aiStored?.reasoning && (
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-3 py-2 text-xs text-on-surface">
+          <p className="font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-300/90">Разбор ИИ</p>
+          <p className="mt-1 leading-relaxed text-on-surface-variant">{aiStored.reasoning}</p>
+        </div>
+      )}
+
       <div>
         <label className="label">ИИ · категория</label>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
-            {CAT_LABELS[suggestion.category] || suggestion.category}{' '}
+            {JOURNAL_CATEGORY_LABELS[suggestion.category] || suggestion.category}{' '}
             <span className="text-on-surface-variant">({Math.round(suggestion.confidence * 100)}%)</span>
           </span>
           {aiDiffers && (
@@ -130,9 +154,9 @@ function TransactionSideContent({
       <div>
         <label className="label">Категория</label>
         <select className="input mt-1 min-h-11 w-full rounded-xl" value={category} onChange={(e) => setCategory(e.target.value)}>
-          {Object.entries(CAT_LABELS).map(([k, label]) => (
+          {JOURNAL_CATEGORY_KEYS.map((k) => (
             <option key={k} value={k}>
-              {label}
+              {JOURNAL_CATEGORY_LABELS[k] || k}
             </option>
           ))}
         </select>
@@ -192,11 +216,16 @@ export default function Accounting() {
   const [filterDateTo, setFilterDateTo] = useState(todayStr)
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all')
   const [filterSearch, setFilterSearch] = useState('')
+  const [attentionFilter, setAttentionFilter] = useState<'all' | 'drafts'>('all')
   const [linkedCounterpartyId, setLinkedCounterpartyId] = useState<string | null>(null)
   const [panelTx, setPanelTx] = useState<any | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [paletteQuery, setPaletteQuery] = useState('')
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null)
+  const captureAmountRef = useRef<HTMLInputElement>(null)
 
-  const aiSuggestion = useMemo(() => suggestCategory(description), [description])
+  const aiSuggestion = useMemo(() => suggestJournalCategory(description), [description])
 
   useEffect(() => {
     const cid = searchParams.get('counterparty_id')
@@ -237,9 +266,10 @@ export default function Accounting() {
         const hay = `${tx.description || ''} ${tx.category || ''}`.toLowerCase()
         if (!hay.includes(term)) return false
       }
+      if (attentionFilter === 'drafts' && tx.status !== 'draft') return false
       return true
     })
-  }, [txQuery.data?.items, filterDateFrom, filterDateTo, filterType, filterSearch])
+  }, [txQuery.data?.items, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter])
 
   const visibleIds = useMemo(() => filteredItems.map((t: any) => String(t.id)), [filteredItems])
   const selection = useDataTableSelection(visibleIds)
@@ -278,6 +308,54 @@ export default function Accounting() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
+
+  const patchCategoryMutation = useMutation({
+    mutationFn: ({ id, category }: { id: string; category: string }) => {
+      const raw = txQuery.data?.items as any[] | undefined
+      const tx = raw?.find((t) => t.id === id)
+      if (!tx) throw new Error('tx')
+      return dashboardApi.updateTransaction(id, buildTxUpdateBody(tx, { category }))
+    },
+    onMutate: async ({ id, category }) => {
+      await qc.cancelQueries({ queryKey: ['transactions', 'accounting'] })
+      const prev = qc.getQueryData(['transactions', 'accounting']) as any
+      qc.setQueryData(['transactions', 'accounting'], (old: any) => {
+        if (!old?.items) return old
+        return {
+          ...old,
+          items: old.items.map((t: any) => (t.id === id ? { ...t, category } : t)),
+        }
+      })
+      return { prev }
+    },
+    onError: (_e, _v, ctx: { prev?: unknown }) => {
+      if (ctx?.prev) qc.setQueryData(['transactions', 'accounting'], ctx.prev as any)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['transactions'] }),
+  })
+
+  const bulkAiCategoriesMutation = useMutation({
+    mutationFn: async () => {
+      const raw = txQuery.data?.items as any[] | undefined
+      const ids = [...selection.selected]
+      await Promise.all(
+        ids.map(async (id) => {
+          const tx = filteredItems.find((t: any) => t.id === id)
+          if (!tx || tx.type !== 'expense') return
+          const sug = suggestJournalCategory(String(tx.description || ''))
+          const cur = tx.category || 'other'
+          if (sug.category === cur) return
+          const full = raw?.find((t) => t.id === id)
+          if (!full) return
+          await dashboardApi.updateTransaction(id, buildTxUpdateBody(full, { category: sug.category }))
+        }),
+      )
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      selection.clear()
     },
   })
 
@@ -325,6 +403,63 @@ export default function Accounting() {
     if (!amount || !description) return
     createMutation.mutate()
   }
+
+  const focusCaptureForm = useCallback(() => {
+    setWorkspaceFocus('capture')
+    window.requestAnimationFrame(() => captureAmountRef.current?.focus())
+  }, [])
+
+  useEffect(() => {
+    setFocusedRowIndex((i) => {
+      if (i === null) return null
+      const max = filteredItems.length - 1
+      if (max < 0) return null
+      return Math.min(i, max)
+    })
+  }, [filteredItems])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = e.target as HTMLElement
+      const inField =
+        el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteQuery('')
+        setCommandOpen(true)
+        return
+      }
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        focusCaptureForm()
+        return
+      }
+      if (e.key === 'Escape') {
+        setCommandOpen(false)
+        setPanelTx(null)
+        setFocusedRowIndex(null)
+        return
+      }
+      if (commandOpen || panelTx) return
+      if (inField) return
+      const n = filteredItems.length
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedRowIndex((i) => (i === null ? 0 : Math.min(i + 1, Math.max(n - 1, 0))))
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedRowIndex((i) => (i === null ? Math.max(n - 1, 0) : Math.max(i - 1, 0)))
+      }
+      if (e.key === 'Enter' && focusedRowIndex !== null && filteredItems[focusedRowIndex]) {
+        e.preventDefault()
+        setPanelTx(filteredItems[focusedRowIndex])
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [filteredItems, commandOpen, panelTx, focusCaptureForm, focusedRowIndex])
 
   const isLoading = txQuery.isLoading
 
@@ -420,7 +555,14 @@ export default function Accounting() {
               <option value="income">Доход</option>
             </select>
             <input className="input min-h-11 rounded-xl" type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} />
-            <input className="input min-h-11 rounded-xl" placeholder="Сумма" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
+            <input
+              ref={captureAmountRef}
+              className="input min-h-11 rounded-xl"
+              placeholder="Сумма"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              inputMode="decimal"
+            />
             <select className="input min-h-11 rounded-xl" value={source} onChange={(e) => setSource(e.target.value as 'manual' | 'scan' | 'bank')}>
               <option value="manual">Ручной ввод</option>
               <option value="scan">Скан / OCR</option>
@@ -434,9 +576,9 @@ export default function Accounting() {
             />
             <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
               <select className="input min-h-11 rounded-xl" value={category} onChange={(e) => setCategory(e.target.value)}>
-                {Object.entries(CAT_LABELS).map(([k, label]) => (
+                {JOURNAL_CATEGORY_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {label}
+                    {JOURNAL_CATEGORY_LABELS[k] || k}
                   </option>
                 ))}
               </select>
@@ -447,7 +589,7 @@ export default function Accounting() {
                 onChange={(e) => setReceiptUrl(e.target.value)}
               />
               <div className="rounded-xl border border-primary/20 bg-primary/[0.05] px-3 py-2 text-sm text-on-surface">
-                <span className="font-semibold text-primary">ИИ:</span> {CAT_LABELS[aiSuggestion.category]}{' '}
+                <span className="font-semibold text-primary">ИИ:</span> {JOURNAL_CATEGORY_LABELS[aiSuggestion.category]}{' '}
                 <span className="text-on-surface-variant">({Math.round(aiSuggestion.confidence * 100)}%)</span>
                 {aiSuggestion.category !== category && (
                   <button
@@ -518,20 +660,48 @@ export default function Accounting() {
                   onChange={(e) => setFilterSearch(e.target.value)}
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn-ghost min-h-10 px-3 text-xs"
-                  onClick={() => {
-                    setFilterDateFrom(monthStartStr)
-                    setFilterDateTo(todayStr)
-                  }}
-                >
-                  Этот месяц
-                </button>
-                <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => selection.clear()}>
-                  Снять выбор
-                </button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="flex gap-1 rounded-full border border-outline-variant/30 bg-surface/80 p-0.5">
+                  <button
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      attentionFilter === 'all' ? 'bg-emerald-600 text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                    onClick={() => setAttentionFilter('all')}
+                  >
+                    Все
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      attentionFilter === 'drafts' ? 'bg-amber-500/90 text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                    onClick={() => setAttentionFilter('drafts')}
+                  >
+                    Черновики
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost min-h-10 px-3 text-xs"
+                    onClick={() => {
+                      setFilterDateFrom(monthStartStr)
+                      setFilterDateTo(todayStr)
+                    }}
+                  >
+                    Этот месяц
+                  </button>
+                  <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => selection.clear()}>
+                    Снять выбор
+                  </button>
+                </div>
+                <p className="hidden text-[10px] text-on-surface-variant xl:block">
+                  <kbd className="rounded bg-surface-container-high px-1">⌘K</kbd> палитра ·{' '}
+                  <kbd className="rounded bg-surface-container-high px-1">N</kbd> ввод ·{' '}
+                  <kbd className="rounded bg-surface-container-high px-1">↑↓</kbd> строки ·{' '}
+                  <kbd className="rounded bg-surface-container-high px-1">Enter</kbd> панель
+                </p>
               </div>
             </div>
           }
@@ -540,6 +710,14 @@ export default function Accounting() {
               <span className="text-xs font-semibold text-emerald-100">Выбрано: {selection.selectedCount}</span>
               <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
                 Очистить
+              </button>
+              <button
+                type="button"
+                className="btn-secondary min-h-9 px-4 text-xs font-bold"
+                disabled={selection.selectedCount === 0 || bulkAiCategoriesMutation.isPending}
+                onClick={() => bulkAiCategoriesMutation.mutate()}
+              >
+                {bulkAiCategoriesMutation.isPending ? 'ИИ…' : 'ИИ: категории'}
               </button>
               <Link to="/bank" className="btn-secondary min-h-9 px-4 text-xs font-bold">
                 Сверка в банке
@@ -557,7 +735,7 @@ export default function Accounting() {
                 title="Нет записей по фильтрам"
                 description="Смените период или добавьте операцию сверху."
                 actions={
-                  <button type="button" className="btn-primary mt-4 min-h-11 px-4" onClick={() => setWorkspaceFocus('capture')}>
+                  <button type="button" className="btn-primary mt-4 min-h-11 px-4" onClick={() => focusCaptureForm()}>
                     Добавить операцию
                   </button>
                 }
@@ -566,8 +744,18 @@ export default function Accounting() {
           ) : (
             <>
               <ul className="divide-y divide-outline-variant/10 md:hidden">
-                {(filteredItems as any[]).map((tx: any) => (
-                    <li key={tx.id} className="p-4">
+                {(filteredItems as any[]).map((tx: any, idx: number) => {
+                  const sug = suggestJournalCategory(String(tx.description || ''))
+                  const aiMismatch = tx.type === 'expense' && sug.category !== (tx.category || 'other')
+                  const accent =
+                    tx.status === 'draft'
+                      ? 'border-l-[3px] border-amber-400'
+                      : aiMismatch
+                        ? 'border-l-[3px] border-emerald-500/45'
+                        : ''
+                  const focusRing = focusedRowIndex === idx ? 'bg-emerald-500/[0.06]' : ''
+                  return (
+                    <li key={tx.id} className={`p-4 ${accent} ${focusRing}`}>
                       <div className="flex gap-3">
                         <input
                           type="checkbox"
@@ -580,13 +768,19 @@ export default function Accounting() {
                         <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPanelTx(tx)}>
                           <p className="font-semibold text-on-surface">{tx.description || '—'}</p>
                           <p className="text-xs text-on-surface-variant">
-                            {tx.transaction_date} · {CAT_LABELS[tx.category] || tx.category || 'Прочее'}
+                            {tx.transaction_date} · {JOURNAL_CATEGORY_LABELS[tx.category] || tx.category || 'Прочее'}
                           </p>
+                          {aiMismatch && (
+                            <span className="mt-1 inline-block rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                              ИИ: {JOURNAL_CATEGORY_LABELS[sug.category]}
+                            </span>
+                          )}
                         </button>
                         <span className="shrink-0 font-headline font-bold tabular-nums">{fmt(Number(tx.amount))}</span>
                       </div>
                     </li>
-                ))}
+                  )
+                })}
               </ul>
 
               <div className="fc-premium-table hidden overflow-x-auto md:block">
@@ -610,8 +804,22 @@ export default function Accounting() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
-                    {(filteredItems as any[]).map((tx: any) => (
-                        <tr key={tx.id} className="cursor-pointer transition-colors hover:bg-emerald-500/[0.04]" onClick={() => setPanelTx(tx)}>
+                    {(filteredItems as any[]).map((tx: any, idx: number) => {
+                      const sug = suggestJournalCategory(String(tx.description || ''))
+                      const aiMismatch = tx.type === 'expense' && sug.category !== (tx.category || 'other')
+                      const accent =
+                        tx.status === 'draft'
+                          ? 'border-l-[3px] border-amber-400'
+                          : aiMismatch
+                            ? 'border-l-[3px] border-emerald-500/45'
+                            : ''
+                      const focusRing = focusedRowIndex === idx ? 'ring-2 ring-primary/25 ring-inset bg-emerald-500/[0.04]' : ''
+                      return (
+                        <tr
+                          key={tx.id}
+                          className={`cursor-pointer transition-colors hover:bg-emerald-500/[0.04] ${accent} ${focusRing}`}
+                          onClick={() => setPanelTx(tx)}
+                        >
                           <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
@@ -624,9 +832,27 @@ export default function Accounting() {
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-on-surface-variant">{tx.transaction_date}</td>
                           <td className="max-w-[240px] px-4 py-3">
                             <p className="truncate font-medium text-on-surface">{tx.description || '—'}</p>
+                            {aiMismatch && (
+                              <span className="mt-0.5 inline-block text-[10px] text-emerald-600/90 dark:text-emerald-400/90">
+                                ИИ → {JOURNAL_CATEGORY_LABELS[sug.category]}
+                              </span>
+                            )}
                           </td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-md bg-surface-container-high px-2 py-0.5 text-xs">{CAT_LABELS[tx.category] || tx.category || 'Прочее'}</span>
+                          <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              className="input max-w-[148px] min-h-9 rounded-lg py-1 text-xs"
+                              value={tx.category || 'other'}
+                              onChange={(e) =>
+                                patchCategoryMutation.mutate({ id: tx.id, category: e.target.value })
+                              }
+                              disabled={patchCategoryMutation.isPending}
+                            >
+                              {JOURNAL_CATEGORY_KEYS.map((k) => (
+                                <option key={k} value={k}>
+                                  {JOURNAL_CATEGORY_LABELS[k]}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="px-4 py-3 text-right font-headline font-bold tabular-nums text-on-surface">{fmt(Number(tx.amount))}</td>
                           <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -635,7 +861,8 @@ export default function Accounting() {
                             </button>
                           </td>
                         </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -643,6 +870,38 @@ export default function Accounting() {
           )}
         </DataTableShell>
       </div>
+
+      <JournalQuickStrip
+        onIncome={() => {
+          setType('income')
+          focusCaptureForm()
+        }}
+        onExpense={() => {
+          setType('expense')
+          focusCaptureForm()
+        }}
+        onFocusCapture={focusCaptureForm}
+      />
+
+      <JournalCommandPalette
+        open={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        transactions={(txQuery.data?.items as any[]) || []}
+        query={paletteQuery}
+        onQueryChange={setPaletteQuery}
+        onPickTransaction={(t) => setPanelTx(t)}
+        onGoCapture={() => {
+          focusCaptureForm()
+          setCommandOpen(false)
+        }}
+        onClearFilters={() => {
+          setFilterDateFrom(monthStartStr)
+          setFilterDateTo(todayStr)
+          setFilterType('all')
+          setFilterSearch('')
+          setAttentionFilter('all')
+        }}
+      />
 
       <WorkflowSidePanel
         open={!!panelTx}
@@ -659,7 +918,7 @@ export default function Accounting() {
         <button type="button" className="btn-secondary min-h-12 flex-1 text-sm font-bold" onClick={() => setWorkspaceFocus('ledger')}>
           Журнал
         </button>
-        <button type="button" className="btn-primary min-h-12 flex-1 text-sm font-bold" onClick={() => setWorkspaceFocus('capture')}>
+        <button type="button" className="btn-primary min-h-12 flex-1 text-sm font-bold" onClick={() => focusCaptureForm()}>
           Ввод
         </button>
         <Link to="/scan" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" aria-label="Сканер">

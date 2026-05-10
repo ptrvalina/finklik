@@ -43,7 +43,11 @@ from app.schemas.business_os import (
 )
 from app.services.business_state_service import compute_business_state
 from app.services.structured_ai_analysis import analyze_transaction_ai
-from app.events.emit import emit_ai_suggestion_recorded, emit_reconciliation_match_recorded
+from app.events.emit import (
+    emit_ai_suggestion_recorded,
+    emit_reconciliation_confirmed,
+    emit_reconciliation_match_recorded,
+)
 
 router = APIRouter(
     prefix="/business",
@@ -267,6 +271,16 @@ async def create_reconciliation_match(
         status=body.status,
         actor="user",
     )
+    if body.status == "confirmed":
+        await emit_reconciliation_confirmed(
+            db,
+            oid,
+            row.id,
+            transaction_id=body.transaction_id,
+            document_id=body.document_id,
+            confidence=float(body.confidence),
+            actor="user",
+        )
     return row
 
 

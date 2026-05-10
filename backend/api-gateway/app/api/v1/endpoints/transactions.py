@@ -18,6 +18,7 @@ from app.services.pipeline_status import (
 )
 from app.services.categorization_service import auto_categorize_transaction
 from app.events.emit import (
+    emit_transaction_categorized,
     emit_transaction_created,
     emit_transaction_deleted,
     emit_transaction_updated,
@@ -251,6 +252,7 @@ async def update_transaction(
     tx = result.scalar_one_or_none()
     if not tx:
         raise HTTPException(status_code=404, detail="Транзакция не найдена")
+    previous_category = tx.category
     if body.counterparty_id:
         from app.models.counterparty import Counterparty
         cp = await db.execute(
@@ -277,6 +279,15 @@ async def update_transaction(
     await auto_categorize_transaction(db, tx)
     await db.flush()
     await emit_transaction_updated(db, str(current_user.organization_id), tx, actor="user")
+    if previous_category != tx.category:
+        await emit_transaction_categorized(
+            db,
+            str(current_user.organization_id),
+            tx.id,
+            previous_category=previous_category,
+            new_category=tx.category,
+            actor="user",
+        )
     await cache.invalidate_org(str(current_user.organization_id))
     return _serialize_transaction(tx)
 

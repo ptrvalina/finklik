@@ -14,7 +14,7 @@ from app.models.transaction import Transaction
 from app.services.ocr_service import tesseract_ocr_process, parse_text_document
 from app.services.expense_ai_classifier import classify_expense_category
 from app.internal.audit.service import safe_log_audit
-from app.events.emit import emit_document_ocr_processed, emit_transaction_created
+from app.events.emit import emit_document_ocr_processed, emit_ocr_linked, emit_transaction_created
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -138,6 +138,8 @@ async def upload_and_scan(
         lifecycle_status=doc.lifecycle_status,
         actor="system",
     )
+    if linked_tx_id:
+        await emit_ocr_linked(db, str(current_user.organization_id), doc.id, transaction_id=linked_tx_id)
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
