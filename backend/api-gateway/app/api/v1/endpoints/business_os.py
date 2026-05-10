@@ -43,6 +43,7 @@ from app.schemas.business_os import (
 )
 from app.services.business_state_service import compute_business_state
 from app.services.structured_ai_analysis import analyze_transaction_ai
+from app.events.emit import emit_ai_suggestion_recorded, emit_reconciliation_match_recorded
 
 router = APIRouter(
     prefix="/business",
@@ -256,6 +257,16 @@ async def create_reconciliation_match(
     )
     db.add(row)
     await db.flush()
+    await emit_reconciliation_match_recorded(
+        db,
+        oid,
+        row.id,
+        transaction_id=body.transaction_id,
+        document_id=body.document_id,
+        confidence=float(body.confidence),
+        status=body.status,
+        actor="user",
+    )
     return row
 
 
@@ -355,5 +366,12 @@ async def analyze_transaction_endpoint(
     analysis = await analyze_transaction_ai(db, tx)
     tx.ai_analysis_json = analysis.model_dump_json()
     await db.flush()
+    await emit_ai_suggestion_recorded(
+        db,
+        oid,
+        transaction_id,
+        analysis=analysis.model_dump(mode="json"),
+        actor="ai",
+    )
     await cache.invalidate_org(oid)
     return analysis

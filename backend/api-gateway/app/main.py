@@ -47,6 +47,7 @@ from app.api.v1.endpoints.notes import router as notes_router
 from app.api.v1.endpoints.signing import router as signing_router
 from app.api.v1.endpoints.integrations import router as integrations_router
 from app.api.v1.endpoints.business_os import router as business_os_router
+from app.api.v1.endpoints.domain_events import router as domain_events_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
@@ -263,6 +264,7 @@ app.include_router(notes_router, prefix="/api/v1")
 app.include_router(signing_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
 app.include_router(business_os_router, prefix="/api/v1")
+app.include_router(domain_events_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

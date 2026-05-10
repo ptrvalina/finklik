@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.transaction import Transaction
 from app.cache.redis_cache import cache
 from app.services.categorization_service import auto_categorize_transaction
+from app.events.emit import emit_transaction_created
 
 router = APIRouter(
     prefix="/import",
@@ -164,10 +165,11 @@ async def import_csv(
         )
         await auto_categorize_transaction(db, tx)
         db.add(tx)
+        await db.flush()
+        await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
         imported += 1
 
     if imported > 0:
-        await db.flush()
         await cache.invalidate_org(str(current_user.organization_id))
 
     return {

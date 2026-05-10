@@ -17,6 +17,11 @@ from app.services.pipeline_status import (
     get_transaction_validation_issues,
 )
 from app.services.categorization_service import auto_categorize_transaction
+from app.events.emit import (
+    emit_transaction_created,
+    emit_transaction_deleted,
+    emit_transaction_updated,
+)
 
 router = APIRouter(
     tags=["transactions"],
@@ -225,6 +230,7 @@ async def create_transaction(
     await auto_categorize_transaction(db, tx)
     db.add(tx)
     await db.flush()
+    await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
     await cache.invalidate_org(str(current_user.organization_id))
     return _serialize_transaction(tx)
 
@@ -270,6 +276,7 @@ async def update_transaction(
     tx.revenue_stream_id = body.revenue_stream_id
     await auto_categorize_transaction(db, tx)
     await db.flush()
+    await emit_transaction_updated(db, str(current_user.organization_id), tx, actor="user")
     await cache.invalidate_org(str(current_user.organization_id))
     return _serialize_transaction(tx)
 
@@ -289,6 +296,18 @@ async def delete_transaction(
     tx = result.scalar_one_or_none()
     if not tx:
         raise HTTPException(status_code=404, detail="Транзакция не найдена")
+    snap = {
+        "type": tx.type,
+        "amount": str(tx.amount),
+        "vat_amount": str(tx.vat_amount),
+        "currency": tx.currency,
+        "category": tx.category,
+        "description": tx.description,
+        "transaction_date": tx.transaction_date.isoformat() if tx.transaction_date else None,
+        "status": tx.status,
+        "source": tx.source,
+    }
+    await emit_transaction_deleted(db, str(current_user.organization_id), tx.id, snapshot=snap, actor="user")
     await db.delete(tx)
     await cache.invalidate_org(str(current_user.organization_id))
 

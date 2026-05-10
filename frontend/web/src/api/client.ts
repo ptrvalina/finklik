@@ -346,6 +346,12 @@ export const businessOsApi = {
     api.post(`/business/transactions/${transactionId}/analyze`),
 }
 
+/** Журнал domain_events + превью производных данных (гибрид CRUD + события). */
+export const eventsApi = {
+  recent: (params?: { limit?: number }) => api.get('/events/recent', { params }),
+  derivedPreview: () => api.get('/events/derived-preview'),
+}
+
 export const employeesApi = {
   list: (params?: any) => api.get('/employees', { params }),
   get: (id: string) => api.get(`/employees/${id}`),

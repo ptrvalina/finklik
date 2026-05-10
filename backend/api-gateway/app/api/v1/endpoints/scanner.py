@@ -14,6 +14,7 @@ from app.models.transaction import Transaction
 from app.services.ocr_service import tesseract_ocr_process, parse_text_document
 from app.services.expense_ai_classifier import classify_expense_category
 from app.internal.audit.service import safe_log_audit
+from app.events.emit import emit_document_ocr_processed, emit_transaction_created
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -125,7 +126,18 @@ async def upload_and_scan(
         lifecycle_status="matched" if linked_tx_id else "parsed",
     )
     db.add(doc)
-    await db.commit()
+    await db.flush()
+    await emit_document_ocr_processed(
+        db,
+        str(current_user.organization_id),
+        doc.id,
+        parsed=parsed,
+        doc_type=ocr_result["doc_type"],
+        confidence=int(ocr_result.get("confidence", 0) or 0),
+        linked_transaction_id=linked_tx_id,
+        lifecycle_status=doc.lifecycle_status,
+        actor="system",
+    )
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
@@ -211,6 +223,19 @@ async def upload_to_kudir(
 
     doc.transaction_id = tx.id
     doc.lifecycle_status = "matched"
+    oid = str(current_user.organization_id)
+    await emit_document_ocr_processed(
+        db,
+        oid,
+        doc.id,
+        parsed=parsed,
+        doc_type=ocr_result["doc_type"],
+        confidence=int(ocr_result.get("confidence", 0) or 0),
+        linked_transaction_id=tx.id,
+        lifecycle_status=doc.lifecycle_status,
+        actor="system",
+    )
+    await emit_transaction_created(db, oid, tx, actor="system")
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
@@ -325,7 +350,19 @@ async def parse_text(
         lifecycle_status="parsed",
     )
     db.add(doc)
-    await db.commit()
+    await db.flush()
+    parsed_out = result.get("parsed", {}) or {}
+    await emit_document_ocr_processed(
+        db,
+        str(current_user.organization_id),
+        doc.id,
+        parsed=parsed_out,
+        doc_type=result["doc_type"],
+        confidence=int(result.get("confidence", 0) or 0),
+        linked_transaction_id=None,
+        lifecycle_status=doc.lifecycle_status,
+        actor="system",
+    )
     await db.refresh(doc)
 
     return {

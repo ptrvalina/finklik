@@ -29,6 +29,7 @@ from app.schemas.primary_document import (
 from app.services.primary_document_numbering import allocate_next_document_number, peek_next_document_number
 from app.services.primary_document_pdf import PrimaryDocumentPdfContext, generate_primary_document_pdf
 from app.services.email_service import send_payment_link_email
+from app.events.emit import emit_transaction_created
 
 router = APIRouter(
     prefix="/primary-documents",
@@ -138,6 +139,7 @@ async def _mark_invoice_paid(
         db.add(tx)
         await db.flush()
         doc.transaction_id = tx.id
+        await emit_transaction_created(db, str(doc.organization_id), tx, actor="system")
     doc.status = "paid"
 
 

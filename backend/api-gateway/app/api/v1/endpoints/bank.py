@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.bank_account import BankAccount
 from app.schemas.bank_import import StatementImportPayload
 from app.internal.audit.service import safe_log_audit
+from app.events.emit import emit_transaction_created
 
 router = APIRouter(
     prefix="/bank",
@@ -302,6 +303,7 @@ async def create_payment(
         metadata={"amount": float(body.amount)},
     )
     await db.flush()
+    await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
     await cache.invalidate_org(str(current_user.organization_id))
 
     return {
@@ -346,21 +348,21 @@ async def import_bank_statement(
         if dup.scalar_one_or_none():
             skipped += 1
             continue
-        db.add(
-            Transaction(
-                id=str(uuid_mod.uuid4()),
-                organization_id=org_id,
-                type=tx_type,
-                amount=amt,
-                description=desc,
-                transaction_date=line.transaction_date,
-                status="confirmed",
-                category="bank_import",
-                source="bank",
-            )
+        nt = Transaction(
+            id=str(uuid_mod.uuid4()),
+            organization_id=org_id,
+            type=tx_type,
+            amount=amt,
+            description=desc,
+            transaction_date=line.transaction_date,
+            status="confirmed",
+            category="bank_import",
+            source="bank",
         )
+        db.add(nt)
+        await db.flush()
+        await emit_transaction_created(db, str(org_id), nt, actor="user")
         created += 1
-    await db.flush()
     await cache.invalidate_org(str(org_id))
     await safe_log_audit(
         db,
