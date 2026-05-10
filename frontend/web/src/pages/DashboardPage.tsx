@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi, reportsApi, bankApi } from '../api/client'
+import { dashboardApi, reportsApi, bankApi, businessOsApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -51,6 +51,15 @@ export default function DashboardPage() {
     queryKey: ['bank-accounts-dashboard'],
     queryFn: () => bankApi.listAccounts().then((r) => r.data),
     enabled: !isManager,
+    staleTime: 60_000,
+  })
+
+  /** Business OS snapshot (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
+  const { data: businessState } = useQuery({
+    queryKey: ['business-state'],
+    queryFn: () => businessOsApi.getState().then((r) => r.data),
+    enabled: !isManager,
+    retry: false,
     staleTime: 60_000,
   })
 
@@ -165,6 +174,52 @@ export default function DashboardPage() {
       </div>
 
       <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
+
+      {businessState && (
+        <GlassCard className="mt-6 p-5 sm:p-6" hoverLift={false}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Business OS</p>
+              <p className="mt-1 font-headline text-lg font-bold text-on-surface">Состояние бизнеса</p>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Выручка и расходы за месяц, прибыль и обязательства — единый снимок для операций.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  businessState.financial_health_status === 'ok'
+                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                    : businessState.financial_health_status === 'warning'
+                      ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
+                      : 'bg-red-500/15 text-red-700 dark:text-red-300'
+                }`}
+              >
+                {businessState.financial_health_status === 'ok'
+                  ? 'Норма'
+                  : businessState.financial_health_status === 'warning'
+                    ? 'Внимание'
+                    : 'Риск'}
+              </span>
+              <div className="text-right text-sm">
+                <p className="text-on-surface-variant">Месяц: доход {fmt(businessState.monthly_revenue)} · расход {fmt(businessState.monthly_expenses)}</p>
+                <p className="font-semibold text-on-surface">Прибыль (всего): {fmt(businessState.profit)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-4 border-t border-outline-variant/20 pt-4 text-sm">
+            <span className="text-on-surface-variant">
+              К оплате: <strong className="text-on-surface">{businessState.pending_obligations_count}</strong>
+            </span>
+            <span className="text-on-surface-variant">
+              Просрочено:{' '}
+              <strong className={businessState.overdue_obligations_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-on-surface'}>
+                {businessState.overdue_obligations_count}
+              </strong>
+            </span>
+          </div>
+        </GlassCard>
+      )}
 
       <div className="mt-8">
         <AIRecommendationPanel metrics={metrics} transactions={transactions} />
