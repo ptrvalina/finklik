@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from decimal import Decimal
-from datetime import date, datetime, time as dt_time, timezone
+from datetime import date, datetime, time as dt_time
 from pathlib import Path
 import structlog
 from prometheus_client import Counter
@@ -21,6 +21,7 @@ from app.schemas.employee import (
     CalendarEventResponse,
     CalendarProductivitySummary,
 )
+from app.core.datetime_utils import utc_now_naive
 from app.services.calendar_reminder_service import delete_pending_for_event, sync_calendar_deliveries
 from app.services.tax_calculator import (
     calculate_usn, calculate_vat, calculate_fsszn, generate_tax_calendar, get_tax_rules_for_year, validate_tax_rules_config
@@ -391,7 +392,7 @@ async def complete_calendar_event(
         raise HTTPException(status_code=404, detail="Событие не найдено")
     if body.done:
         event.is_completed = True
-        event.completed_at = datetime.now(timezone.utc)
+        event.completed_at = utc_now_naive()
         await delete_pending_for_event(db, event.id)
     else:
         event.is_completed = False
@@ -412,8 +413,9 @@ async def calendar_productivity_summary(
         raise HTTPException(status_code=400, detail="Неверный период")
     org_id = _require_org_id(current_user)
 
-    start_dt = datetime.combine(period_start, dt_time.min, tzinfo=timezone.utc)
-    end_dt = datetime.combine(period_end, dt_time(23, 59, 59), tzinfo=timezone.utc)
+    # Границы периода в UTC как naive (колонки TIMESTAMP WITHOUT TIME ZONE).
+    start_dt = datetime.combine(period_start, dt_time.min)
+    end_dt = datetime.combine(period_end, dt_time(23, 59, 59))
 
     ce_completed_r = await db.execute(
         select(func.count()).select_from(CalendarEvent).where(

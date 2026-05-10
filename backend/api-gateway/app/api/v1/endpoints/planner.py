@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_, select
@@ -19,6 +19,7 @@ from app.schemas.planner import (
 )
 from app.services.planner_notifications import send_planner_email, send_planner_telegram
 from app.internal.audit.service import safe_log_audit
+from app.core.datetime_utils import utc_now_naive
 
 router = APIRouter(prefix="/planner", tags=["planner"])
 
@@ -152,7 +153,7 @@ async def close_task(
         raise HTTPException(status_code=403, detail="Недостаточно прав для закрытия задачи")
 
     task.status = "closed"
-    task.closed_at = datetime.now(timezone.utc)
+    task.closed_at = utc_now_naive()
     await safe_log_audit(
         db,
         user_id=str(current_user.id),

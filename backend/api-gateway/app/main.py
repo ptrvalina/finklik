@@ -174,10 +174,12 @@ app = FastAPI(
 async def global_exception_handler(request, exc):
     log.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
     from starlette.responses import JSONResponse
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"Internal error: {type(exc).__name__}: {exc}"},
-    )
+
+    if settings.DEBUG:
+        detail = f"Internal error: {type(exc).__name__}: {exc}"
+    else:
+        detail = "Внутренняя ошибка сервера. Попробуйте позже или обратитесь в поддержку."
+    return JSONResponse(status_code=500, content={"detail": detail})
 
 # Метрики Prometheus (до прочих middleware — корректный учёт latency)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)

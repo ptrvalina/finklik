@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, date, timezone
+from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy import String, Numeric, Boolean, DateTime, Date, ForeignKey, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.core.datetime_utils import utc_now_naive
 
 
 class Employee(Base):
@@ -50,7 +51,7 @@ class Employee(Base):
     #: Расширенные кадровые поля (JSON): приказы, подразделение, совместительство, выписки сканов и т.д.
     hr_meta_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
     salaries: Mapped[list["SalaryRecord"]] = relationship("SalaryRecord", back_populates="employee")
 
@@ -91,7 +92,7 @@ class SalaryRecord(Base):
 
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft/paid
     paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
     employee: Mapped["Employee"] = relationship("Employee", back_populates="salaries")
 
@@ -115,7 +116,7 @@ class CalendarEvent(Base):
     recurrence_rule: Mapped[str | None] = mapped_column(String(50), nullable=True)
     # monthly / quarterly / yearly
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
     #: Весь день или интервал времени (локальное время «ЧЧ:ММ»).
     all_day: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -149,4 +150,4 @@ class AuditLog(Base):
     ip_address: Mapped[str] = mapped_column(String(45), nullable=False)
     success: Mapped[bool] = mapped_column(Boolean, default=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
