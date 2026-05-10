@@ -320,6 +320,32 @@ export const dashboardApi = {
   deleteTransaction: (id: string) => api.delete(`/transactions/${id}`),
 }
 
+/** Business OS: единый снимок состояния, доменные сущности, обязательства, сверка. */
+export const businessOsApi = {
+  getState: () => api.get('/business/state'),
+  listEntities: () => api.get('/business/entities'),
+  createEntity: (data: { name: string; entity_type: string; counterparty_id?: string | null }) =>
+    api.post('/business/entities', data),
+  listCostCenters: () => api.get('/business/cost-centers'),
+  createCostCenter: (data: { name: string; center_type: string }) =>
+    api.post('/business/cost-centers', data),
+  listRevenueStreams: () => api.get('/business/revenue-streams'),
+  createRevenueStream: (data: { name: string; source?: string | null }) =>
+    api.post('/business/revenue-streams', data),
+  listObligations: () => api.get('/business/obligations'),
+  createObligation: (data: any) => api.post('/business/obligations', data),
+  patchObligation: (id: string, data: any) => api.patch(`/business/obligations/${id}`, data),
+  listReconciliationMatches: () => api.get('/business/reconciliation-matches'),
+  createReconciliationMatch: (data: any) => api.post('/business/reconciliation-matches', data),
+  listWorkflowActions: () => api.get('/business/workflow-actions'),
+  logWorkflowAction: (data: any) => api.post('/business/workflow-actions', data),
+  listAiMemory: () => api.get('/business/ai-memory'),
+  appendAiMemory: (data: { memory_type: string; payload_json: string }) =>
+    api.post('/business/ai-memory', data),
+  analyzeTransaction: (transactionId: string) =>
+    api.post(`/business/transactions/${transactionId}/analyze`),
+}
+
 export const employeesApi = {
   list: (params?: any) => api.get('/employees', { params }),
   get: (id: string) => api.get(`/employees/${id}`),

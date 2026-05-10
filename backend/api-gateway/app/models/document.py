@@ -44,6 +44,11 @@ class ScannedDocument(Base):
     confidence: Mapped[int] = mapped_column(Integer, default=0)
 
     transaction_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: Жизненный цикл документа ОС: uploaded | parsed | matched | confirmed
+    lifecycle_status: Mapped[str] = mapped_column(String(20), nullable=False, default="uploaded")
+    duplicate_of_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("scanned_documents.id", ondelete="SET NULL"), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 

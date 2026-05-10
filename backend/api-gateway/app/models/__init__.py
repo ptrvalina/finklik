@@ -14,6 +14,15 @@ from app.models.categorization_rule import CategorizationRule
 from app.models.automation_policy import AutomationPolicy
 from app.models.user_note import UserNote
 from app.models.calendar_reminder import CalendarReminderDelivery
+from app.models.business_os import (
+    AIMemoryEntry,
+    BusinessEntity,
+    CostCenter,
+    FinancialObligation,
+    ReconciliationMatch,
+    RevenueStream,
+    WorkflowAction,
+)
 
 __all__ = [
     "Organization", "User", "Invitation", "Transaction",
@@ -26,4 +35,11 @@ __all__ = [
     "AutomationPolicy",
     "UserNote",
     "CalendarReminderDelivery",
+    "AIMemoryEntry",
+    "BusinessEntity",
+    "CostCenter",
+    "FinancialObligation",
+    "ReconciliationMatch",
+    "RevenueStream",
+    "WorkflowAction",
 ]

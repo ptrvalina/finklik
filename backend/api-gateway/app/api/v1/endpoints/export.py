@@ -47,6 +47,7 @@ async def download_transactions_csv(
     txs = result.scalars().all()
     data = [
         {
+            "id": t.id,
             "transaction_date": str(t.transaction_date),
             "type": t.type,
             "amount": float(t.amount),
@@ -54,6 +55,9 @@ async def download_transactions_csv(
             "category": t.category or "",
             "description": t.description or "",
             "status": t.status,
+            "counterparty_id": t.counterparty_id,
+            "cost_center_id": t.cost_center_id,
+            "revenue_stream_id": t.revenue_stream_id,
         }
         for t in txs
     ]

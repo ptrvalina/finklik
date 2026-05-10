@@ -19,20 +19,39 @@ def export_transactions_csv(transactions: list[dict]) -> bytes:
 
     writer = csv.DictWriter(
         output,
-        fieldnames=["Дата", "Тип", "Сумма (BYN)", "НДС (BYN)", "Категория", "Описание", "Статус"],
+        fieldnames=[
+            "Дата",
+            "Тип",
+            "Сумма (BYN)",
+            "НДС (BYN)",
+            "Категория",
+            "Описание",
+            "Статус",
+            "ID операции",
+            "ID контрагента",
+            "ID центра затрат",
+            "ID потока выручки",
+        ],
         delimiter=";",
     )
     writer.writeheader()
 
+    _type_labels = {"income": "Доход", "expense": "Расход", "refund": "Возврат", "writeoff": "Списание"}
+
     for tx in transactions:
+        t = tx.get("type") or ""
         writer.writerow({
             "Дата": tx.get("transaction_date", ""),
-            "Тип": "Доход" if tx.get("type") == "income" else "Расход",
+            "Тип": _type_labels.get(t, t or ""),
             "Сумма (BYN)": str(tx.get("amount", "0")).replace(".", ","),
             "НДС (BYN)": str(tx.get("vat_amount", "0")).replace(".", ","),
             "Категория": tx.get("category", "") or "",
             "Описание": tx.get("description", ""),
             "Статус": tx.get("status", ""),
+            "ID операции": tx.get("id", ""),
+            "ID контрагента": tx.get("counterparty_id", "") or "",
+            "ID центра затрат": tx.get("cost_center_id", "") or "",
+            "ID потока выручки": tx.get("revenue_stream_id", "") or "",
         })
 
     return output.getvalue().encode("utf-8-sig")

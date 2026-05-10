@@ -25,6 +25,8 @@ class TransactionCreate(BaseModel):
     ai_category_confidence: Decimal | None = Field(default=None, ge=0, le=1)
     receipt_image_url: str | None = None
     transaction_date: date
+    cost_center_id: str | None = None
+    revenue_stream_id: str | None = None
 
 
 class TransactionResponse(BaseModel):
@@ -43,6 +45,9 @@ class TransactionResponse(BaseModel):
     pipeline_status: str | None = None
     validation_issues: list[str] = []
     created_at: datetime
+    cost_center_id: str | None = None
+    revenue_stream_id: str | None = None
+    ai_analysis_json: str | None = None
 
     model_config = {"from_attributes": True}
 

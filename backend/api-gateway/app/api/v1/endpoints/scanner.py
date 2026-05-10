@@ -122,6 +122,7 @@ async def upload_and_scan(
         parsed_data=json.dumps(parsed, ensure_ascii=False),
         confidence=ocr_result.get("confidence", 0),
         transaction_id=linked_tx_id,
+        lifecycle_status="matched" if linked_tx_id else "parsed",
     )
     db.add(doc)
     await db.commit()
@@ -146,6 +147,7 @@ async def upload_and_scan(
         "warnings": ocr_result.get("warnings", []),
         "is_duplicate": is_duplicate,
         "linked_transaction_id": linked_tx_id,
+        "lifecycle_status": doc.lifecycle_status,
         "created_at": doc.created_at.isoformat(),
     }
 
@@ -187,6 +189,7 @@ async def upload_to_kudir(
         ocr_text=ocr_result.get("ocr_text", ""),
         parsed_data=json.dumps(parsed, ensure_ascii=False),
         confidence=ocr_result.get("confidence", 0),
+        lifecycle_status="parsed",
     )
     db.add(doc)
     await db.flush()
@@ -207,6 +210,7 @@ async def upload_to_kudir(
     await db.flush()
 
     doc.transaction_id = tx.id
+    doc.lifecycle_status = "matched"
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
@@ -250,6 +254,7 @@ async def review_queue(
                 "doc_type": d.doc_type,
                 "created_at": d.created_at.isoformat(),
                 "transaction_id": d.transaction_id,
+                "lifecycle_status": d.lifecycle_status,
             }
             for d in docs
         ]
@@ -289,6 +294,7 @@ async def list_scanned_documents(
             "confidence": d.confidence,
             "parsed": parsed,
             "transaction_id": d.transaction_id,
+            "lifecycle_status": d.lifecycle_status,
             "created_at": d.created_at.isoformat(),
         })
 
@@ -316,6 +322,7 @@ async def parse_text(
         ocr_text=result.get("ocr_text", ""),
         parsed_data=json.dumps(result.get("parsed", {}), ensure_ascii=False),
         confidence=result.get("confidence", 0),
+        lifecycle_status="parsed",
     )
     db.add(doc)
     await db.commit()
@@ -330,6 +337,7 @@ async def parse_text(
         "ocr_text": result.get("ocr_text", ""),
         "parsed": result.get("parsed", {}),
         "warnings": result.get("warnings", []),
+        "lifecycle_status": doc.lifecycle_status,
         "created_at": doc.created_at.isoformat(),
     }
 

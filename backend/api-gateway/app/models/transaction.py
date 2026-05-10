@@ -1,9 +1,10 @@
 import uuid
-from datetime import datetime, date, timezone
+from datetime import datetime, date
 from sqlalchemy import String, Numeric, DateTime, Date, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
 from app.core.database import Base
+from app.core.datetime_utils import utc_now_naive
 
 
 class Transaction(Base):
@@ -29,6 +30,9 @@ class Transaction(Base):
     receipt_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     transaction_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="draft")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    cost_center_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("cost_centers.id", ondelete="SET NULL"), nullable=True)
+    revenue_stream_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("revenue_streams.id", ondelete="SET NULL"), nullable=True)
+    ai_analysis_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="transactions")

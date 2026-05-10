@@ -41,6 +41,9 @@ def _serialize_transaction(tx: Transaction) -> TransactionResponse:
         pipeline_status=get_transaction_pipeline_status(tx),
         validation_issues=get_transaction_validation_issues(tx),
         created_at=tx.created_at,
+        cost_center_id=tx.cost_center_id,
+        revenue_stream_id=tx.revenue_stream_id,
+        ai_analysis_json=tx.ai_analysis_json,
     )
 
 
@@ -216,6 +219,8 @@ async def create_transaction(
         ai_category_confidence=body.ai_category_confidence,
         receipt_image_url=body.receipt_image_url,
         transaction_date=body.transaction_date,
+        cost_center_id=body.cost_center_id,
+        revenue_stream_id=body.revenue_stream_id,
     )
     await auto_categorize_transaction(db, tx)
     db.add(tx)
@@ -261,6 +266,8 @@ async def update_transaction(
     tx.ai_category_confidence = body.ai_category_confidence
     tx.receipt_image_url = body.receipt_image_url
     tx.transaction_date = body.transaction_date
+    tx.cost_center_id = body.cost_center_id
+    tx.revenue_stream_id = body.revenue_stream_id
     await auto_categorize_transaction(db, tx)
     await db.flush()
     await cache.invalidate_org(str(current_user.organization_id))
