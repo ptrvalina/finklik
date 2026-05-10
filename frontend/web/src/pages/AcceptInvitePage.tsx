@@ -43,7 +43,7 @@ export default function AcceptInvitePage() {
         <p className="mt-3 text-sm text-on-surface-variant">Код приглашения и пароль для входа в команду</p>
       </AuthBrandMark>
 
-      <div className="card-elevated relative overflow-hidden rounded-[1.25rem] border border-outline/75 p-8 shadow-lift ring-1 ring-primary/[0.08]">
+      <div className="card-elevated relative overflow-hidden rounded-3xl border border-outline/60 p-8 shadow-float ring-1 ring-emerald-500/[0.08] backdrop-blur-xl dark:border-white/[0.08]">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90" aria-hidden />
         <div className="pt-1 text-center">
           <h2 className="font-headline text-xl font-bold text-on-surface">Присоединиться к ФинКлик</h2>

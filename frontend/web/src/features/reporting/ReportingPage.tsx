@@ -36,7 +36,7 @@ export default function ReportingPage({ basePath = '/reporting' }: ReportingPage
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="card-elevated relative overflow-hidden rounded-[1.25rem] p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
+      <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90" aria-hidden />
         <h1 className="page-heading">
           {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Отчетность'}
@@ -55,7 +55,7 @@ export default function ReportingPage({ basePath = '/reporting' }: ReportingPage
       </div>
 
       {!filter && (
-        <div className="flex flex-wrap gap-2 rounded-[1.25rem] border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4">
+        <div className="flex flex-wrap gap-2 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4">
           <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80 lg:hidden">Органы</span>
           {hubLinks.map((l) => (
             <Link

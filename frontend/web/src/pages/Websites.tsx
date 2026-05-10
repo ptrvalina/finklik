@@ -59,7 +59,7 @@ export default function Websites() {
             href={x.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="card-elevated group flex gap-4 rounded-[1.25rem] border border-outline/70 p-4 shadow-card ring-1 ring-primary/[0.04] transition-colors hover:border-primary/35 hover:bg-primary/[0.04] sm:p-5"
+            className="card-elevated group flex gap-4 rounded-3xl border border-outline/70 p-4 shadow-card ring-1 ring-primary/[0.04] transition-colors hover:border-primary/35 hover:bg-primary/[0.04] sm:p-5"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Icon name={x.icon} className="text-2xl" />

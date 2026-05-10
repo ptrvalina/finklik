@@ -39,7 +39,7 @@ export default function LoginPage() {
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Бизнес в кармане</p>
       </AuthBrandMark>
 
-      <div className="card-elevated rounded-[1.25rem] border border-outline/75 p-7 shadow-lift ring-1 ring-primary/[0.08] dark:border-outline-variant/40">
+      <div className="card-elevated rounded-3xl border border-outline/60 p-8 shadow-float ring-1 ring-emerald-500/[0.08] backdrop-blur-xl dark:border-white/[0.08]">
         <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
           Войти в аккаунт
         </h2>
@@ -76,7 +76,7 @@ export default function LoginPage() {
               <Icon name="mail" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
               <input
                 type="email"
-                className="input rounded-[1rem] pl-10"
+                className="input pl-10"
                 placeholder="ivan@company.by"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -91,7 +91,7 @@ export default function LoginPage() {
               <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
               <input
                 type="password"
-                className="input rounded-[1rem] pl-10"
+                className="input pl-10"
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -99,7 +99,7 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          <button type="submit" className="btn-primary min-h-12 w-full rounded-[1rem]" disabled={isLoading}>
+          <button type="submit" className="btn-primary min-h-12 w-full" disabled={isLoading}>
             {isLoading ? 'Входим...' : 'Войти'}
           </button>
         </form>

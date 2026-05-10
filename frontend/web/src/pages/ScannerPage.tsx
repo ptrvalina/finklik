@@ -256,7 +256,7 @@ export default function ScannerPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-[1.25rem] border border-outline/75 bg-surface-container-low p-4 shadow-soft sm:p-6">
+            <div className="rounded-3xl border border-outline/75 bg-surface-container-low p-4 shadow-soft sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Icon name="auto_awesome" filled className="text-primary" />
                 <div>
@@ -309,7 +309,7 @@ export default function ScannerPage() {
             const displayDoc = editDraft?.docType || scanResult.doc_type
             const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
             return (
-            <div className="mt-6 overflow-hidden rounded-[1.25rem] border border-outline/75 bg-surface-container-low shadow-soft">
+            <div className="mt-6 overflow-hidden rounded-3xl border border-outline/75 bg-surface-container-low shadow-soft">
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
                   <Icon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
