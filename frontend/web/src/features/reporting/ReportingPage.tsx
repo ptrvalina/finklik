@@ -35,18 +35,19 @@ export default function ReportingPage({ basePath = '/reporting' }: ReportingPage
   const filter = authority && isReportingAuthority(authority) ? authority : null
 
   return (
-    <div className="max-w-7xl space-y-5 sm:space-y-6">
-      <div className="card-elevated p-4 sm:p-5">
+    <div className="fc-page-shell">
+      <div className="card-elevated relative overflow-hidden rounded-[1.25rem] p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90" aria-hidden />
         <h1 className="page-heading">
           {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Отчетность'}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-on-surface-variant">
           {filter
             ? `Отчёты и отправка в ${authorityTitle(filter)}`
             : 'Выберите орган в меню слева или перейдите в раздел ниже'}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Подготовка</span>
+        <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-primary/20 bg-primary/[0.06] px-2.5 py-1 font-semibold text-primary">Подготовка</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Проверка</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Подача</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Статус</span>
@@ -54,13 +55,13 @@ export default function ReportingPage({ basePath = '/reporting' }: ReportingPage
       </div>
 
       {!filter && (
-        <div className="flex flex-wrap gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-3 shadow-soft sm:p-4">
-          <span className="w-full text-[10px] font-bold uppercase tracking-widest text-zinc-500 lg:hidden">Органы</span>
+        <div className="flex flex-wrap gap-2 rounded-[1.25rem] border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4">
+          <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80 lg:hidden">Органы</span>
           {hubLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="tap-highlight-none rounded-lg border border-zinc-200/90 bg-surface px-3 py-2 text-xs font-bold text-zinc-800 transition-colors hover:border-primary/35 hover:bg-primary/5 hover:text-primary dark:border-zinc-700/80 dark:text-zinc-200"
+              className="tap-highlight-none rounded-xl border border-outline/70 bg-surface px-4 py-2.5 text-xs font-bold text-on-surface shadow-xs transition hover:border-primary/40 hover:bg-primary/[0.07] hover:text-primary"
             >
               {l.label}
             </Link>

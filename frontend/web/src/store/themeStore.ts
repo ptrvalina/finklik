@@ -12,7 +12,7 @@ export function applyThemeClass(theme: ThemeMode) {
 
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) {
-    meta.setAttribute('content', theme === 'dark' ? '#09090b' : '#ffffff')
+    meta.setAttribute('content', theme === 'dark' ? '#061513' : '#f4f8f6')
   }
 }
 

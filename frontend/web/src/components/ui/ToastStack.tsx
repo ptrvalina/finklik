@@ -7,7 +7,7 @@ function variantClasses(v: ToastVariant): string {
     case 'error':
       return 'border-red-200/90 bg-red-50/95 text-red-950 shadow-[0_12px_40px_-12px_rgb(239_68_68/0.3)] dark:border-red-900/60 dark:bg-red-950/90 dark:text-red-50'
     default:
-      return 'border-outline/80 bg-surface/98 text-on-surface shadow-lift dark:border-zinc-700/80 dark:bg-zinc-900/98'
+      return 'border-outline/80 bg-surface/98 text-on-surface shadow-lift dark:border-outline/45 dark:bg-surface/98'
   }
 }
 

@@ -206,33 +206,36 @@ export default function EmployeesPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending
 
   return (
-    <div className="max-w-7xl space-y-4 sm:space-y-6">
+    <div className="fc-page-shell">
       {/* Header */}
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <h1 className="page-heading">Сотрудники</h1>
-          <p className="mt-1 text-sm text-zinc-500">Команда, зарплаты и кадровый учёт</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Кадры</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Начисления</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Выплаты</span>
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div>
+            <h1 className="page-heading">Сотрудники</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">Команда, зарплаты и кадровый учёт</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Кадры</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Начисления</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Выплаты</span>
+            </div>
           </div>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link to="/calendar" className="btn-secondary w-full sm:w-auto">
-            <Icon name="calendar_today" className="text-lg" /> График
-          </Link>
-          <button
-            type="button"
-            className="btn-primary w-full sm:w-auto"
-            onClick={() => {
-              setEditingEmployee(null)
-              resetForm()
-              setShowModal(true)
-            }}
-          >
-            <Icon name="person_add" className="text-lg" /> Добавить
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Link to="/calendar" className="btn-secondary w-full sm:w-auto">
+              <Icon name="calendar_today" className="text-lg" /> График
+            </Link>
+            <button
+              type="button"
+              className="btn-primary w-full sm:w-auto"
+              onClick={() => {
+                setEditingEmployee(null)
+                resetForm()
+                setShowModal(true)
+              }}
+            >
+              <Icon name="person_add" className="text-lg" /> Добавить
+            </button>
+          </div>
         </div>
       </div>
 
@@ -246,7 +249,7 @@ export default function EmployeesPage() {
 
       {/* Tabs */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
           {(
             [
               { key: 'active' as Tab, label: 'Активные', count: employees.length },
@@ -274,7 +277,7 @@ export default function EmployeesPage() {
       {/* Payroll */}
       {tab === 'payroll' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:gap-4 sm:p-5">
+          <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface-container-low p-4 border border-outline/75 shadow-soft sm:gap-4 sm:p-5">
             <div>
               <label className="label">Год</label>
               <input type="number" className="input w-28 min-h-11 rounded-xl" value={payrollYear} onChange={(e) => setPayrollYear(Number(e.target.value))} />
@@ -293,13 +296,13 @@ export default function EmployeesPage() {
                 ))}
               </select>
             </div>
-            <span className="pb-2 text-sm text-zinc-500">
+            <span className="pb-2 text-sm text-on-surface-variant">
               {payrollLoading ? 'Загрузка...' : `${payroll.length} записей`}
             </span>
           </div>
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
             {payroll.length === 0 ? (
-              <div className="p-12 text-center text-sm text-zinc-500">{payrollLoading ? 'Загрузка...' : 'Нет расчётов'}</div>
+              <div className="p-12 text-center text-sm text-on-surface-variant">{payrollLoading ? 'Загрузка...' : 'Нет расчётов'}</div>
             ) : (
               <>
                 <ul className="divide-y divide-white/[0.05] md:hidden">
@@ -307,8 +310,8 @@ export default function EmployeesPage() {
                     <li key={r.id} className="p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Сотрудник</p>
-                          <p className="font-mono text-xs text-zinc-500">{r.employee_id.slice(0, 8)}…</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Сотрудник</p>
+                          <p className="font-mono text-xs text-on-surface-variant">{r.employee_id.slice(0, 8)}…</p>
                         </div>
                         <span
                           className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${
@@ -322,19 +325,19 @@ export default function EmployeesPage() {
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-zinc-500">К выдаче</span>
+                          <span className="text-on-surface-variant">К выдаче</span>
                           <p className="font-headline font-bold text-primary">{fmt(r.net_salary)}</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-zinc-500">Начислено</span>
+                          <span className="text-on-surface-variant">Начислено</span>
                           <p className="font-bold text-on-surface">{fmt(r.gross_salary)}</p>
                         </div>
                         <div>
-                          <span className="text-zinc-500">НДФЛ</span>
+                          <span className="text-on-surface-variant">НДФЛ</span>
                           <p className="text-red-300">{fmt(r.income_tax)}</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-zinc-500">ФСЗН 34%</span>
+                          <span className="text-on-surface-variant">ФСЗН 34%</span>
                           <p className="text-violet-300">{fmt(r.fsszn_employer)}</p>
                         </div>
                       </div>
@@ -382,11 +385,11 @@ export default function EmployeesPage() {
       {/* Employee list */}
       {tab !== 'payroll' && (
         <>
-          <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
+          <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low p-4 border border-outline/75 shadow-soft sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
             <div className="min-w-0 flex-1 sm:min-w-[200px]">
               <label className="label">Поиск</label>
               <div className="relative">
-                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-zinc-500" />
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
                 <input
                   className="input min-h-11 rounded-xl pl-10"
                   placeholder="ФИО или должность"
@@ -395,19 +398,19 @@ export default function EmployeesPage() {
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 pb-1 text-sm text-zinc-500 sm:pb-2">
+            <label className="flex items-center gap-2 pb-1 text-sm text-on-surface-variant sm:pb-2">
               <input type="checkbox" checked={onlyWithChildren} onChange={(e) => setOnlyWithChildren(e.target.checked)} className="rounded" />{' '}
               Только с детьми
             </label>
           </div>
 
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
             {isLoading ? (
-              <div className="p-12 text-center text-sm text-zinc-500">Загружаем...</div>
+              <div className="p-12 text-center text-sm text-on-surface-variant">Загружаем...</div>
             ) : filtered.length === 0 ? (
               <div className="p-12 text-center sm:p-16">
                 <Icon name="group" className="text-5xl text-on-surface-variant/20" />
-                <p className="mt-4 text-sm text-zinc-500">{tab === 'fired' ? 'Уволенных нет' : 'Сотрудников пока нет'}</p>
+                <p className="mt-4 text-sm text-on-surface-variant">{tab === 'fired' ? 'Уволенных нет' : 'Сотрудников пока нет'}</p>
               </div>
             ) : (
               <>
@@ -415,16 +418,16 @@ export default function EmployeesPage() {
                   {filtered.map((emp) => (
                     <li key={emp.id} className="p-4">
                       <div className="flex gap-3">
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100">
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-high">
                           <Icon name="person" className="text-xl text-primary" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-headline text-sm font-bold text-on-surface">{emp.full_name}</p>
-                          <p className="text-xs text-zinc-500">{emp.position}</p>
+                          <p className="text-xs text-on-surface-variant">{emp.position}</p>
                           {emp.identification_number && (
-                            <p className="mt-1 font-mono text-[10px] text-zinc-500">ИД {emp.identification_number}</p>
+                            <p className="mt-1 font-mono text-[10px] text-on-surface-variant">ИД {emp.identification_number}</p>
                           )}
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
                             <span className="font-bold text-on-surface">{fmt(emp.salary)} BYN</span>
                             <span>·</span>
                             <span>{tab === 'fired' ? emp.fire_date || '—' : `с ${emp.hire_date}`}</span>
@@ -439,7 +442,7 @@ export default function EmployeesPage() {
                               </span>
                             )}
                             {emp.is_pensioner && (
-                              <span className="rounded-md border border-zinc-300/80 bg-zinc-100 px-2 py-0.5 text-[9px] font-bold text-zinc-700">
+                              <span className="rounded-md border border-outline-variant/80 bg-surface-container-high px-2 py-0.5 text-[9px] font-bold text-on-surface">
                                 пенсионер
                               </span>
                             )}
@@ -451,14 +454,14 @@ export default function EmployeesPage() {
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
-                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-surface py-2.5 text-xs font-bold text-primary dark:border-zinc-700/80"
+                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-outline/75 bg-surface py-2.5 text-xs font-bold text-primary dark:border-outline/45"
                             onClick={() => openSalary(emp)}
                           >
                             <Icon name="calculate" className="text-lg" /> Зарплата
                           </button>
                           <button
                             type="button"
-                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-zinc-200/80 bg-zinc-50 py-2.5 text-xs font-bold text-zinc-700"
+                            className="tap-highlight-none flex flex-1 items-center justify-center gap-1 rounded-xl border border-outline/75 bg-surface-container-low py-2.5 text-xs font-bold text-on-surface"
                             onClick={() => openEdit(emp)}
                           >
                             <Icon name="edit" className="text-lg" /> Изменить
@@ -563,7 +566,7 @@ export default function EmployeesPage() {
             </div>
           }
         >
-          <p className="mb-4 text-sm text-zinc-400">Это действие нельзя отменить.</p>
+          <p className="mb-4 text-sm text-on-surface-variant">Это действие нельзя отменить.</p>
           <div>
             <label className="label">Дата увольнения</label>
             <input
@@ -601,7 +604,7 @@ export default function EmployeesPage() {
         >
           <div className="space-y-6">
             <section>
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">Основное</p>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Основное</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="label">ФИО</label>
@@ -692,7 +695,7 @@ export default function EmployeesPage() {
             </section>
 
             <section>
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
                 Документ, удостоверяющий личность
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -762,7 +765,7 @@ export default function EmployeesPage() {
             </section>
 
             <section>
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500">Льготы и вычеты</p>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Льготы и вычеты</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">Детей (для вычета)</label>
@@ -792,7 +795,7 @@ export default function EmployeesPage() {
                     <option value="3">III группа</option>
                   </select>
                 </div>
-                <label className="flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-3 text-sm text-zinc-700 sm:col-span-2">
+                <label className="flex items-center gap-2 rounded-xl border border-outline/75 bg-surface-container-low/80 px-3 py-3 text-sm text-on-surface sm:col-span-2">
                   <input
                     type="checkbox"
                     checked={form.is_pensioner}
@@ -829,7 +832,7 @@ export default function EmployeesPage() {
           }
         >
           <p className="text-sm font-semibold text-on-surface">{selectedEmployee.full_name}</p>
-          <p className="mb-4 text-xs text-zinc-500">
+          <p className="mb-4 text-xs text-on-surface-variant">
             Оклад: {fmt(selectedEmployee.salary)} BYN · {selectedEmployee.position}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -897,7 +900,7 @@ export default function EmployeesPage() {
             </div>
           </div>
           {salaryResult && (
-            <div className="mt-5 border-t border-zinc-200/80 pt-5">
+            <div className="mt-5 border-t border-outline/75 pt-5">
               <h4 className="mb-3 text-sm font-bold text-on-surface">
                 Расчётный лист — {MONTHS[salaryResult.period_month]} {salaryResult.period_year}
               </h4>
@@ -906,11 +909,11 @@ export default function EmployeesPage() {
                 <PR label="Бонус" value={fmt(salaryResult.bonus)} color="text-secondary" />
                 <PR label="Больничные" value={fmt(salaryResult.sick_pay)} />
                 <PR label="Отпускные" value={fmt(salaryResult.vacation_pay)} />
-                <div className="col-span-2 my-1 border-t border-zinc-200/70" />
+                <div className="col-span-2 my-1 border-t border-outline/70" />
                 <PR label="Начислено" value={fmt(salaryResult.gross_salary)} bold />
                 <PR label="НДФЛ 13%" value={`−${fmt(salaryResult.income_tax)}`} color="text-error" />
                 <PR label="ФСЗН 1%" value={`−${fmt(salaryResult.fsszn_employee)}`} color="text-error" />
-                <div className="col-span-2 my-1 border-t-2 border-zinc-300/80" />
+                <div className="col-span-2 my-1 border-t-2 border-outline-variant/80" />
                 <PR label="К выдаче" value={`${fmt(salaryResult.net_salary)} BYN`} bold color="text-primary" />
                 <PR label="ФСЗН 34%" value={fmt(salaryResult.fsszn_employer)} color="text-tertiary" sub />
               </div>

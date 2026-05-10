@@ -448,10 +448,11 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="max-w-7xl space-y-6 sm:space-y-8">
-      <div>
+    <div className="fc-page-shell">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
         <h1 className="page-heading">Документы</h1>
-        <p className="mt-1 text-sm text-zinc-500">Импорт и экспорт данных</p>
+        <p className="mt-1 text-sm text-on-surface-variant">Импорт и экспорт данных</p>
       </div>
 
       <div className="card-elevated flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
@@ -604,7 +605,7 @@ export default function DocumentsPage() {
       </div>
 
       <h2 className="font-headline text-lg font-bold text-on-surface sm:text-xl">Первичные документы</h2>
-      <p className="text-xs text-zinc-500 max-w-3xl">
+      <p className="text-xs text-on-surface-variant max-w-3xl">
         Сценарий: счёт (invoice) → оплата (статус подтягивается через webhook/polling) → акт или накладная с привязкой к счёту.
         Печать — PDF с реквизитами ИП/ООО из организации.
       </p>
@@ -726,9 +727,9 @@ export default function DocumentsPage() {
         </div>
 
         {primaryDocsLoading ? (
-          <p className="mt-4 text-sm text-zinc-500">Загрузка документов...</p>
+          <p className="mt-4 text-sm text-on-surface-variant">Загрузка документов...</p>
         ) : (primaryDocsData?.length ?? 0) === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">Документов пока нет.</p>
+          <p className="mt-4 text-sm text-on-surface-variant">Документов пока нет.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-xs">
@@ -826,15 +827,15 @@ export default function DocumentsPage() {
           aria-modal="true"
           aria-label="Оплата по QR"
         >
-          <div className="max-w-sm rounded-2xl border border-zinc-200/90 bg-surface p-6 shadow-lift dark:border-zinc-700/80">
+          <div className="max-w-sm rounded-2xl border border-outline/80 bg-surface p-6 shadow-lift dark:border-outline/45">
             <h3 className="mb-2 font-headline text-lg font-bold text-on-surface">Оплата счёта</h3>
-            <p className="mb-4 text-sm text-zinc-600">
+            <p className="mb-4 text-sm text-on-surface-variant">
               {payQrModal.amount.toFixed(2)} {payQrModal.currency} — демо-QR (не ЕРИП). Ссылка для теста ниже.
             </p>
-            <p className={`mb-3 text-xs font-semibold ${payQrModal.isPaid ? 'text-secondary' : 'text-zinc-500'}`}>
+            <p className={`mb-3 text-xs font-semibold ${payQrModal.isPaid ? 'text-secondary' : 'text-on-surface-variant'}`}>
               Статус оплаты: {payQrModal.isPaid ? 'оплачен' : 'ожидает оплаты'}
             </p>
-            <div className="mb-4 flex justify-center rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+            <div className="mb-4 flex justify-center rounded-xl border border-outline/60 bg-surface-container-low p-3">
               <img src={`data:image/png;base64,${payQrModal.b64}`} alt="QR оплаты" className="h-48 w-48" />
             </div>
             <a
@@ -864,13 +865,13 @@ export default function DocumentsPage() {
                 {sendPaymentLinkMutation.isPending ? 'Отправляем...' : 'Отправить ссылку на email'}
               </button>
             </div>
-            <p className="mb-3 text-[11px] text-zinc-500">
+            <p className="mb-3 text-[11px] text-on-surface-variant">
               Статус и история обновляются автоматически каждые 10 секунд.
             </p>
             {paymentEvents.length > 0 && (
-              <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2 text-xs text-zinc-700">
+              <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-outline/75 bg-surface-container-low/80 p-2 text-xs text-on-surface">
                 {paymentSummary && (
-                  <div className="mb-2 rounded border border-zinc-200/60 bg-surface p-2 text-[11px] text-zinc-600 dark:border-zinc-700/60 dark:text-zinc-400">
+                  <div className="mb-2 rounded border border-outline/65 bg-surface p-2 text-[11px] text-on-surface-variant dark:border-outline/40 dark:text-on-surface-variant">
                     Всего: {paymentSummary.total ?? 0} • webhook ok: {paymentSummary.webhook_success ?? 0} •
                     конфликты: {paymentSummary.webhook_conflict ?? 0}
                   </div>
@@ -886,7 +887,7 @@ export default function DocumentsPage() {
                       key={opt.id}
                       type="button"
                       className={`rounded px-2 py-1 text-[10px] ${
-                        paymentEventFilter === opt.id ? 'bg-primary/15 text-primary' : 'bg-surface text-zinc-600 ring-1 ring-zinc-200/80 dark:text-zinc-400 dark:ring-zinc-700/80'
+                        paymentEventFilter === opt.id ? 'bg-primary/15 text-primary' : 'bg-surface text-on-surface-variant ring-1 ring-outline/75 dark:text-on-surface-variant dark:ring-outline/45'
                       }`}
                       onClick={() => setPaymentEventFilter(opt.id as any)}
                     >
@@ -895,14 +896,14 @@ export default function DocumentsPage() {
                   ))}
                 </div>
                 {filteredPaymentEvents.map((e: any) => (
-                  <div key={e.id} className="mb-2 border-b border-zinc-200/70 pb-2 last:mb-0 last:border-0 last:pb-0">
+                  <div key={e.id} className="mb-2 border-b border-outline/70 pb-2 last:mb-0 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="font-semibold text-zinc-900">{paymentEventLabel(String(e.event_type || ''))}</div>
-                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase text-zinc-600">
+                      <div className="font-semibold text-on-surface">{paymentEventLabel(String(e.event_type || ''))}</div>
+                      <span className="rounded bg-surface-container-high px-1.5 py-0.5 text-[10px] uppercase text-on-surface-variant">
                         {e.source}
                       </span>
                     </div>
-                    <div className="text-[11px] text-zinc-500">{formatEventDate(String(e.created_at || ''))}</div>
+                    <div className="text-[11px] text-on-surface-variant">{formatEventDate(String(e.created_at || ''))}</div>
                     {e.payload && (
                       <>
                         <button
@@ -915,18 +916,18 @@ export default function DocumentsPage() {
                           {expandedEventIds[e.id] ? 'Скрыть детали' : 'Показать детали'}
                         </button>
                         {expandedEventIds[e.id] && (
-                          <div className="mt-1 rounded border border-zinc-200/80 bg-surface p-2 text-[11px] text-zinc-700 dark:border-zinc-700/80 dark:text-zinc-300">
+                          <div className="mt-1 rounded border border-outline/75 bg-surface p-2 text-[11px] text-on-surface dark:border-outline/45 dark:text-on-surface-variant">
                             {paymentPayloadEntries(e.payload).length > 0 ? (
                               <div className="space-y-1">
                                 {paymentPayloadEntries(e.payload).map((entry) => (
                                   <div key={`${e.id}-${entry.label}`} className="flex items-start justify-between gap-2">
-                                    <span className="text-zinc-500">{entry.label}</span>
+                                    <span className="text-on-surface-variant">{entry.label}</span>
                                     <span className="break-all text-right">{entry.value}</span>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-zinc-500">Нет деталей</span>
+                              <span className="text-on-surface-variant">Нет деталей</span>
                             )}
                           </div>
                         )}
@@ -935,7 +936,7 @@ export default function DocumentsPage() {
                   </div>
                 ))}
                 {filteredPaymentEvents.length === 0 && (
-                  <div className="text-[11px] text-zinc-500">Нет событий по выбранному фильтру.</div>
+                  <div className="text-[11px] text-on-surface-variant">Нет событий по выбранному фильтру.</div>
                 )}
               </div>
             )}

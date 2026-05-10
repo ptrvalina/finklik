@@ -256,25 +256,28 @@ export default function CounterpartiesPage() {
   }
 
   return (
-    <div className="max-w-7xl space-y-4 sm:space-y-6">
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <h1 className="page-heading">Контрагенты</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Добавление по УНП (до интеграции ЕГР — название уточняйте вручную), поиск <kbd className="rounded border px-1">/</kbd>
-            , операции из списка.
-          </p>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
-            <Icon name="description" className="text-lg" /> Учёт
-          </Link>
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
-            <Icon name="bolt" className="text-lg" /> По УНП
-          </button>
-          <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-            <Icon name="add" className="text-lg" /> Вручную
-          </button>
+    <div className="fc-page-shell">
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="page-heading">Контрагенты</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Добавление по УНП (до интеграции ЕГР — название уточняйте вручную), поиск <kbd className="rounded border px-1">/</kbd>
+              , операции из списка.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
+              <Icon name="description" className="text-lg" /> Учёт
+            </Link>
+            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
+              <Icon name="bolt" className="text-lg" /> По УНП
+            </button>
+            <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
+              <Icon name="add" className="text-lg" /> Вручную
+            </button>
+          </div>
         </div>
       </div>
 
@@ -308,10 +311,10 @@ export default function CounterpartiesPage() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft sm:p-5">
+      <div className="rounded-2xl bg-surface-container-low p-4 border border-outline/75 shadow-soft sm:p-5">
         <label className="label">Поиск по названию или УНП (горячая клавиша /)</label>
         <div className="relative">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-zinc-500" />
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
           <input
             ref={searchRef}
             className="input min-h-11 rounded-xl pl-10"
@@ -322,13 +325,13 @@ export default function CounterpartiesPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
         {isLoading ? (
-          <div className="p-12 text-center text-sm text-zinc-500">Загружаем...</div>
+          <div className="p-12 text-center text-sm text-on-surface-variant">Загружаем...</div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center sm:p-16">
             <Icon name="handshake" className="text-5xl text-on-surface-variant/20" />
-            <p className="mt-4 text-sm text-zinc-500">{search ? 'Ничего не найдено' : 'Контрагентов пока нет'}</p>
+            <p className="mt-4 text-sm text-on-surface-variant">{search ? 'Ничего не найдено' : 'Контрагентов пока нет'}</p>
           </div>
         ) : (
           <>
@@ -336,7 +339,7 @@ export default function CounterpartiesPage() {
               {items.map((cp) => (
                 <li key={cp.id} className="p-4">
                   <div className="flex gap-3">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-100">
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-high">
                       <Icon name="corporate_fare" className="text-xl text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -344,15 +347,15 @@ export default function CounterpartiesPage() {
                         {cp.is_pinned ? <Icon name="push_pin" className="mr-1 align-middle text-xs text-amber-600" /> : null}
                         {cp.name}
                       </p>
-                      <p className="font-mono text-xs text-zinc-500">
+                      <p className="font-mono text-xs text-on-surface-variant">
                         УНП {cp.unp} · {CP_KIND_LABEL[cp.cp_kind || 'both'] || cp.cp_kind}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-600">
+                      <p className="mt-1 text-xs text-on-surface-variant">
                         Сальдо: {cp.balance_net ?? '0'} · Последняя оп.:{' '}
                         {cp.last_transaction_date || '—'}{' '}
                         {cp.last_transaction_amount != null ? `(${cp.last_transaction_amount})` : ''}
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-500">
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-on-surface-variant">
                         {cp.phone && (
                           <a href={`tel:${cp.phone}`} className="text-primary underline">
                             {cp.phone}

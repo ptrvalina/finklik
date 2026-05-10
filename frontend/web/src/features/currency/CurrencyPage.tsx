@@ -81,11 +81,12 @@ export default function CurrencyPage() {
   }, [ratesQuery.data?.rates])
 
   return (
-    <div className="max-w-5xl space-y-8">
-      <div>
+    <div className="mx-auto w-full max-w-5xl space-y-6 sm:space-y-8">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
         <h1 className="page-heading">Курсы валют</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
-          Официальные курсы <strong className="text-zinc-900">Национального банка Республики Беларусь</strong> — те же
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
+          Официальные курсы <strong className="text-on-surface">Национального банка Республики Беларусь</strong> — те же
           данные, что использует бизнес и отчётность. Сервер ФинКлик периодически обновляет справочник; конвертация идёт
           через белорусский рубль (BYN) по правилам НБ.
         </p>
@@ -102,12 +103,12 @@ export default function CurrencyPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="lg:col-span-2 rounded-2xl border border-zinc-200/90 bg-surface p-5 shadow-card dark:border-zinc-700/80">
+        <section className="lg:col-span-2 rounded-2xl border border-outline/80 bg-surface p-5 shadow-card dark:border-outline/45">
           <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
             <Icon name="swap_horiz" className="text-primary" />
             Конвертер
           </h2>
-          <p className="mt-1 text-xs text-zinc-500">Введите сумму и выберите валюты — пересчёт по курсу НБ на дату ниже.</p>
+          <p className="mt-1 text-xs text-on-surface-variant">Введите сумму и выберите валюты — пересчёт по курсу НБ на дату ниже.</p>
 
           <div className="mt-4 space-y-4">
             <div>
@@ -167,23 +168,23 @@ export default function CurrencyPage() {
           )}
         </section>
 
-        <section className="lg:col-span-3 rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-card">
+        <section className="lg:col-span-3 rounded-2xl border border-outline/80 bg-surface p-5 shadow-card">
           <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
             <Icon name="table_chart" className="text-tertiary" />
             Справочник курсов
           </h2>
           {ratesQuery.isLoading && (
-            <p className="mt-4 text-sm text-zinc-500">
+            <p className="mt-4 text-sm text-on-surface-variant">
               <Icon name="hourglass_empty" className="mr-2 inline animate-spin" />
               Загружаем таблицу…
             </p>
           )}
           {ratesQuery.data && (
             <>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant">
                 <span>
                   Дата курса:{' '}
-                  <strong className="text-zinc-800">{ratesQuery.data.rates_date}</strong>
+                  <strong className="text-on-surface">{ratesQuery.data.rates_date}</strong>
                 </span>
                 <span>
                   Обновлено сервером:{' '}
@@ -198,19 +199,19 @@ export default function CurrencyPage() {
                   {highlighted.map((r) => (
                     <div
                       key={r.code}
-                      className="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 shadow-soft"
+                      className="flex items-center justify-between rounded-lg border border-outline/75 bg-surface-container-low/90 px-3 py-2 shadow-soft"
                     >
                       <span className="font-semibold text-on-surface">{r.code}</span>
-                      <span className="text-sm text-zinc-600">
+                      <span className="text-sm text-on-surface-variant">
                         1 {r.code} = {fmtRate(r)} BYN
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg border border-zinc-200/80 bg-surface shadow-soft dark:border-zinc-700/80">
+              <div className="mt-6 max-h-[420px] overflow-auto rounded-lg border border-outline/75 bg-surface shadow-soft dark:border-outline/45">
                 <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 border-b border-zinc-200/80 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
+                  <thead className="sticky top-0 border-b border-outline/75 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
                     <tr>
                       <th className="px-3 py-2">Код</th>
                       <th className="px-3 py-2">Валюта</th>
@@ -219,13 +220,13 @@ export default function CurrencyPage() {
                       <th className="px-3 py-2 text-right">1 ед. = BYN</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 text-zinc-700">
+                  <tbody className="divide-y divide-outline/55 text-on-surface">
                     {[...(ratesQuery.data.rates ?? [])]
                       .sort((a, b) => a.code.localeCompare(b.code))
                       .map((r) => (
-                        <tr key={r.code} className="hover:bg-zinc-50/80">
+                        <tr key={r.code} className="hover:bg-surface-container-low/90">
                           <td className="px-3 py-2 font-mono font-semibold text-primary">{r.code}</td>
-                          <td className="px-3 py-2 text-zinc-600">{r.name}</td>
+                          <td className="px-3 py-2 text-on-surface-variant">{r.name}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.scale}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.official_rate_byn}</td>
                           <td className="px-3 py-2 text-right tabular-nums font-medium text-on-surface">{fmtRate(r)}</td>
@@ -234,7 +235,7 @@ export default function CurrencyPage() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-[11px] leading-relaxed text-zinc-600">
+              <p className="mt-4 text-[11px] leading-relaxed text-on-surface-variant">
                 Источник: API НБ РБ ({ratesQuery.data.source_url}). Курс устанавливается банком на рабочие дни; в выходные
                 может отображаться последний рабочий курс.
               </p>

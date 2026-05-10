@@ -254,36 +254,39 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="max-w-7xl space-y-4 sm:space-y-6">
+    <div className="fc-page-shell">
       {/* Header */}
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <h1 className="page-heading">Операции</h1>
-          <p className="mt-1 text-sm text-zinc-500">{total} операций · единый журнал доходов/расходов</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">new</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">parsed</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">categorized</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">verified</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">reported</span>
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="page-heading">Операции</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">{total} операций · единый журнал доходов/расходов</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">new</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">parsed</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">categorized</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">verified</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">reported</span>
+            </div>
           </div>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
-            <Icon name="auto_fix_high" className="text-lg" /> Правила
-          </button>
-          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
-            <Icon name="upload_file" className="text-lg" /> Импорт
-          </Link>
-          <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-            <Icon name="add" className="text-lg" /> Добавить
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
+              <Icon name="auto_fix_high" className="text-lg" /> Правила
+            </button>
+            <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+              <Icon name="upload_file" className="text-lg" /> Импорт
+            </Link>
+            <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
+              <Icon name="add" className="text-lg" /> Добавить
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filter tabs — горизонтальный скролл на телефоне */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
           {[
             { key: 'all', label: 'Все' },
             { key: 'income', label: 'Доходы' },
@@ -333,15 +336,15 @@ export default function TransactionsPage() {
       </div>
 
       {/* Список: карточки на мобиле, таблица с md */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
         {isLoading ? (
-          <div className="flex items-center justify-center gap-2 p-12 text-sm text-zinc-500">
+          <div className="flex items-center justify-center gap-2 p-12 text-sm text-on-surface-variant">
             <Icon name="hourglass_empty" className="animate-spin" /> Загружаем...
           </div>
         ) : transactions.length === 0 ? (
           <div className="p-12 text-center sm:p-16">
             <Icon name="receipt_long" className="text-5xl text-on-surface-variant/20" />
-            <p className="mt-4 text-sm text-zinc-500">Операций нет</p>
+            <p className="mt-4 text-sm text-on-surface-variant">Операций нет</p>
             <button type="button" className="btn-primary mt-4" onClick={openCreate}>
               <Icon name="add" className="text-lg" /> Добавить первую
             </button>
@@ -355,13 +358,13 @@ export default function TransactionsPage() {
                   <li key={tx.id} className="p-4">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 ${meta.color}`}
+                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-low ${meta.color}`}
                       >
                         <Icon name={meta.icon} filled className="text-xl" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-headline text-sm font-semibold text-on-surface">{tx.description || meta.label}</p>
-                        <p className="mt-0.5 text-xs text-zinc-500">{tx.transaction_date}</p>
+                        <p className="mt-0.5 text-xs text-on-surface-variant">{tx.transaction_date}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <span className={`text-[9px] font-bold uppercase rounded-md px-2 py-0.5 ${getSyncBadgeClass(tx)}`}>
                             {getSyncBadge(tx)}
@@ -370,7 +373,7 @@ export default function TransactionsPage() {
                             {pipelineLabel(tx.pipeline_status)}
                           </span>
                           {tx.category && (
-                            <span className="text-[10px] text-zinc-500">{tx.category}</span>
+                            <span className="text-[10px] text-on-surface-variant">{tx.category}</span>
                           )}
                           {Array.isArray(tx.validation_issues) && tx.validation_issues.length > 0 && (
                             <span className="text-[10px] text-amber-400">{tx.validation_issues[0]}</span>
@@ -386,11 +389,11 @@ export default function TransactionsPage() {
                           {tx.type === 'income' ? '+' : '−'}
                           {fmt(tx.amount)}
                         </p>
-                        <span className="text-[10px] text-zinc-500">BYN</span>
+                        <span className="text-[10px] text-on-surface-variant">BYN</span>
                         <div className="flex gap-1">
                           <button
                             type="button"
-                            className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 text-zinc-600"
+                            className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-lg border border-outline/75 bg-surface-container-low text-on-surface-variant"
                             onClick={() => openEdit(tx)}
                             aria-label="Изменить"
                           >
@@ -540,7 +543,7 @@ export default function TransactionsPage() {
           >
             <Icon name="chevron_left" className="text-lg" /> Назад
           </button>
-          <span className="px-2 text-sm font-medium text-zinc-500">
+          <span className="px-2 text-sm font-medium text-on-surface-variant">
             {page} / {totalPages}
           </span>
           <button
@@ -588,7 +591,7 @@ export default function TransactionsPage() {
                     className={`tap-highlight-none flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition-all sm:py-2.5 sm:text-sm ${
                       form.type === t
                         ? m.badge
-                        : 'border-zinc-200/90 text-zinc-600 hover:border-primary/25 hover:bg-primary/5'
+                        : 'border-outline/80 text-on-surface-variant hover:border-primary/25 hover:bg-primary/5'
                     }`}
                   >
                     <Icon name={m.icon} className="text-lg" /> {m.label}
@@ -704,7 +707,7 @@ export default function TransactionsPage() {
             </button>
             <div className="space-y-2">
               {(rulesData ?? []).length === 0 ? (
-                <p className="text-xs text-zinc-500">Правил пока нет. Будут применяться базовые автоэвристики.</p>
+                <p className="text-xs text-on-surface-variant">Правил пока нет. Будут применяться базовые автоэвристики.</p>
               ) : (
                 (rulesData ?? []).map((rule: any) => (
                   <div key={rule.id} className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-3 text-xs">

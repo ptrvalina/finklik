@@ -149,23 +149,26 @@ export default function Accounting() {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="card-elevated p-6">
-        <div className="flex items-center justify-between">
+    <section className="fc-page-shell">
+      <div className="card-elevated relative overflow-hidden rounded-[1.25rem] p-6 shadow-lift ring-1 ring-primary/[0.06]">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-[#004d40]" aria-hidden />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-on-surface">Учет (КУДиР)</h1>
-            <p className="mt-2 text-on-surface-variant">Автозаполнение из сканов/банка и AI-классификация расходов.</p>
+            <h1 className="page-heading text-[1.65rem] sm:text-3xl">Учёт (КУДиР)</h1>
+            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">Автозаполнение из сканов/банка и AI-классификация расходов.</p>
             {linkedCounterpartyId ? (
               <p className="mt-2 text-xs font-medium text-primary">
                 Привязка к контрагенту активна для следующей операции (из раздела «Контрагенты»).
               </p>
             ) : null}
           </div>
-          <button className="btn-secondary" onClick={downloadKudir}>Скачать КУДиР</button>
+          <button type="button" className="btn-secondary shrink-0 rounded-[1rem]" onClick={downloadKudir}>
+            Скачать КУДиР
+          </button>
         </div>
       </div>
 
-      <form className="card-elevated grid gap-3 p-6 md:grid-cols-2" onSubmit={submit}>
+      <form className="card-elevated grid gap-3 rounded-[1.25rem] p-6 shadow-card ring-1 ring-primary/[0.05] md:grid-cols-2" onSubmit={submit}>
         <select className="input" value={type} onChange={(e) => setType(e.target.value as any)}>
           <option value="expense">Расход</option>
           <option value="income">Доход</option>
@@ -187,8 +190,9 @@ export default function Accounting() {
             <option value="other">other</option>
           </select>
           <input className="input" placeholder="URL чека (receipt_image_url)" value={receiptUrl} onChange={(e) => setReceiptUrl(e.target.value)} />
-          <div className="rounded-xl border border-outline/70 px-3 py-2 text-sm">
-            AI: {aiSuggestion.category} ({Math.round(aiSuggestion.confidence * 100)}%)
+          <div className="rounded-xl border border-primary/20 bg-primary/[0.05] px-3 py-2 text-sm text-on-surface">
+            <span className="font-semibold text-primary">AI:</span> {aiSuggestion.category}{' '}
+            <span className="text-on-surface-variant">({Math.round(aiSuggestion.confidence * 100)}%)</span>
           </div>
         </div>
         <div className="md:col-span-2 grid gap-3 md:grid-cols-[1fr_auto_auto]">
@@ -199,17 +203,48 @@ export default function Accounting() {
           <button type="button" className="btn-secondary" onClick={() => uploadToKudirMutation.mutate()} disabled={!scanFile || uploadToKudirMutation.isPending}>
             OCR + AI + в КУДиР
           </button>
-          <button type="submit" className="btn-primary" disabled={createMutation.isPending}>Добавить в КУДиР</button>
+          <button type="submit" className="btn-primary rounded-[1rem]" disabled={createMutation.isPending}>
+            Добавить в КУДиР
+          </button>
         </div>
       </form>
 
-      <div className="card-elevated p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Записи</h2>
-          <div className="inline-flex gap-1 rounded-lg border border-outline/70 p-1">
-            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { setFilterDateFrom(monthStartStr); setFilterDateTo(todayStr) }}>Этот месяц</button>
-            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 30); setFilterDateFrom(d.toISOString().slice(0, 10)); setFilterDateTo(todayStr) }}>30 дней</button>
-            <button type="button" className="btn-ghost !px-2 !py-1 text-xs" onClick={() => { setFilterDateFrom(''); setFilterDateTo(todayStr) }}>Все</button>
+      <div className="card-elevated rounded-[1.25rem] p-5 shadow-card ring-1 ring-primary/[0.05]">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-headline text-lg font-bold text-on-surface">Записи</h2>
+          <div className="inline-flex gap-1 rounded-full border border-outline/70 bg-surface-container-low/80 p-1">
+            <button
+              type="button"
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition hover:bg-surface hover:text-on-surface"
+              onClick={() => {
+                setFilterDateFrom(monthStartStr)
+                setFilterDateTo(todayStr)
+              }}
+            >
+              Этот месяц
+            </button>
+            <button
+              type="button"
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition hover:bg-surface hover:text-on-surface"
+              onClick={() => {
+                const d = new Date()
+                d.setDate(d.getDate() - 30)
+                setFilterDateFrom(d.toISOString().slice(0, 10))
+                setFilterDateTo(todayStr)
+              }}
+            >
+              30 дней
+            </button>
+            <button
+              type="button"
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition hover:bg-surface hover:text-on-surface"
+              onClick={() => {
+                setFilterDateFrom('')
+                setFilterDateTo(todayStr)
+              }}
+            >
+              Все
+            </button>
           </div>
         </div>
         <div className="mb-4 grid gap-2 md:grid-cols-5">
@@ -230,17 +265,24 @@ export default function Accounting() {
           </select>
           <input className="input" placeholder="Поиск" value={filterSearch} onChange={(e) => setFilterSearch(e.target.value)} />
         </div>
-        <div className="space-y-2">
+        <div className="divide-y divide-outline/50 overflow-hidden rounded-2xl border border-outline/60 bg-surface">
           {filteredItems.map((tx: any) => (
-            <div key={tx.id} className="flex items-center justify-between rounded-lg border border-outline/60 px-3 py-2 text-sm">
-              <div>
-                <p className="font-medium">{tx.description}</p>
-                <p className="text-on-surface-variant">{tx.transaction_date} · {tx.category || 'other'}</p>
+            <div
+              key={tx.id}
+              className="flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-primary/[0.03]"
+            >
+              <div className="min-w-0">
+                <p className="font-semibold text-on-surface">{tx.description}</p>
+                <p className="text-xs text-on-surface-variant">
+                  {tx.transaction_date} · {tx.category || 'other'}
+                </p>
               </div>
-              <span>{tx.amount}</span>
+              <span className="shrink-0 font-headline font-bold tabular-nums text-on-surface">{tx.amount}</span>
             </div>
           ))}
-          {filteredItems.length === 0 && <p className="text-sm text-on-surface-variant">Нет записей по выбранным фильтрам.</p>}
+          {filteredItems.length === 0 && (
+            <p className="px-4 py-8 text-center text-sm text-on-surface-variant">Нет записей по выбранным фильтрам.</p>
+          )}
         </div>
       </div>
     </section>

@@ -47,14 +47,15 @@ export default function TaxesPage() {
       : null
 
   return (
-    <div className="max-w-7xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-extrabold font-headline text-on-surface tracking-tight">Налоги</h1>
-        <p className="text-on-surface-variant mt-1">Расчёт налогов и календарь дедлайнов</p>
+    <div className="fc-page-shell">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
+        <h1 className="page-heading">Налоги</h1>
+        <p className="mt-1 text-on-surface-variant">Расчёт налогов и календарь дедлайнов</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-surface-container-low p-5 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div className="page-section grid grid-cols-1 items-end gap-4 md:grid-cols-4">
         <div><label className="label">Период с</label><input type="date" className="input" value={periodStart} onChange={e => setPeriodStart(e.target.value)} /></div>
         <div><label className="label">Период по</label><input type="date" className="input" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} /></div>
         <label className="flex items-center gap-2 text-sm text-on-surface-variant pb-2">
@@ -125,8 +126,8 @@ export default function TaxesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tax summary */}
-        <div className="bg-surface-container-low rounded-xl p-6">
-          <h2 className="text-lg font-bold font-headline text-on-surface mb-6 flex items-center gap-2">
+        <div className="page-section">
+          <h2 className="mb-6 flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
             <Icon name="receipt" className="text-primary" /> Итоги периода
           </h2>
           {isLoading || !data ? (
@@ -204,9 +205,9 @@ export default function TaxesPage() {
         </div>
 
         {/* Calendar */}
-        <div className="bg-surface-container-low rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold font-headline text-on-surface flex items-center gap-2">
+        <div className="page-section">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
               <Icon name="calendar_today" className="text-primary" /> Налоговый календарь
             </h2>
             <input type="number" className="input w-24" value={year} onChange={e => setYear(Number(e.target.value))} />

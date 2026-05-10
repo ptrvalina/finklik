@@ -44,11 +44,14 @@ export default function BankOAuthCallbackPage() {
   }, [accountId, code, navigate, state])
 
   return (
-    <section className="card-elevated mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-semibold text-on-surface">Подключение банка</h1>
-      {!done && !error && <p className="mt-2 text-on-surface-variant">Завершаем OAuth2 авторизацию...</p>}
-      {done && <p className="mt-2 text-emerald-600">Банк успешно подключен. Возвращаем в раздел Банка...</p>}
-      {error && <p className="mt-2 text-red-600">{error}</p>}
+    <section className="fc-page-shell-narrow">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
+        <h1 className="page-heading">Подключение банка</h1>
+        {!done && !error && <p className="mt-2 text-on-surface-variant">Завершаем OAuth2 авторизацию...</p>}
+        {done && <p className="mt-2 font-medium text-primary">Банк успешно подключен. Возвращаем в раздел Банка...</p>}
+        {error && <p className="mt-2 text-error">{error}</p>}
+      </div>
     </section>
   )
 }

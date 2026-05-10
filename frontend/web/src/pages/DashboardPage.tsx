@@ -18,6 +18,26 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
   )
 }
 
+/** FinClick Premium — акцент для диаграмм */
+const CHART_BRAND = '#00a86b'
+
+function MetricWaveDecor({ variant }: { variant: 'primary' | 'expense' | 'balance' | 'violet' }) {
+  const waveClass =
+    variant === 'primary'
+      ? 'text-primary'
+      : variant === 'expense'
+        ? 'text-red-500'
+        : variant === 'balance'
+          ? 'text-emerald-600'
+          : 'text-violet-500'
+  return (
+    <svg className={`pointer-events-none absolute bottom-0 left-0 right-0 h-14 opacity-[0.22] ${waveClass}`} viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden>
+      <path fill="currentColor" d="M0 40 Q80 18 160 28 T320 22 T400 30 V56 H0 Z" />
+      <path fill="white" className="opacity-[0.35]" d="M0 48 Q100 32 200 38 T400 34 V56 H0 Z" />
+    </svg>
+  )
+}
+
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const isManager = (user?.role || '').toLowerCase() === 'manager'
@@ -88,19 +108,20 @@ export default function DashboardPage() {
   const daysLeft = deadline ? Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000) : null
 
   const quickLinks = [
-    { to: '/scanner', icon: 'document_scanner', label: 'Сканер', color: 'from-teal-50 to-cyan-50 text-teal-800 ring-teal-100' },
-    { to: '/documents', icon: 'description', label: 'Документы', color: 'from-violet-50 to-purple-50 text-violet-900 ring-violet-100' },
-    { to: '/currency', icon: 'currency_exchange', label: 'Курсы НБ', color: 'from-cyan-50 to-sky-50 text-cyan-900 ring-cyan-100' },
-    { to: '/reporting', icon: 'assignment_turned_in', label: 'Отчётность', color: 'from-amber-50 to-orange-50 text-amber-950 ring-amber-100' },
-    { to: '/calendar', icon: 'calendar_today', label: 'Календарь', color: 'from-sky-50 to-blue-50 text-sky-900 ring-sky-100' },
-    { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-emerald-50 to-teal-50 text-emerald-900 ring-emerald-100' },
-    { to: '/settings', icon: 'gavel', label: 'Законы', color: 'from-zinc-100 to-zinc-50 text-zinc-800 ring-zinc-200' },
+    { to: '/scanner', icon: 'document_scanner', label: 'Сканер', color: 'from-emerald-50 to-teal-50 text-[#004d40] ring-emerald-100/90' },
+    { to: '/documents', icon: 'description', label: 'Документы', color: 'from-teal-50 to-emerald-50 text-[#004d40] ring-teal-100' },
+    { to: '/currency', icon: 'currency_exchange', label: 'Курсы НБ', color: 'from-[#ecfdf7] to-emerald-50 text-[#004d40] ring-emerald-100' },
+    { to: '/reporting', icon: 'assignment_turned_in', label: 'Отчётность', color: 'from-[#e8faf4] to-teal-50 text-[#004d40] ring-teal-100/80' },
+    { to: '/calendar', icon: 'calendar_today', label: 'Календарь', color: 'from-emerald-50/90 to-[#f0fdf9] text-[#004d40] ring-emerald-100' },
+    { to: '/counterparties', icon: 'handshake', label: 'Контрагенты', color: 'from-teal-50 to-cyan-50 text-[#004d40] ring-teal-100' },
+    { to: '/settings', icon: 'gavel', label: 'Законы', color: 'from-surface-container-low to-emerald-50/40 text-[#1e403a] ring-outline/80' },
   ] as const
 
   if (isManager) {
     return (
-      <div className="max-w-4xl space-y-6">
-        <div className="card-elevated p-6">
+      <div className="fc-page-shell-tight">
+        <div className="fc-hero">
+          <div className="fc-hero-strip" aria-hidden />
           <h1 className="page-heading">Главная</h1>
           <p className="mt-2 text-on-surface-variant">Виджет менеджера: новые задачи, сканы и отчёты команды.</p>
         </div>
@@ -123,29 +144,66 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl space-y-6 sm:space-y-8">
+    <div className="fc-page-shell">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="page-heading">Главная</h1>
-          <p className="mt-1.5 text-sm text-on-surface-variant">
-            УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
-          </p>
-        </div>
-        <div className="page-actions sm:w-auto sm:flex-row sm:gap-3">
-          <Link to="/documents" className="btn-secondary !py-2.5 text-sm">
-            <Icon name="file_download" className="text-lg" />
-            Экспорт
-          </Link>
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="page-heading">Главная</h1>
+            <p className="mt-1.5 text-sm text-on-surface-variant">
+              УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          <div className="page-actions sm:w-auto sm:flex-row sm:gap-3">
+            <Link to="/documents" className="btn-secondary !py-2.5 text-sm">
+              <Icon name="file_download" className="text-lg" />
+              Экспорт
+            </Link>
+          </div>
         </div>
       </div>
 
       <OnboardingChecklist />
       <ClientJourneyPanel metrics={metrics} transactions={transactions} />
 
+      {/* Умные действия */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link
+          to="/assistant"
+          className="group relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#003d36] via-[#00695c] to-[#008f7a] p-6 text-white shadow-lift ring-1 ring-white/10 transition duration-300 hover:brightness-[1.03]"
+        >
+          <div className="relative z-[1] max-w-[78%]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-200/90">Умные действия</p>
+            <h2 className="mt-2 font-headline text-xl font-bold tracking-tight">Спросить ИИ</h2>
+            <p className="mt-1.5 text-sm leading-snug text-white/78">Подсказки по учёту, УСН и срокам — в контексте вашей организации.</p>
+            <span className="mt-4 inline-flex items-center text-sm font-semibold text-emerald-100 underline-offset-4 group-hover:underline">
+              Подробнее
+            </span>
+          </div>
+          <Icon name="smart_toy" className="pointer-events-none absolute -bottom-3 -right-1 text-[6.5rem] leading-none text-white/[0.09]" filled />
+        </Link>
+        <Link
+          to="/planner"
+          className="group relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#022f29] via-[#045648] to-[#00796b] p-6 text-white shadow-lift ring-1 ring-white/10 transition duration-300 hover:brightness-[1.03]"
+        >
+          <div className="relative z-[1] flex max-w-[78%] flex-col">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-200/90">Задачи</p>
+            <h2 className="mt-2 font-headline text-xl font-bold tracking-tight">Планёр</h2>
+            <p className="mt-1.5 text-sm leading-snug text-white/78">Поручения команде, отчёты и напоминания в одном месте.</p>
+            <span className="mt-4 inline-flex min-h-10 items-center justify-center self-start rounded-full bg-white/15 px-5 text-sm font-semibold ring-1 ring-white/25 transition group-hover:bg-white/22">
+              Открыть планёр
+            </span>
+          </div>
+          <div className="pointer-events-none absolute -bottom-2 -right-2 flex h-28 w-28 items-center justify-center rounded-full border border-white/15 bg-white/10">
+            <Icon name="task_alt" className="text-[4.5rem] text-white/35" filled />
+          </div>
+        </Link>
+      </div>
+
       {/* Быстрые сервисы — мобильный super-app ряд */}
       <div className="-mx-1 lg:hidden">
-        <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Быстрый доступ</p>
+        <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-primary/70">Быстрый доступ</p>
         <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {quickLinks.map((q) => (
             <Link
@@ -154,7 +212,7 @@ export default function DashboardPage() {
               className={`flex min-w-[4.75rem] flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br p-3 shadow-soft ring-1 ${q.color}`}
             >
               <Icon name={q.icon} className="text-2xl opacity-90" />
-              <span className="text-center text-[10px] font-bold leading-tight text-zinc-900">{q.label}</span>
+              <span className="text-center text-[10px] font-bold leading-tight text-[#0d302a]">{q.label}</span>
             </Link>
           ))}
         </div>
@@ -191,22 +249,55 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {(
           [
-            { label: 'Доходы / мес', value: metrics?.income_current_month, icon: 'trending_up', accent: 'bg-primary', iconBg: 'bg-primary/10', iconClass: 'text-primary' },
-            { label: 'Расходы / мес', value: metrics?.expense_current_month, icon: 'trending_down', accent: 'bg-red-500', iconBg: 'bg-red-50', iconClass: 'text-red-600' },
-            { label: 'Баланс', value: metrics?.balance_current_month, icon: 'account_balance_wallet', accent: 'bg-emerald-500', iconBg: 'bg-emerald-50', iconClass: 'text-emerald-700' },
-            { label: 'В банке', value: metrics?.bank_balance, icon: 'credit_card', accent: 'bg-violet-500', iconBg: 'bg-violet-50', iconClass: 'text-violet-700' },
+            {
+              label: 'Доходы / мес',
+              value: metrics?.income_current_month,
+              icon: 'trending_up',
+              accent: 'bg-primary',
+              iconBg: 'bg-primary/12',
+              iconClass: 'text-primary',
+              wave: 'primary' as const,
+            },
+            {
+              label: 'Расходы / мес',
+              value: metrics?.expense_current_month,
+              icon: 'trending_down',
+              accent: 'bg-red-500',
+              iconBg: 'bg-red-50',
+              iconClass: 'text-red-600',
+              wave: 'expense' as const,
+            },
+            {
+              label: 'Баланс',
+              value: metrics?.balance_current_month,
+              icon: 'account_balance_wallet',
+              accent: 'bg-emerald-600',
+              iconBg: 'bg-emerald-50',
+              iconClass: 'text-emerald-700',
+              wave: 'balance' as const,
+            },
+            {
+              label: 'В банке',
+              value: metrics?.bank_balance,
+              icon: 'credit_card',
+              accent: 'bg-[#5b7cff]',
+              iconBg: 'bg-violet-50',
+              iconClass: 'text-violet-700',
+              wave: 'violet' as const,
+            },
           ] as const
         ).map((m) => (
-          <div key={m.label} className="metric-blade group rounded-2xl">
+          <div key={m.label} className="metric-blade group rounded-[1.25rem] pb-8 pt-5">
             <div className={`absolute bottom-0 left-0 top-0 w-1 ${m.accent} opacity-90`} />
-            <div className="mb-3 flex items-start justify-between sm:mb-4">
+            <MetricWaveDecor variant={m.wave} />
+            <div className="relative z-[1] mb-3 flex items-start justify-between sm:mb-4">
               <span className="label !mb-0 text-[9px] sm:text-[10px]">{m.label}</span>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${m.iconBg}`}>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${m.iconBg} shadow-xs ring-1 ring-black/[0.04]`}>
                 <Icon name={m.icon} className={`text-lg ${m.iconClass}`} />
               </div>
             </div>
-            <p className="font-headline text-lg font-extrabold text-on-surface sm:text-2xl">
-              {fmt(m.value)} <span className="text-xs font-normal text-zinc-500 sm:text-sm">BYN</span>
+            <p className="relative z-[1] font-headline text-lg font-extrabold text-on-surface sm:text-2xl">
+              {fmt(m.value)} <span className="text-xs font-normal text-on-surface-variant sm:text-sm">BYN</span>
             </p>
           </div>
         ))}
@@ -215,7 +306,7 @@ export default function DashboardPage() {
       {/* Bento Grid */}
       <div className="grid grid-cols-12 gap-6">
         {/* Chart */}
-        <div className="page-section col-span-12 bg-surface p-4 dark:border-zinc-700/80 sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="page-section col-span-12 bg-surface p-4 dark:border-outline/45 sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-4 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы</h3>
             <div className="flex items-center gap-6">
@@ -234,8 +325,8 @@ export default function DashboardPage() {
             <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  <stop offset="5%" stopColor={CHART_BRAND} stopOpacity={0.22} />
+                  <stop offset="95%" stopColor={CHART_BRAND} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="ge" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#dc2626" stopOpacity={0.12} />
@@ -255,7 +346,7 @@ export default function DashboardPage() {
                 }}
                 formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]}
               />
-              <Area type="monotone" dataKey="income" name="Доходы" stroke="#0d9488" strokeWidth={2} fill="url(#gi)" />
+              <Area type="monotone" dataKey="income" name="Доходы" stroke={CHART_BRAND} strokeWidth={2} fill="url(#gi)" />
               <Area type="monotone" dataKey="expense" name="Расходы" stroke="#dc2626" strokeWidth={2} fill="url(#ge)" />
             </AreaChart>
             </ResponsiveContainer>
@@ -264,7 +355,7 @@ export default function DashboardPage() {
 
         {/* Taxes sidebar */}
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
-          <div className="page-section flex-1 bg-surface p-4 dark:border-zinc-700/80 sm:p-6">
+          <div className="page-section flex-1 bg-surface p-4 dark:border-outline/45 sm:p-6">
             <h3 className="label mb-6 flex items-center gap-2">
               <Icon name="calculate" className="text-primary text-lg" />
               Налоги к уплате
@@ -311,8 +402,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent transactions */}
-        <div className="page-section col-span-12 overflow-hidden bg-surface p-0 dark:border-zinc-700/80">
-          <div className="flex flex-col gap-2 border-b border-zinc-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
+        <div className="page-section col-span-12 overflow-hidden bg-surface p-0 dark:border-outline/45">
+          <div className="flex flex-col gap-2 border-b border-outline/55 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
             <Link to="/transactions" className="text-sm font-bold text-primary hover:underline">
               Все операции

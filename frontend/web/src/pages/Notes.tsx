@@ -145,8 +145,8 @@ export default function Notes() {
 
   if (notesQuery.isError) {
     return (
-      <div className="max-w-3xl">
-        <div className="card-elevated p-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="card-elevated rounded-[1.25rem] p-6 ring-1 ring-primary/[0.06]">
           <h1 className="page-heading">Заметки</h1>
           <p className="mt-2 text-on-surface-variant">
             Не удалось загрузить заметки. Проверьте сеть и попробуйте снова.
@@ -160,9 +160,10 @@ export default function Notes() {
   }
 
   return (
-    <div className="max-w-4xl space-y-5">
-      <div className="card-elevated flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
+    <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
+      <div className="fc-hero flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1]">
           <h1 className="page-heading">Заметки</h1>
           <p className="mt-1 text-sm text-on-surface-variant">
             Сохраняются в вашем аккаунте и доступны с любого устройства.
@@ -170,7 +171,7 @@ export default function Notes() {
         </div>
         <button
           type="button"
-          className="btn-primary self-start sm:self-auto"
+          className="btn-primary relative z-[1] self-start rounded-[1rem] sm:self-auto"
           onClick={openCreate}
           disabled={busy}
         >
@@ -179,7 +180,7 @@ export default function Notes() {
       </div>
 
       {importUi && (
-        <div className="card-elevated flex flex-col gap-3 border border-secondary/30 bg-secondary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="card-elevated flex flex-col gap-3 rounded-[1.25rem] border border-secondary/30 bg-secondary/5 p-4 ring-1 ring-secondary/15 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-on-surface">
             В браузере есть {importUi.count}{' '}
             {importUi.count === 1 ? 'старая заметка' : 'старых заметок'} (localStorage). Перенести в аккаунт?
@@ -208,7 +209,7 @@ export default function Notes() {
       )}
 
       {sorted.length === 0 && !notesQuery.isLoading ? (
-        <div className="card-elevated border border-dashed border-outline/60 p-8 text-center text-sm text-on-surface-variant">
+        <div className="card-elevated rounded-[1.25rem] border border-dashed border-primary/25 bg-primary/[0.02] p-8 text-center text-sm text-on-surface-variant">
           Пока нет заметок — нажмите «Новая заметка».
         </div>
       ) : notesQuery.isLoading ? (
@@ -218,7 +219,7 @@ export default function Notes() {
       ) : (
         <ul className="space-y-3">
           {sorted.map((n) => (
-            <li key={n.id} className="card-elevated border border-outline/70 p-4 sm:p-5">
+            <li key={n.id} className="card-elevated rounded-[1.25rem] border border-outline/70 p-4 shadow-card ring-1 ring-primary/[0.04] sm:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <button
                   type="button"
@@ -259,7 +260,7 @@ export default function Notes() {
           onClose={closeModal}
           wide
           footer={
-            <div className="flex w-full justify-end gap-2 border-t border-outline/80 px-4 py-3 dark:border-zinc-800 sm:px-6">
+            <div className="flex w-full justify-end gap-2 border-t border-outline/80 px-4 py-3 dark:border-outline/40 sm:px-6">
               <button type="button" className="btn-secondary" onClick={closeModal}>
                 Отмена
               </button>

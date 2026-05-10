@@ -68,29 +68,32 @@ export default function AnalyticsPage() {
   const categories = catData?.items ?? []
 
   return (
-    <div className="max-w-7xl space-y-6 sm:space-y-8">
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
-        <div>
-          <h1 className="page-heading">Аналитика</h1>
-          <p className="mt-1 text-sm text-zinc-500">Финансовые показатели за {year} год</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Динамика</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Структура</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Рекомендации</span>
+    <div className="fc-page-shell">
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="page-heading">Аналитика</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">Финансовые показатели за {year} год</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Динамика</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Структура</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Рекомендации</span>
+            </div>
           </div>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
-            <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
-          </Link>
-          <div className="flex rounded-md border border-zinc-200/80 bg-surface-container-high p-1 shadow-soft">
-            <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
-              <Icon name="chevron_left" className="text-sm" />
-            </button>
-            <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface sm:py-1.5">{year}</span>
-            <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
-              <Icon name="chevron_right" className="text-sm" />
-            </button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <Link to="/reporting" className="btn-secondary w-full sm:w-auto">
+              <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
+            </Link>
+            <div className="flex rounded-md border border-outline/75 bg-surface-container-high p-1 shadow-soft">
+              <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
+                <Icon name="chevron_left" className="text-sm" />
+              </button>
+              <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface sm:py-1.5">{year}</span>
+              <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
+                <Icon name="chevron_right" className="text-sm" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -205,7 +208,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-                <Bar dataKey="income" name="Доходы" fill="#0d9488" radius={[4, 4, 0, 0]} opacity={0.85} />
+                <Bar dataKey="income" name="Доходы" fill="#00a86b" radius={[4, 4, 0, 0]} opacity={0.85} />
                 <Bar dataKey="expense" name="Расходы" fill="#dc2626" radius={[4, 4, 0, 0]} opacity={0.75} />
               </BarChart>
             </ResponsiveContainer>
@@ -213,7 +216,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="flex-1 rounded-xl border border-zinc-200/80 bg-surface-container-high p-4 shadow-soft sm:p-6">
+          <div className="flex-1 rounded-xl border border-outline/75 bg-surface-container-high p-4 shadow-soft sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <p className="text-sm text-on-surface-variant">Нет данных по расходам</p>
@@ -259,14 +262,14 @@ export default function AnalyticsPage() {
             <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#00a86b" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#00a86b" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
-              <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#0d9488" strokeWidth={2} fill="url(#gp)" />
+              <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#00a86b" strokeWidth={2} fill="url(#gp)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

@@ -59,11 +59,11 @@ export default function OnecSyncPage() {
   }, [jobs])
 
   return (
-    <div className="max-w-7xl space-y-5 sm:space-y-6">
+    <div className="fc-page-shell">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="page-heading">Синхронизация 1С</h1>
-          <p className="text-sm text-zinc-500">Очередь задач, статусы, ошибки и ручной retry</p>
+          <p className="text-sm text-on-surface-variant">Очередь задач, статусы, ошибки и ручной retry</p>
         </div>
         <div className="w-full sm:w-56">
           <label className="label">Фильтр по статусу</label>
@@ -77,18 +77,18 @@ export default function OnecSyncPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {(['pending', 'running', 'retry', 'success', 'failed'] as const).map((s) => (
-          <div key={s} className="rounded-xl bg-surface-container-low p-4 border border-zinc-200/80 shadow-soft">
+          <div key={s} className="rounded-xl bg-surface-container-low p-4 border border-outline/75 shadow-soft">
             <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">{statusLabel(s)}</p>
             <p className="mt-1 text-2xl font-extrabold text-on-surface">{stats[s] || 0}</p>
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+      <div className="overflow-hidden rounded-xl bg-surface-container-low border border-outline/75 shadow-soft">
         {isLoading ? (
-          <div className="p-10 text-center text-sm text-zinc-500">Загрузка...</div>
+          <div className="p-10 text-center text-sm text-on-surface-variant">Загрузка...</div>
         ) : jobs.length === 0 ? (
-          <div className="p-10 text-center text-sm text-zinc-500">Задачи не найдены</div>
+          <div className="p-10 text-center text-sm text-on-surface-variant">Задачи не найдены</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px]">

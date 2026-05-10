@@ -175,10 +175,11 @@ export default function SettingsPage() {
   const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <div className="max-w-7xl space-y-5 sm:space-y-6">
-      <div className="card-elevated p-4 sm:p-5">
+    <div className="fc-page-shell">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
         <h1 className="page-heading">Настройки</h1>
-        <p className="mt-1 text-sm text-zinc-500">Профиль, интеграции, команда и законодательство</p>
+        <p className="mt-1 text-sm text-on-surface-variant">Профиль, интеграции, команда и законодательство</p>
         <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Профиль</span>
           <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Интеграции</span>
@@ -187,7 +188,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="page-section p-4 dark:border-zinc-700/80 sm:p-5">
+      <div className="page-section p-4 dark:border-outline/45 sm:p-5">
         <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
         <div className="flex flex-wrap gap-2">
           <button
@@ -196,7 +197,7 @@ export default function SettingsPage() {
             className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
               theme === 'light'
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-zinc-200/80 bg-surface text-on-surface-variant hover:border-zinc-300 dark:border-zinc-700/80'
+                : 'border-outline/75 bg-surface text-on-surface-variant hover:border-primary/35 dark:border-outline/45'
             }`}
           >
             <Icon name="light_mode" className="text-lg" />
@@ -208,7 +209,7 @@ export default function SettingsPage() {
             className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
               theme === 'dark'
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-zinc-200/80 bg-surface text-on-surface-variant hover:border-zinc-300 dark:border-zinc-700/80'
+                : 'border-outline/75 bg-surface text-on-surface-variant hover:border-primary/35 dark:border-outline/45'
             }`}
           >
             <Icon name="dark_mode" className="text-lg" />
@@ -219,7 +220,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
           {([
             { key: 'profile' as Tab, label: 'Профиль', icon: 'business' },
             { key: 'integrations' as Tab, label: 'Интеграции', icon: 'integration_instructions' },
@@ -703,7 +704,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               </button>
               <button
                 type="button"
-                className="btn-ghost min-h-11 border border-zinc-200/80"
+                className="btn-ghost min-h-11 border border-outline/75"
                 disabled={!llmStatus?.org_key_configured || clearLlmMutation.isPending}
                 onClick={() => clearLlmMutation.mutate()}
               >
@@ -763,7 +764,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
 
-      <p className="text-[11px] text-zinc-600">Интеграции можно временно отключить, оставив пустой endpoint.</p>
+      <p className="text-[11px] text-on-surface-variant">Интеграции можно временно отключить, оставив пустой endpoint.</p>
     </div>
   )
 }
@@ -961,7 +962,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+      <div className="overflow-hidden rounded-xl border border-outline/75 bg-surface-container-low shadow-soft">
         <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           <table className="w-full min-w-[640px]">
           <thead>
@@ -1193,7 +1194,7 @@ function RegulatorySection() {
             <span className={`inline-flex text-[10px] px-2 py-0.5 rounded-md font-bold uppercase border ${AUTHORITY_COLORS[selectedUpdate.authority] || ''}`}>
               {selectedUpdate.authority_name}
             </span>
-            <p className="text-sm leading-relaxed text-zinc-400">{selectedUpdate.summary}</p>
+            <p className="text-sm leading-relaxed text-on-surface-variant">{selectedUpdate.summary}</p>
             {selectedUpdate.effective_date && (
               <div className="rounded-lg bg-surface-container-low p-3">
                 <p className="text-xs text-on-surface-variant">

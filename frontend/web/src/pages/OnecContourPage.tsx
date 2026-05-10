@@ -41,7 +41,7 @@ function statusBadgeClass(s: string): string {
     case 'error':
       return 'bg-error/10 text-error border border-error/25'
     case 'suspended':
-      return 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
+      return 'border border-outline/40 bg-surface-container-high text-on-surface-variant'
     default:
       return 'bg-amber-500/10 text-amber-300 border border-amber-500/25'
   }
@@ -69,33 +69,36 @@ export default function OnecContourPage() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="page-heading">Контур 1С</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Реестр организации в ФинКлик и состояние подключения к 1С.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="btn-secondary min-h-11 text-sm"
-            disabled={isFetching}
-            onClick={() => refetch()}
-          >
-            <Icon name="refresh" className="text-lg" />
-            {isFetching ? 'Обновляем…' : 'Обновить'}
-          </button>
-          <button type="button" className="btn-primary min-h-11 text-sm" onClick={() => pingHealth()}>
-            <Icon name="monitor_heart" className="text-lg" />
-            Проверить 1С
-          </button>
+    <div className="fc-page-shell-narrow">
+      <div className="fc-hero flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="page-heading">Контур 1С</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Реестр организации в ФинКлик и состояние подключения к 1С.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-secondary min-h-11 text-sm"
+              disabled={isFetching}
+              onClick={() => refetch()}
+            >
+              <Icon name="refresh" className="text-lg" />
+              {isFetching ? 'Обновляем…' : 'Обновить'}
+            </button>
+            <button type="button" className="btn-primary min-h-11 text-sm" onClick={() => pingHealth()}>
+              <Icon name="monitor_heart" className="text-lg" />
+              Проверить 1С
+            </button>
+          </div>
         </div>
       </div>
 
       {healthQuery.data && (
-        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/90 px-4 py-3 text-sm text-zinc-700 shadow-soft">
+        <div className="rounded-xl border border-outline/75 bg-surface-container-low/95 px-4 py-3 text-sm text-on-surface shadow-soft">
           <span className="font-bold text-primary">Последняя проверка /onec/health:</span>{' '}
           {healthQuery.data.connected ? (
             <span className="text-secondary">связь есть</span>
@@ -103,13 +106,13 @@ export default function OnecContourPage() {
             <span className="text-error">нет связи</span>
           )}
           {healthQuery.data.mode === 'mock' && (
-            <span className="ml-2 text-zinc-500">(демо без endpoint)</span>
+            <span className="ml-2 text-on-surface-variant">(демо без endpoint)</span>
           )}
         </div>
       )}
 
       {isLoading && (
-        <div className="flex items-center gap-2 text-sm text-zinc-500">
+        <div className="flex items-center gap-2 text-sm text-on-surface-variant">
           <Icon name="hourglass_empty" className="animate-spin" />
           Загрузка реестра…
         </div>
@@ -123,36 +126,36 @@ export default function OnecContourPage() {
 
       {data && !isLoading && (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-zinc-200/80 shadow-soft">
+          <div className="rounded-2xl bg-surface-container-low p-5 border border-outline/75 shadow-soft">
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <span className={`rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${statusBadgeClass(data.status)}`}>
                 {statusLabel(data.status)}
               </span>
-              <code className="rounded-md border border-zinc-200/80 bg-zinc-100 px-2 py-1 font-mono text-sm text-primary">{data.contour_key}</code>
+              <code className="rounded-md border border-outline/75 bg-surface-container-high px-2 py-1 font-mono text-sm text-primary">{data.contour_key}</code>
             </div>
             <dl className="grid gap-3 text-sm">
-              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
-                <dt className="text-zinc-500">Внешний tenant / ИБ</dt>
+              <div className="flex justify-between gap-4 border-b border-outline/70 pb-2">
+                <dt className="text-on-surface-variant">Внешний tenant / ИБ</dt>
                 <dd className="text-right text-on-surface">{data.external_tenant_id || '—'}</dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
-                <dt className="text-zinc-500">HTTP-подключение настроено</dt>
+              <div className="flex justify-between gap-4 border-b border-outline/70 pb-2">
+                <dt className="text-on-surface-variant">HTTP-подключение настроено</dt>
                 <dd className="text-right font-medium text-on-surface">
                   {data.connection_configured ? (
                     <span className="text-secondary">да</span>
                   ) : (
-                    <span className="text-zinc-500">нет</span>
+                    <span className="text-on-surface-variant">нет</span>
                   )}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
-                <dt className="text-zinc-500">Endpoint</dt>
-                <dd className="max-w-[min(100%,280px)] truncate text-right font-mono text-xs text-zinc-400">
+              <div className="flex justify-between gap-4 border-b border-outline/70 pb-2">
+                <dt className="text-on-surface-variant">Endpoint</dt>
+                <dd className="max-w-[min(100%,280px)] truncate text-right font-mono text-xs text-on-surface-variant">
                   {data.endpoint || '—'}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-zinc-200/70 pb-2">
-                <dt className="text-zinc-500">Последний health (реестр)</dt>
+              <div className="flex justify-between gap-4 border-b border-outline/70 pb-2">
+                <dt className="text-on-surface-variant">Последний health (реестр)</dt>
                 <dd className="text-right text-on-surface">
                   {data.last_health_at
                     ? new Date(data.last_health_at).toLocaleString('ru-BY')
@@ -166,16 +169,16 @@ export default function OnecContourPage() {
               </div>
               {data.last_error && (
                 <div>
-                  <dt className="text-zinc-500">Последняя ошибка</dt>
+                  <dt className="text-on-surface-variant">Последняя ошибка</dt>
                   <dd className="mt-1 rounded-lg bg-error/5 p-2 font-mono text-xs text-error">{data.last_error}</dd>
                 </div>
               )}
             </dl>
           </div>
 
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-on-surface-variant">
             Настройка URL и токена — в разделе настроек интеграции. Очередь синхронизации операций —{' '}
-            <Link to="/onec-sync" className="text-teal-400 underline-offset-2 hover:underline">
+            <Link to="/onec-sync" className="text-primary underline-offset-2 hover:underline">
               Синхронизация 1С
             </Link>
             .

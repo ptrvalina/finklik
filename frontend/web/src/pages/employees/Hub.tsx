@@ -15,7 +15,7 @@ export default function EmployeesHub() {
         <Link
           key={c.to}
           to={c.to}
-          className="card-elevated group flex flex-col gap-2 rounded-2xl p-5 transition hover:border-primary/40"
+          className="card-elevated group flex flex-col gap-2 rounded-[1.25rem] p-5 shadow-card ring-1 ring-primary/[0.05] transition hover:border-primary/40"
         >
           <span className="material-symbols-outlined text-3xl text-primary">{c.icon}</span>
           <h2 className="text-lg font-semibold text-on-surface group-hover:text-primary">{c.title}</h2>

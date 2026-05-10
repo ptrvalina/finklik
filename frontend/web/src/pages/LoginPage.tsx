@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { pingApi, PRODUCTION_API_BASE, resolveApiBase } from '../api/client'
+import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -25,84 +26,91 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     clearError()
-    try { await login(form) } catch { /* error in store */ }
+    try {
+      await login(form)
+    } catch {
+      /* error in store */
+    }
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas p-4">
-      <div className="absolute -right-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-primary/[0.07] blur-3xl" />
-      <div className="absolute -bottom-48 -left-32 h-[32rem] w-[32rem] rounded-full bg-primary/[0.04] blur-3xl" />
-      <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-3xl dark:bg-zinc-800/30" />
+    <AuthLayout>
+      <AuthBrandMark>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Бизнес в кармане</p>
+      </AuthBrandMark>
 
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="mb-10 text-center">
-          <h1 className="page-heading-brand">
-            ФинКлик
-          </h1>
-          <p className="mt-2.5 text-xs font-semibold tracking-[0.22em] text-on-surface-variant">БИЗНЕС В КАРМАНЕ</p>
-        </div>
+      <div className="card-elevated rounded-[1.25rem] border border-outline/75 p-7 shadow-lift ring-1 ring-primary/[0.08] dark:border-outline-variant/40">
+        <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
+          Войти в аккаунт
+        </h2>
 
-        <div className="card-elevated border border-outline/80 p-7 dark:border-zinc-700/70">
-          <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
-            Войти в аккаунт
-          </h2>
+        {typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io' && (
+          <div className="mb-4 rounded-xl border border-primary/25 bg-primary/[0.06] p-3 text-xs leading-snug text-on-surface">
+            <span className="font-semibold text-primary">Рекомендуемый адрес:</span> фронт и API на одном домене (без блокировок cross-origin). Откройте{' '}
+            <a className="break-all font-mono font-semibold text-primary underline" href={`${PRODUCTION_API_BASE}/login`}>
+              {PRODUCTION_API_BASE}/login
+            </a>
+          </div>
+        )}
 
-          {typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io' && (
-            <div className="mb-4 p-3 rounded-lg border border-primary/25 bg-primary/[0.06] text-xs text-on-surface leading-snug">
-              <span className="font-semibold text-primary">Рекомендуемый адрес:</span>{' '}
-              фронт и API на одном домене (без блокировок cross-origin). Откройте{' '}
-              <a
-                className="font-mono text-primary underline break-all font-semibold"
-                href={`${PRODUCTION_API_BASE}/login`}
-              >
-                {PRODUCTION_API_BASE}/login
-              </a>
+        {apiReachable === false && !error && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200">
+            <Icon name="warning" className="mt-0.5 text-base" />
+            <span>
+              API ({resolveApiBase()}) пока не ответил на проверку (простой Render 1–2 мин или ограничение сети). Откройте{' '}
+              <span className="font-mono break-all">{resolveApiBase()}/docs</span> — если не грузится, попробуйте интернет с телефона или VPN (иногда провайдер режет
+              зарубежные хостинги).
+            </span>
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-error/25 bg-error/10 p-3 text-sm text-error">
+            <Icon name="error" className="mt-0.5 text-lg" /> <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label">Email</label>
+            <div className="relative">
+              <Icon name="mail" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+              <input
+                type="email"
+                className="input rounded-[1rem] pl-10"
+                placeholder="ivan@company.by"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                autoFocus
+              />
             </div>
-          )}
-
-          {apiReachable === false && !error && (
-            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
-              <Icon name="warning" className="text-base mt-0.5" />
-              <span>
-                API ({resolveApiBase()}) пока не ответил на проверку (простой Render 1–2 мин или ограничение сети).
-                Откройте <span className="font-mono break-all">{resolveApiBase()}/docs</span> — если не грузится, попробуйте интернет с телефона или VPN (иногда провайдер режет зарубежные хостинги).
-              </span>
+          </div>
+          <div>
+            <label className="label">Пароль</label>
+            <div className="relative">
+              <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+              <input
+                type="password"
+                className="input rounded-[1rem] pl-10"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+              />
             </div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error flex items-start gap-2">
-              <Icon name="error" className="text-lg mt-0.5" /> <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label">Email</label>
-              <div className="relative">
-                <Icon name="mail" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" />
-                <input type="email" className="input pl-10" placeholder="ivan@company.by"
-                  value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required autoFocus />
-              </div>
-            </div>
-            <div>
-              <label className="label">Пароль</label>
-              <div className="relative">
-                <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" />
-                <input type="password" className="input pl-10" placeholder="••••••••"
-                  value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-              </div>
-            </div>
-            <button type="submit" className="btn-primary w-full" disabled={isLoading}>
-              {isLoading ? 'Входим...' : 'Войти'}
-            </button>
-          </form>
-        </div>
-
-        <p className="text-center text-sm text-on-surface-variant mt-6">
-          Нет аккаунта?{' '}
-          <Link to="/register" className="text-primary font-bold hover:underline">Зарегистрироваться</Link>
-        </p>
+          </div>
+          <button type="submit" className="btn-primary min-h-12 w-full rounded-[1rem]" disabled={isLoading}>
+            {isLoading ? 'Входим...' : 'Войти'}
+          </button>
+        </form>
       </div>
-    </div>
+
+      <p className="mt-6 text-center text-sm text-on-surface-variant">
+        Нет аккаунта?{' '}
+        <Link to="/register" className="font-bold text-primary hover:underline">
+          Зарегистрироваться
+        </Link>
+      </p>
+    </AuthLayout>
   )
 }

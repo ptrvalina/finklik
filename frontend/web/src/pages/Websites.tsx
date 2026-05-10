@@ -43,8 +43,9 @@ const LINKS: { title: string; href: string; description: string; icon: string }[
 
 export default function Websites() {
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="card-elevated p-4 sm:p-5">
+    <div className="mx-auto max-w-5xl space-y-6 sm:space-y-8">
+      <div className="fc-hero">
+        <div className="fc-hero-strip" aria-hidden />
         <h1 className="page-heading">Сайты для работы</h1>
         <p className="mt-1 text-sm text-on-surface-variant">
           Быстрые ссылки на официальные ресурсы (открываются в новой вкладке).
@@ -58,7 +59,7 @@ export default function Websites() {
             href={x.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="card-elevated group flex gap-4 border border-outline/70 p-4 transition-colors hover:border-primary/35 hover:bg-primary/[0.04] sm:p-5"
+            className="card-elevated group flex gap-4 rounded-[1.25rem] border border-outline/70 p-4 shadow-card ring-1 ring-primary/[0.04] transition-colors hover:border-primary/35 hover:bg-primary/[0.04] sm:p-5"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Icon name={x.icon} className="text-2xl" />

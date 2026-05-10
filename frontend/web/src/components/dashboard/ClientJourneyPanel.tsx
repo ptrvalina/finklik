@@ -135,7 +135,7 @@ export default function ClientJourneyPanel({
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/70 ring-1 ring-black/5 dark:bg-white/10">
                 <Icon name={action.icon} className="text-xl" />
               </div>
-              <span className="rounded-lg bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
+              <span className="rounded-lg bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface dark:bg-surface/70 dark:text-on-surface-variant">
                 {action.priority === 'high' ? 'Критично' : action.priority === 'medium' ? 'Важно' : 'Планово'}
               </span>
             </div>

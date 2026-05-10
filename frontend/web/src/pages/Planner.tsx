@@ -354,17 +354,20 @@ export default function Planner() {
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
 
   return (
-    <section className="space-y-6">
-      <div className="card-elevated flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-on-surface">Планер</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Календарь событий и задачи организации. Задачи из списка ниже отображаются в сетке месяца по дате создания.
-          </p>
+    <section className="fc-page-shell">
+      <div className="fc-hero flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="page-heading">Планер</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Календарь событий и задачи организации. Задачи из списка ниже отображаются в сетке месяца по дате создания.
+            </p>
+          </div>
+          <button type="button" className="btn-primary shrink-0" onClick={() => openCreate()}>
+            + Добавить событие
+          </button>
         </div>
-        <button type="button" className="btn-primary shrink-0" onClick={() => openCreate()}>
-          + Добавить событие
-        </button>
       </div>
 
       <div className="card-elevated space-y-4 p-5">

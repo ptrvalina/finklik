@@ -133,25 +133,28 @@ export default function BankPage() {
   ]
 
   return (
-    <div className="max-w-7xl space-y-6 sm:space-y-8">
+    <div className="fc-page-shell">
       {/* Header */}
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <h1 className="page-heading">Банк</h1>
-          <p className="mt-1 text-sm text-zinc-500">Мульти-банк, платежи и сверка операций</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Счета</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Платежи</span>
-            <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Сверка</span>
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div>
+            <h1 className="page-heading">Банк</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">Мульти-банк, платежи и сверка операций</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Счета</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Платежи</span>
+              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Сверка</span>
+            </div>
           </div>
-        </div>
-        <div className="page-actions sm:gap-3">
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
-            <Icon name="send" className="text-lg" /> Новый платёж
-          </button>
-          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
-            <Icon name="add" className="text-lg" /> Добавить счёт
-          </button>
+          <div className="page-actions sm:gap-3">
+            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
+              <Icon name="send" className="text-lg" /> Новый платёж
+            </button>
+            <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
+              <Icon name="add" className="text-lg" /> Добавить счёт
+            </button>
+          </div>
         </div>
       </div>
       <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
@@ -168,7 +171,7 @@ export default function BankPage() {
       )}
 
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-zinc-200/80 shadow-soft sm:inline-flex sm:min-w-0">
+        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
           {tabItems.map((t) => (
             <button
               key={t.key}
@@ -228,10 +231,10 @@ export default function BankPage() {
           </div>
 
           {/* Statements */}
-          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-zinc-200/80 shadow-soft">
+          <div className="overflow-hidden rounded-2xl bg-surface-container-low border border-outline/75 shadow-soft">
             <div className="flex flex-col gap-1 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
               <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
-              <span className="text-xs text-zinc-500">{statementsData?.total || 0} всего</span>
+              <span className="text-xs text-on-surface-variant">{statementsData?.total || 0} всего</span>
             </div>
             {statementsLoading ? (
               <div className="empty-state text-sm">Загрузка...</div>
@@ -285,7 +288,7 @@ export default function BankPage() {
               {accounts.map(acc => (
                 <div
                   key={acc.id}
-                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 border border-zinc-200/70 shadow-soft sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
+                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 border border-outline/70 shadow-soft sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
                   style={{ borderLeftColor: acc.color }}
                 >
                   <div className="flex items-start justify-between">
@@ -315,7 +318,7 @@ export default function BankPage() {
               ))}
             </div>
           )}
-          <div className="mt-5 rounded-xl border border-zinc-200/80 bg-surface p-4">
+          <div className="mt-5 rounded-xl border border-outline/75 bg-surface p-4">
             <p className="mb-2 text-sm font-semibold">OAuth2 подключение банка</p>
             <p className="mb-2 text-[11px] text-on-surface-variant">
               После авторизации в банке вставьте `code` и `state` из callback URL и подтвердите привязку.
@@ -392,7 +395,7 @@ export default function BankPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="page-section p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Сверка учёт ↔ выписка</h3>
-            <p className="mb-4 text-[11px] text-zinc-500">
+            <p className="mb-4 text-[11px] text-on-surface-variant">
               Обороты за период: весь учёт и отдельно операции с категорией <code className="text-teal-400">bank_import</code>.
             </p>
             <div className="mb-4 grid gap-3 sm:grid-cols-2">
@@ -410,7 +413,7 @@ export default function BankPage() {
               {recLoading ? 'Считаем…' : 'Пересчитать'}
             </button>
             {recData && (
-              <div className="space-y-2 rounded-xl border border-zinc-200/80 bg-zinc-50 p-4 font-mono text-xs text-zinc-700">
+              <div className="space-y-2 rounded-xl border border-outline/75 bg-surface-container-low p-4 font-mono text-xs text-on-surface">
                 <p>
                   Учёт: доход {fmt(recData.book?.total_income)} · расход {fmt(recData.book?.total_expense)} · чистый{' '}
                   <span className="font-semibold text-on-surface">{fmt(recData.book?.net)}</span> ({recData.book?.transactions_count} оп.)
@@ -427,9 +430,9 @@ export default function BankPage() {
           </div>
           <div className="page-section p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Импорт выписки (JSON)</h3>
-            <p className="mb-3 text-[11px] text-zinc-500">
-              Массив строк: <code className="text-zinc-400">transaction_date</code>, <code className="text-zinc-400">amount</code>,{' '}
-              <code className="text-zinc-400">direction</code> credit/debit, <code className="text-zinc-400">description</code>.
+            <p className="mb-3 text-[11px] text-on-surface-variant">
+              Массив строк: <code className="text-on-surface-variant">transaction_date</code>, <code className="text-on-surface-variant">amount</code>,{' '}
+              <code className="text-on-surface-variant">direction</code> credit/debit, <code className="text-on-surface-variant">description</code>.
             </p>
             <textarea
               className="input mb-3 min-h-[180px] w-full resize-y font-mono text-xs"
@@ -453,7 +456,7 @@ export default function BankPage() {
             >
               {importStatementMutation.isPending ? 'Импорт…' : 'Импортировать в учёт'}
             </button>
-            <div className="mt-4 border-t border-zinc-200/80 pt-4">
+            <div className="mt-4 border-t border-outline/75 pt-4">
               <p className="mb-2 text-sm font-semibold">Импорт из банка через OAuth2</p>
               <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                 <select className="input" value={oauthAccountId} onChange={(e) => setOauthAccountId(e.target.value)}>
@@ -529,7 +532,7 @@ export default function BankPage() {
                 onChange={(e) => setAccountForm((f) => ({ ...f, account_number: e.target.value }))}
               />
             </div>
-            <label className="flex items-center gap-2 text-sm text-zinc-500">
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
               <input
                 type="checkbox"
                 checked={accountForm.is_primary}

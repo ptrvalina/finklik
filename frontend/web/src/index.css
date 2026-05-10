@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Семантические RGB для Tailwind `rgb(var(...) / <alpha>)` — светлая тема с «воздухом», тёмная спокойная */
+/* Семантические RGB — FinClick Premium: светлая зона контента + лесной акцент */
 @layer base {
   :root {
     color-scheme: light;
@@ -10,40 +10,43 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
-    --color-canvas: 248 250 252;
+    --fc-brand: 0 168 107;
+    --fc-brand-dim: 0 122 90;
+    --fc-forest: 0 51 46;
+    --color-canvas: 244 248 246;
     --color-surface: 255 255 255;
-    --color-surface-dim: 248 250 252;
+    --color-surface-dim: 248 251 249;
     --color-surface-bright: 255 255 255;
-    --color-surface-container-lowest: 249 250 251;
-    --color-surface-container-low: 243 244 246;
-    --color-surface-container: 243 244 246;
-    --color-surface-container-high: 235 236 239;
-    --color-surface-container-highest: 226 229 233;
-    --color-surface-variant: 229 231 235;
-    --color-on-surface: 17 24 39;
-    --color-on-surface-variant: 100 116 139;
-    --color-on-background: 17 24 39;
-    --color-outline: 226 232 240;
-    --color-outline-variant: 203 213 225;
+    --color-surface-container-lowest: 247 250 248;
+    --color-surface-container-low: 237 244 241;
+    --color-surface-container: 232 239 236;
+    --color-surface-container-high: 223 231 227;
+    --color-surface-container-highest: 214 223 219;
+    --color-surface-variant: 220 228 224;
+    --color-on-surface: 15 26 24;
+    --color-on-surface-variant: 82 105 98;
+    --color-on-background: 15 26 24;
+    --color-outline: 216 228 222;
+    --color-outline-variant: 190 204 197;
   }
 
   .dark {
     color-scheme: dark;
-    --color-canvas: 9 9 11;
-    --color-surface: 24 24 27;
-    --color-surface-dim: 9 9 11;
-    --color-surface-bright: 39 39 42;
-    --color-surface-container-lowest: 9 9 11;
-    --color-surface-container-low: 24 24 27;
-    --color-surface-container: 39 39 42;
-    --color-surface-container-high: 47 47 52;
-    --color-surface-container-highest: 63 63 70;
-    --color-surface-variant: 63 63 70;
-    --color-on-surface: 248 250 252;
-    --color-on-surface-variant: 161 161 170;
-    --color-on-background: 248 250 252;
-    --color-outline: 63 63 70;
-    --color-outline-variant: 82 82 91;
+    --color-canvas: 6 21 19;
+    --color-surface: 14 28 26;
+    --color-surface-dim: 6 21 19;
+    --color-surface-bright: 22 38 35;
+    --color-surface-container-lowest: 6 21 19;
+    --color-surface-container-low: 14 28 26;
+    --color-surface-container: 22 38 35;
+    --color-surface-container-high: 28 46 42;
+    --color-surface-container-highest: 36 56 51;
+    --color-surface-variant: 42 62 57;
+    --color-on-surface: 235 245 242;
+    --color-on-surface-variant: 154 176 169;
+    --color-on-background: 235 245 242;
+    --color-outline: 42 62 57;
+    --color-outline-variant: 56 78 72;
   }
 
   * { box-sizing: border-box; }
@@ -91,10 +94,10 @@
     @apply inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5
            rounded-2xl font-headline text-sm font-semibold tracking-wide text-on-primary
            bg-gradient-to-br from-primary via-primary to-primary-dim
-           shadow-[0_2px_8px_rgb(13_148_136/0.28),0_8px_24px_-6px_rgb(13_148_136/0.22)]
+           shadow-[0_2px_8px_rgb(0_168_107/0.32),0_8px_24px_-6px_rgb(0_122_90/0.22)]
            ring-1 ring-white/15
            transition-all duration-200 ease-smooth
-           hover:brightness-[1.04] hover:shadow-[0_4px_16px_rgb(13_148_136/0.35),0_12px_32px_-8px_rgb(13_148_136/0.2)]
+           hover:brightness-[1.04] hover:shadow-[0_4px_16px_rgb(0_168_107/0.38),0_12px_32px_-8px_rgb(0_122_90/0.22)]
            active:scale-[0.98] active:brightness-[0.98]
            disabled:cursor-not-allowed disabled:opacity-50;
   }
@@ -112,12 +115,12 @@
            hover:bg-surface-container-high hover:text-on-surface;
   }
   .card {
-    @apply rounded-3xl border border-outline/80 bg-surface shadow-card
-           dark:border-zinc-700/70;
+    @apply rounded-[1.25rem] border border-outline/80 bg-surface shadow-card
+           dark:border-outline/45;
   }
   .card-elevated {
-    @apply rounded-3xl border border-outline/70 bg-surface shadow-lift
-           dark:border-zinc-700/60;
+    @apply rounded-[1.25rem] border border-outline/70 bg-surface shadow-lift
+           dark:border-outline/40;
   }
   .input {
     @apply w-full min-h-11 rounded-2xl border border-outline/90 bg-surface px-4 py-2.5 text-sm text-on-surface
@@ -146,20 +149,20 @@
     @apply mb-1.5 block font-label text-[11px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant;
   }
   .metric-blade {
-    @apply relative overflow-hidden rounded-3xl border border-outline/80 bg-surface p-6 shadow-card
+    @apply relative overflow-hidden rounded-[1.25rem] border border-outline/80 bg-surface p-6 shadow-card
            transition-all duration-300 ease-smooth
            hover:border-outline-variant hover:shadow-lift
            dark:border-zinc-700/70 dark:hover:border-zinc-600;
   }
   .glass-panel {
     backdrop-filter: blur(20px) saturate(1.2);
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    box-shadow: 0 8px 32px rgb(15 23 42 / 0.06);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(216, 228, 222, 0.9);
+    box-shadow: 0 8px 32px rgb(0 51 46 / 0.06);
   }
   .dark .glass-panel {
-    background: rgba(24, 24, 27, 0.88);
-    border: 1px solid rgba(63, 63, 70, 0.65);
+    background: rgba(14, 28, 26, 0.9);
+    border: 1px solid rgba(42, 62, 57, 0.75);
     box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
   }
   .tap-highlight-none {
@@ -192,7 +195,7 @@
     letter-spacing: -0.035em;
   }
   .page-section {
-    @apply rounded-2xl border border-outline/70 bg-surface p-4 shadow-soft sm:p-6;
+    @apply rounded-[1.25rem] border border-outline/70 bg-surface p-4 shadow-card ring-1 ring-primary/[0.04] sm:p-6;
   }
   .page-actions {
     @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center;
@@ -202,6 +205,22 @@
   }
   .table-head-row {
     @apply bg-surface-container-high/50 text-[10px] font-label uppercase tracking-widest text-on-surface-variant;
+  }
+  /* FinClick Premium — единая оболочка и шапки секций на внутренних страницах */
+  .fc-page-shell {
+    @apply mx-auto max-w-7xl space-y-5 sm:space-y-6;
+  }
+  .fc-hero {
+    @apply card-elevated relative overflow-hidden rounded-[1.25rem] p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6;
+  }
+  .fc-hero-strip {
+    @apply pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90;
+  }
+  .fc-page-shell-tight {
+    @apply mx-auto w-full max-w-4xl space-y-5 sm:space-y-6;
+  }
+  .fc-page-shell-narrow {
+    @apply mx-auto w-full max-w-3xl space-y-5 sm:space-y-6;
   }
 }
 

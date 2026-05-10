@@ -11,7 +11,7 @@ const EVENT_COLORS: Record<string, string> = {
   tax: '#dc2626',
   deadline: '#c026d3',
   salary: '#059669',
-  report: '#0d9488',
+  report: '#00a86b',
   meeting: '#2563eb',
   custom: '#52525b',
 }
@@ -81,8 +81,10 @@ export default function CalendarPage() {
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] max-w-7xl flex-col space-y-4 sm:space-y-6">
-      <div className="card-elevated flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
+    <div className="fc-page-shell flex h-[calc(100vh-8rem)] flex-col">
+      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="fc-hero-strip" aria-hidden />
+        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <h1 className="page-heading">
             {MONTHS[month]} {year}
@@ -128,10 +130,11 @@ export default function CalendarPage() {
             <Icon name="add" className="text-lg" /> Событие
           </button>
         </div>
+        </div>
       </div>
 
       {/* Calendar grid */}
-      <div className="page-section flex min-h-0 flex-1 flex-col overflow-hidden bg-surface p-0 dark:border-zinc-700/80">
+      <div className="page-section flex min-h-0 flex-1 flex-col overflow-hidden bg-surface p-0 dark:border-outline/45">
         {/* Days header */}
         <div className="grid grid-cols-7 bg-surface-container-high">
           {DAYS.map(d => (
@@ -160,7 +163,7 @@ export default function CalendarPage() {
                   {events.slice(0, 2).map(ev => (
                     <div
                       key={ev.id}
-                      className="truncate rounded-md border-l-2 p-1 text-[10px] font-bold text-zinc-900"
+                      className="truncate rounded-md border-l-2 p-1 text-[10px] font-bold text-on-surface"
                       style={{ borderLeftColor: ev.color, backgroundColor: `${ev.color}18` }}
                       title={ev.title}
                     >

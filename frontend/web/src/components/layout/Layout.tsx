@@ -8,7 +8,10 @@ import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
 import ToastStack from '../ui/ToastStack'
 import { notificationsApi } from '../../api/client'
-import { flattenNavForSheetWithAssistant, getMobileBarItemsForRole, getNavItemsForRole } from './navConfig'
+import { flattenNavForSheetWithAssistant, getMobileBarItemsForRole, getNavItemsForRole, type NavItem } from './navConfig'
+
+/** Основные разделы; остальное — блок «Полезное» (как в премиум-макете). */
+const PRIMARY_NAV_TOS = new Set(['/', '/planner', '/bank', '/reports', '/employees', '/accounting', '/counterparties'])
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -122,124 +125,149 @@ export default function Layout() {
   const roleLabel =
     user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : user?.role === 'viewer' ? 'Наблюдатель' : user?.role
 
+  const primaryNavItems = navItems.filter((i) => PRIMARY_NAV_TOS.has(i.to))
+  const utilityNavItems = navItems.filter((i) => !PRIMARY_NAV_TOS.has(i.to))
+
+  function renderSidebarItems(items: NavItem[]) {
+    return items.map((item) => {
+      const { to, label, icon, end, flyout } = item
+      const active =
+        pathActive(location.pathname, to, end) || (flyout?.some((c) => pathActive(location.pathname, c.to, true)) ?? false)
+      if (flyout?.length) {
+        return (
+          <div key={to} className="group relative">
+            <NavLink
+              to={to}
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
+                active
+                  ? 'bg-white/[0.12] text-white shadow-sm ring-1 ring-white/15'
+                  : 'text-white/55 hover:bg-white/[0.06] hover:text-white'
+              }`}
+            >
+              <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
+              <span>{label}</span>
+              <Icon
+                name="expand_more"
+                className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-emerald-200 rotate-180' : 'text-white/35 group-hover:rotate-180'}`}
+              />
+            </NavLink>
+            <div
+              className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-white/10 bg-[#061f1c]/95 py-1.5 opacity-0 shadow-xl backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100"
+              role="menu"
+              aria-label={`${label}: подразделы`}
+            >
+              {flyout.map((c) => {
+                const subActive = pathActive(location.pathname, c.to, true)
+                return (
+                  <NavLink
+                    key={c.to}
+                    to={c.to}
+                    role="menuitem"
+                    className={`block px-3 py-2 text-sm font-medium transition-colors ${
+                      subActive ? 'bg-emerald-500/15 text-emerald-200' : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {c.label}
+                  </NavLink>
+                )
+              })}
+            </div>
+          </div>
+        )
+      }
+      return (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
+            active
+              ? 'bg-white/[0.12] text-white shadow-sm ring-1 ring-white/15'
+              : 'text-white/55 hover:bg-white/[0.06] hover:text-white'
+          }`}
+        >
+          <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
+          <span>{label}</span>
+          {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.8)]" aria-hidden />}
+        </NavLink>
+      )
+    })
+  }
+
   return (
     <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      {/* Desktop sidebar */}
-      <aside className="hidden h-full w-[272px] flex-shrink-0 flex-col border-r border-outline/50 bg-gradient-to-b from-surface via-surface to-surface-container-low/90 shadow-[4px_0_24px_-12px_rgb(15_23_42/0.06)] backdrop-blur-sm dark:border-zinc-800/60 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/95 dark:shadow-[4px_0_32px_-8px_rgb(0_0_0/0.45)] lg:flex">
-        <div className="px-6 pt-9 pb-7">
+      {/* Desktop sidebar — FinClick Premium (тёмный лес + изумруд) */}
+      <aside className="relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-emerald-950/35 bg-gradient-to-b from-[#021e1c] via-[#05352e] to-[#04241f] shadow-[4px_0_40px_-8px_rgb(0_0_0/0.4)] before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_100%_70%_at_0%_-5%,rgba(0,168,107,0.2),transparent_50%)] after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gradient-to-b after:from-emerald-400/25 after:via-white/5 after:to-transparent lg:flex">
+        <div className="relative z-[1] px-6 pb-6 pt-9">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/18 via-primary/10 to-primary/5 shadow-card ring-1 ring-primary/15 dark:from-primary/25 dark:via-primary/15 dark:ring-primary/25">
-              <Icon name="account_balance" className="text-[22px] text-primary" filled />
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/30 via-primary/20 to-white/5 shadow-lg ring-1 ring-white/15">
+              <Icon name="account_balance" className="text-[24px] text-emerald-200" filled />
             </div>
             <div className="min-w-0">
-              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-on-surface" style={{ letterSpacing: '-0.03em' }}>
+              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-white" style={{ letterSpacing: '-0.03em' }}>
                 ФинКлик
               </h1>
-              <p className="truncate text-[11px] font-medium uppercase tracking-[0.16em] text-on-surface-variant">
-                {user?.org_name || 'Организация'}
-              </p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/95">Premium</p>
+              <p className="truncate text-[11px] text-white/50">{user?.org_name || 'Организация'}</p>
             </div>
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">
-          <nav className="space-y-1">
-          {navItems.map((item) => {
-            const { to, label, icon, end, flyout } = item
-            const active =
-              pathActive(location.pathname, to, end) ||
-              (flyout?.some((c) => pathActive(location.pathname, c.to, true)) ?? false)
-            if (flyout?.length) {
-              return (
-                <div key={to} className="group relative">
-                  <NavLink
-                    to={to}
-                    className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
-                      active
-                        ? 'bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-transparent text-primary shadow-xs ring-1 ring-primary/15 dark:from-primary/15 dark:via-primary/10 dark:ring-primary/25'
-                        : 'text-on-surface-variant hover:bg-surface-container-high/80 hover:text-on-surface'
-                    }`}
-                  >
-                    <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
-                    <span>{label}</span>
-                    <Icon
-                      name="expand_more"
-                      className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-primary rotate-180' : 'text-zinc-400 group-hover:rotate-180'}`}
-                    />
-                  </NavLink>
-                  <div
-                    className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-outline/90 bg-surface/95 py-1.5 opacity-0 shadow-lift backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-zinc-700/80 dark:bg-zinc-900/95"
-                    role="menu"
-                    aria-label={`${label}: подразделы`}
-                  >
-                    {flyout.map((c) => {
-                      const subActive = pathActive(location.pathname, c.to, true)
-                      return (
-                        <NavLink
-                          key={c.to}
-                          to={c.to}
-                          role="menuitem"
-                          className={`block px-3 py-2 text-sm font-medium transition-colors ${
-                            subActive ? 'bg-primary/10 text-primary' : 'text-zinc-700 hover:bg-surface-container-low hover:text-on-surface dark:text-zinc-300 dark:hover:text-on-surface'
-                          }`}
-                        >
-                          {c.label}
-                        </NavLink>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            }
-            return (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-200 ease-smooth ${
-                  active
-                    ? 'bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-transparent text-primary shadow-xs ring-1 ring-primary/15 dark:from-primary/15 dark:via-primary/10 dark:ring-primary/25'
-                    : 'text-on-surface-variant hover:bg-surface-container-high/80 hover:text-on-surface'
-                }`}
-              >
-                <Icon name={icon} filled={active} className="text-[22px] opacity-90" />
-                <span>{label}</span>
-                {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
-              </NavLink>
-            )
-          })}
-          </nav>
+        <div className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <nav className="space-y-1">{renderSidebarItems(primaryNavItems)}</nav>
+          {utilityNavItems.length > 0 && (
+            <div className="mt-6">
+              <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Полезное</p>
+              <nav className="space-y-1">{renderSidebarItems(utilityNavItems)}</nav>
+            </div>
+          )}
         </div>
 
-        {!isManager && <div className="flex justify-center border-t border-outline/50 p-4 dark:border-zinc-800/80">
-          <NavLink
-            to="/assistant"
-            title="Консультант"
-            aria-label="Консультант"
-            className={({ isActive }) =>
-              `tap-highlight-none flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-zinc-200/80 transition-colors ${
-                isActive
-                  ? 'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-950/60 dark:text-violet-200 dark:ring-violet-800'
-                  : 'bg-surface text-zinc-500 shadow-soft hover:bg-surface-container-low hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-              }`
-            }
-          >
-            {({ isActive }) => <Icon name="smart_toy" filled={isActive} className="text-[20px]" />}
-          </NavLink>
-        </div>}
+        <div className="relative z-[1] mt-auto border-t border-white/10 bg-black/15 px-4 py-4 backdrop-blur-md">
+          {!isManager && (
+            <NavLink
+              to="/assistant"
+              title="Консультант"
+              aria-label="Консультант"
+              className={({ isActive }) =>
+                `tap-highlight-none mb-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/35'
+                    : 'text-white/70 hover:bg-white/[0.07] hover:text-white'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon name="smart_toy" filled={isActive} className="text-[22px]" />
+                  <span>Консультант</span>
+                </>
+              )}
+            </NavLink>
+          )}
+          <div className="flex items-center gap-3 rounded-2xl px-1 py-1">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-white shadow-glow ring-2 ring-white/10">
+              {(user?.full_name || '?').slice(0, 1).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-headline text-sm font-semibold text-white">{user?.full_name || 'Профиль'}</p>
+              <p className="truncate text-[11px] text-white/45">{roleLabel}</p>
+            </div>
+          </div>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/40 bg-surface/80 px-3 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/70 dark:border-white/[0.06] dark:bg-zinc-950/80 dark:supports-[backdrop-filter]:bg-zinc-950/70 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/50 bg-surface/90 px-3 shadow-[0_1px_0_rgb(0_168_107/0.06)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.92)] dark:shadow-none dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.85)] sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container-low ring-1 ring-zinc-200/80 shadow-soft dark:ring-zinc-700/80">
-                <Icon name="account_balance" className="text-lg text-primary" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#053028] to-[#062f29] ring-1 ring-emerald-500/25 shadow-soft">
+                <Icon name="account_balance" className="text-lg text-emerald-300" />
               </div>
               <div className="min-w-0">
                 <p className="truncate font-headline text-sm font-bold text-on-surface">ФинКлик</p>
-                <p className="truncate text-[10px] text-zinc-500">{user?.org_name}</p>
+                <p className="truncate text-[10px] text-on-surface-variant">{user?.org_name}</p>
               </div>
             </div>
 
@@ -249,10 +277,10 @@ export default function Layout() {
               title="Сканировать"
               aria-label="Сканировать"
               className={({ isActive }) =>
-                `tap-highlight-none flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-zinc-200/80 transition-colors sm:h-10 sm:w-10 ${
+                `tap-highlight-none flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-outline/75 transition-colors sm:h-10 sm:w-10 ${
                   isActive
                     ? 'bg-primary/10 text-primary ring-primary/25'
-                    : 'bg-surface-container-low text-zinc-600 shadow-soft hover:bg-surface hover:text-on-surface dark:text-zinc-400 dark:hover:text-on-surface'
+                    : 'bg-surface-container-low text-on-surface-variant shadow-soft hover:bg-surface hover:text-on-surface dark:text-on-surface-variant dark:hover:text-on-surface'
                 }`
               }
             >
@@ -262,35 +290,35 @@ export default function Layout() {
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="group hidden min-w-0 flex-1 items-center gap-2 rounded-xl border border-outline/70 bg-surface-container-low/70 px-3 py-2 text-left text-sm text-on-surface-variant shadow-xs transition hover:border-outline hover:bg-surface lg:flex"
+              className="group hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-outline/60 bg-surface-container-low/80 px-4 py-2.5 text-left text-sm text-on-surface-variant shadow-xs transition hover:border-primary/25 hover:bg-surface lg:flex"
               aria-label="Глобальный поиск по разделам"
             >
-              <Icon name="search" className="text-lg text-zinc-400 group-hover:text-zinc-600" />
-              <span className="truncate">Поиск разделов, действий и сценариев клиента…</span>
-              <span className="ml-auto rounded-md bg-surface px-2 py-0.5 text-[10px] font-semibold text-zinc-500 ring-1 ring-outline/80">Ctrl + K</span>
+              <Icon name="search" className="text-lg text-primary/60 group-hover:text-primary" />
+              <span className="truncate">Поиск операций, действий и подсказок…</span>
+              <span className="ml-auto rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-semibold text-on-surface-variant/80 ring-1 ring-outline/70">Ctrl + K</span>
             </button>
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-50/90 px-3 py-1.5 text-[11px] font-semibold text-emerald-900 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-100 sm:flex">
-              <span className={`h-2 w-2 rounded-full shadow-[0_0_0_3px_rgb(16_185_129/0.25)] ${connected ? 'bg-emerald-500' : 'bg-zinc-400 shadow-none'}`} />
+            <div className="hidden items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.07] px-3 py-1.5 text-[11px] font-semibold text-primary shadow-xs dark:border-primary/30 dark:bg-primary/10 dark:text-emerald-300 sm:flex">
+              <span className={`h-2 w-2 rounded-full shadow-[0_0_0_3px_rgb(0_168_107/0.28)] ${connected ? 'bg-primary' : 'bg-on-surface-variant/50 shadow-none'}`} />
               {connected ? 'Онлайн' : 'Офлайн'}
             </div>
             {/* Колокольчик + тема */}
-            <div className="relative flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-zinc-700/70 dark:bg-zinc-900/90 sm:gap-1 sm:p-1.5" ref={notifMenuRef}>
+            <div className="relative flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-outline/45 dark:bg-surface/90 sm:gap-1 sm:p-1.5" ref={notifMenuRef}>
               <button
                 type="button"
                 onClick={() => setNotifOpen((v) => !v)}
-                className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400"
+                className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-on-surface-variant"
                 aria-label="Уведомления"
               >
                 <Icon name="notifications" className="text-xl" />
                 {unreadCount > 0 && (
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-zinc-800 sm:right-1.5 sm:top-1.5" />
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-outline/50 sm:right-1.5 sm:top-1.5" />
                 )}
               </button>
               {notifOpen && (
-                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift dark:bg-zinc-900">
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift dark:bg-surface">
                   <div className="flex items-center justify-between px-2 py-1">
                     <p className="text-sm font-semibold">Уведомления</p>
                     <button
@@ -325,11 +353,11 @@ export default function Layout() {
                   </div>
                 </div>
               )}
-              <span className="hidden h-6 w-px bg-outline/90 dark:bg-zinc-600 sm:block" aria-hidden />
+              <span className="hidden h-6 w-px bg-outline/90 dark:bg-outline-variant sm:block" aria-hidden />
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="tap-highlight-none flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-zinc-400 dark:hover:text-on-surface"
+                className="tap-highlight-none flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-on-surface-variant dark:hover:text-on-surface"
                 aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
                 title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
               >
@@ -338,8 +366,8 @@ export default function Layout() {
             </div>
             <button
               type="button"
-              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 sm:h-11 sm:w-11 dark:border-zinc-700/80 ${
-                searchOpen ? 'bg-primary/10 text-primary ring-2 ring-primary/20' : 'bg-surface-container-low text-zinc-600 shadow-soft hover:bg-surface dark:text-zinc-400'
+              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 sm:h-11 sm:w-11 dark:border-outline/45 ${
+                searchOpen ? 'bg-primary/10 text-primary ring-2 ring-primary/20' : 'bg-surface-container-low text-on-surface-variant shadow-soft hover:bg-surface dark:text-on-surface-variant'
               }`}
               aria-label={searchOpen ? 'Закрыть поиск' : 'Поиск'}
               aria-expanded={searchOpen}
@@ -358,16 +386,16 @@ export default function Layout() {
                 {(user?.full_name || '?').slice(0, 1).toUpperCase()}
               </button>
               {userOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-outline/90 bg-surface/98 py-2 shadow-lift backdrop-blur-xl dark:border-zinc-700/80 dark:bg-zinc-900/98">
-                  <div className="border-b border-zinc-100 px-3 pb-2 dark:border-zinc-800">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-outline/90 bg-surface/98 py-2 shadow-lift backdrop-blur-xl dark:border-outline/45 dark:bg-surface/98">
+                  <div className="border-b border-outline/55 px-3 pb-2 dark:border-outline/35">
                     <p className="truncate text-sm font-semibold text-on-surface">{user?.full_name}</p>
-                    <p className="truncate text-xs text-zinc-500">{user?.email}</p>
-                    <p className="truncate text-[11px] text-zinc-500">{roleLabel}</p>
+                    <p className="truncate text-xs text-on-surface-variant">{user?.email}</p>
+                    <p className="truncate text-[11px] text-on-surface-variant">{roleLabel}</p>
                   </div>
                   {!isManager && (
                     <Link
                       to="/settings"
-                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-zinc-800/80"
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high"
                       onClick={() => setUserOpen(false)}
                     >
                       <Icon name="settings" className="text-lg" />
@@ -390,9 +418,9 @@ export default function Layout() {
 
         {/* Mobile expanded search */}
         {searchOpen && (
-          <div className="border-b border-zinc-200/80 bg-surface-container-low/95 px-4 py-3 dark:border-zinc-800/80">
+          <div className="border-b border-outline/75 bg-surface-container-low/95 px-4 py-3 dark:border-outline/35/80">
             <div className="relative">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
               <input
                 autoFocus
                 type="search"
@@ -418,14 +446,14 @@ export default function Layout() {
               >
                 <span className="min-w-0 text-on-surface">
                   <span className="font-bold text-primary">{n.event}:</span>{' '}
-                  <span className="text-zinc-600 dark:text-zinc-400">
+                  <span className="text-on-surface-variant dark:text-on-surface-variant">
                     {typeof n.data === 'object' ? JSON.stringify(n.data) : String(n.data)}
                   </span>
                 </span>
                 <button
                   type="button"
                   onClick={() => dismissNotification(n.id)}
-                  className="tap-highlight-none ml-2 flex-shrink-0 text-zinc-400 hover:text-zinc-800"
+                  className="tap-highlight-none ml-2 flex-shrink-0 text-on-surface-variant hover:text-on-surface"
                   aria-label="Закрыть"
                 >
                   <Icon name="close" className="text-lg" />
@@ -435,7 +463,7 @@ export default function Layout() {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/40 via-canvas to-canvas dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-surface-container-low/50 via-canvas to-canvas dark:from-[rgb(var(--color-surface))] dark:via-canvas dark:to-canvas">
           <div className="mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
             <Outlet />
           </div>
@@ -444,7 +472,7 @@ export default function Layout() {
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/50 bg-surface/90 pb-[max(env(safe-area-inset-bottom,0px),6px)] shadow-[0_-8px_32px_-12px_rgb(15_23_42/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 dark:border-white/[0.06] dark:bg-zinc-950/90 dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.5)] lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[70] border-t border-outline/60 bg-surface/95 pb-[max(env(safe-area-inset-bottom,0px),6px)] shadow-[0_-8px_32px_-12px_rgb(0_51_46/0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-surface/85 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.95)] dark:shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.45)] lg:hidden"
         aria-label="Основная навигация"
       >
         <div className="mx-auto flex max-w-lg items-end justify-between gap-0.5 px-0.5 pt-1">
@@ -456,7 +484,7 @@ export default function Layout() {
                 to={to}
                 end={end}
                 className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
-                  active ? 'text-primary' : 'text-zinc-500'
+                  active ? 'text-primary' : 'text-on-surface-variant'
                 }`}
               >
                 <Icon name={icon} filled={active} className="text-[22px]" />
@@ -469,7 +497,7 @@ export default function Layout() {
             type="button"
             onClick={() => setMoreOpen(true)}
             className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 ${
-              moreOpen ? 'text-primary' : 'text-zinc-500'
+              moreOpen ? 'text-primary' : 'text-on-surface-variant'
             }`}
           >
             <Icon name="apps" className="text-[24px]" />
@@ -488,20 +516,20 @@ export default function Layout() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-zinc-900/25 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#021e1c]/30 backdrop-blur-sm"
             aria-label="Закрыть"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[1.25rem] border border-zinc-200/90 bg-surface shadow-lift motion-safe:transition-transform dark:border-zinc-700/80">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[1.25rem] border border-outline/80 bg-surface shadow-lift motion-safe:transition-transform dark:border-outline/45">
+            <div className="flex items-center justify-between border-b border-outline/55 px-5 py-4 dark:border-outline/35">
               <div>
                 <p className="font-headline text-base font-bold text-on-surface">Сервисы</p>
-                <p className="text-xs text-zinc-500">Все разделы ФинКлик</p>
+                <p className="text-xs text-on-surface-variant">Все разделы ФинКлик</p>
               </div>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200/80 bg-surface-container-low text-zinc-600 hover:bg-surface dark:border-zinc-700/80 dark:text-zinc-400"
+                className="tap-highlight-none flex h-10 w-10 items-center justify-center rounded-full border border-outline/75 bg-surface-container-low text-on-surface-variant hover:bg-surface dark:border-outline/45 dark:text-on-surface-variant"
                 aria-label="Закрыть"
               >
                 <Icon name="close" className="text-xl" />
@@ -519,18 +547,18 @@ export default function Layout() {
                     className={`tap-highlight-none flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-colors ${
                       active
                         ? 'bg-primary/8 ring-1 ring-primary/25 shadow-soft'
-                        : 'border border-zinc-200/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-zinc-700/60'
+                        : 'border border-outline/70 bg-surface-container-low/80 hover:bg-surface hover:shadow-soft dark:border-outline/40'
                     }`}
                   >
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                        active ? 'bg-primary/12 text-primary' : 'bg-surface text-zinc-600 ring-1 ring-zinc-200/80 dark:text-zinc-400 dark:ring-zinc-700/80'
+                        active ? 'bg-primary/12 text-primary' : 'bg-surface text-on-surface-variant ring-1 ring-outline/75 dark:text-on-surface-variant dark:ring-outline/45'
                       }`}
                     >
                       <Icon name={icon} filled={active} className="text-[26px]" />
                     </div>
                     <span className="text-[11px] font-bold leading-tight text-on-surface">{label}</span>
-                    {description && <span className="line-clamp-2 text-[9px] leading-tight text-zinc-500">{description}</span>}
+                    {description && <span className="line-clamp-2 text-[9px] leading-tight text-on-surface-variant">{description}</span>}
                   </NavLink>
                 )
               })}

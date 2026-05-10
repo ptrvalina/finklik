@@ -18,14 +18,20 @@ export default {
           'container-high': 'rgb(var(--color-surface-container-high) / <alpha-value>)',
           'container-highest': 'rgb(var(--color-surface-container-highest) / <alpha-value>)',
           variant: 'rgb(var(--color-surface-variant) / <alpha-value>)',
-          tint: '#0d9488',
+          tint: '#00a86b',
+        },
+        /** FinClick Premium — лесной зелёный бренд */
+        forest: {
+          DEFAULT: '#00332e',
+          mid: '#004d40',
+          soft: '#00695c',
         },
         primary: {
-          DEFAULT: '#0d9488',
-          dim: '#0f766e',
-          fixed: '#14b8a6',
-          'fixed-dim': '#0d9488',
-          container: '#2dd4bf',
+          DEFAULT: '#00a86b',
+          dim: '#007a5a',
+          fixed: '#00c896',
+          'fixed-dim': '#00a86b',
+          container: '#5ee9c0',
         },
         'on-primary': {
           DEFAULT: '#ffffff',
@@ -34,11 +40,11 @@ export default {
           'fixed-variant': '#f0fdfa',
         },
         secondary: {
-          DEFAULT: '#059669',
-          dim: '#047857',
-          fixed: '#10b981',
-          'fixed-dim': '#059669',
-          container: '#d1fae5',
+          DEFAULT: '#008f6c',
+          dim: '#007a5a',
+          fixed: '#00c896',
+          'fixed-dim': '#008f6c',
+          container: '#ccf7e8',
         },
         'on-secondary': { DEFAULT: '#ffffff', container: '#064e3b', fixed: '#ffffff', 'fixed-variant': '#065f46' },
         tertiary: {
@@ -66,7 +72,7 @@ export default {
         },
         'inverse-surface': '#18181b',
         'inverse-on-surface': '#fafafa',
-        'inverse-primary': '#5eead4',
+        'inverse-primary': '#5ee9c0',
       },
       fontFamily: {
         headline: ['Manrope', 'system-ui', 'sans-serif'],
@@ -85,9 +91,9 @@ export default {
       boxShadow: {
         xs: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
         soft: '0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.04)',
-        card: '0 2px 8px rgb(15 23 42 / 0.05), 0 12px 32px rgb(15 23 42 / 0.04)',
-        lift: '0 8px 24px rgb(15 23 42 / 0.08), 0 24px 48px -12px rgb(15 23 42 / 0.14)',
-        glow: '0 0 0 1px rgb(13 148 136 / 0.12), 0 10px 28px -10px rgb(13 148 136 / 0.28)',
+        card: '0 2px 8px rgb(0 51 46 / 0.06), 0 12px 32px rgb(0 51 46 / 0.05)',
+        lift: '0 8px 24px rgb(0 51 46 / 0.08), 0 24px 48px -12px rgb(0 51 46 / 0.1)',
+        glow: '0 0 0 1px rgb(0 168 107 / 0.14), 0 10px 28px -10px rgb(0 168 107 / 0.22)',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',

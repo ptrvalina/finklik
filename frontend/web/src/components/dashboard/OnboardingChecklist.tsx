@@ -84,14 +84,14 @@ export default function OnboardingChecklist() {
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="font-headline text-sm font-bold text-on-surface sm:text-base">С чего начать</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="mt-0.5 text-xs text-on-surface-variant">
             {doneCount} из {steps.length} шагов — закройте базовый онбординг за пару минут
           </p>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="tap-highlight-none flex-shrink-0 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-500 hover:bg-zinc-100 hover:text-on-surface"
+          className="tap-highlight-none flex-shrink-0 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
         >
           Скрыть
         </button>
@@ -104,7 +104,7 @@ export default function OnboardingChecklist() {
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
                 s.done
                   ? 'border border-emerald-200/80 bg-emerald-50 text-emerald-900'
-                  : 'border border-zinc-200/80 bg-surface text-zinc-800 hover:border-primary/30 hover:bg-primary/5 dark:border-zinc-700/80 dark:text-zinc-200'
+                  : 'border border-outline/75 bg-surface text-on-surface hover:border-primary/30 hover:bg-primary/5 dark:border-outline/45 dark:text-on-surface'
               }`}
             >
               <span
@@ -115,7 +115,7 @@ export default function OnboardingChecklist() {
                 {s.done ? <Icon name="check" className="text-xl" /> : <Icon name={s.icon} className="text-xl" />}
               </span>
               <span className="min-w-0 flex-1 text-sm font-medium leading-snug">{s.label}</span>
-              {!s.done && <Icon name="chevron_right" className="flex-shrink-0 text-zinc-500" />}
+              {!s.done && <Icon name="chevron_right" className="flex-shrink-0 text-on-surface-variant" />}
             </Link>
           </li>
         ))}
