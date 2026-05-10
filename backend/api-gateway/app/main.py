@@ -80,9 +80,20 @@ USE_LOCAL_DOCS = (_STATIC_SWAGGER / "swagger-ui-bundle.js").is_file() and (
 
 _SPA_DIR = _REPO_ROOT / "static" / "spa"
 
+# index.html ссылается на хэшированные ассеты; без no-cache браузер может долго держать старый
+# index и подгружать устаревший UI после деплоя.
+_SPA_INDEX_NO_CACHE = {
+    "Cache-Control": "no-cache, must-revalidate",
+    "Pragma": "no-cache",
+}
+
 
 def _spa_available() -> bool:
     return (_SPA_DIR / "index.html").is_file()
+
+
+def _spa_index_response():
+    return FileResponse(_SPA_DIR / "index.html", headers=dict(_SPA_INDEX_NO_CACHE))
 
 
 @asynccontextmanager
@@ -255,7 +266,7 @@ app.include_router(ws_router)
 async def root():
     """Корень: SPA при сборке Docker (тот же хост, что и API на Render), иначе JSON для проверки деплоя."""
     if _spa_available():
-        return FileResponse(_SPA_DIR / "index.html")
+        return _spa_index_response()
     return {
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
@@ -339,4 +350,4 @@ if _spa_available():
             or spa_route == "ws"
         ):
             raise HTTPException(status_code=404, detail="Not found")
-        return FileResponse(_SPA_DIR / "index.html")
+        return _spa_index_response()
