@@ -16,6 +16,7 @@ from app.models.automation_policy import AutomationPolicy
 from app.models.user_note import UserNote
 from app.models.calendar_reminder import CalendarReminderDelivery
 from app.models.domain_event import DomainEvent
+from app.models.state_audit import FinancialStateAuditEntry
 from app.models.business_os import (
     AIMemoryEntry,
     BusinessEntity,
@@ -47,4 +48,5 @@ __all__ = [
     "RevenueStream",
     "WorkflowAction",
     "DomainEvent",
+    "FinancialStateAuditEntry",
 ]

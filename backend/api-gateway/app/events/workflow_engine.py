@@ -5,6 +5,8 @@ from __future__ import annotations
 import structlog
 from typing import TYPE_CHECKING, Any, Protocol
 
+from prometheus_client import Counter
+
 from app.models.domain_event import DomainEvent
 
 if TYPE_CHECKING:
@@ -48,4 +50,8 @@ class WorkflowEngine:
                 try:
                     await h.handle(db, event, store, depth)
                 except Exception:
+                    workflow_handler_failures.labels(
+                        handler=type(h).__name__,
+                        event_type=event.event_type or "unknown",
+                    ).inc()
                     log.exception("handler_failed", handler=type(h).__name__, event_type=event.event_type)

@@ -35,8 +35,26 @@ class EventStore:
         target_kind: str | None = None,
         occurred_at_ms: int | None = None,
         skip_workflow: bool = False,
+        idempotency_key: str | None = None,
         _depth: int = 0,
     ) -> DomainEvent:
+        if idempotency_key:
+            dup = await db.execute(
+                select(DomainEvent).where(
+                    DomainEvent.organization_id == organization_id,
+                    DomainEvent.idempotency_key == idempotency_key,
+                )
+            )
+            existing = dup.scalar_one_or_none()
+            if existing is not None:
+                log.info(
+                    "domain_event_idempotent_skip",
+                    organization_id=organization_id,
+                    event_type=event_type,
+                    idempotency_key=idempotency_key,
+                )
+                return existing
+
         row = DomainEvent(
             id=str(uuid.uuid4()),
             organization_id=organization_id,
@@ -46,6 +64,7 @@ class EventStore:
             target_kind=target_kind,
             payload_json=json.dumps(payload or {}, ensure_ascii=False),
             occurred_at_ms=occurred_at_ms if occurred_at_ms is not None else int(time.time() * 1000),
+            idempotency_key=idempotency_key,
         )
         db.add(row)
         await db.flush()

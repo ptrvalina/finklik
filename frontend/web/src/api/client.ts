@@ -155,6 +155,17 @@ api.interceptors.response.use(
         window.location.href = resolveAppPath('/login')
       }
     }
+    const body = error.response?.data
+    if (body && typeof body === 'object') {
+      const um = (body as { user_message?: unknown }).user_message
+      if (typeof um === 'string' && um.trim()) {
+        ;(error as { calmUserMessage?: string }).calmUserMessage = um.trim()
+      }
+      const rs = (body as { retry_suggested?: unknown }).retry_suggested
+      if (typeof rs === 'boolean') {
+        ;(error as { retrySuggested?: boolean }).retrySuggested = rs
+      }
+    }
     return Promise.reject(error)
   },
 )
@@ -336,6 +347,7 @@ export const workspaceApi = {
 export const operationsApi = {
   executionFeed: () => api.get('/operations/execution-feed'),
   financialState: () => api.get('/operations/financial-state'),
+  trustSurface: () => api.get('/operations/trust-surface'),
   ackWorkPack: (packId: string) => api.post(`/operations/work-packs/${encodeURIComponent(packId)}/ack`),
 }
 

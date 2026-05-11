@@ -284,6 +284,7 @@ async def accept_invitation(
             user_id=user.id,
             organization_id=invitation.organization_id,
             role_in_org=user.role,
+            is_pinned=False,
         )
     )
     await db.flush()

@@ -85,6 +85,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
                 user_id=user.id,
                 organization_id=org.id,
                 role_in_org=user.role,
+                is_pinned=False,
             )
         )
         await db.flush()

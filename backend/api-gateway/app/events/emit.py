@@ -79,6 +79,7 @@ async def emit_transaction_created(
         target_id=tx.id,
         target_kind="transaction",
         payload=payload,
+        idempotency_key=f"{organization_id}:ev:{EV_TRANSACTION_CREATED}:{tx.id}",
     )
 
 
@@ -129,6 +130,7 @@ async def emit_transaction_deleted(
         target_id=tx_id,
         target_kind="transaction",
         payload={"snapshot": snapshot},
+        idempotency_key=f"{organization_id}:ev:{EV_TRANSACTION_DELETED}:{tx_id}",
     )
 
 
@@ -159,6 +161,7 @@ async def emit_document_ocr_processed(
             "linked_transaction_id": linked_transaction_id,
             "lifecycle_status": lifecycle_status,
         },
+        idempotency_key=f"{organization_id}:ev:{EV_DOCUMENT_OCR_PROCESSED}:{document_id}",
     )
 
 
@@ -187,6 +190,7 @@ async def emit_reconciliation_match_recorded(
             "confidence": confidence,
             "status": status,
         },
+        idempotency_key=f"{organization_id}:ev:{EV_RECONCILIATION_MATCH_RECORDED}:{match_id}",
     )
 
 

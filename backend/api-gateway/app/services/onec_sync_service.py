@@ -5,6 +5,7 @@ from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
+from prometheus_client import Counter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,12 @@ from app.core.database import AsyncSessionLocal
 from app.models.onec import OneCConnection
 from app.models.onec_sync import OneCSyncJob
 from app.models.transaction import Transaction
+
+# Flow 10: «мёртвая очередь» в смысле observability — задача исчерпала попытки (не пользовательский UI).
+onec_sync_terminal_failed_total = Counter(
+    "finclick_onec_sync_terminal_failed_total",
+    "Задача синхронизации 1С переведена в failed после исчерпания попыток.",
+)
 
 
 def _build_tx_payload(tx: Transaction) -> dict:
@@ -124,6 +131,7 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
                 job.status = "failed"
                 job.last_error = "Транзакция не найдена"
                 job.finished_at = datetime.now(timezone.utc)
+                onec_sync_terminal_failed_total.inc()
                 await session.commit()
                 processed += 1
                 continue
@@ -156,6 +164,7 @@ async def process_onec_sync_jobs_once(batch_size: int = 20) -> int:
                 if job.attempts >= job.max_attempts:
                     job.status = "failed"
                     job.finished_at = datetime.now(timezone.utc)
+                    onec_sync_terminal_failed_total.inc()
                 else:
                     job.status = "retry"
                 await session.commit()
@@ -181,6 +190,7 @@ async def recover_stuck_sync_jobs(stuck_after_minutes: int = 15) -> int:
                 job.status = "failed"
                 job.finished_at = datetime.now(timezone.utc)
                 job.last_error = "Задача зависла в running и переведена в failed"
+                onec_sync_terminal_failed_total.inc()
             else:
                 job.status = "retry"
                 job.last_error = "Задача зависла в running и возвращена в retry"

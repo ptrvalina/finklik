@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text, UniqueConstraint, Index
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text, UniqueConstraint, Index, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.core.datetime_utils import utc_now_naive
@@ -54,7 +54,7 @@ class UserOrganizationMembership(Base):
     organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     #: Переопределение роли в рамках организации (если NULL — используется User.role).
     role_in_org: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 

@@ -105,7 +105,13 @@ async def upload_and_scan(
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 
-    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    try:
+        ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    except Exception:
+        raise HTTPException(
+            503,
+            "Распознавание временно не завершилось. Попробуйте загрузить файл ещё раз — данные учёта не изменены.",
+        ) from None
     parsed = ocr_result.get("parsed", {}) or {}
     linked_tx_id, is_duplicate = await _find_duplicate_or_linked_transaction(
         db=db,
@@ -182,7 +188,13 @@ async def upload_to_kudir(
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
 
-    ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    try:
+        ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+    except Exception:
+        raise HTTPException(
+            503,
+            "Распознавание временно не завершилось. Попробуйте загрузить файл ещё раз — проводка ещё не создана.",
+        ) from None
     parsed = ocr_result.get("parsed", {}) or {}
     try:
         tx_date = date.fromisoformat(str(parsed.get("transaction_date")))

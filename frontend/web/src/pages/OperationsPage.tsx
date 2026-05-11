@@ -17,6 +17,8 @@ type OperationalItem = {
   ai_why?: string | null
   state_dimension?: string | null
   state_transition_hint?: string | null
+  governance_tags?: string[]
+  truth_confidence?: number | null
 }
 
 type FinancialStateBlock = {
@@ -49,6 +51,26 @@ type StatePrediction = {
   severity: string
 }
 
+type TruthGovernance = {
+  governance_version: string
+  state_confidence: number
+  frozen_dimensions: string[]
+  mutation_level_by_dimension: Record<string, string>
+  conflicts: Array<{ id: string; severity: string; title: string; detail: string; affected_dimensions: string[] }>
+  governance_violations: string[]
+  rules_catalog: Array<{ state_field: string; allowed_sources: string[]; validation_rule: string; priority: number }>
+}
+
+type StateAuditEntry = {
+  id: string
+  previous_state_summary?: string | null
+  new_state_summary?: string | null
+  trigger_event: string
+  source: string
+  actor: string
+  timestamp: string
+}
+
 type WorkPack = {
   id: string
   title: string
@@ -59,6 +81,88 @@ type WorkPack = {
   expected_outcome: string
   risk_if_ignored: string
   primary_action_path: string | null
+}
+
+type ExperienceMode = 'solo' | 'operator' | 'accountant' | 'advanced'
+type FeedDensity = 'minimal' | 'standard' | 'full'
+
+type ProgressiveExperienceMeta = {
+  mode: ExperienceMode
+  feed_density: FeedDensity
+  simplified_state?: {
+    headline: string
+    supporting_line?: string | null
+    readiness_plain?: string | null
+  } | null
+  primary_focus_hint?: string | null
+}
+
+type OperationalHealthScore = {
+  readiness: number
+  consistency: number
+  liquidity: number
+  reporting_stability: number
+  operational_load: number
+  automation_stability: number
+  composite: number
+  summary_plain: string
+}
+
+type TrustedAutomationProfile = {
+  trust_level: string
+  legacy_ai_action_mode: string
+  allowed_auto_actions: string[]
+  always_require_confirmation: string[]
+  rationale_plain: string
+}
+
+type WorkflowMaintenanceSuggestion = {
+  id: string
+  kind: string
+  title: string
+  detail: string
+}
+
+type CalmUiBudget = {
+  max_visible_alerts: number
+  max_parallel_priorities: number
+  dominant_next_action_enforced: boolean
+}
+
+type TrustSurfaceResponse = {
+  trust_lines: string[]
+  background_jobs: Array<{
+    id: string
+    domain: string
+    status_plain: string
+    last_success_at?: string | null
+    last_attempt_at?: string | null
+    retry_count: number
+    duration_hint_plain?: string | null
+    failure_reason_plain?: string | null
+  }>
+  state_consistency?: {
+    snapshot_aligned_with_audit: boolean
+    message_plain: string
+    stale_hint_plain?: string | null
+  } | null
+  operational_confidence: {
+    level: string
+    headline: string
+    supporting_line?: string | null
+  }
+  safe_actions: {
+    undo_window_hint: string
+    confirmation_hint: string
+    audit_reference_hint: string
+    rollback_hint: string
+  }
+  backup_recovery: {
+    snapshot_export_ready: boolean
+    restore_boundary_note: string
+    migration_safety_note: string
+  }
+  state_etag?: string | null
 }
 
 type ExecutionFeedResponse = {
@@ -72,6 +176,14 @@ type ExecutionFeedResponse = {
   work_packs: WorkPack[]
   state_predictions: StatePrediction[]
   default_autonomy_mode: string
+  truth_governance: TruthGovernance | null
+  recent_state_audit: StateAuditEntry[]
+  progressive_experience?: ProgressiveExperienceMeta | null
+  operational_health?: OperationalHealthScore | null
+  trusted_automation?: TrustedAutomationProfile | null
+  workflow_maintenance?: WorkflowMaintenanceSuggestion[]
+  operational_memory_hints?: string[]
+  calm_ui_budget?: CalmUiBudget
 }
 
 const PRIORITY_LABEL: Record<string, string> = {
@@ -94,6 +206,37 @@ const AUTONOMY_RU: Record<string, string> = {
   suggest: 'подсказки',
   prepare: 'подготовка',
   execute_with_approval: 'исполнение с подтверждением',
+}
+
+const TRUST_LEVEL_RU: Record<string, string> = {
+  observe_only: 'только наблюдение',
+  suggest_only: 'подсказки',
+  prepare_only: 'подготовка действий',
+  auto_execute_safe: 'безопасные авто-действия',
+}
+
+function HealthMeter({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-0">
+      <div className="flex justify-between gap-2 text-[10px] text-on-surface-variant">
+        <span className="truncate">{label}</span>
+        <span className="shrink-0 tabular-nums">{value}%</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-primary/70 to-emerald-400/80"
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+const GOV_TAG_RU: Record<string, string> = {
+  conflict_detected: 'Конфликт источников',
+  frozen_state: 'Заморозка',
+  requires_confirmation: 'Нужно подтверждение',
+  governance_violation: 'Нарушение правил',
 }
 
 function priorityStyles(p: string) {
@@ -130,10 +273,13 @@ function FeedRow({
   item,
   onOpen,
   prominent,
+  compact,
 }: {
   item: OperationalItem
   onOpen: (path: string | null | undefined) => void
   prominent?: boolean
+  /** Скрыть внутренние измерения и уверенность — спокойный режим. */
+  compact?: boolean
 }) {
   const touch = useRef({ x: 0, y: 0 })
 
@@ -179,7 +325,7 @@ function FeedRow({
             >
               {PRIORITY_LABEL[item.priority] || item.priority}
             </span>
-            {item.state_dimension && (
+            {!compact && item.state_dimension && (
               <span className="rounded-full bg-white/6 px-2 py-0.5 text-[10px] text-on-surface-variant">
                 {STATE_DIM_RU[item.state_dimension] || item.state_dimension}
               </span>
@@ -202,8 +348,25 @@ function FeedRow({
           )}
           {item.state_transition_hint && (
             <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant/90">
-              <span className="font-medium text-on-surface/90">Состояние: </span>
+              <span className="font-medium text-on-surface/90">{compact ? 'Что изменится: ' : 'Состояние: '}</span>
               {item.state_transition_hint}
+            </p>
+          )}
+          {!compact && (item.governance_tags?.length ?? 0) > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {item.governance_tags!.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-100 ring-1 ring-violet-400/25"
+                >
+                  {GOV_TAG_RU[t] || t}
+                </span>
+              ))}
+            </div>
+          )}
+          {!compact && item.truth_confidence != null && (
+            <p className="mt-1 text-[10px] text-on-surface-variant">
+              Уверенность сигнала: <strong>{(item.truth_confidence * 100).toFixed(0)}%</strong>
             </p>
           )}
           {item.action_path && prominent && (
@@ -217,14 +380,30 @@ function FeedRow({
   )
 }
 
+const MODE_LABEL: Record<ExperienceMode, string> = {
+  solo: 'Спокойный режим',
+  operator: 'Оператор',
+  accountant: 'Бухгалтер / несколько клиентов',
+  advanced: 'Расширенный',
+}
+
 export default function OperationsPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
+  const [stateDetailsOpen, setStateDetailsOpen] = useState(false)
 
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, error: feedError, refetch, isFetching } = useQuery({
     queryKey: ['operations', 'execution-feed'],
     queryFn: () => operationsApi.executionFeed().then((r) => r.data as ExecutionFeedResponse),
+  })
+
+  const { data: trustData } = useQuery({
+    queryKey: ['operations', 'trust-surface'],
+    queryFn: () => operationsApi.trustSurface().then((r) => r.data as TrustSurfaceResponse),
+    staleTime: 60_000,
+    retry: 1,
+    throwOnError: false,
   })
 
   const ackPack = useMutation({
@@ -246,43 +425,261 @@ export default function OperationsPage() {
   const rest = top ? items.filter((i) => i.id !== top.id) : items
   const next = rest[0] ?? null
 
+  const pe = data?.progressive_experience
+  const mode = pe?.mode ?? 'operator'
+  const feedCompact = pe?.feed_density === 'minimal'
+  const simplified = pe?.simplified_state
+  const showTechnicalStateByDefault = mode === 'advanced'
+
   return (
     <div className="relative mx-auto max-w-3xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-10">
       {/* Мобильный state-dashboard: риск + готовность + следующий микро-шаг */}
       {!isLoading && !isError && data?.financial_state && (
         <div className="fixed inset-x-0 top-0 z-20 border-b border-outline/30 bg-[rgb(var(--color-surface)/0.92)] px-3 py-2 shadow-sm backdrop-blur-md sm:hidden">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 text-[11px] text-on-surface">
-            <span>
-              Риск: <strong className="text-on-surface">{data.financial_state.risk_level}</strong>
-            </span>
-            <span>
-              Готовн.: <strong>{data.financial_state.operational_readiness.score}%</strong>
-            </span>
-            {data.state_predictions?.[0] && (
-              <span className="line-clamp-1 min-w-0 text-on-surface-variant" title={data.state_predictions[0].message}>
-                {data.state_predictions[0].message}
-              </span>
+          <div className="mx-auto flex max-w-3xl flex-col gap-1 text-[11px] text-on-surface">
+            {simplified && (mode === 'solo' || mode === 'operator') ? (
+              <>
+                <span className="line-clamp-2 font-medium leading-snug">{simplified.headline}</span>
+                {simplified.readiness_plain && (
+                  <span className="line-clamp-1 text-on-surface-variant">{simplified.readiness_plain}</span>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  Риск: <strong className="text-on-surface">{data.financial_state.risk_level}</strong>
+                </span>
+                <span>
+                  Готовн.: <strong>{data.financial_state.operational_readiness.score}%</strong>
+                </span>
+                {data.truth_governance != null && (
+                  <span>
+                    Достов.: <strong>{(data.truth_governance.state_confidence * 100).toFixed(0)}%</strong>
+                  </span>
+                )}
+                {!data.truth_governance && data.state_predictions?.[0] && (
+                  <span className="line-clamp-1 min-w-0 text-on-surface-variant" title={data.state_predictions[0].message}>
+                    {data.state_predictions[0].message}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
       )}
 
       <header className={`mb-8 ${!isLoading && !isError && data?.financial_state ? 'mt-10 sm:mt-0' : ''}`}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Исполнение</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Исполнение</p>
+          {pe && (
+            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium text-on-surface-variant ring-1 ring-white/10">
+              {MODE_LABEL[mode]}
+            </span>
+          )}
+        </div>
         <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
           Что сделать сегодня
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
-          Лента отражает единое финансовое состояние: сначала снимок, затем пакеты подготовки и сигналы, что
-          изменить в первую очередь.
+          {mode === 'solo'
+            ? 'Один спокойный фокус: что сделать дальше и почему это важно для отчётности — без лишних панелей.'
+            : mode === 'operator'
+              ? 'Операционная лента: задачи, сверки и согласования в порядке важности.'
+              : mode === 'accountant'
+                ? 'Работа по клиентам: пакеты, конфликты данных и готовность к сдаче.'
+                : 'Полная картина состояния, истины и аудита для глубокого контроля.'}
         </p>
       </header>
 
-      {!isLoading && !isError && data?.financial_state && (
+      {!isLoading && !isError && trustData && (
+        <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
+          <summary className="cursor-pointer font-medium text-on-surface/90">
+            Надёжность и фоновые процессы
+          </summary>
+          <div className="mt-3 space-y-4 text-on-surface-variant">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Спокойные индикаторы</p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-relaxed">
+                {trustData.trust_lines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Фон</p>
+              <ul className="mt-2 space-y-2 text-xs leading-relaxed">
+                {trustData.background_jobs.map((j) => (
+                  <li key={j.id}>
+                    <span className="text-on-surface/90">{j.domain}</span> — {j.status_plain}
+                    {j.failure_reason_plain ? (
+                      <span className="block text-amber-100/90">{j.failure_reason_plain}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {trustData.state_consistency && (
+              <p className="text-xs leading-relaxed">
+                <span className="font-medium text-on-surface/90">Согласованность: </span>
+                {trustData.state_consistency.message_plain}
+                {trustData.state_consistency.stale_hint_plain
+                  ? ` ${trustData.state_consistency.stale_hint_plain}`
+                  : ''}
+              </p>
+            )}
+            <div>
+              <p className="text-xs font-semibold text-on-surface/90">{trustData.operational_confidence.headline}</p>
+              {trustData.operational_confidence.supporting_line && (
+                <p className="mt-1 text-xs">{trustData.operational_confidence.supporting_line}</p>
+              )}
+            </div>
+            <details className="rounded-2xl border border-outline/25 bg-surface/50 px-3 py-2 text-[11px] dark:bg-white/[0.02]">
+              <summary className="cursor-pointer font-medium text-on-surface/85">Как устроены безопасные действия</summary>
+              <ul className="mt-2 space-y-1">
+                <li>{trustData.safe_actions.confirmation_hint}</li>
+                <li>{trustData.safe_actions.audit_reference_hint}</li>
+                <li>{trustData.safe_actions.undo_window_hint}</li>
+                <li>{trustData.safe_actions.rollback_hint}</li>
+              </ul>
+            </details>
+          </div>
+        </details>
+      )}
+
+      {!isLoading && !isError && pe?.primary_focus_hint && (
+        <GlassCard variant="subtle" className="mb-6 border-primary/25 p-5 ring-1 ring-primary/15" hoverLift={false}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Главный фокус</p>
+          <p className="mt-2 text-base font-medium leading-snug text-on-surface">{pe.primary_focus_hint}</p>
+        </GlassCard>
+      )}
+
+      {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator' || mode === 'accountant') && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Состояние (каноническая модель)
+            Как выглядит ситуация
           </p>
+          <p className="mt-3 text-base font-medium leading-relaxed text-on-surface">{simplified.headline}</p>
+          {simplified.supporting_line && (
+            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{simplified.supporting_line}</p>
+          )}
+          {simplified.readiness_plain && (
+            <p className="mt-3 text-sm text-on-surface-variant">{simplified.readiness_plain}</p>
+          )}
+        </GlassCard>
+      )}
+
+      {!isLoading && !isError && data?.operational_health && (
+        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+                Операционное здоровье
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-on-surface">{data.operational_health.summary_plain}</p>
+            </div>
+            <div className="rounded-2xl bg-primary/15 px-3 py-2 text-center ring-1 ring-primary/25">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Индекс</p>
+              <p className="font-headline text-2xl font-bold tabular-nums text-on-surface">
+                {data.operational_health.composite}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <HealthMeter label="Готовность процессов" value={data.operational_health.readiness} />
+            <HealthMeter label="Согласованность данных" value={data.operational_health.consistency} />
+            <HealthMeter label="Ликвидность" value={data.operational_health.liquidity} />
+            <HealthMeter label="Стабильность отчётности" value={data.operational_health.reporting_stability} />
+            <HealthMeter label="Управляемость нагрузки" value={data.operational_health.operational_load} />
+            <HealthMeter label="Надёжность автоматизации" value={data.operational_health.automation_stability} />
+          </div>
+        </GlassCard>
+      )}
+
+      {!isLoading && !isError && data?.trusted_automation && (
+        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+            Доверие к автоматизации
+          </p>
+          <p className="mt-3 text-sm text-on-surface">
+            Уровень:{' '}
+            <strong>{TRUST_LEVEL_RU[data.trusted_automation.trust_level] || data.trusted_automation.trust_level}</strong>
+            <span className="text-on-surface-variant">
+              {' '}
+              · базовый режим ИИ: {AUTONOMY_RU[data.trusted_automation.legacy_ai_action_mode] ||
+                data.trusted_automation.legacy_ai_action_mode}
+            </span>
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">{data.trusted_automation.rationale_plain}</p>
+          {(data.trusted_automation.allowed_auto_actions?.length ?? 0) > 0 && (
+            <ul className="mt-3 list-inside list-disc text-xs text-on-surface-variant">
+              {data.trusted_automation.allowed_auto_actions.slice(0, mode === 'solo' ? 2 : 5).map((a) => (
+                <li key={a}>{a}</li>
+              ))}
+            </ul>
+          )}
+          <details className="mt-4 rounded-2xl border border-outline/35 bg-surface-container-low/40 px-3 py-2 text-xs text-on-surface-variant dark:bg-white/[0.03]">
+            <summary className="cursor-pointer font-medium text-on-surface/90">Всегда только с вашим подтверждением</summary>
+            <ul className="mt-2 list-inside list-disc space-y-1">
+              {(data.trusted_automation.always_require_confirmation ?? []).map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          </details>
+        </GlassCard>
+      )}
+
+      {!isLoading && !isError && (data?.workflow_maintenance?.length ?? 0) > 0 && (
+        <section className="mb-6">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+            Самообслуживание процессов
+          </p>
+          <div className="grid gap-3">
+            {(data.workflow_maintenance ?? []).map((w) => (
+              <GlassCard key={w.id} variant="subtle" className="p-4" hoverLift={false}>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">{w.kind}</p>
+                <p className="mt-1 font-medium text-on-surface">{w.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">{w.detail}</p>
+              </GlassCard>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!isLoading && !isError && (data?.operational_memory_hints?.length ?? 0) > 0 && (
+        <div className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/50 px-4 py-3 text-xs leading-relaxed text-on-surface-variant dark:bg-white/[0.03]">
+          <p className="font-bold uppercase tracking-wide text-primary">Операционная память</p>
+          <ul className="mt-2 space-y-2">
+            {(data.operational_memory_hints ?? []).map((h) => (
+              <li key={h}>{h}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!isLoading && !isError && data?.calm_ui_budget && mode === 'solo' && (
+        <p className="mb-6 text-center text-[10px] leading-relaxed text-on-surface-variant">
+          На экране одновременно не больше {data.calm_ui_budget.max_visible_alerts} заметных сигналов — приоритет у одного
+          следующего шага.
+        </p>
+      )}
+
+      {!isLoading && !isError && data?.financial_state && (
+        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+              {showTechnicalStateByDefault ? 'Состояние (детально)' : 'Технические детали состояния'}
+            </p>
+            {!showTechnicalStateByDefault && (
+              <button
+                type="button"
+                onClick={() => setStateDetailsOpen((v) => !v)}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                {stateDetailsOpen ? 'Свернуть' : 'Показать детали'}
+              </button>
+            )}
+          </div>
+          {(showTechnicalStateByDefault || stateDetailsOpen) && (
           <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <p className="text-xs text-on-surface-variant">Касса / cashflow_state</p>
@@ -325,6 +722,8 @@ export default function OperationsPage() {
               <p className="mt-0.5 font-semibold text-on-surface">{data.financial_state.risk_level}</p>
             </div>
           </div>
+          )}
+          {(showTechnicalStateByDefault || stateDetailsOpen) && (
           <p className="mt-4 text-xs text-on-surface-variant">
             Автономность ИИ:{' '}
             <strong className="text-on-surface">
@@ -332,7 +731,59 @@ export default function OperationsPage() {
             </strong>{' '}
             — подготовка без массового автопроведения.
           </p>
+          )}
         </GlassCard>
+      )}
+
+      {!isLoading && !isError && data?.truth_governance && (
+        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+            Управление истиной (Flow 7)
+          </p>
+          <p className="mt-3 text-sm text-on-surface">
+            Уверенность снимка:{' '}
+            <strong>{(data.truth_governance.state_confidence * 100).toFixed(1)}%</strong>
+            {data.truth_governance.frozen_dimensions?.length ? (
+              <>
+                {' '}
+                · Заморожено: <strong>{data.truth_governance.frozen_dimensions.join(', ')}</strong>
+              </>
+            ) : null}
+          </p>
+          {(data.truth_governance.conflicts?.length ?? 0) > 0 && (
+            <ul className="mt-3 list-inside list-disc text-sm text-on-surface-variant">
+              {data.truth_governance.conflicts.map((c) => (
+                <li key={c.id}>
+                  <span className="font-medium text-on-surface">{c.title}</span> — {c.detail}
+                </li>
+              ))}
+            </ul>
+          )}
+          {(data.truth_governance.governance_violations?.length ?? 0) > 0 && (
+            <ul className="mt-2 text-xs text-amber-100/95">
+              {data.truth_governance.governance_violations.map((v, i) => (
+                <li key={i}>{v}</li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-[10px] text-on-surface-variant">
+            Правил в каталоге: {data.truth_governance.rules_catalog?.length ?? 0} · версия{' '}
+            {data.truth_governance.governance_version}
+          </p>
+        </GlassCard>
+      )}
+
+      {!isLoading && !isError && (data?.recent_state_audit?.length ?? 0) > 0 && (
+        <div className="mb-6 rounded-3xl border border-outline/35 bg-surface-container-low/50 px-4 py-3 text-xs text-on-surface-variant dark:bg-white/[0.03]">
+          <p className="font-bold uppercase tracking-wide text-primary">Аудит состояния</p>
+          <ul className="mt-2 space-y-2">
+            {(data.recent_state_audit ?? []).slice(0, 3).map((a) => (
+              <li key={a.id} className="leading-snug">
+                <span className="text-on-surface">{a.trigger_event}</span> · {a.new_state_summary}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {!isLoading && !isError && (data?.state_predictions?.length ?? 0) > 0 && (
@@ -449,7 +900,13 @@ export default function OperationsPage() {
 
       {isError && (
         <div className="rounded-3xl border border-amber-400/25 bg-amber-500/[0.06] px-5 py-4 text-sm text-on-surface">
-          Не удалось загрузить ленту исполнения. Проверьте доступ к организации и попробуйте снова.
+          {(feedError as { calmUserMessage?: string } | undefined)?.calmUserMessage?.trim() ||
+            'Не удалось загрузить ленту исполнения. Проверьте доступ к организации и попробуйте снова.'}
+          {(feedError as { retrySuggested?: boolean } | undefined)?.retrySuggested ? (
+            <span className="mt-2 block text-xs text-on-surface-variant">
+              Можно безопасно обновить страницу — черновики на сервере не теряются из‑за этой ошибки.
+            </span>
+          ) : null}
         </div>
       )}
 
@@ -466,7 +923,7 @@ export default function OperationsPage() {
           <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Главное действие
           </h2>
-          <FeedRow item={top} onOpen={openPath} prominent />
+          <FeedRow item={top} onOpen={openPath} prominent compact={feedCompact} />
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -493,7 +950,7 @@ export default function OperationsPage() {
           </h2>
           <div className="grid gap-3">
             {rest.map((item) => (
-              <FeedRow key={item.id} item={item} onOpen={openPath} />
+              <FeedRow key={item.id} item={item} onOpen={openPath} compact={feedCompact} />
             ))}
           </div>
         </section>

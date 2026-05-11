@@ -23,4 +23,6 @@ class DomainEvent(Base):
     target_kind: Mapped[str | None] = mapped_column(String(40), nullable=True)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     occurred_at_ms: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    #: Flow 10: защита от повторной доставки; при совпадении append не дублирует и не перезапускает workflow.
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, nullable=False)

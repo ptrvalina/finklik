@@ -18,7 +18,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.String(36), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("organization_id", sa.String(36), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False),
         sa.Column("role_in_org", sa.String(20), nullable=True),
-        sa.Column("is_pinned", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_pinned", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("last_used_at", sa.DateTime(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.UniqueConstraint("user_id", "organization_id", name="uq_user_org_membership"),
@@ -86,7 +86,7 @@ def upgrade() -> None:
             text(
                 "INSERT INTO user_organization_memberships "
                 "(id, user_id, organization_id, role_in_org, is_pinned, last_used_at, created_at) "
-                "VALUES (:id, :uid, :oid, :role, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                "VALUES (:id, :uid, :oid, :role, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ),
             {"id": str(uuid.uuid4()), "uid": uid, "oid": oid, "role": role},
         )

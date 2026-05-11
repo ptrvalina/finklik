@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.state_governance import StateAuditEntry, TruthGovernanceOverlay
+
 AIActionMode = Literal["observe", "suggest", "prepare", "execute_with_approval"]
 
 StateDimension = Literal[
@@ -101,5 +103,9 @@ class FinancialStateBundle(BaseModel):
     """Ответ API: состояние + режим автономности по умолчанию."""
 
     state: FinancialState
+    #: Flow 10: отпечаток для оптимистичной согласованности клиента (If-Match / сравнение перед тяжёлыми действиями).
+    state_fingerprint: str | None = None
     default_autonomy_mode: AIActionMode = "suggest"
     predictions: list[StatePrediction] = Field(default_factory=list)
+    truth_governance: TruthGovernanceOverlay | None = None
+    recent_state_audit: list[StateAuditEntry] = Field(default_factory=list)

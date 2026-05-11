@@ -12,6 +12,14 @@ from app.schemas.financial_state import FinancialStateBundle
 from app.schemas.operations_feed import ExecutionFeedResponse, WorkPackAckResponse
 from app.services.financial_state_service import derive_financial_state, infer_autonomy_mode
 from app.services.operations_feed_service import build_execution_feed
+from app.schemas.flow10_trust import TrustSurfaceResponse
+from app.services.state_truth_governance_service import (
+    assess_truth_governance,
+    financial_state_fingerprint,
+    load_recent_audit_entries,
+    persist_state_audit_if_changed,
+)
+from app.services.trust_surface_service import build_trust_surface
 
 router = APIRouter(
     prefix="/operations",
@@ -33,7 +41,7 @@ async def get_execution_feed(
     db: AsyncSession = Depends(get_db),
 ):
     """Единая лента «что сделать сегодня»: производная от FinancialState + операционные сигналы."""
-    return await build_execution_feed(db, _org_id(current_user))
+    return await build_execution_feed(db, _org_id(current_user), current_user)
 
 
 @router.get("/financial-state", response_model=FinancialStateBundle)
@@ -41,13 +49,31 @@ async def get_financial_state_bundle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Канонический снимок финансового состояния организации (Flow 6)."""
-    fs, predictions = await derive_financial_state(db, _org_id(current_user))
+    """Канонический снимок финансового состояния + правила истины и аудит (Flow 6–7)."""
+    oid = _org_id(current_user)
+    fs, predictions = await derive_financial_state(db, oid)
+    tg = await assess_truth_governance(db, oid, fs)
+    await persist_state_audit_if_changed(db, oid, fs)
+    audit_tail = await load_recent_audit_entries(db, oid, limit=8)
     return FinancialStateBundle(
         state=fs,
+        state_fingerprint=financial_state_fingerprint(fs),
         default_autonomy_mode=infer_autonomy_mode(fs),
         predictions=predictions,
+        truth_governance=tg,
+        recent_state_audit=audit_tail,
     )
+
+
+@router.get("/trust-surface", response_model=TrustSurfaceResponse)
+async def get_trust_surface(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Flow 10: спокойные индикаторы надёжности и фоновых работ (без внутренних имён инфраструктуры)."""
+    oid = _org_id(current_user)
+    fs, _pred = await derive_financial_state(db, oid)
+    return await build_trust_surface(db, oid, fs)
 
 
 @router.post("/work-packs/{pack_id}/ack", response_model=WorkPackAckResponse)

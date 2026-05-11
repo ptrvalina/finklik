@@ -175,6 +175,21 @@ app = FastAPI(
 )
 
 
+def _calm_error_payload(
+    *,
+    detail: str,
+    user_message: str,
+    retry_suggested: bool,
+    error_code: str,
+) -> dict:
+    return {
+        "detail": detail,
+        "user_message": user_message,
+        "retry_suggested": retry_suggested,
+        "error_code": error_code,
+    }
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     log.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
@@ -182,9 +197,22 @@ async def global_exception_handler(request, exc):
 
     if settings.DEBUG:
         detail = f"Internal error: {type(exc).__name__}: {exc}"
+        user_message = detail
     else:
-        detail = "Внутренняя ошибка сервера. Попробуйте позже или обратитесь в поддержку."
-    return JSONResponse(status_code=500, content={"detail": detail})
+        detail = "internal_error"
+        user_message = (
+            "Не удалось завершить операцию. Система может повторить попытку автоматически; "
+            "если сообщение не исчезнет, обновите страницу или вернитесь чуть позже."
+        )
+    return JSONResponse(
+        status_code=500,
+        content=_calm_error_payload(
+            detail=detail,
+            user_message=user_message,
+            retry_suggested=True,
+            error_code="INTERNAL",
+        ),
+    )
 
 # Метрики Prometheus (до прочих middleware — корректный учёт latency)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)

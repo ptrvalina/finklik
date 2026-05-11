@@ -11,6 +11,8 @@ from app.schemas.financial_state import (
 )
 from app.schemas.operations_feed import OperationalItem
 
+_PRI: dict[str, int] = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+
 
 def infer_state_dimension(item: OperationalItem) -> StateDimension:
     if item.id == "readiness-gate":
@@ -134,8 +136,8 @@ def build_work_packs(items: list[OperationalItem], fs: FinancialState) -> list[W
             )
         )
 
-    # Убрать пустые пакеты (теоретически не бывает)
-    return [p for p in packs if p.operational_item_ids]
+    nonempty = [p for p in packs if p.operational_item_ids]
+    return sort_work_packs_by_urgency(nonempty, items)
 
 
 def _lines_from_items(sub: list[OperationalItem]) -> list[WorkPackLine]:

@@ -6,6 +6,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.experience import ProgressiveExperienceMeta
+from app.schemas.flow9_automation import (
+    CalmUiBudget,
+    TrustedAutomationProfile,
+    WorkflowMaintenanceSuggestion,
+)
+from app.schemas.flow9_operational_health import OperationalHealthScore
 from app.schemas.financial_state import (
     AIActionMode,
     FinancialState,
@@ -13,6 +20,7 @@ from app.schemas.financial_state import (
     StatePrediction,
     WorkPack,
 )
+from app.schemas.state_governance import StateAuditEntry, TruthGovernanceOverlay
 
 OperationalItemType = Literal["transaction", "document", "approval", "reporting", "reconciliation"]
 OperationalPriority = Literal["low", "medium", "high", "critical"]
@@ -35,6 +43,9 @@ class OperationalItem(BaseModel):
     state_dimension: StateDimension | None = None
     #: Краткий сигнал перехода состояния при закрытии пункта.
     state_transition_hint: str | None = None
+    #: Flow 7: метки истины (конфликт, заморозка, подтверждение).
+    governance_tags: list[str] = Field(default_factory=list)
+    truth_confidence: float | None = Field(None, ge=0.0, le=1.0)
 
 
 class ExecutionFeedResponse(BaseModel):
@@ -49,6 +60,16 @@ class ExecutionFeedResponse(BaseModel):
     work_packs: list[WorkPack] = Field(default_factory=list)
     state_predictions: list[StatePrediction] = Field(default_factory=list)
     default_autonomy_mode: AIActionMode = "suggest"
+    truth_governance: TruthGovernanceOverlay | None = None
+    recent_state_audit: list[StateAuditEntry] = Field(default_factory=list)
+    #: Flow 8.5: режим опыта и упрощённое описание состояния без дублирования экранов.
+    progressive_experience: ProgressiveExperienceMeta | None = None
+    #: Flow 9: здоровье операций, доверие к автоматизации, самообслуживание и память — координированно с лентой.
+    operational_health: OperationalHealthScore | None = None
+    trusted_automation: TrustedAutomationProfile | None = None
+    workflow_maintenance: list[WorkflowMaintenanceSuggestion] = Field(default_factory=list)
+    operational_memory_hints: list[str] = Field(default_factory=list)
+    calm_ui_budget: CalmUiBudget = Field(default_factory=CalmUiBudget)
 
 
 class WorkPackAckResponse(BaseModel):

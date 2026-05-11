@@ -7,6 +7,7 @@ from datetime import date
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.user import User
 from app.core.datetime_utils import utc_now_naive
 from app.models.business_os import ReconciliationMatch
 from app.models.collaboration import ApprovalRequest, OperationalInboxItem
@@ -20,8 +21,25 @@ from app.schemas.operations_feed import (
     OperationalPriority,
 )
 from app.schemas.reporting_calm import ConsistencyIssue
+from app.schemas.flow9_automation import CalmUiBudget
+from app.services.adaptive_priority_service import adaptive_priority_sort
+from app.services.automation_trust_service import build_trusted_automation_profile
+from app.services.financial_memory_service import load_operational_memory_hints
 from app.services.financial_state_service import infer_autonomy_mode
+from app.services.operational_health_engine import compute_operational_health
+from app.services.operational_noise_service import collapse_operational_noise
 from app.services.reporting_calm_service import build_reporting_calm_overview
+from app.schemas.state_governance import TruthGovernanceOverlay
+from app.services.state_truth_governance_service import (
+    assess_truth_governance,
+    load_recent_audit_entries,
+    persist_state_audit_if_changed,
+)
+from app.services.progressive_experience_service import (
+    apply_progressive_experience,
+    resolve_experience_mode,
+)
+from app.services.workflow_maintenance_service import build_workflow_maintenance_suggestions
 from app.services.work_pack_service import build_work_packs, infer_state_dimension
 
 PRIORITY_RANK: dict[str, int] = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -89,29 +107,35 @@ def _annotate_item(it: OperationalItem, fs: FinancialState) -> OperationalItem:
     return it.model_copy(update={"state_dimension": dim, "state_transition_hint": hint})
 
 
-def _sort_state_aware(items: list[OperationalItem], fs: FinancialState) -> list[OperationalItem]:
-    def boost(it: OperationalItem) -> int:
-        b = 0
-        if fs.risk_level in ("critical", "high") and it.state_dimension == "reporting_status":
-            if fs.reporting_status.status in ("at_risk", "blocked"):
-                b += 2
-        if fs.compliance_state.level == "blocked" and it.state_dimension == "compliance_state":
-            b += 2
-        if fs.document_completeness.score < 50 and it.state_dimension == "document_completeness":
-            b += 1
-        return b
+def _apply_truth_tags(
+    it: OperationalItem,
+    overlay: TruthGovernanceOverlay,
+) -> OperationalItem:
+    tags: list[str] = []
+    dim = it.state_dimension
+    if dim:
+        d = str(dim)
+        for c in overlay.conflicts:
+            if d in c.affected_dimensions:
+                tags.append("conflict_detected")
+                break
+        if d in overlay.frozen_dimensions:
+            tags.append("frozen_state")
+    if it.type == "approval" and overlay.mutation_level_by_dimension.get("compliance_state") == "user_confirmed":
+        tags.append("requires_confirmation")
+    if overlay.governance_violations and dim == "compliance_state":
+        tags.append("governance_violation")
+    tc = overlay.state_confidence
+    if "conflict_detected" in tags:
+        tc = max(0.2, tc - 0.12)
+    return it.model_copy(update={"governance_tags": tags, "truth_confidence": round(tc, 3)})
 
-    def key(it: OperationalItem) -> tuple[int, int, str]:
-        return (
-            PRIORITY_RANK.get(it.priority, 0) + boost(it),
-            TYPE_WEIGHT.get(it.type, 0),
-            it.title,
-        )
 
-    return sorted(items, key=key, reverse=True)
-
-
-async def build_execution_feed(db: AsyncSession, organization_id: str) -> ExecutionFeedResponse:
+async def build_execution_feed(
+    db: AsyncSession,
+    organization_id: str,
+    user: User | None = None,
+) -> ExecutionFeedResponse:
     today = utc_now_naive().date()
     month_start = date(today.year, today.month, 1)
     items: list[OperationalItem] = []
@@ -366,14 +390,38 @@ async def build_execution_feed(db: AsyncSession, organization_id: str) -> Execut
         seen.add(it.id)
         deduped.append(it)
 
-    sorted_items = _sort_items(deduped)
+    collapsed = collapse_operational_noise(deduped)
+    sorted_items = _sort_items(collapsed)
     sorted_items = [_annotate_item(it, fs) for it in sorted_items]
-    sorted_items = _sort_state_aware(sorted_items, fs)
+
+    truth_gov = await assess_truth_governance(db, organization_id, fs)
+    sorted_items = [_apply_truth_tags(it, truth_gov) for it in sorted_items]
+
+    health = compute_operational_health(
+        fs,
+        truth_gov,
+        open_operational_item_count=len(sorted_items),
+        predictions=state_predictions,
+    )
+    sorted_items = adaptive_priority_sort(sorted_items, fs, health, state_predictions)
+
     blocked = sum(1 for x in sorted_items if x.priority == "critical")
     top = sorted_items[0] if sorted_items else None
     work_packs = build_work_packs(sorted_items, fs)
 
-    return ExecutionFeedResponse(
+    await persist_state_audit_if_changed(db, organization_id, fs)
+    recent_audit = await load_recent_audit_entries(db, organization_id, limit=8)
+
+    maintenance = build_workflow_maintenance_suggestions(fs, overview)
+    memory_hints = await load_operational_memory_hints(db, organization_id)
+    trust_profile = build_trusted_automation_profile(fs, truth_gov)
+    calm_budget = CalmUiBudget(
+        max_visible_alerts=3 if health.composite >= 62 else 5,
+        max_parallel_priorities=1,
+        dominant_next_action_enforced=True,
+    )
+
+    raw = ExecutionFeedResponse(
         items=sorted_items,
         top_action=top,
         pending_count=len(sorted_items),
@@ -384,4 +432,13 @@ async def build_execution_feed(db: AsyncSession, organization_id: str) -> Execut
         work_packs=work_packs,
         state_predictions=state_predictions,
         default_autonomy_mode=infer_autonomy_mode(fs),
+        truth_governance=truth_gov,
+        recent_state_audit=recent_audit,
+        operational_health=health,
+        trusted_automation=trust_profile,
+        workflow_maintenance=maintenance,
+        operational_memory_hints=memory_hints,
+        calm_ui_budget=calm_budget,
     )
+    mode = await resolve_experience_mode(db, user) if user else "operator"
+    return apply_progressive_experience(mode, raw)
