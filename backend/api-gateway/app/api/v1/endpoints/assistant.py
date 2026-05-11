@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import Organization, User
 from app.services.org_llm_crypto import decrypt_org_llm_api_key, encrypt_org_llm_api_key
 from app.services.assistant_knowledge import (
@@ -237,10 +237,10 @@ async def assistant_status(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    api_key, _base, model, key_source = await _resolve_llm_for_org(db, current_user.organization_id)
+    api_key, _base, model, key_source = await _resolve_llm_for_org(db, workspace_organization_id(current_user))
     org_configured = False
-    if current_user.organization_id:
-        org = await db.get(Organization, current_user.organization_id)
+    if workspace_organization_id(current_user):
+        org = await db.get(Organization, workspace_organization_id(current_user))
         org_configured = bool(org and org.llm_api_key_encrypted)
 
     return {
@@ -274,7 +274,7 @@ async def assistant_chat(
     retrieved_chunks, rag_block = retrieve_for_query(last["content"], limit=6)
     sources = format_sources_for_api(retrieved_chunks)
 
-    api_key, base, model, key_source = await _resolve_llm_for_org(db, current_user.organization_id)
+    api_key, base, model, key_source = await _resolve_llm_for_org(db, workspace_organization_id(current_user))
     if not api_key:
         reply = _mock_reply(last["content"]) + append_demo_sources_footer(last["content"])
         return {
@@ -312,10 +312,10 @@ async def set_organization_llm_key(
 ):
     if current_user.role != "owner":
         raise HTTPException(403, detail="Только владелец организации может сохранить ключ ИИ")
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="У пользователя нет организации")
 
-    org = await db.get(Organization, current_user.organization_id)
+    org = await db.get(Organization, workspace_organization_id(current_user))
     if not org:
         raise HTTPException(404, detail="Организация не найдена")
 
@@ -336,10 +336,10 @@ async def delete_organization_llm_key(
 ):
     if current_user.role != "owner":
         raise HTTPException(403, detail="Только владелец организации может удалить ключ ИИ")
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="У пользователя нет организации")
 
-    org = await db.get(Organization, current_user.organization_id)
+    org = await db.get(Organization, workspace_organization_id(current_user))
     if not org:
         raise HTTPException(404, detail="Организация не найдена")
 

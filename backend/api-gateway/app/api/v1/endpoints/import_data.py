@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.cache.redis_cache import cache
@@ -154,7 +154,7 @@ async def import_csv(
 
         tx = Transaction(
             id=str(uuid.uuid4()),
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             type=row["type"],
             amount=Decimal(str(row["amount"])),
             vat_amount=Decimal(str(row.get("vat_amount", 0))),
@@ -166,11 +166,11 @@ async def import_csv(
         await auto_categorize_transaction(db, tx)
         db.add(tx)
         await db.flush()
-        await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
+        await emit_transaction_created(db, workspace_organization_id(current_user), tx, actor="user")
         imported += 1
 
     if imported > 0:
-        await cache.invalidate_org(str(current_user.organization_id))
+        await cache.invalidate_org(workspace_organization_id(current_user))
 
     return {
         "imported": imported,

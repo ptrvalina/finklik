@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User
 from app.models.regulatory import RegulatoryUpdate, RegulatoryNotification
 
@@ -142,7 +142,7 @@ async def list_updates(
 
     read_result = await db.execute(
         select(RegulatoryNotification.update_id).where(
-            RegulatoryNotification.organization_id == current_user.organization_id,
+            RegulatoryNotification.organization_id == workspace_organization_id(current_user),
             RegulatoryNotification.is_read == True,
         )
     )
@@ -179,7 +179,7 @@ async def mark_as_read(
     existing = await db.execute(
         select(RegulatoryNotification).where(
             RegulatoryNotification.update_id == update_id,
-            RegulatoryNotification.organization_id == current_user.organization_id,
+            RegulatoryNotification.organization_id == workspace_organization_id(current_user),
         )
     )
     notif = existing.scalar_one_or_none()
@@ -189,7 +189,7 @@ async def mark_as_read(
     else:
         notif = RegulatoryNotification(
             update_id=update_id,
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             is_read=True,
             read_at=datetime.now(timezone.utc),
         )
@@ -211,7 +211,7 @@ async def mark_all_as_read(
 
     read_result = await db.execute(
         select(RegulatoryNotification.update_id).where(
-            RegulatoryNotification.organization_id == current_user.organization_id,
+            RegulatoryNotification.organization_id == workspace_organization_id(current_user),
         )
     )
     existing_ids = set(read_result.scalars().all())
@@ -220,7 +220,7 @@ async def mark_all_as_read(
         if uid not in existing_ids:
             db.add(RegulatoryNotification(
                 update_id=uid,
-                organization_id=current_user.organization_id,
+                organization_id=workspace_organization_id(current_user),
                 is_read=True,
                 read_at=datetime.now(timezone.utc),
             ))

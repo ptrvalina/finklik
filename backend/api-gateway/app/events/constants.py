@@ -22,3 +22,17 @@ EV_AI_INSIGHT = "AIInsight"
 
 # Проекции
 EV_BUSINESS_STATE_STALE = "BusinessStateStale"
+
+# Отчётность (операционный контур)
+EV_REPORT_PREPARATION_STARTED = "ReportPreparationStarted"
+EV_REPORT_VALIDATED = "ReportValidated"
+EV_REPORT_GENERATED = "ReportGenerated"
+EV_OBLIGATION_CREATED = "ObligationCreated"
+EV_SUBMISSION_COMPLETED = "SubmissionCompleted"
+
+# Коллаборация / бух. контур
+EV_ORGANIZATION_SWITCHED = "OrganizationSwitched"
+EV_COMMENT_ADDED = "CommentAdded"
+EV_APPROVAL_REQUESTED = "ApprovalRequested"
+EV_APPROVAL_COMPLETED = "ApprovalCompleted"
+EV_DOCUMENT_REQUESTED = "DocumentRequested"

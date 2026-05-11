@@ -8,7 +8,7 @@ import structlog
 from prometheus_client import Counter
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, workspace_organization_id
 from app.models.user import User, Organization
 from app.models.transaction import Transaction
 from app.models.employee import CalendarEvent, SalaryRecord
@@ -33,12 +33,13 @@ log = structlog.get_logger(__name__)
 
 
 def _require_org_id(user: User) -> str:
-    if not user.organization_id:
+    oid = workspace_organization_id(user)
+    if not oid:
         raise HTTPException(
             status_code=400,
             detail="Нет привязки к организации — события календаря недоступны. Проверьте вход или миграции БД (alembic upgrade head).",
         )
-    return str(user.organization_id)
+    return oid
 
 tax_rules_fallback_counter = Counter(
     "tax_rules_validate_fallback_total",
@@ -111,7 +112,7 @@ async def calculate_taxes(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     org = None
     if org_id:
         org_r = await db.execute(select(Organization).where(Organization.id == org_id))
@@ -252,15 +253,15 @@ async def get_tax_calendar(
     db: AsyncSession = Depends(get_db),
 ):
     org = None
-    if current_user.organization_id:
-        result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    if workspace_organization_id(current_user):
+        result = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
         org = result.scalar_one_or_none()
     tax_regime = org.tax_regime if org else "usn_no_vat"
     legal_form = org.legal_form if org else "ip"
-    if current_user.organization_id:
+    if workspace_organization_id(current_user):
         await _sync_auto_calendar_obligations(
             db=db,
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             year=year,
             tax_regime=tax_regime,
             legal_form=legal_form,
@@ -282,7 +283,7 @@ async def validate_tax_rules(
         log.warning(
             "tax_rules_validation_fallback",
             user_id=current_user.id,
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             cause=cause,
             source=payload.get("source"),
             first_error=(payload.get("errors") or [None])[0],

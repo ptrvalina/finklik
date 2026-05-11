@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.events.bootstrap import get_event_store
 from app.events.constants import EV_AI_INSIGHT
 from app.models.user import User
@@ -17,9 +17,7 @@ from app.services.business_state_service import compute_business_state
 
 
 def _org_id(user: User) -> str:
-    if not user.organization_id:
-        return ""
-    return str(user.organization_id)
+    return workspace_organization_id(user) or ""
 
 
 router = APIRouter(

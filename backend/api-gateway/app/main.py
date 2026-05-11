@@ -48,6 +48,9 @@ from app.api.v1.endpoints.signing import router as signing_router
 from app.api.v1.endpoints.integrations import router as integrations_router
 from app.api.v1.endpoints.business_os import router as business_os_router
 from app.api.v1.endpoints.domain_events import router as domain_events_router
+from app.api.v1.endpoints.reporting_calm import router as reporting_calm_router
+from app.api.v1.endpoints.workspace import router as workspace_router
+from app.api.v1.endpoints.operations_feed import router as operations_feed_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
@@ -265,6 +268,9 @@ app.include_router(signing_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
 app.include_router(business_os_router, prefix="/api/v1")
 app.include_router(domain_events_router, prefix="/api/v1")
+app.include_router(reporting_calm_router, prefix="/api/v1")
+app.include_router(workspace_router, prefix="/api/v1")
+app.include_router(operations_feed_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

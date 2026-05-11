@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.counterparty import Counterparty
 from app.models.document import PaymentEvent, PrimaryDocument
 from app.models.transaction import Transaction
@@ -207,7 +207,7 @@ async def list_primary_documents(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    filters = [PrimaryDocument.organization_id == current_user.organization_id]
+    filters = [PrimaryDocument.organization_id == workspace_organization_id(current_user)]
     if doc_type:
         filters.append(PrimaryDocument.doc_type == doc_type)
     if status:
@@ -228,7 +228,7 @@ async def get_next_number_preview(
     db: AsyncSession = Depends(get_db),
 ):
     """Подсказка следующего номера (без резервирования)."""
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     if not org_id:
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
     n = await peek_next_document_number(db, org_id, doc_type)
@@ -241,7 +241,7 @@ async def create_primary_document(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     if not org_id:
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
 
@@ -285,7 +285,7 @@ async def get_primary_document(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -304,7 +304,7 @@ async def update_primary_document(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -317,15 +317,15 @@ async def update_primary_document(
     next_related = payload.get("related_document_id", doc.related_document_id)
     next_type = doc.doc_type
 
-    await _validate_links(db, current_user.organization_id, next_counterparty_id, next_transaction_id)
-    await _validate_related_document(db, current_user.organization_id, next_related, next_type)
+    await _validate_links(db, workspace_organization_id(current_user), next_counterparty_id, next_transaction_id)
+    await _validate_related_document(db, workspace_organization_id(current_user), next_related, next_type)
 
     if "doc_number" in payload:
         doc_number = payload["doc_number"]
         if doc_number != doc.doc_number:
             dup = await db.execute(
                 select(PrimaryDocument.id).where(
-                    PrimaryDocument.organization_id == current_user.organization_id,
+                    PrimaryDocument.organization_id == workspace_organization_id(current_user),
                     PrimaryDocument.doc_type == doc.doc_type,
                     PrimaryDocument.doc_number == doc_number,
                     PrimaryDocument.id != doc.id,
@@ -350,7 +350,7 @@ async def delete_primary_document(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -369,7 +369,7 @@ async def primary_document_payment_qr(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -407,7 +407,7 @@ async def primary_document_payment_status(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -434,7 +434,7 @@ async def send_primary_document_payment_link(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -490,7 +490,7 @@ async def primary_document_mark_paid(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -636,7 +636,7 @@ async def primary_document_payment_events(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()
@@ -698,7 +698,7 @@ async def print_primary_document(
     result = await db.execute(
         select(PrimaryDocument).where(
             PrimaryDocument.id == doc_id,
-            PrimaryDocument.organization_id == current_user.organization_id,
+            PrimaryDocument.organization_id == workspace_organization_id(current_user),
         )
     )
     doc = result.scalar_one_or_none()

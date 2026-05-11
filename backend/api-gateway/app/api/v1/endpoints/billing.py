@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User, Organization
 from app.models.subscription import Plan, Subscription
 from app.models.transaction import Transaction
@@ -142,7 +142,7 @@ async def get_subscription(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     sub = await ensure_subscription(db, org_id)
     _, plan = await get_org_subscription(db, org_id)
 
@@ -198,7 +198,7 @@ async def change_plan(
     if not plan:
         raise HTTPException(404, "Тариф не найден")
 
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     sub, _ = await get_org_subscription(db, org_id)
     if not sub:
         sub = await ensure_subscription(db, org_id)

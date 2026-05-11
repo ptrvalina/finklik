@@ -37,6 +37,8 @@ class RefreshRequest(BaseModel):
     """Refresh token in body is optional when the same value is sent in httpOnly cookie."""
 
     refresh_token: str | None = None
+    #: Активная организация после мульти-клиентского режима (если не задано — домашняя из профиля).
+    organization_id: str | None = None
 
 
 class TokenResponse(BaseModel):

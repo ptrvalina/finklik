@@ -5,7 +5,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import require_roles
+from app.core.deps import require_roles, workspace_organization_id
 from app.models.notification import Notification
 from app.models.planner import PlannerComment, PlannerReport, PlannerTask
 from app.models.user import User
@@ -45,13 +45,13 @@ async def create_task(
     current_user: User = Depends(require_roles("admin", "accountant", "manager")),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
 
     assignee = await db.execute(
         select(User).where(
             User.id == body.assignee_id,
-            User.organization_id == current_user.organization_id,
+            User.organization_id == workspace_organization_id(current_user),
             User.is_active.is_(True),
         )
     )
@@ -61,7 +61,7 @@ async def create_task(
 
     title = body.title.strip()
     task = PlannerTask(
-        tenant_id=str(current_user.organization_id),
+        tenant_id=workspace_organization_id(current_user),
         author_id=str(current_user.id),
         assignee_id=body.assignee_id,
         title=title,
@@ -107,10 +107,10 @@ async def list_tasks(
     current_user: User = Depends(require_roles("admin", "accountant", "manager")),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         return []
 
-    filters = [PlannerTask.tenant_id == str(current_user.organization_id)]
+    filters = [PlannerTask.tenant_id == workspace_organization_id(current_user)]
     if mode == "mine":
         filters.append(PlannerTask.author_id == str(current_user.id))
     elif mode == "assigned":
@@ -142,7 +142,7 @@ async def close_task(
     result = await db.execute(
         select(PlannerTask).where(
             PlannerTask.id == task_id,
-            PlannerTask.tenant_id == str(current_user.organization_id),
+            PlannerTask.tenant_id == workspace_organization_id(current_user),
         )
     )
     task = result.scalar_one_or_none()
@@ -176,7 +176,7 @@ async def create_report(
     task_result = await db.execute(
         select(PlannerTask).where(
             PlannerTask.id == task_id,
-            PlannerTask.tenant_id == str(current_user.organization_id),
+            PlannerTask.tenant_id == workspace_organization_id(current_user),
         )
     )
     task = task_result.scalar_one_or_none()
@@ -241,7 +241,7 @@ async def list_comments(
     task_result = await db.execute(
         select(PlannerTask).where(
             PlannerTask.id == task_id,
-            PlannerTask.tenant_id == str(current_user.organization_id),
+            PlannerTask.tenant_id == workspace_organization_id(current_user),
         )
     )
     task = task_result.scalar_one_or_none()
@@ -263,7 +263,7 @@ async def add_comment(
     task_result = await db.execute(
         select(PlannerTask).where(
             PlannerTask.id == task_id,
-            PlannerTask.tenant_id == str(current_user.organization_id),
+            PlannerTask.tenant_id == workspace_organization_id(current_user),
         )
     )
     task = task_result.scalar_one_or_none()

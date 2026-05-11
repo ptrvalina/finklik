@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
+import ReportingGuidedFlow from './ReportingGuidedFlow'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -54,8 +55,13 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
         </div>
       </div>
 
+      {!filter && <ReportingGuidedFlow basePath={base} />}
+
       {!filter && (
-        <div className="flex flex-wrap gap-2 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4">
+        <div
+          id="fc-report-authorities"
+          className="flex flex-wrap gap-2 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4"
+        >
           <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80 lg:hidden">Органы</span>
           {hubLinks.map((l) => (
             <Link

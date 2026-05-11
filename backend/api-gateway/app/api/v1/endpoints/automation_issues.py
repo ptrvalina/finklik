@@ -3,7 +3,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.automation_policy import AutomationPolicy
 from app.models.employee import AuditLog, CalendarEvent, SalaryRecord
 from app.models.onec_sync import OneCSyncJob
@@ -46,7 +46,7 @@ async def automation_issues(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         return {
             "items": [],
             "total": 0,
@@ -58,7 +58,7 @@ async def automation_issues(
     sync_result = await db.execute(
         select(OneCSyncJob)
         .where(
-            OneCSyncJob.organization_id == current_user.organization_id,
+            OneCSyncJob.organization_id == workspace_organization_id(current_user),
             OneCSyncJob.status == "failed",
         )
         .order_by(desc(OneCSyncJob.updated_at))
@@ -82,7 +82,7 @@ async def automation_issues(
     report_result = await db.execute(
         select(ReportSubmission)
         .where(
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
             ReportSubmission.status == "rejected",
         )
         .order_by(desc(ReportSubmission.updated_at))
@@ -120,7 +120,7 @@ async def get_policy(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    policy = await _get_or_create_policy(db, str(current_user.organization_id))
+    policy = await _get_or_create_policy(db, workspace_organization_id(current_user))
     return policy
 
 
@@ -130,7 +130,7 @@ async def update_policy(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    policy = await _get_or_create_policy(db, str(current_user.organization_id))
+    policy = await _get_or_create_policy(db, workspace_organization_id(current_user))
     policy.mode = body.mode
     policy.allow_auto_reporting = body.allow_auto_reporting
     policy.allow_auto_workforce = body.allow_auto_workforce
@@ -144,7 +144,7 @@ async def scenarios(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    policy = await _get_or_create_policy(db, str(current_user.organization_id))
+    policy = await _get_or_create_policy(db, workspace_organization_id(current_user))
     return {
         "mode": policy.mode,
         "items": [
@@ -176,7 +176,7 @@ async def automation_health(
     db: AsyncSession = Depends(get_db),
 ):
     all_sync = await db.execute(
-        select(OneCSyncJob).where(OneCSyncJob.organization_id == current_user.organization_id)
+        select(OneCSyncJob).where(OneCSyncJob.organization_id == workspace_organization_id(current_user))
     )
     sync_jobs = all_sync.scalars().all()
     total_sync = len(sync_jobs)
@@ -186,7 +186,7 @@ async def automation_health(
 
     rejected_reports = await db.execute(
         select(ReportSubmission).where(
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
             ReportSubmission.status == "rejected",
         )
     )
@@ -209,7 +209,7 @@ async def automation_audit(
 ):
     result = await db.execute(
         select(AuditLog)
-        .where(AuditLog.organization_id == str(current_user.organization_id))
+        .where(AuditLog.organization_id == workspace_organization_id(current_user))
         .order_by(desc(AuditLog.created_at))
         .limit(limit)
     )
@@ -236,7 +236,7 @@ async def automation_kpi(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = str(current_user.organization_id)
+    org_id = workspace_organization_id(current_user)
 
     total_tx_q = await db.execute(
         select(func.count(Transaction.id)).where(Transaction.organization_id == org_id)
@@ -418,7 +418,7 @@ async def automation_data_quality(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = str(current_user.organization_id)
+    org_id = workspace_organization_id(current_user)
     normalized_description = func.lower(func.trim(func.coalesce(Transaction.description, "")))
     duplicate_groups_q = await db.execute(
         select(

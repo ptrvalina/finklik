@@ -30,6 +30,13 @@ export const NAV_GROUPS: NavGroup[] = [
         end: true,
         description: 'AI, метрики и пульс бизнеса',
       },
+      {
+        to: '/operations',
+        label: 'Исполнение',
+        icon: 'bolt',
+        end: true,
+        description: 'Один поток задач на день',
+      },
     ],
   },
   {
@@ -127,10 +134,34 @@ function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
     .filter((g) => g.items.length > 0)
 }
 
+function augmentWorkspaceNav(groups: NavGroup[]): NavGroup[] {
+  const idx = groups.findIndex((g) => g.id === 'command')
+  if (idx < 0) return groups
+  const cmd = groups[idx]
+  if (cmd.items.some((i) => i.to === '/workspace')) return groups
+  const wsItem: NavItem = {
+    to: '/workspace',
+    label: 'Клиенты',
+    icon: 'corporate_fare',
+    description: 'Мульти-орг и операционные очереди',
+  }
+  return groups.map((g, i) => (i === idx ? { ...g, items: [wsItem, ...g.items] } : g))
+}
+
 /** Группы для сайдбара и мобильного листа с учётом роли. */
 export function getNavGroupsForRole(role?: string | null): NavGroup[] {
-  if ((role || '').toLowerCase() === 'manager') {
+  const r = (role || '').toLowerCase()
+  if (r === 'manager') {
     return filterNavGroups(NAV_GROUPS, MANAGER_ALLOWED)
+  }
+  if (r === 'accountant' || r === 'owner') {
+    return augmentWorkspaceNav(NAV_GROUPS)
+  }
+  if (r === 'viewer') {
+    return NAV_GROUPS.map((g) => ({
+      ...g,
+      items: g.items.filter((i) => i.to !== '/operations'),
+    })).filter((g) => g.items.length > 0)
   }
   return NAV_GROUPS
 }

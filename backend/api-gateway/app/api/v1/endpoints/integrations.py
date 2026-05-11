@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 
 from app.core.config import get_settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, workspace_organization_id
 from app.models.user import User
 from app.services import nbrb_fx_service
 
@@ -66,7 +66,7 @@ async def integration_capabilities(current_user: User = Depends(get_current_user
 
     return {
         "queried_at": datetime.now(timezone.utc).isoformat(),
-        "organization_id": current_user.organization_id,
+        "organization_id": workspace_organization_id(current_user),
         "submission_portal": {
             "mode": settings.SUBMISSION_PORTAL_MODE,
             "base_url_configured": bool(settings.SUBMISSION_PORTAL_BASE_URL.strip()),

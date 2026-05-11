@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.config import get_settings
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.regulatory import ReportSubmission
 from app.models.user import User
 from app.services.signing_facade import compute_digest, mock_signature_b64_preview
@@ -32,7 +32,7 @@ async def submission_payload_digest(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()

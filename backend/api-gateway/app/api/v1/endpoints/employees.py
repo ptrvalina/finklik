@@ -9,7 +9,7 @@ from sqlalchemy import select, and_, func
 from datetime import date
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User, Organization
 from app.models.employee import Employee, SalaryRecord
 from app.schemas.employee import (
@@ -132,7 +132,7 @@ async def list_employees(
 ):
     enc = get_encryptor()
     pii_enc = get_aes_gcm_encryptor()
-    filters = [Employee.organization_id == current_user.organization_id]
+    filters = [Employee.organization_id == workspace_organization_id(current_user)]
     if active_only:
         filters.append(Employee.is_active == True)
 
@@ -150,9 +150,9 @@ async def hr_order_sequences(
     db: AsyncSession = Depends(get_db),
 ):
     """Следующие порядковые номера приказов (после инкремента при сохранении)."""
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="Нет организации")
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(404, detail="Организация не найдена")
@@ -180,7 +180,7 @@ async def employee_salary_records_range(
     er = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     if er.scalar_one_or_none() is None:
@@ -195,7 +195,7 @@ async def employee_salary_records_range(
     result = await db.execute(
         select(SalaryRecord)
         .where(
-            SalaryRecord.organization_id == current_user.organization_id,
+            SalaryRecord.organization_id == workspace_organization_id(current_user),
             SalaryRecord.employee_id == emp_id,
             period_expr >= from_key,
             period_expr <= to_key,
@@ -220,13 +220,13 @@ async def download_hire_order_document(
     er = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     emp = er.scalar_one_or_none()
     if not emp:
         raise HTTPException(status_code=404, detail="Сотрудник не найден")
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     org_name = (org.name if org else "") or ""
 
@@ -276,7 +276,7 @@ async def get_employee(
     result = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     emp = result.scalar_one_or_none()
@@ -297,7 +297,7 @@ async def create_employee(
     id_doc_enc = None
     if body.id_document and body.id_document_type:
         id_doc_enc = enc.encrypt(_id_doc_to_json(body.id_document))
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(400, detail="Организация не найдена")
@@ -319,7 +319,7 @@ async def create_employee(
     pos_code = body.position_code
 
     emp = Employee(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         full_name_enc=enc.encrypt(body.full_name),
         identification_number_enc=id_num_enc,
         position=body.position,
@@ -353,7 +353,7 @@ async def create_employee(
     )
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title=f"Онбординг сотрудника: {body.full_name}",
@@ -361,7 +361,7 @@ async def create_employee(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title=f"Кадровый контроль: {body.full_name}",
         description="Автоматическое событие после приёма сотрудника.",
         event_date=body.hire_date,
@@ -383,7 +383,7 @@ async def update_employee(
     result = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     emp = result.scalar_one_or_none()
@@ -468,7 +468,7 @@ async def fire_employee(
     result = await db.execute(
         select(Employee).where(
             Employee.id == emp_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     emp = result.scalar_one_or_none()
@@ -483,7 +483,7 @@ async def fire_employee(
     full_name = _safe_decrypt(get_encryptor(), emp.full_name_enc) or "Сотрудник"
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title=f"Оффбординг сотрудника: {full_name}",
@@ -491,7 +491,7 @@ async def fire_employee(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title=f"Увольнение: {full_name}",
         description="Автоматическое событие контроля закрытия кадрового цикла.",
         event_date=fire_dt,
@@ -509,7 +509,7 @@ async def calculate_employee_salary(
     result = await db.execute(
         select(Employee).where(
             Employee.id == body.employee_id,
-            Employee.organization_id == current_user.organization_id,
+            Employee.organization_id == workspace_organization_id(current_user),
         )
     )
     emp = result.scalar_one_or_none()
@@ -544,7 +544,7 @@ async def calculate_employee_salary(
     else:
         # Создаём новую запись
         record = SalaryRecord(
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             employee_id=body.employee_id,
             period_year=body.period_year,
             period_month=body.period_month,
@@ -567,7 +567,7 @@ async def calculate_employee_salary(
     )
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title=f"Проверка начисления зарплаты ({body.period_month:02d}.{body.period_year})",
@@ -575,7 +575,7 @@ async def calculate_employee_salary(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title=f"Дедлайн payroll ({body.period_month:02d}.{body.period_year})",
         description="Автоматическое напоминание по payroll после расчёта.",
         event_date=payroll_followup_date(),
@@ -594,7 +594,7 @@ async def list_salary_records(
 ):
     result = await db.execute(
         select(SalaryRecord).where(
-            SalaryRecord.organization_id == current_user.organization_id,
+            SalaryRecord.organization_id == workspace_organization_id(current_user),
             SalaryRecord.period_year == year,
             SalaryRecord.period_month == month,
         )

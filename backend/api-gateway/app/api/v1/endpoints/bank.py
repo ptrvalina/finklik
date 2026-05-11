@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 import httpx
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.core.config import settings
 from app.security.ssrf import validate_outbound_http_url
 from app.models.user import User
@@ -87,7 +87,7 @@ async def list_accounts(
 ):
     result = await db.execute(
         select(BankAccount)
-        .where(BankAccount.organization_id == current_user.organization_id)
+        .where(BankAccount.organization_id == workspace_organization_id(current_user))
         .order_by(BankAccount.is_primary.desc(), BankAccount.created_at)
     )
     accounts = result.scalars().all()
@@ -103,7 +103,7 @@ async def create_account(
     if body.is_primary:
         existing = await db.execute(
             select(BankAccount).where(
-                BankAccount.organization_id == current_user.organization_id,
+                BankAccount.organization_id == workspace_organization_id(current_user),
                 BankAccount.is_primary == True,
             )
         )
@@ -111,7 +111,7 @@ async def create_account(
             acc.is_primary = False
 
     account = BankAccount(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         bank_name=body.bank_name,
         bank_bic=body.bank_bic,
         account_number=body.account_number,
@@ -141,7 +141,7 @@ async def update_account(
     result = await db.execute(
         select(BankAccount).where(
             BankAccount.id == account_id,
-            BankAccount.organization_id == current_user.organization_id,
+            BankAccount.organization_id == workspace_organization_id(current_user),
         )
     )
     account = result.scalar_one_or_none()
@@ -150,7 +150,7 @@ async def update_account(
 
     if body.is_primary is True:
         all_accs = await db.execute(
-            select(BankAccount).where(BankAccount.organization_id == current_user.organization_id)
+            select(BankAccount).where(BankAccount.organization_id == workspace_organization_id(current_user))
         )
         for a in all_accs.scalars().all():
             a.is_primary = (a.id == account_id)
@@ -179,7 +179,7 @@ async def delete_account(
     result = await db.execute(
         select(BankAccount).where(
             BankAccount.id == account_id,
-            BankAccount.organization_id == current_user.organization_id,
+            BankAccount.organization_id == workspace_organization_id(current_user),
         )
     )
     account = result.scalar_one_or_none()
@@ -206,7 +206,7 @@ async def get_balance(
     from sqlalchemy import func
     from decimal import Decimal
 
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
 
     income_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
@@ -249,7 +249,7 @@ async def get_statements(
     from app.models.transaction import Transaction
     from sqlalchemy import func
 
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     result = await db.execute(
         select(Transaction)
         .where(Transaction.organization_id == org_id)
@@ -286,7 +286,7 @@ async def create_payment(
 
     tx = Transaction(
         id=str(uuid.uuid4()),
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         type="expense",
         amount=body.amount,
         description=f"Платёж: {body.description} → {body.recipient_name}",
@@ -303,8 +303,8 @@ async def create_payment(
         metadata={"amount": float(body.amount)},
     )
     await db.flush()
-    await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
-    await cache.invalidate_org(str(current_user.organization_id))
+    await emit_transaction_created(db, workspace_organization_id(current_user), tx, actor="user")
+    await cache.invalidate_org(workspace_organization_id(current_user))
 
     return {
         "status": "success",
@@ -326,7 +326,7 @@ async def import_bank_statement(
     from app.cache.redis_cache import cache
     import uuid as uuid_mod
 
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     if not org_id:
         raise HTTPException(400, "Нет организации")
 
@@ -381,11 +381,11 @@ async def get_oauth_url(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    account = await _get_account_or_404(db, current_user.organization_id, account_id)
+    account = await _get_account_or_404(db, workspace_organization_id(current_user), account_id)
     if not settings.BANK_OAUTH_AUTHORIZE_URL:
         raise HTTPException(400, "BANK_OAUTH_AUTHORIZE_URL не задан")
 
-    state = _make_oauth_state(account_id=str(account.id), organization_id=str(current_user.organization_id))
+    state = _make_oauth_state(account_id=str(account.id), organization_id=workspace_organization_id(current_user))
     redirect_uri = settings.BANK_OAUTH_CALLBACK_URL or f"{settings.FRONTEND_URL.rstrip('/')}/bank/oauth/callback"
     params = {
         "response_type": "code",
@@ -404,11 +404,11 @@ async def oauth_callback(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    account = await _get_account_or_404(db, current_user.organization_id, body.account_id)
+    account = await _get_account_or_404(db, workspace_organization_id(current_user), body.account_id)
     if not _is_valid_oauth_state(
         state=body.state,
         account_id=str(account.id),
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
     ):
         raise HTTPException(400, "Некорректный OAuth state")
     token_data = await _exchange_oauth_code(body.code)
@@ -435,7 +435,7 @@ async def oauth_status(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    account = await _get_account_or_404(db, current_user.organization_id, account_id)
+    account = await _get_account_or_404(db, workspace_organization_id(current_user), account_id)
     connected = bool(account.oauth_access_token)
     return {
         "account_id": account.id,
@@ -452,7 +452,7 @@ async def oauth_import_to_kudir(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    account = await _get_account_or_404(db, current_user.organization_id, body.account_id)
+    account = await _get_account_or_404(db, workspace_organization_id(current_user), body.account_id)
     if body.date_to < body.date_from:
         raise HTTPException(400, "date_to раньше date_from")
 
@@ -472,7 +472,7 @@ async def bank_reconciliation(
     """Сверка: обороты по учёту и по импорту выписки за период."""
     from app.models.transaction import Transaction
 
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     if not org_id:
         raise HTTPException(400, "Нет организации")
     if date_to < date_from:

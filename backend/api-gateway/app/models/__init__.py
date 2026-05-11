@@ -1,4 +1,5 @@
-from app.models.user import Organization, User, Invitation
+from app.models.user import Organization, User, Invitation, UserOrganizationMembership
+from app.models.collaboration import OperationalInboxItem, ApprovalRequest, CollaborationComment
 from app.models.transaction import Transaction
 from app.models.employee import Employee, SalaryRecord, CalendarEvent, AuditLog
 from app.models.counterparty import Counterparty
@@ -26,7 +27,9 @@ from app.models.business_os import (
 )
 
 __all__ = [
-    "Organization", "User", "Invitation", "Transaction",
+    "Organization", "User", "Invitation", "UserOrganizationMembership",
+    "OperationalInboxItem", "ApprovalRequest", "CollaborationComment",
+    "Transaction",
     "Employee", "SalaryRecord", "CalendarEvent", "AuditLog",
     "Counterparty", "ScannedDocument", "PrimaryDocument", "PrimaryDocumentSequence", "PaymentEvent", "BankAccount",
     "RegulatoryUpdate", "RegulatoryNotification", "ReportSubmission",

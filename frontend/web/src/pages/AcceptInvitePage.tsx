@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { teamApi } from '../api/client'
+import { ACTIVE_ORG_STORAGE_KEY, authApi, teamApi } from '../api/client'
 import { resolveAppPath } from '../appBase'
 import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
 
@@ -26,6 +26,12 @@ export default function AcceptInvitePage() {
     try {
       const { data } = await teamApi.acceptInvite(form)
       localStorage.setItem('access_token', data.access_token)
+      try {
+        const { data: user } = await authApi.me()
+        if (user.organization_id) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, user.organization_id)
+      } catch {
+        /* me optional */
+      }
       setSuccess(true)
       setTimeout(() => {
         window.location.href = resolveAppPath('/')

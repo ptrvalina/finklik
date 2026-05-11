@@ -25,7 +25,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal, get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
+from app.events.emit import emit_report_generated, emit_submission_completed
 from app.models.employee import Employee, SalaryRecord
 from app.models.regulatory import ReportSubmission
 from app.models.transaction import Transaction
@@ -172,6 +173,16 @@ async def _async_finish_submission(
                     portal_outcome="error",
                     report_payload=report_payload,
                 )
+                await emit_submission_completed(
+                    db,
+                    str(submission.organization_id),
+                    submission.id,
+                    status=submission.status,
+                    authority=submission.authority,
+                    report_type=submission.report_type,
+                    report_period=submission.report_period,
+                    portal_outcome="error",
+                )
                 await db.commit()
                 await notify_submission_portal_result(
                     org_id=str(submission.organization_id),
@@ -196,6 +207,16 @@ async def _async_finish_submission(
                     settings=settings,
                     portal_outcome="error",
                     report_payload=report_payload,
+                )
+                await emit_submission_completed(
+                    db,
+                    str(submission.organization_id),
+                    submission.id,
+                    status=submission.status,
+                    authority=submission.authority,
+                    report_type=submission.report_type,
+                    report_period=submission.report_period,
+                    portal_outcome="error",
                 )
                 await db.commit()
                 await notify_submission_portal_result(
@@ -224,6 +245,16 @@ async def _async_finish_submission(
                     settings=settings,
                     portal_outcome="accepted",
                     report_payload=report_payload,
+                )
+                await emit_submission_completed(
+                    db,
+                    str(submission.organization_id),
+                    submission.id,
+                    status=submission.status,
+                    authority=submission.authority,
+                    report_type=submission.report_type,
+                    report_period=submission.report_period,
+                    portal_outcome="accepted",
                 )
                 await db.commit()
                 msg = (
@@ -255,6 +286,16 @@ async def _async_finish_submission(
                 settings=settings,
                 portal_outcome="rejected",
                 report_payload=report_payload,
+            )
+            await emit_submission_completed(
+                db,
+                str(submission.organization_id),
+                submission.id,
+                status=submission.status,
+                authority=submission.authority,
+                report_type=submission.report_type,
+                report_period=submission.report_period,
+                portal_outcome="rejected",
             )
             await db.commit()
             msg = (
@@ -692,7 +733,7 @@ async def list_submissions(
 ):
     """List all report submissions for the organization."""
     query = select(ReportSubmission).where(
-        ReportSubmission.organization_id == current_user.organization_id
+        ReportSubmission.organization_id == workspace_organization_id(current_user)
     )
     if authority:
         query = query.where(ReportSubmission.authority == authority)
@@ -724,7 +765,7 @@ async def get_submission(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()
@@ -745,14 +786,14 @@ async def create_submission(
         raise HTTPException(400, f"Неизвестный тип отчёта: {body.report_type}")
 
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
 
     try:
         report_data = await _build_report_data(
             db,
-            current_user.organization_id,
+            workspace_organization_id(current_user),
             body.authority,
             body.report_type,
             body.report_period,
@@ -762,7 +803,7 @@ async def create_submission(
         raise HTTPException(status_code=400, detail=str(exc))
 
     submission = ReportSubmission(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         authority=body.authority,
         report_type=body.report_type,
@@ -772,6 +813,15 @@ async def create_submission(
     )
     db.add(submission)
     await db.flush()
+    await emit_report_generated(
+        db,
+        workspace_organization_id(current_user),
+        submission.id,
+        authority=submission.authority,
+        report_type=submission.report_type,
+        report_period=submission.report_period,
+        actor="user",
+    )
 
     return _serialize(submission)
 
@@ -786,7 +836,7 @@ async def confirm_submission(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()
@@ -798,7 +848,7 @@ async def confirm_submission(
     period_start, period_end, _ = _parse_report_period(submission.report_period)
     inconsistencies = await _count_pipeline_inconsistencies(
         db=db,
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         period_start=period_start,
         period_end=period_end,
     )
@@ -831,7 +881,7 @@ async def submit_report(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()
@@ -845,7 +895,7 @@ async def submit_report(
         raise HTTPException(status_code=409, detail="; ".join(issues))
 
     org_row = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_row.scalar_one_or_none()
     org_name = org.name if org else ""
@@ -900,6 +950,17 @@ async def submit_report(
             report_payload=report_payload,
         )
         await db.flush()
+        await emit_submission_completed(
+            db,
+            workspace_organization_id(current_user),
+            submission.id,
+            status=submission.status,
+            authority=submission.authority,
+            report_type=submission.report_type,
+            report_period=submission.report_period,
+            portal_outcome="accepted",
+            actor="user",
+        )
         msg = (
             f"Отчёт принят {auth_label}. "
             f"Референс: {submission.submission_ref}"
@@ -911,7 +972,7 @@ async def submit_report(
         }
         background_tasks.add_task(
             notify_submission_portal_result,
-            org_id=str(current_user.organization_id),
+            org_id=workspace_organization_id(current_user),
             user_email=current_user.email,
             org_name=org_name,
             authority_label=auth_label,
@@ -937,6 +998,17 @@ async def submit_report(
         report_payload=report_payload,
     )
     await db.flush()
+    await emit_submission_completed(
+        db,
+        workspace_organization_id(current_user),
+        submission.id,
+        status=submission.status,
+        authority=submission.authority,
+        report_type=submission.report_type,
+        report_period=submission.report_period,
+        portal_outcome="rejected",
+        actor="user",
+    )
     msg = (
         f"{auth_label} отклонил отчёт. "
         f"Референс: {submission.submission_ref}. "
@@ -949,7 +1021,7 @@ async def submit_report(
     }
     background_tasks.add_task(
         notify_submission_portal_result,
-        org_id=str(current_user.organization_id),
+        org_id=workspace_organization_id(current_user),
         user_email=current_user.email,
         org_name=org_name,
         authority_label=auth_label,
@@ -973,7 +1045,7 @@ async def submission_readiness(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()
@@ -997,7 +1069,7 @@ async def auto_submit_confirmed(
     result = await db.execute(
         select(ReportSubmission)
         .where(
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
             ReportSubmission.status == "confirmed",
         )
         .order_by(desc(ReportSubmission.confirmed_at), desc(ReportSubmission.created_at))
@@ -1040,7 +1112,7 @@ async def reject_submission(
     result = await db.execute(
         select(ReportSubmission).where(
             ReportSubmission.id == submission_id,
-            ReportSubmission.organization_id == current_user.organization_id,
+            ReportSubmission.organization_id == workspace_organization_id(current_user),
         )
     )
     submission = result.scalar_one_or_none()

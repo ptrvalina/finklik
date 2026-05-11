@@ -8,9 +8,9 @@ from app.core.datetime_utils import utc_now_naive
 
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, resolve_workspace_organization_id, workspace_organization_id
 from app.core.config import settings
-from app.models.user import User, Organization
+from app.models.user import User, Organization, UserOrganizationMembership
 from app.services.onec_contour_service import ensure_onec_contour_record
 from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, TokenResponse, UserResponse, UserNotificationsPatch
 from app.security import check_brute_force, record_failed_login, record_successful_login, audit_log
@@ -80,6 +80,14 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
         db.add(user)
         await db.flush()
+        db.add(
+            UserOrganizationMembership(
+                user_id=user.id,
+                organization_id=org.id,
+                role_in_org=user.role,
+            )
+        )
+        await db.flush()
         await db.commit()
     except HTTPException:
         raise
@@ -148,7 +156,6 @@ async def refresh_tokens(
     body: RefreshRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    _ = body
     raw = request.cookies.get(REFRESH_COOKIE_NAME)
     if not raw:
         raise HTTPException(status_code=401, detail="Требуется refresh token в httpOnly cookie")
@@ -158,8 +165,11 @@ async def refresh_tokens(
     if not user:
         raise HTTPException(status_code=401, detail="Пользователь не найден")
 
-    org_id = str(user.organization_id) if user.organization_id else ""
-    access_token = create_access_token(str(user.id), org_id, user.role)
+    body_org = None
+    if body and body.organization_id and str(body.organization_id).strip():
+        body_org = str(body.organization_id).strip()
+    org_id_str = await resolve_workspace_organization_id(db, user, body_org)
+    access_token = create_access_token(str(user.id), org_id_str, user.role)
     new_refresh = create_refresh_token(str(user.id))
 
     payload = TokenResponse(
@@ -175,8 +185,8 @@ async def refresh_tokens(
 async def get_me(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     org_name = None
     org = None
-    if current_user.organization_id:
-        result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    if workspace_organization_id(current_user):
+        result = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
         org = result.scalar_one_or_none()
         org_name = org.name if org else None
 
@@ -185,7 +195,7 @@ async def get_me(current_user: User = Depends(get_current_user), db: AsyncSessio
         email=current_user.email,
         full_name=current_user.full_name,
         role=current_user.role,
-        organization_id=str(current_user.organization_id) if current_user.organization_id else None,
+        organization_id=workspace_organization_id(current_user) if workspace_organization_id(current_user) else None,
         org_name=org_name,
         legal_form=org.legal_form if org else None,
         tax_regime=org.tax_regime if org else None,
@@ -206,8 +216,8 @@ async def patch_me_notifications(
     await db.flush()
     org_name = None
     org = None
-    if current_user.organization_id:
-        result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    if workspace_organization_id(current_user):
+        result = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
         org = result.scalar_one_or_none()
         org_name = org.name if org else None
     return UserResponse(
@@ -215,7 +225,7 @@ async def patch_me_notifications(
         email=current_user.email,
         full_name=current_user.full_name,
         role=current_user.role,
-        organization_id=str(current_user.organization_id) if current_user.organization_id else None,
+        organization_id=workspace_organization_id(current_user) if workspace_organization_id(current_user) else None,
         org_name=org_name,
         legal_form=org.legal_form if org else None,
         tax_regime=org.tax_regime if org else None,

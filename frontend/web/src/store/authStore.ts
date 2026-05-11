@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { authApi, resolveApiBase } from '../api/client'
+import { ACTIVE_ORG_STORAGE_KEY, authApi, resolveApiBase, workspaceApi } from '../api/client'
 
 interface User {
   id: string
@@ -21,6 +21,8 @@ interface AuthStore {
   error: string | null
   login: (data: { email: string; password: string }) => Promise<void>
   register: (data: any) => Promise<void>
+  /** Переключить активную организацию (новый JWT, тот же аккаунт). */
+  switchOrganization: (organizationId: string) => Promise<void>
   logout: () => void
   clearError: () => void
 }
@@ -46,6 +48,11 @@ export const useAuthStore = create<AuthStore>()(
           const { data: tokens } = await authApi.login(data)
           localStorage.setItem('access_token', tokens.access_token)
           const { data: user } = await authApi.me()
+          try {
+            if (user.organization_id) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, user.organization_id)
+          } catch {
+            /* storage */
+          }
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
           const status = e.response?.status
@@ -80,6 +87,11 @@ export const useAuthStore = create<AuthStore>()(
           const { data: tokens } = await authApi.register(data)
           localStorage.setItem('access_token', tokens.access_token)
           const { data: user } = await authApi.me()
+          try {
+            if (user.organization_id) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, user.organization_id)
+          } catch {
+            /* storage */
+          }
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e: any) {
           const rawDetail = e.response?.data?.detail
@@ -97,8 +109,36 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      switchOrganization: async (organizationId: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const { data: tokens } = await workspaceApi.switchOrg(organizationId)
+          localStorage.setItem('access_token', tokens.access_token)
+          try {
+            localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, organizationId)
+          } catch {
+            /* storage */
+          }
+          const { data: user } = await authApi.me()
+          set({ user, isAuthenticated: true, isLoading: false })
+        } catch (e: any) {
+          const rawDetail = e.response?.data?.detail
+          const detail =
+            typeof rawDetail === 'string' && rawDetail.trim()
+              ? rawDetail
+              : 'Не удалось переключить организацию'
+          set({ error: detail, isLoading: false })
+          throw e
+        }
+      },
+
       logout: () => {
         localStorage.removeItem('access_token')
+        try {
+          localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY)
+        } catch {
+          /* storage */
+        }
         set({ user: null, isAuthenticated: false })
       },
 

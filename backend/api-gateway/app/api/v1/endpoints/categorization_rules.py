@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.categorization_rule import CategorizationRule
 from app.models.user import User
 from app.schemas.categorization_rule import (
@@ -26,7 +26,7 @@ async def list_rules(
 ):
     result = await db.execute(
         select(CategorizationRule)
-        .where(CategorizationRule.organization_id == current_user.organization_id)
+        .where(CategorizationRule.organization_id == workspace_organization_id(current_user))
         .order_by(CategorizationRule.priority.asc(), CategorizationRule.created_at.desc())
     )
     return list(result.scalars().all())
@@ -46,7 +46,7 @@ async def create_rule(
         raise HTTPException(status_code=422, detail="min_amount не может быть больше max_amount")
 
     row = CategorizationRule(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         name=body.name.strip(),
         category=body.category,
         transaction_type=body.transaction_type,
@@ -72,7 +72,7 @@ async def delete_rule(
     result = await db.execute(
         select(CategorizationRule).where(
             CategorizationRule.id == rule_id,
-            CategorizationRule.organization_id == current_user.organization_id,
+            CategorizationRule.organization_id == workspace_organization_id(current_user),
         )
     )
     rule = result.scalar_one_or_none()

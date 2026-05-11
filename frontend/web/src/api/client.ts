@@ -128,12 +128,15 @@ api.interceptors.response.use(
       original._retry = true
       try {
         if (!refreshPromise) {
+          let body: { organization_id?: string } = {}
+          try {
+            const oid = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY)
+            if (oid) body = { organization_id: oid }
+          } catch {
+            /* localStorage */
+          }
           refreshPromise = axios
-            .post(
-              `${resolveApiBase()}/api/v1/auth/refresh`,
-              {},
-              { withCredentials: true },
-            )
+            .post(`${resolveApiBase()}/api/v1/auth/refresh`, body, { withCredentials: true })
             .then(({ data }) => {
               localStorage.setItem('access_token', data.access_token)
               return data.access_token as string
@@ -302,6 +305,9 @@ export async function pingApi(): Promise<boolean> {
   return false
 }
 
+/** Сохраняем активную организацию для refresh тела запроса (мульти-клиенты). */
+export const ACTIVE_ORG_STORAGE_KEY = 'finklik_active_org'
+
 export const authApi = {
   // Без cookies: кросс-доменный вход (Pages→Render) надёжнее; refresh-cookie всё равно часто
   // режется как third-party — токен доступа приходит в JSON.
@@ -310,6 +316,27 @@ export const authApi = {
   me: () => api.get('/auth/me'),
   patchNotifications: (data: { telegram_chat_id?: string | null }) =>
     api.patch('/auth/me/notifications', data),
+}
+
+/** Мульти-орг, inbox, согласования, комментарии (Flow 3). */
+export const workspaceApi = {
+  memberships: () => api.get('/workspace/memberships'),
+  switchOrg: (organization_id: string) => api.post('/workspace/switch', { organization_id }),
+  pinMembership: (organization_id: string, pinned: boolean) =>
+    api.patch(`/workspace/memberships/${organization_id}/pin`, { pinned }),
+  accountantOverview: () => api.get('/workspace/accountant/overview'),
+  inbox: (params?: { status?: string }) => api.get('/workspace/inbox', { params }),
+  approvals: (params?: { status_filter?: string }) =>
+    api.get('/workspace/approvals', { params }),
+  comments: (params?: { target_kind?: string; target_id?: string }) =>
+    api.get('/workspace/comments', { params }),
+}
+
+/** Flow 4–6: лента исполнения + каноническое состояние + пакеты автономности. */
+export const operationsApi = {
+  executionFeed: () => api.get('/operations/execution-feed'),
+  financialState: () => api.get('/operations/financial-state'),
+  ackWorkPack: (packId: string) => api.post(`/operations/work-packs/${encodeURIComponent(packId)}/ack`),
 }
 
 export const dashboardApi = {
@@ -414,6 +441,13 @@ export const reportsApi = {
     api.get('/reports/expense-categories', { params }),
   incomeExpenseTrend: (months?: number) =>
     api.get('/reports/income-expense-trend', { params: { months } }),
+}
+
+/** Спокойная операционная отчётность: готовность, шкала времени, проверки. */
+export const reportingCalmApi = {
+  overview: () => api.get('/reporting/calm/overview'),
+  startPreparation: (body?: { period?: string | null }) => api.post('/reporting/calm/preparation/start', body ?? {}),
+  validate: () => api.post('/reporting/calm/validate'),
 }
 
 export const counterpartiesApi = {

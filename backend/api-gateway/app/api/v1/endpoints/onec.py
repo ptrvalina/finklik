@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.security.ssrf import validate_outbound_http_url
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.counterparty import Counterparty
 from app.models.onec import OneCAccount, OneCConnection
 from app.models.onec_sync import OneCSyncJob
@@ -123,7 +123,7 @@ async def get_onec_config(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if not connection:
         return {"configured": False}
     return {
@@ -140,18 +140,18 @@ async def upsert_onec_config(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
     await _validate_onec_endpoint(body.endpoint)
 
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if connection:
         connection.endpoint = str(body.endpoint)
         connection.token = body.token
         connection.protocol = body.protocol
     else:
         connection = OneCConnection(
-            organization_id=current_user.organization_id,
+            organization_id=workspace_organization_id(current_user),
             endpoint=str(body.endpoint),
             token=body.token,
             protocol=body.protocol,
@@ -168,10 +168,10 @@ async def onec_health(
 ):
     from app.services.onec_contour_service import update_contour_health_snapshot
 
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if not connection:
         await update_contour_health_snapshot(
-            db, current_user.organization_id, ok=True, error=None
+            db, workspace_organization_id(current_user), ok=True, error=None
         )
         return {
             "connected": True,
@@ -185,7 +185,7 @@ async def onec_health(
         if not isinstance(payload, dict):
             payload = {}
         await update_contour_health_snapshot(
-            db, current_user.organization_id, ok=True, error=None
+            db, workspace_organization_id(current_user), ok=True, error=None
         )
         return {
             "connected": True,
@@ -196,7 +196,7 @@ async def onec_health(
         }
     except httpx.HTTPError as exc:
         await update_contour_health_snapshot(
-            db, current_user.organization_id, ok=False, error=str(exc)
+            db, workspace_organization_id(current_user), ok=False, error=str(exc)
         )
         return {
             "connected": False,
@@ -211,10 +211,10 @@ async def sync_counterparties_from_onec(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
 
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if connection:
         try:
             payload = await _onec_get(connection, "/counterparties")
@@ -235,7 +235,7 @@ async def sync_counterparties_from_onec(
 
         result = await db.execute(
             select(Counterparty).where(
-                Counterparty.organization_id == current_user.organization_id,
+                Counterparty.organization_id == workspace_organization_id(current_user),
                 Counterparty.unp == unp,
             )
         )
@@ -248,7 +248,7 @@ async def sync_counterparties_from_onec(
         else:
             db.add(
                 Counterparty(
-                    organization_id=current_user.organization_id,
+                    organization_id=workspace_organization_id(current_user),
                     name=name,
                     unp=unp,
                     address=item.get("address"),
@@ -267,10 +267,10 @@ async def sync_chart_of_accounts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
 
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if connection:
         try:
             payload = await _onec_get(connection, "/accounts")
@@ -288,7 +288,7 @@ async def sync_chart_of_accounts(
             continue
         result = await db.execute(
             select(OneCAccount).where(
-                OneCAccount.organization_id == current_user.organization_id,
+                OneCAccount.organization_id == workspace_organization_id(current_user),
                 OneCAccount.code == code,
             )
         )
@@ -299,7 +299,7 @@ async def sync_chart_of_accounts(
         else:
             db.add(
                 OneCAccount(
-                    organization_id=current_user.organization_id,
+                    organization_id=workspace_organization_id(current_user),
                     code=code,
                     name=name,
                     account_type=account.get("type"),
@@ -317,7 +317,7 @@ async def lookup_counterparty(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if connection:
         try:
             payload = await _onec_get(connection, f"/counterparties/{unp}")
@@ -340,7 +340,7 @@ async def search_counterparty(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    connection = await _get_onec_connection(db, current_user.organization_id)
+    connection = await _get_onec_connection(db, workspace_organization_id(current_user))
     if connection:
         try:
             query = urlencode({"q": q})
@@ -363,12 +363,12 @@ async def get_chart_of_accounts(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         return {"accounts": CHART_OF_ACCOUNTS}
 
     result = await db.execute(
         select(OneCAccount).where(
-            OneCAccount.organization_id == current_user.organization_id
+            OneCAccount.organization_id == workspace_organization_id(current_user)
         ).order_by(OneCAccount.code)
     )
     accounts = result.scalars().all()
@@ -394,7 +394,7 @@ async def sync_transaction_to_1c(
     result = await db.execute(
         select(Transaction).where(
             Transaction.id == tx_id,
-            Transaction.organization_id == current_user.organization_id,
+            Transaction.organization_id == workspace_organization_id(current_user),
         )
     )
     tx = result.scalar_one_or_none()
@@ -412,7 +412,7 @@ async def sync_transaction_to_1c(
 
     job, created = await enqueue_sync_job(
         db=db,
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         transaction_id=tx_id,
         max_attempts=body.max_attempts,
     )
@@ -438,7 +438,7 @@ async def list_sync_jobs(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    filters = [OneCSyncJob.organization_id == current_user.organization_id]
+    filters = [OneCSyncJob.organization_id == workspace_organization_id(current_user)]
     if status:
         filters.append(OneCSyncJob.status == status)
     result = await db.execute(
@@ -472,7 +472,7 @@ async def retry_sync_job(
     result = await db.execute(
         select(OneCSyncJob).where(
             OneCSyncJob.id == job_id,
-            OneCSyncJob.organization_id == current_user.organization_id,
+            OneCSyncJob.organization_id == workspace_organization_id(current_user),
         )
     )
     job = result.scalar_one_or_none()

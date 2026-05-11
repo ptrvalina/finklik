@@ -29,6 +29,8 @@ import SettingsPage from './pages/SettingsPage'
 import ReportingPage from './features/reporting/ReportingPage'
 import CurrencyPage from './features/currency/CurrencyPage'
 import AssistantPage from './pages/AssistantPage'
+import WorkspaceCommandPage from './pages/WorkspaceCommandPage'
+import OperationsPage from './pages/OperationsPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
 import Layout from './components/layout/Layout'
 
@@ -97,6 +99,22 @@ function AppRoutes() {
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
+          <Route
+            path="operations"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <OperationsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="workspace"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <WorkspaceCommandPage />
+              </RoleRoute>
+            }
+          />
           <Route path="bank" element={<RoleRoute allow={['admin', 'accountant']}><Bank /></RoleRoute>} />
           <Route path="bank/oauth/callback" element={<RoleRoute allow={['admin', 'accountant']}><BankOAuthCallbackPage /></RoleRoute>} />
           <Route path="reports/:authority" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />

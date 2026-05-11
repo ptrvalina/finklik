@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.endpoints.onec import _get_onec_connection, _validate_onec_endpoint
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, workspace_organization_id
 from app.models.onec import OneCConnection, OneCContour
 from app.models.user import Organization, User
 from app.services.onec_contour_service import ensure_onec_contour_record, get_or_create_contour
@@ -44,16 +44,16 @@ async def get_contour_status(
     db: AsyncSession = Depends(get_db),
 ):
     """Реестр organization_id → контур 1С + факт наличия HTTP-подключения."""
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Пользователь не привязан к организации")
 
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(status_code=400, detail="Организация не найдена")
 
     contour = await get_or_create_contour(db, org)
-    conn = await _get_onec_connection(db, current_user.organization_id)
+    conn = await _get_onec_connection(db, workspace_organization_id(current_user))
     return {
         "contour_key": contour.contour_key,
         "status": contour.status,

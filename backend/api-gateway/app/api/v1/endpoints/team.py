@@ -10,9 +10,9 @@ from sqlalchemy import select, func, and_
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.core.security import hash_password
-from app.models.user import User, Organization, Invitation
+from app.models.user import User, Organization, Invitation, UserOrganizationMembership
 from app.models.bank_account import BankAccount
 from app.services.email_service import send_invite_email
 
@@ -113,13 +113,16 @@ async def list_members(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all users in the current organization."""
+    """Участники активной организации (по членству, не только «домашний» профиль)."""
+    oid = workspace_organization_id(current_user)
     result = await db.execute(
-        select(User).where(User.organization_id == current_user.organization_id)
+        select(User)
+        .join(UserOrganizationMembership, UserOrganizationMembership.user_id == User.id)
+        .where(UserOrganizationMembership.organization_id == oid)
     )
     users = result.scalars().all()
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
 
@@ -149,7 +152,7 @@ async def list_invitations(
     """List pending invitations."""
     result = await db.execute(
         select(Invitation).where(
-            Invitation.organization_id == current_user.organization_id,
+            Invitation.organization_id == workspace_organization_id(current_user),
             Invitation.status == "pending",
         )
     )
@@ -180,15 +183,18 @@ async def invite_user(
         raise HTTPException(403, "Только владелец может приглашать пользователей")
 
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
     if not org:
         raise HTTPException(404, "Организация не найдена")
 
     user_count = await db.execute(
-        select(func.count(User.id)).where(
-            User.organization_id == current_user.organization_id,
+        select(func.count(User.id))
+        .select_from(User)
+        .join(UserOrganizationMembership, UserOrganizationMembership.user_id == User.id)
+        .where(
+            UserOrganizationMembership.organization_id == workspace_organization_id(current_user),
             User.is_active == True,
         )
     )
@@ -205,7 +211,7 @@ async def invite_user(
     existing_invite = await db.execute(
         select(Invitation).where(
             Invitation.email == body.email,
-            Invitation.organization_id == current_user.organization_id,
+            Invitation.organization_id == workspace_organization_id(current_user),
             Invitation.status == "pending",
         )
     )
@@ -214,7 +220,7 @@ async def invite_user(
 
     invite_code = secrets.token_urlsafe(32)
     invitation = Invitation(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         email=body.email,
         role=body.role,
         invite_code=invite_code,
@@ -273,6 +279,14 @@ async def accept_invitation(
     db.add(user)
     invitation.status = "accepted"
     await db.flush()
+    db.add(
+        UserOrganizationMembership(
+            user_id=user.id,
+            organization_id=invitation.organization_id,
+            role_in_org=user.role,
+        )
+    )
+    await db.flush()
 
     from app.core.security import create_access_token, create_refresh_token
     from app.core.config import settings
@@ -301,9 +315,11 @@ async def deactivate_member(
         raise HTTPException(400, "Нельзя деактивировать самого себя")
 
     result = await db.execute(
-        select(User).where(
+        select(User)
+        .join(UserOrganizationMembership, UserOrganizationMembership.user_id == User.id)
+        .where(
             User.id == user_id,
-            User.organization_id == current_user.organization_id,
+            UserOrganizationMembership.organization_id == workspace_organization_id(current_user),
         )
     )
     user = result.scalar_one_or_none()
@@ -328,7 +344,7 @@ async def cancel_invitation(
     result = await db.execute(
         select(Invitation).where(
             Invitation.id == invite_id,
-            Invitation.organization_id == current_user.organization_id,
+            Invitation.organization_id == workspace_organization_id(current_user),
         )
     )
     invitation = result.scalar_one_or_none()
@@ -345,9 +361,9 @@ async def get_organization_requisites(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="Нет организации")
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(404, detail="Организация не найдена")
@@ -397,9 +413,9 @@ async def patch_organization_requisites(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="Нет организации")
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(404, detail="Организация не найдена")
@@ -416,9 +432,9 @@ async def export_organization_requisites(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(400, detail="Нет организации")
-    org_r = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+    org_r = await db.execute(select(Organization).where(Organization.id == workspace_organization_id(current_user)))
     org = org_r.scalar_one_or_none()
     if not org:
         raise HTTPException(404, detail="Организация не найдена")

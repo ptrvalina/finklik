@@ -7,7 +7,7 @@ from sqlalchemy import select, desc
 from pydantic import BaseModel
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, workspace_organization_id
 from app.models.user import User
 from app.models.document import ScannedDocument
 from app.models.transaction import Transaction
@@ -109,12 +109,12 @@ async def upload_and_scan(
     parsed = ocr_result.get("parsed", {}) or {}
     linked_tx_id, is_duplicate = await _find_duplicate_or_linked_transaction(
         db=db,
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         parsed=parsed,
     )
 
     doc = ScannedDocument(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         filename=file.filename or "unknown",
         doc_type=ocr_result["doc_type"],
@@ -129,7 +129,7 @@ async def upload_and_scan(
     await db.flush()
     await emit_document_ocr_processed(
         db,
-        str(current_user.organization_id),
+        workspace_organization_id(current_user),
         doc.id,
         parsed=parsed,
         doc_type=ocr_result["doc_type"],
@@ -139,7 +139,7 @@ async def upload_and_scan(
         actor="system",
     )
     if linked_tx_id:
-        await emit_ocr_linked(db, str(current_user.organization_id), doc.id, transaction_id=linked_tx_id)
+        await emit_ocr_linked(db, workspace_organization_id(current_user), doc.id, transaction_id=linked_tx_id)
     await safe_log_audit(
         db,
         user_id=str(current_user.id),
@@ -195,7 +195,7 @@ async def upload_to_kudir(
     )
 
     doc = ScannedDocument(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         filename=file.filename or "unknown",
         doc_type=ocr_result["doc_type"],
@@ -209,7 +209,7 @@ async def upload_to_kudir(
     await db.flush()
 
     tx = Transaction(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         type=parsed.get("type", "expense"),
         amount=amount if amount > 0 else Decimal("0.01"),
         vat_amount=vat_amount if vat_amount >= 0 else Decimal("0"),
@@ -225,7 +225,7 @@ async def upload_to_kudir(
 
     doc.transaction_id = tx.id
     doc.lifecycle_status = "matched"
-    oid = str(current_user.organization_id)
+    oid = workspace_organization_id(current_user)
     await emit_document_ocr_processed(
         db,
         oid,
@@ -265,7 +265,7 @@ async def review_queue(
     result = await db.execute(
         select(ScannedDocument)
         .where(
-            ScannedDocument.organization_id == current_user.organization_id,
+            ScannedDocument.organization_id == workspace_organization_id(current_user),
             ScannedDocument.status == "needs_review",
         )
         .order_by(desc(ScannedDocument.created_at))
@@ -297,7 +297,7 @@ async def list_scanned_documents(
 ):
     stmt = (
         select(ScannedDocument)
-        .where(ScannedDocument.organization_id == current_user.organization_id)
+        .where(ScannedDocument.organization_id == workspace_organization_id(current_user))
         .order_by(desc(ScannedDocument.created_at))
         .limit(limit)
         .offset(offset)
@@ -341,7 +341,7 @@ async def parse_text(
     result = parse_text_document(body.text, body.doc_type)
 
     doc = ScannedDocument(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         filename="text_input",
         doc_type=result["doc_type"],
@@ -356,7 +356,7 @@ async def parse_text(
     parsed_out = result.get("parsed", {}) or {}
     await emit_document_ocr_processed(
         db,
-        str(current_user.organization_id),
+        workspace_organization_id(current_user),
         doc.id,
         parsed=parsed_out,
         doc_type=result["doc_type"],
@@ -389,7 +389,7 @@ async def delete_scanned_document(
 ):
     stmt = select(ScannedDocument).where(
         ScannedDocument.id == doc_id,
-        ScannedDocument.organization_id == current_user.organization_id,
+        ScannedDocument.organization_id == workspace_organization_id(current_user),
     )
     result = await db.execute(stmt)
     doc = result.scalar_one_or_none()

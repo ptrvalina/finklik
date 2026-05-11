@@ -4,7 +4,7 @@ from sqlalchemy import select, func, and_
 from decimal import Decimal
 from datetime import date, datetime, timezone
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.schemas.transaction import (
@@ -58,7 +58,7 @@ async def get_dashboard(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     cache_key = cache.key_dashboard(str(org_id))
     cached = await cache.get(cache_key)
     if cached:
@@ -165,7 +165,7 @@ async def list_transactions(
     db: AsyncSession = Depends(get_db),
 ):
     offset = (page - 1) * per_page
-    filters = [Transaction.organization_id == current_user.organization_id]
+    filters = [Transaction.organization_id == workspace_organization_id(current_user)]
     if type:
         filters.append(Transaction.type == type)
     if date_from:
@@ -207,14 +207,14 @@ async def create_transaction(
         cp = await db.execute(
             select(Counterparty).where(
                 Counterparty.id == body.counterparty_id,
-                Counterparty.organization_id == current_user.organization_id,
+                Counterparty.organization_id == workspace_organization_id(current_user),
             )
         )
         if not cp.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Контрагент не найден в вашей организации")
 
     tx = Transaction(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         type=body.type,
         amount=body.amount,
         vat_amount=body.vat_amount,
@@ -231,8 +231,8 @@ async def create_transaction(
     await auto_categorize_transaction(db, tx)
     db.add(tx)
     await db.flush()
-    await emit_transaction_created(db, str(current_user.organization_id), tx, actor="user")
-    await cache.invalidate_org(str(current_user.organization_id))
+    await emit_transaction_created(db, workspace_organization_id(current_user), tx, actor="user")
+    await cache.invalidate_org(workspace_organization_id(current_user))
     return _serialize_transaction(tx)
 
 
@@ -246,7 +246,7 @@ async def update_transaction(
     result = await db.execute(
         select(Transaction).where(
             Transaction.id == tx_id,
-            Transaction.organization_id == current_user.organization_id,
+            Transaction.organization_id == workspace_organization_id(current_user),
         )
     )
     tx = result.scalar_one_or_none()
@@ -258,7 +258,7 @@ async def update_transaction(
         cp = await db.execute(
             select(Counterparty).where(
                 Counterparty.id == body.counterparty_id,
-                Counterparty.organization_id == current_user.organization_id,
+                Counterparty.organization_id == workspace_organization_id(current_user),
             )
         )
         if not cp.scalar_one_or_none():
@@ -278,17 +278,17 @@ async def update_transaction(
     tx.revenue_stream_id = body.revenue_stream_id
     await auto_categorize_transaction(db, tx)
     await db.flush()
-    await emit_transaction_updated(db, str(current_user.organization_id), tx, actor="user")
+    await emit_transaction_updated(db, workspace_organization_id(current_user), tx, actor="user")
     if previous_category != tx.category:
         await emit_transaction_categorized(
             db,
-            str(current_user.organization_id),
+            workspace_organization_id(current_user),
             tx.id,
             previous_category=previous_category,
             new_category=tx.category,
             actor="user",
         )
-    await cache.invalidate_org(str(current_user.organization_id))
+    await cache.invalidate_org(workspace_organization_id(current_user))
     return _serialize_transaction(tx)
 
 
@@ -301,7 +301,7 @@ async def delete_transaction(
     result = await db.execute(
         select(Transaction).where(
             Transaction.id == tx_id,
-            Transaction.organization_id == current_user.organization_id,
+            Transaction.organization_id == workspace_organization_id(current_user),
         )
     )
     tx = result.scalar_one_or_none()
@@ -318,9 +318,9 @@ async def delete_transaction(
         "status": tx.status,
         "source": tx.source,
     }
-    await emit_transaction_deleted(db, str(current_user.organization_id), tx.id, snapshot=snap, actor="user")
+    await emit_transaction_deleted(db, workspace_organization_id(current_user), tx.id, snapshot=snap, actor="user")
     await db.delete(tx)
-    await cache.invalidate_org(str(current_user.organization_id))
+    await cache.invalidate_org(workspace_organization_id(current_user))
 
 
 @router.get("/transactions/{tx_id}", response_model=TransactionResponse)
@@ -332,7 +332,7 @@ async def get_transaction(
     result = await db.execute(
         select(Transaction).where(
             Transaction.id == tx_id,
-            Transaction.organization_id == current_user.organization_id,
+            Transaction.organization_id == workspace_organization_id(current_user),
         )
     )
     tx = result.scalar_one_or_none()
@@ -352,7 +352,7 @@ async def counterparty_turnover(
     from app.models.counterparty import Counterparty
 
     filters = [
-        Transaction.organization_id == current_user.organization_id,
+        Transaction.organization_id == workspace_organization_id(current_user),
         Transaction.counterparty_id.isnot(None),
     ]
     if date_from:

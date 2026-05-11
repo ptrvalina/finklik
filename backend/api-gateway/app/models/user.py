@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.core.datetime_utils import utc_now_naive
 
 
 class Organization(Base):
@@ -33,6 +34,32 @@ class Organization(Base):
     users: Mapped[list["User"]] = relationship("User", back_populates="organization")
     transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="organization")
     invitations: Mapped[list["Invitation"]] = relationship("Invitation", back_populates="organization")
+    memberships: Mapped[list["UserOrganizationMembership"]] = relationship(
+        "UserOrganizationMembership", back_populates="organization"
+    )
+
+
+class UserOrganizationMembership(Base):
+    """Доступ пользователя к организации (мульти-клиенты / бухгалтеры)."""
+
+    __tablename__ = "user_organization_memberships"
+    __table_args__ = (
+        UniqueConstraint("user_id", "organization_id", name="uq_user_org_membership"),
+        Index("ix_membership_user", "user_id"),
+        Index("ix_membership_org", "organization_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    #: Переопределение роли в рамках организации (если NULL — используется User.role).
+    role_in_org: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+    user: Mapped["User"] = relationship("User", back_populates="organization_memberships")
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="memberships")
 
 
 class User(Base):
@@ -52,6 +79,11 @@ class User(Base):
     telegram_chat_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     organization: Mapped["Organization | None"] = relationship("Organization", back_populates="users")
+    organization_memberships: Mapped[list["UserOrganizationMembership"]] = relationship(
+        "UserOrganizationMembership",
+        back_populates="user",
+        foreign_keys="UserOrganizationMembership.user_id",
+    )
 
 
 class Invitation(Base):

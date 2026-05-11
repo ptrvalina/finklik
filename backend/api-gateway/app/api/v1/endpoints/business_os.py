@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache.redis_cache import cache
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.business_os import (
     AIMemoryEntry,
     BusinessEntity,
@@ -45,6 +45,7 @@ from app.services.business_state_service import compute_business_state
 from app.services.structured_ai_analysis import analyze_transaction_ai
 from app.events.emit import (
     emit_ai_suggestion_recorded,
+    emit_obligation_created,
     emit_reconciliation_confirmed,
     emit_reconciliation_match_recorded,
 )
@@ -57,9 +58,10 @@ router = APIRouter(
 
 
 def _org_id(user: User) -> str:
-    if not user.organization_id:
+    oid = workspace_organization_id(user)
+    if not oid:
         raise HTTPException(status_code=400, detail="Нет организации")
-    return str(user.organization_id)
+    return oid
 
 
 @router.get("/state", response_model=BusinessStateResponse)
@@ -174,6 +176,15 @@ async def create_obligation(
     )
     db.add(row)
     await db.flush()
+    await emit_obligation_created(
+        db,
+        oid,
+        row.id,
+        obligation_type=row.obligation_type,
+        amount=row.amount,
+        due_date=row.due_date.isoformat(),
+        actor="user",
+    )
     return row
 
 

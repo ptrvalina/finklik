@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.datetime_utils import utc_now_naive
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, workspace_organization_id
 from app.models.user import User
 from app.models.user_note import UserNote
 from app.schemas.user_note import UserNoteCreate, UserNoteResponse, UserNoteUpdate
@@ -17,12 +17,12 @@ async def list_notes(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         return []
     result = await db.execute(
         select(UserNote)
         .where(
-            UserNote.organization_id == current_user.organization_id,
+            UserNote.organization_id == workspace_organization_id(current_user),
             UserNote.user_id == current_user.id,
         )
         .order_by(UserNote.updated_at.desc())
@@ -36,12 +36,12 @@ async def create_note(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Организация не назначена")
     title = (body.title or "").strip() or "Без названия"
     now = utc_now_naive()
     note = UserNote(
-        organization_id=current_user.organization_id,
+        organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         title=title[:500],
         body=body.body or "",
@@ -60,12 +60,12 @@ async def update_note(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Организация не назначена")
     result = await db.execute(
         select(UserNote).where(
             UserNote.id == note_id,
-            UserNote.organization_id == current_user.organization_id,
+            UserNote.organization_id == workspace_organization_id(current_user),
             UserNote.user_id == current_user.id,
         )
     )
@@ -88,12 +88,12 @@ async def delete_note(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.organization_id:
+    if not workspace_organization_id(current_user):
         raise HTTPException(status_code=400, detail="Организация не назначена")
     result = await db.execute(
         select(UserNote).where(
             UserNote.id == note_id,
-            UserNote.organization_id == current_user.organization_id,
+            UserNote.organization_id == workspace_organization_id(current_user),
             UserNote.user_id == current_user.id,
         )
     )

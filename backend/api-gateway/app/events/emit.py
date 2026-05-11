@@ -21,10 +21,20 @@ def _json_safe(obj: Any) -> Any:
 from app.events.bootstrap import get_event_store
 from app.events.constants import (
     EV_AI_SUGGESTION_RECORDED,
+    EV_APPROVAL_COMPLETED,
+    EV_APPROVAL_REQUESTED,
+    EV_COMMENT_ADDED,
+    EV_DOCUMENT_REQUESTED,
     EV_DOCUMENT_OCR_PROCESSED,
+    EV_OBLIGATION_CREATED,
     EV_OCR_LINKED,
+    EV_ORGANIZATION_SWITCHED,
     EV_RECONCILIATION_CONFIRMED,
     EV_RECONCILIATION_MATCH_RECORDED,
+    EV_REPORT_GENERATED,
+    EV_REPORT_PREPARATION_STARTED,
+    EV_REPORT_VALIDATED,
+    EV_SUBMISSION_COMPLETED,
     EV_TRANSACTION_CREATED,
     EV_TRANSACTION_CATEGORIZED,
     EV_TRANSACTION_DELETED,
@@ -267,4 +277,231 @@ async def emit_ai_suggestion_recorded(
         target_id=transaction_id,
         target_kind="transaction",
         payload={"kind": "AISuggestion", **analysis},
+    )
+
+
+async def emit_report_preparation_started(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    period: str | None = None,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_REPORT_PREPARATION_STARTED,
+        actor=actor,
+        target_id=str(organization_id),
+        target_kind="organization",
+        payload={"period": period},
+    )
+
+
+async def emit_report_validated(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    readiness_score: int,
+    confidence: str,
+    issue_count: int,
+    actor: str = "system",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_REPORT_VALIDATED,
+        actor=actor,
+        target_id=str(organization_id),
+        target_kind="organization",
+        payload={
+            "readiness_score": readiness_score,
+            "confidence": confidence,
+            "issue_count": issue_count,
+        },
+    )
+
+
+async def emit_obligation_created(
+    db: AsyncSession,
+    organization_id: str,
+    obligation_id: str,
+    *,
+    obligation_type: str,
+    amount: Any,
+    due_date: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_OBLIGATION_CREATED,
+        actor=actor,
+        target_id=obligation_id,
+        target_kind="obligation",
+        payload={
+            "obligation_type": obligation_type,
+            "amount": str(amount),
+            "due_date": due_date,
+        },
+    )
+
+
+async def emit_report_generated(
+    db: AsyncSession,
+    organization_id: str,
+    submission_id: str,
+    *,
+    authority: str,
+    report_type: str,
+    report_period: str,
+    actor: str = "system",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_REPORT_GENERATED,
+        actor=actor,
+        target_id=submission_id,
+        target_kind="report_submission",
+        payload={
+            "authority": authority,
+            "report_type": report_type,
+            "report_period": report_period,
+        },
+    )
+
+
+async def emit_submission_completed(
+    db: AsyncSession,
+    organization_id: str,
+    submission_id: str,
+    *,
+    status: str,
+    authority: str,
+    report_type: str,
+    report_period: str,
+    portal_outcome: str | None = None,
+    actor: str = "system",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_SUBMISSION_COMPLETED,
+        actor=actor,
+        target_id=submission_id,
+        target_kind="report_submission",
+        payload={
+            "status": status,
+            "authority": authority,
+            "report_type": report_type,
+            "report_period": report_period,
+            "portal_outcome": portal_outcome,
+        },
+    )
+
+
+async def emit_organization_switched(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    user_id: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_ORGANIZATION_SWITCHED,
+        actor=actor,
+        target_id=user_id,
+        target_kind="user",
+        payload={"organization_id": str(organization_id)},
+    )
+
+
+async def emit_comment_added(
+    db: AsyncSession,
+    organization_id: str,
+    comment_id: str,
+    *,
+    target_kind: str,
+    target_id: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_COMMENT_ADDED,
+        actor=actor,
+        target_id=comment_id,
+        target_kind="collaboration_comment",
+        payload={"target_kind": target_kind, "target_id": target_id},
+    )
+
+
+async def emit_approval_requested(
+    db: AsyncSession,
+    organization_id: str,
+    approval_id: str,
+    *,
+    subject_kind: str,
+    subject_id: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_APPROVAL_REQUESTED,
+        actor=actor,
+        target_id=approval_id,
+        target_kind="approval_request",
+        payload={"subject_kind": subject_kind, "subject_id": subject_id},
+    )
+
+
+async def emit_approval_completed(
+    db: AsyncSession,
+    organization_id: str,
+    approval_id: str,
+    *,
+    status: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_APPROVAL_COMPLETED,
+        actor=actor,
+        target_id=approval_id,
+        target_kind="approval_request",
+        payload={"status": status},
+    )
+
+
+async def emit_document_requested(
+    db: AsyncSession,
+    organization_id: str,
+    inbox_item_id: str,
+    *,
+    kind: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_DOCUMENT_REQUESTED,
+        actor=actor,
+        target_id=inbox_item_id,
+        target_kind="operational_inbox",
+        payload={"kind": kind},
     )

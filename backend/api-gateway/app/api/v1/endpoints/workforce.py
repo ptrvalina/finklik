@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.internal.audit.service import safe_log_audit
 from app.internal.employee.service import EmployeeService
 from app.internal.fszn.client import FsznClient
@@ -64,7 +64,7 @@ async def bulk_terminate_employees(
     )
     try:
         await service.TerminateEmployeesBulk(
-            current_user.organization_id,
+            workspace_organization_id(current_user),
             req.employee_ids,
             req.termination_date,
             dismissal_reason_code=req.dismissal_reason_code,
@@ -89,7 +89,7 @@ async def bulk_terminate_employees(
     )
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title="Оффбординг: групповой приказ",
@@ -97,7 +97,7 @@ async def bulk_terminate_employees(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title="Контроль группового увольнения",
         description="Автоматическое событие после массового увольнения.",
         event_date=req.termination_date,
@@ -124,7 +124,7 @@ async def terminate_employee(
     log.info("employee_terminate_requested", employee_id=employee_id, user_id=str(current_user.id))
     try:
         await service.TerminateEmployee(
-            current_user.organization_id,
+            workspace_organization_id(current_user),
             employee_id,
             req.termination_date,
             dismissal_reason_code=req.dismissal_reason_code,
@@ -149,7 +149,7 @@ async def terminate_employee(
     )
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title="Оффбординг сотрудника",
@@ -157,7 +157,7 @@ async def terminate_employee(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title="Контроль оффбординга сотрудника",
         description=f"Автоматическое событие после увольнения сотрудника {employee_id}.",
         event_date=req.termination_date,
@@ -193,7 +193,7 @@ async def send_pu2(
         ),
         {
             "id": report_id,
-            "tenant_id": current_user.organization_id,
+            "tenant_id": workspace_organization_id(current_user),
             "report_type": "pu2",
             "period": req.period,
             "xml_data": req.xml_data,
@@ -238,7 +238,7 @@ async def send_pu3(
         ),
         {
             "id": report_id,
-            "tenant_id": current_user.organization_id,
+            "tenant_id": workspace_organization_id(current_user),
             "report_type": "pu3",
             "period": req.period,
             "xml_data": req.xml_data,
@@ -275,7 +275,7 @@ async def calculate_salary(
     log.info("salary_calculation_requested", employee_id=req.employee_id, user_id=str(current_user.id))
     try:
         result = await calculator.CalculateSalary(
-            current_user.organization_id,
+            workspace_organization_id(current_user),
             req.employee_id,
             req.period_start,
             req.period_end,
@@ -292,7 +292,7 @@ async def calculate_salary(
     )
     await create_workforce_followup_task(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         author_user_id=str(current_user.id),
         assignee_user_id=str(current_user.id),
         title="Проверка payroll-расчёта",
@@ -300,7 +300,7 @@ async def calculate_salary(
     )
     await create_workforce_calendar_event(
         db=db,
-        organization_id=str(current_user.organization_id),
+        organization_id=workspace_organization_id(current_user),
         title="Дедлайн payroll проверки",
         description=f"Автоматическое событие после расчёта зарплаты для сотрудника {req.employee_id}.",
         event_date=payroll_followup_date(),
@@ -332,7 +332,7 @@ async def list_salary_calculations(
             ORDER BY sc.period DESC, sc.created_at DESC
             """
         ),
-        {"tenant_id": current_user.organization_id},
+        {"tenant_id": workspace_organization_id(current_user)},
     )
     result: list[SalaryCalculationDTO] = []
     for row in rows.mappings().all():
@@ -368,7 +368,7 @@ async def run_month_payroll(
               AND is_active = 1
             """
         ),
-        {"tenant_id": current_user.organization_id},
+        {"tenant_id": workspace_organization_id(current_user)},
     )
     employee_ids = [str(r["id"]) for r in active_rows.mappings().all()]
     created = 0
@@ -389,7 +389,7 @@ async def run_month_payroll(
                 """
             ),
             {
-                "tenant_id": current_user.organization_id,
+                "tenant_id": workspace_organization_id(current_user),
                 "employee_id": employee_id,
                 "year": req.period_year,
                 "month": req.period_month,
@@ -398,7 +398,7 @@ async def run_month_payroll(
         existing_row = existing.mappings().first()
         try:
             result = await calculator.CalculateSalary(
-                current_user.organization_id,
+                workspace_organization_id(current_user),
                 employee_id,
                 date(req.period_year, req.period_month, 1),
                 date(req.period_year, req.period_month, min(28, req.work_days_plan)),
@@ -441,7 +441,7 @@ async def run_month_payroll(
         ),
         {
             "id": str(uuid.uuid4()),
-            "tenant_id": current_user.organization_id,
+            "tenant_id": workspace_organization_id(current_user),
             "author_id": str(current_user.id),
             "assignee_id": str(current_user.id),
             "title": f"Payroll run {req.period_month:02d}.{req.period_year}",

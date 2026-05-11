@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, func
 from datetime import date
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User, Organization
 from app.models.transaction import Transaction
 from app.models.employee import SalaryRecord, Employee
@@ -38,7 +38,7 @@ async def download_transactions_csv(
     result = await db.execute(
         select(Transaction).where(
             and_(
-                Transaction.organization_id == current_user.organization_id,
+                Transaction.organization_id == workspace_organization_id(current_user),
                 Transaction.transaction_date >= date_from,
                 Transaction.transaction_date <= date_to,
             )
@@ -80,7 +80,7 @@ async def download_salary_csv(
 
     salary_result = await db.execute(
         select(SalaryRecord).where(
-            SalaryRecord.organization_id == current_user.organization_id,
+            SalaryRecord.organization_id == workspace_organization_id(current_user),
             SalaryRecord.period_year == year,
             SalaryRecord.period_month == month,
         )
@@ -128,7 +128,7 @@ async def download_tax_report(
     db: AsyncSession = Depends(get_db),
 ):
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
     org_name = org.name if org else "Организация"
@@ -136,7 +136,7 @@ async def download_tax_report(
 
     income_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            and_(Transaction.organization_id == current_user.organization_id,
+            and_(Transaction.organization_id == workspace_organization_id(current_user),
                  Transaction.type == "income",
                  Transaction.transaction_date >= period_start,
                  Transaction.transaction_date <= period_end)
@@ -146,7 +146,7 @@ async def download_tax_report(
 
     expense_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            and_(Transaction.organization_id == current_user.organization_id,
+            and_(Transaction.organization_id == workspace_organization_id(current_user),
                  Transaction.type == "expense",
                  Transaction.transaction_date >= period_start,
                  Transaction.transaction_date <= period_end)
@@ -200,7 +200,7 @@ async def download_vat_declaration(
     from app.services.tax_calculator import calculate_vat
 
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
     org_name = org.name if org else "Организация"
@@ -216,7 +216,7 @@ async def download_vat_declaration(
     income_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
             and_(
-                Transaction.organization_id == current_user.organization_id,
+                Transaction.organization_id == workspace_organization_id(current_user),
                 Transaction.type == "income",
                 Transaction.transaction_date >= q_start,
                 Transaction.transaction_date <= q_end,
@@ -228,7 +228,7 @@ async def download_vat_declaration(
     expense_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
             and_(
-                Transaction.organization_id == current_user.organization_id,
+                Transaction.organization_id == workspace_organization_id(current_user),
                 Transaction.type == "expense",
                 Transaction.transaction_date >= q_start,
                 Transaction.transaction_date <= q_end,
@@ -268,7 +268,7 @@ async def download_fsszn_pu3(
     enc = get_encryptor()
 
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
     org_name = org.name if org else "Организация"
@@ -278,7 +278,7 @@ async def download_fsszn_pu3(
 
     salary_result = await db.execute(
         select(SalaryRecord).where(
-            SalaryRecord.organization_id == current_user.organization_id,
+            SalaryRecord.organization_id == workspace_organization_id(current_user),
             SalaryRecord.period_year == year,
             SalaryRecord.period_month.in_(q_months),
         )
@@ -321,7 +321,7 @@ async def download_financial_report_pdf(
 ):
     """Generate a PDF financial report for a given period."""
     org_result = await db.execute(
-        select(Organization).where(Organization.id == current_user.organization_id)
+        select(Organization).where(Organization.id == workspace_organization_id(current_user))
     )
     org = org_result.scalar_one_or_none()
     org_name = org.name if org else "Организация"
@@ -329,7 +329,7 @@ async def download_financial_report_pdf(
 
     income_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            and_(Transaction.organization_id == current_user.organization_id,
+            and_(Transaction.organization_id == workspace_organization_id(current_user),
                  Transaction.type == "income",
                  Transaction.transaction_date >= date_from,
                  Transaction.transaction_date <= date_to)
@@ -339,7 +339,7 @@ async def download_financial_report_pdf(
 
     expense_q = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            and_(Transaction.organization_id == current_user.organization_id,
+            and_(Transaction.organization_id == workspace_organization_id(current_user),
                  Transaction.type == "expense",
                  Transaction.transaction_date >= date_from,
                  Transaction.transaction_date <= date_to)
@@ -350,7 +350,7 @@ async def download_financial_report_pdf(
     result = await db.execute(
         select(Transaction).where(
             and_(
-                Transaction.organization_id == current_user.organization_id,
+                Transaction.organization_id == workspace_organization_id(current_user),
                 Transaction.transaction_date >= date_from,
                 Transaction.transaction_date <= date_to,
             )

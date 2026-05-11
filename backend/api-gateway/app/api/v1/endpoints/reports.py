@@ -5,7 +5,7 @@ from decimal import Decimal
 from datetime import date, datetime, timezone
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.schemas.transaction import CATEGORY_LABELS
@@ -26,7 +26,7 @@ async def monthly_summary(
     """Income/expense aggregated by month for a given year."""
     if year is None:
         year = datetime.now(timezone.utc).year
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
 
     result = await db.execute(
         select(
@@ -87,7 +87,7 @@ async def expense_categories(
     db: AsyncSession = Depends(get_db),
 ):
     """Group expenses by category."""
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     filters = [
         Transaction.organization_id == org_id,
         Transaction.type == "expense",
@@ -131,7 +131,7 @@ async def income_expense_trend(
     db: AsyncSession = Depends(get_db),
 ):
     """Daily income/expense for the last N months (for sparklines)."""
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
     now = datetime.now(timezone.utc)
     start_month = now.month - months
     start_year = now.year

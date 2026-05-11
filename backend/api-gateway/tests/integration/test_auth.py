@@ -2,10 +2,10 @@
 import pytest
 import time
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
+from app.models.user import User, UserOrganizationMembership
 
 
 @pytest.mark.asyncio
@@ -141,7 +141,7 @@ async def test_me_authenticated(client: AsyncClient, auth_headers: dict):
 
 @pytest.mark.asyncio
 async def test_me_user_without_organization(client: AsyncClient, db_session: AsyncSession):
-    """Пользователь без organization_id не должен получать 500 на /me (регрессия NameError org)."""
+    """Без домашней организации и членства workspace не резолвится — /me возвращает 400."""
     suffix = int(time.time() * 1000) % 999999999
     email = f"noorg_{suffix}@example.com"
     await client.post(
@@ -157,14 +157,15 @@ async def test_me_user_without_organization(client: AsyncClient, db_session: Asy
     r = await db_session.execute(select(User).where(User.email == email))
     u = r.scalar_one()
     u.organization_id = None
+    await db_session.execute(delete(UserOrganizationMembership).where(UserOrganizationMembership.user_id == u.id))
     await db_session.commit()
 
     login = await client.post("/api/v1/auth/login", json={"email": email, "password": "TestPass123"})
     assert login.status_code == 200
     headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
     me = await client.get("/api/v1/auth/me", headers=headers)
-    assert me.status_code == 200
-    assert me.json()["organization_id"] is None
+    # Workspace не может быть разрешён без домашней организации и членства — GET /me отклонён.
+    assert me.status_code == 400
 
 
 @pytest.mark.asyncio

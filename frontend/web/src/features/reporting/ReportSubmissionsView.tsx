@@ -274,7 +274,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   const currentAuthorityTypes = reportTypes[createForm.authority] || {}
 
   return (
-    <div className="space-y-4">
+    <div id="fc-report-submissions" className="space-y-4">
       {message && (
         <div
           className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold ${

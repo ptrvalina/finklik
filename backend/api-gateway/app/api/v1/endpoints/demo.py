@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, require_roles, workspace_organization_id
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.counterparty import Counterparty
@@ -53,7 +53,7 @@ async def seed_demo_data(
     db: AsyncSession = Depends(get_db),
 ):
     """Fills the current organization with realistic demo data."""
-    org_id = current_user.organization_id
+    org_id = workspace_organization_id(current_user)
 
     existing_tx = await db.execute(
         select(func.count(Transaction.id)).where(Transaction.organization_id == org_id)

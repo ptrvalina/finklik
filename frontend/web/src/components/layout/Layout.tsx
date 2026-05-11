@@ -15,6 +15,7 @@ import {
   getNavGroupsForRole,
   type NavItem,
 } from './navConfig'
+import OrgSwitcher from '../workspace/OrgSwitcher'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -208,6 +209,9 @@ export default function Layout() {
               </h1>
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/95">Premium</p>
               <p className="truncate text-[11px] text-white/50">{user?.org_name || 'Организация'}</p>
+              <div className="mt-2">
+                <OrgSwitcher placement="sidebar" />
+              </div>
             </div>
           </div>
         </div>
@@ -269,6 +273,7 @@ export default function Layout() {
                 <p className="truncate font-headline text-sm font-bold text-on-surface">ФинКлик</p>
                 <p className="truncate text-[10px] text-on-surface-variant">{user?.org_name}</p>
               </div>
+              <OrgSwitcher placement="header" className="min-w-0 flex-shrink" />
             </div>
 
             <NavLink
