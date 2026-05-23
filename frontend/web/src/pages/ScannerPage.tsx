@@ -22,6 +22,14 @@ type ScanResult = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
   ocr_text: string; parsed: ParsedData; created_at: string
   warnings?: string[]
+  requires_review?: boolean
+  field_confidence?: Record<string, number>
+}
+
+function fieldNeedsReview(fc: Record<string, number> | undefined, key: string): boolean {
+  if (!fc) return false
+  const v = fc[key]
+  return v != null && v < 75
 }
 type HistoryItem = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
@@ -43,7 +51,14 @@ const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> 
   ttn: { label: 'ТТН', icon: 'local_shipping', color: 'text-primary' },
   act: { label: 'Акт', icon: 'task', color: 'text-tertiary' },
   invoice: { label: 'Счёт', icon: 'request_quote', color: 'text-error' },
+  payment_order: { label: 'Платёжное поручение', icon: 'payments', color: 'text-primary' },
   unknown: { label: 'Другое', icon: 'description', color: 'text-on-surface-variant' },
+}
+
+function reviewInputClass(needsReview: boolean): string {
+  return needsReview
+    ? 'input min-h-11 w-full rounded-xl border-amber-400/50 bg-amber-500/10 ring-1 ring-amber-400/30'
+    : 'input min-h-11 w-full rounded-xl'
 }
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -346,6 +361,11 @@ export default function ScannerPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  {(scanResult.requires_review || scanResult.confidence < 75) && (
+                    <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+                      Нужна проверка
+                    </span>
+                  )}
                   <span className={`text-sm font-bold ${scanResult.confidence >= 90 ? 'text-secondary' : scanResult.confidence >= 75 ? 'text-tertiary' : 'text-error'}`}>
                     {scanResult.confidence}%
                   </span>
@@ -393,7 +413,9 @@ export default function ScannerPage() {
                       Проверьте распознавание и при необходимости исправьте поля перед созданием операции.
                     </p>
                   </div>
-                  {editDraft && (
+                  {editDraft && (() => {
+                    const fc = scanResult.field_confidence
+                    return (
                     <div className="space-y-3">
                       <div>
                         <label className="label">Вид документа</label>
@@ -408,9 +430,14 @@ export default function ScannerPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="label">Контрагент</label>
+                        <label className="label">
+                          Контрагент
+                          {fieldNeedsReview(fc, 'counterparty_name') && (
+                            <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
+                          )}
+                        </label>
                         <input
-                          className="input min-h-11 w-full rounded-xl"
+                          className={reviewInputClass(fieldNeedsReview(fc, 'counterparty_name'))}
                           value={editDraft.counterparty}
                           onChange={(e) => setEditDraft((d) => d && { ...d, counterparty: e.target.value })}
                           placeholder="Название организации или ИП"
@@ -420,21 +447,31 @@ export default function ScannerPage() {
                         <p className="text-xs text-on-surface-variant">Номер в документе: {scanResult.parsed.doc_number}</p>
                       )}
                       <div>
-                        <label className="label">Дата операции</label>
+                        <label className="label">
+                          Дата операции
+                          {fieldNeedsReview(fc, 'transaction_date') && (
+                            <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
+                          )}
+                        </label>
                         <input
                           type="date"
-                          className="input min-h-11 w-full rounded-xl"
+                          className={reviewInputClass(fieldNeedsReview(fc, 'transaction_date'))}
                           value={editDraft.transactionDate}
                           onChange={(e) => setEditDraft((d) => d && { ...d, transactionDate: e.target.value })}
                         />
                       </div>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                          <label className="label">Сумма, BYN</label>
+                          <label className="label">
+                            Сумма, BYN
+                            {fieldNeedsReview(fc, 'amount') && (
+                              <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
+                            )}
+                          </label>
                           <input
                             type="text"
                             inputMode="decimal"
-                            className="input min-h-11 w-full rounded-xl"
+                            className={reviewInputClass(fieldNeedsReview(fc, 'amount'))}
                             value={editDraft.amount}
                             onChange={(e) => {
                               setEditDraft((d) => d && { ...d, amount: e.target.value })
@@ -479,7 +516,8 @@ export default function ScannerPage() {
                       </div>
                       {amountError && <p className="text-sm text-error">{amountError}</p>}
                     </div>
-                  )}
+                    )
+                  })()}
                   {scanResult.parsed.items_count != null && (
                     <p className="text-xs text-on-surface-variant">Позиций в документе: {scanResult.parsed.items_count}</p>
                   )}

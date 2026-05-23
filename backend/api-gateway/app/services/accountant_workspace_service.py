@@ -56,4 +56,18 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
         }
 
     rows = await asyncio.gather(*[card(m, o) for m, o in pairs])
-    return {"organizations": list(rows), "generated_at": datetime.now(timezone.utc).isoformat()}
+
+    def _sort_key(card: dict) -> tuple:
+        # Закреплённые сверху; затем ниже готовность и выше операционная нагрузка — «нужно внимание» выше в списке.
+        pinned = 0 if card.get("is_pinned") else 1
+        rs = card.get("readiness_score")
+        try:
+            score_key = float(rs) if rs is not None else 999.0
+        except (TypeError, ValueError):
+            score_key = 999.0
+        workload = int(card.get("open_inbox") or 0) + int(card.get("pending_approvals") or 0) + int(card.get("attention_issues") or 0)
+        name = str(card.get("organization_name") or "")
+        return (pinned, score_key, -workload, name)
+
+    ordered = sorted(rows, key=_sort_key)
+    return {"organizations": ordered, "generated_at": datetime.now(timezone.utc).isoformat()}

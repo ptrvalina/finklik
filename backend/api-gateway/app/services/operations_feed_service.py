@@ -161,7 +161,7 @@ async def build_execution_feed(
                 title=issue.title,
                 context=issue.detail,
                 action_path=issue.action_path,
-                ai_why=issue.fix_hint,
+                ai_why=issue.fix_hint or issue.detail or "Требуется действие для стабильности учёта и отчётности.",
             )
         )
 
@@ -178,7 +178,9 @@ async def build_execution_feed(
                 title=f"Готовность отчётности {score}% — ниже порога {READINESS_THRESHOLD}%",
                 context="Исправьте замечания в журнале и документах перед сдачей.",
                 action_path="/reports",
-                ai_why=overview.readiness.suggested_fixes[0] if overview.readiness.suggested_fixes else None,
+                ai_why=overview.readiness.suggested_fixes[0]
+                    if overview.readiness.suggested_fixes
+                    else "Готовность отчётности ниже целевого порога — проверьте журнал и первичные документы.",
             )
         )
 

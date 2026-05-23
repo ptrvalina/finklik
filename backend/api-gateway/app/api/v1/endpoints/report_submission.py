@@ -33,6 +33,7 @@ from app.models.transaction import Transaction
 from app.models.user import Organization, User
 from app.security import get_encryptor
 from app.services.pu3_aggregation import build_pu3_aggregates
+from app.services.financial_state_service import refresh_financial_state_audit
 from app.services.submission_notifications import notify_submission_portal_result
 from app.services.submission_portal import submit_to_http_portal
 from app.services.tax_calculator import calculate_fsszn, calculate_usn, calculate_vat, get_tax_rules_for_year
@@ -183,6 +184,7 @@ async def _async_finish_submission(
                     report_period=submission.report_period,
                     portal_outcome="error",
                 )
+                await refresh_financial_state_audit(db, str(submission.organization_id))
                 await db.commit()
                 await notify_submission_portal_result(
                     org_id=str(submission.organization_id),
@@ -218,6 +220,7 @@ async def _async_finish_submission(
                     report_period=submission.report_period,
                     portal_outcome="error",
                 )
+                await refresh_financial_state_audit(db, str(submission.organization_id))
                 await db.commit()
                 await notify_submission_portal_result(
                     org_id=str(submission.organization_id),
@@ -256,6 +259,7 @@ async def _async_finish_submission(
                     report_period=submission.report_period,
                     portal_outcome="accepted",
                 )
+                await refresh_financial_state_audit(db, str(submission.organization_id))
                 await db.commit()
                 msg = (
                     f"Отчёт принят {auth_label}. "
@@ -297,6 +301,7 @@ async def _async_finish_submission(
                 report_period=submission.report_period,
                 portal_outcome="rejected",
             )
+            await refresh_financial_state_audit(db, str(submission.organization_id))
             await db.commit()
             msg = (
                 f"{auth_label} отклонил отчёт. "
@@ -822,6 +827,7 @@ async def create_submission(
         report_period=submission.report_period,
         actor="user",
     )
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
 
     return _serialize(submission)
 
@@ -862,6 +868,7 @@ async def confirm_submission(
     submission.confirmed_by = current_user.id
     submission.confirmed_at = datetime.now(timezone.utc)
     await db.flush()
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
 
     return _serialize(submission)
 
@@ -911,6 +918,7 @@ async def submit_report(
     if settings.SUBMISSION_ASYNC:
         submission.status = "submitting"
         await db.flush()
+        await refresh_financial_state_audit(db, workspace_organization_id(current_user))
         background_tasks.add_task(_async_finish_submission, submission.id, sim)
         return {
             **_serialize(submission),
@@ -961,6 +969,7 @@ async def submit_report(
             portal_outcome="accepted",
             actor="user",
         )
+        await refresh_financial_state_audit(db, workspace_organization_id(current_user))
         msg = (
             f"Отчёт принят {auth_label}. "
             f"Референс: {submission.submission_ref}"
@@ -1009,6 +1018,7 @@ async def submit_report(
         portal_outcome="rejected",
         actor="user",
     )
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
     msg = (
         f"{auth_label} отклонил отчёт. "
         f"Референс: {submission.submission_ref}. "
@@ -1131,6 +1141,7 @@ async def reject_submission(
     submission.confirmed_by = None
     submission.confirmed_at = None
     await db.flush()
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
 
     return _serialize(submission)
 

@@ -101,7 +101,10 @@ export default {
         premium: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       transitionDuration: {
-        fc: '260ms',
+        /** Align with `index.css` `--fc-duration-*` */
+        fc: '240ms',
+        'fc-fast': '160ms',
+        'fc-slow': '320ms',
       },
     },
   },

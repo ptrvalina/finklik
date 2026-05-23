@@ -35,17 +35,26 @@ export function PremiumEmptyState({
       />
       <span
         className={clsx(
-          'material-symbols-outlined mx-auto block text-primary/45',
-          compact ? 'text-4xl' : 'text-[3.25rem]',
+          'material-symbols-outlined mx-auto block text-primary/38',
+          compact ? 'text-[2.125rem]' : 'text-[3rem]',
         )}
       >
         {icon}
       </span>
-      <p className={clsx('font-headline font-bold text-on-surface', compact ? 'mt-3 text-base' : 'mt-5 text-lg')}>{title}</p>
+      <p
+        className={clsx(
+          'font-headline font-semibold tracking-tight text-on-surface sm:font-bold',
+          compact ? 'mt-3 text-base' : 'mt-4 text-lg sm:mt-5',
+        )}
+      >
+        {title}
+      </p>
       {description && (
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-on-surface-variant">{description}</p>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-snug text-on-surface-variant/90">{description}</p>
       )}
-      {actions && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">{actions}</div>}
+      {actions && (
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:mt-6 sm:gap-3">{actions}</div>
+      )}
     </div>
   )
 }

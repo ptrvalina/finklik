@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 
@@ -17,7 +17,7 @@ export type DataTableShellProps = {
 /**
  * Единая оболочка «тяжёлых» таблиц: липкий премиум-тулбар, анимированная bulk-панель, стеклянная поверхность.
  */
-export function DataTableShell({
+function DataTableShellInner({
   toolbar,
   bulkBar,
   selectedCount = 0,
@@ -28,8 +28,14 @@ export function DataTableShell({
   const showBulk = bulkBar != null && selectedCount > 0
 
   return (
-    <div className={clsx(!bare && 'fc-premium-surface shadow-soft', className)}>
-      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[rgb(var(--color-surface)/0.88)] px-3 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.72)] sm:px-4 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.65)] dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.55)]">
+    <div
+      className={clsx(
+        !bare && 'fc-premium-surface shadow-soft',
+        showBulk && 'fc-datatable-shell--bulk',
+        className,
+      )}
+    >
+      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[rgb(var(--color-surface)/0.88)] px-3 py-[var(--fc-toolbar-y)] backdrop-blur-[var(--fc-blur-glass)] supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.72)] sm:px-4 sm:py-[var(--fc-toolbar-y-sm)] dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.65)] dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.55)]">
         {toolbar}
       </div>
 
@@ -39,10 +45,12 @@ export function DataTableShell({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className="overflow-hidden border-b border-emerald-400/25 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.06] to-transparent"
+            transition={{ type: 'spring', stiffness: 280, damping: 36, mass: 0.85 }}
+            className="overflow-hidden border-b border-outline/30 bg-surface-container-low/50 dark:border-white/[0.06] dark:bg-white/[0.04]"
           >
-            <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:px-4">{bulkBar}</div>
+            <div className="flex flex-wrap items-center gap-2 px-3 py-[var(--fc-toolbar-y)] sm:px-4 sm:py-[var(--fc-toolbar-y-sm)]">
+              {bulkBar}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -51,6 +59,8 @@ export function DataTableShell({
     </div>
   )
 }
+
+export const DataTableShell = memo(DataTableShellInner)
 
 /** Выбор строк с Escape для сброса — без привязки к домену. */
 export function useDataTableSelection(idList: string[]) {
@@ -89,13 +99,20 @@ export function useDataTableSelection(idList: string[]) {
     return () => window.removeEventListener('keydown', onKey)
   }, [clear])
 
-  return {
-    selected,
-    selectedCount: selected.size,
-    toggle,
-    toggleAllVisible,
-    clear,
-    isSelected: (id: string) => selected.has(id),
-    allVisibleSelected: idList.length > 0 && idList.every((id) => selected.has(id)),
-  }
+  const selectedCount = selected.size
+  const allVisibleSelected = idList.length > 0 && idList.every((id) => selected.has(id))
+  const isSelected = useCallback((id: string) => selected.has(id), [selected])
+
+  return useMemo(
+    () => ({
+      selected,
+      selectedCount,
+      toggle,
+      toggleAllVisible,
+      clear,
+      isSelected,
+      allVisibleSelected,
+    }),
+    [selected, selectedCount, toggle, toggleAllVisible, clear, isSelected, allVisibleSelected],
+  )
 }

@@ -108,6 +108,7 @@ make check-deploy-status
 | Раздел | Файл |
 |--------|------|
 | Разработка | [`docs/dev/DEVELOPER_GUIDE.md`](docs/dev/DEVELOPER_GUIDE.md) |
+| Belarus FOS master plan | [`docs/dev/BELARUS_FOS_MASTER_PLAN.md`](docs/dev/BELARUS_FOS_MASTER_PLAN.md) |
 | API/OpenAPI (этап 7) | [`docs/dev/API_OPENAPI_STAGE7.md`](docs/dev/API_OPENAPI_STAGE7.md) |
 | Релизный чеклист (этап 7) | [`docs/dev/RELEASE_STAGE7_CHECKLIST.md`](docs/dev/RELEASE_STAGE7_CHECKLIST.md) |
 | Прод-smoke отчёт (этап 7) | [`docs/dev/SMOKE_STAGE7_PROD_2026-04-27.md`](docs/dev/SMOKE_STAGE7_PROD_2026-04-27.md) |

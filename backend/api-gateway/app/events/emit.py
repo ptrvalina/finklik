@@ -35,10 +35,14 @@ from app.events.constants import (
     EV_REPORT_PREPARATION_STARTED,
     EV_REPORT_VALIDATED,
     EV_SUBMISSION_COMPLETED,
+    EV_DOCUMENT_SIGNED,
     EV_TRANSACTION_CREATED,
     EV_TRANSACTION_CATEGORIZED,
     EV_TRANSACTION_DELETED,
     EV_TRANSACTION_UPDATED,
+    EV_OKED_SELECTED,
+    EV_TAX_MODE_SELECTED,
+    EV_BUSINESS_PROFILE_COMPLETED,
 )
 from app.models.transaction import Transaction
 
@@ -508,4 +512,96 @@ async def emit_document_requested(
         target_id=inbox_item_id,
         target_kind="operational_inbox",
         payload={"kind": kind},
+    )
+
+
+async def emit_document_signed(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    signing_request_id: str,
+    document_kind: str,
+    document_id: str,
+    document_hash: str,
+    hash_algorithm: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_DOCUMENT_SIGNED,
+        actor=actor,
+        target_id=signing_request_id,
+        target_kind="signing_request",
+        payload=_json_safe(
+            {
+                "document_kind": document_kind,
+                "document_id": document_id,
+                "document_hash": document_hash,
+                "hash_algorithm": hash_algorithm,
+            }
+        ),
+        idempotency_key=f"DocumentSigned:{signing_request_id}",
+    )
+
+
+async def emit_oked_selected(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    oked_primary: str,
+    oked_secondary: list[str] | None = None,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_OKED_SELECTED,
+        actor=actor,
+        target_id=str(organization_id),
+        target_kind="organization",
+        payload=_json_safe({"oked_primary": oked_primary, "oked_secondary": oked_secondary or []}),
+        idempotency_key=f"OkedSelected:{organization_id}:{oked_primary}"[:128],
+    )
+
+
+async def emit_tax_mode_selected(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    tax_regime: str,
+    legal_form: str,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_TAX_MODE_SELECTED,
+        actor=actor,
+        target_id=str(organization_id),
+        target_kind="organization",
+        payload=_json_safe({"tax_regime": tax_regime, "legal_form": legal_form}),
+        idempotency_key=f"TaxModeSelected:{organization_id}:{tax_regime}"[:128],
+    )
+
+
+async def emit_business_profile_completed(
+    db: AsyncSession,
+    organization_id: str,
+    *,
+    actor: str = "user",
+) -> None:
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=str(organization_id),
+        event_type=EV_BUSINESS_PROFILE_COMPLETED,
+        actor=actor,
+        target_id=str(organization_id),
+        target_kind="organization",
+        payload={},
+        idempotency_key=f"BusinessProfileCompleted:{organization_id}"[:128],
     )

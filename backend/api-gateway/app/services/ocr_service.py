@@ -81,10 +81,17 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         if is_pdf:
             text = _ocr_pdf_with_tesseract(file_bytes)
         else:
-            img = Image.open(io.BytesIO(file_bytes))
-            # Базовая нормализация для лучшего OCR.
-            img = img.convert("L")
+            from app.services.ocr_preprocess import load_image_from_bytes, preprocess_for_ocr
+
+            img = preprocess_for_ocr(load_image_from_bytes(file_bytes))
             text = pytesseract.image_to_string(img, lang="rus+eng")
+            # Второй проход с другим PSM для слабых сканов.
+            try:
+                text2 = pytesseract.image_to_string(img, lang="rus+eng", config="--psm 6")
+                if len(text2) > len(text):
+                    text = text2
+            except Exception:
+                pass
         text = (text or "").strip()
     except Exception as exc:
         out = mock_ocr_process(filename, file_bytes)
@@ -96,9 +103,11 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         out["warnings"] = list(out.get("warnings", [])) + ["Не удалось надежно распознать текст, использован mock fallback"]
         return out
 
-    # Для реального OCR парсим тот же текстовый пайплайн.
+    from app.services.belarus_ocr_parse import detect_document_type as detect_by_ru
+
+    doc_type = detect_by_ru(text, filename) or detect_doc_type(filename)
     try:
-        parsed = parse_text_document(text, detect_doc_type(filename))
+        parsed = parse_text_document(text, doc_type)
     except Exception as exc:
         out = mock_ocr_process(filename, file_bytes)
         out["warnings"] = list(out.get("warnings", [])) + [
@@ -111,7 +120,7 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
     if parsed.get("parsed", {}).get("amount", 0) > 0:
         conf += 10
     parsed["confidence"] = min(95, max(parsed.get("confidence", 0), conf))
-    return parsed
+    return _attach_field_confidence(parsed)
 
 
 def _ocr_pdf_with_tesseract(file_bytes: bytes) -> str:
@@ -463,6 +472,23 @@ def _detect_type_from_text(text: str) -> str:
     return "unknown"
 
 
+def _attach_field_confidence(result: dict) -> dict:
+    from app.services.belarus_ocr_parse import build_confidence_result, parse_belarus_fields
+
+    text = result.get("ocr_text") or ""
+    extra = parse_belarus_fields(text)
+    fields = extra.get("fields") or {}
+    fc = dict(extra.get("field_confidence") or {})
+    parsed = dict(result.get("parsed") or {})
+    for k, v in fields.items():
+        if v and not parsed.get(k):
+            parsed[k] = v
+    overall = int(result.get("confidence") or 0)
+    meta = build_confidence_result(overall, fc)
+    out = {**result, "parsed": parsed, **meta}
+    return out
+
+
 def _extract_generic(text: str, doc_type: str) -> dict:
     """Extract basic fields from any document text."""
     amount = parse_total_amount_from_text(text)
@@ -491,7 +517,7 @@ def _extract_generic(text: str, doc_type: str) -> dict:
     if counterparty:
         confidence += 10
 
-    return {
+    base = {
         "doc_type": doc_type,
         "confidence": min(confidence, 95),
         "ocr_text": text,
@@ -505,6 +531,7 @@ def _extract_generic(text: str, doc_type: str) -> dict:
         },
         "warnings": [] if amount > 0 else ["Не удалось извлечь сумму из текста"],
     }
+    return _attach_field_confidence(base)
 
 
 def _mock_invoice(size_kb: float) -> dict:

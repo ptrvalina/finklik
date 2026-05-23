@@ -48,6 +48,7 @@ export default function OrgSwitcher({
           if (!v || v === activeId) return
           void (async () => {
             try {
+              await qc.cancelQueries()
               await switchOrganization(v)
               await qc.invalidateQueries()
             } catch {

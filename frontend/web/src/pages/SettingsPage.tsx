@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi, authApi } from '../api/client'
+import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi, authApi, accountingApi } from '../api/client'
+import { Link } from 'react-router-dom'
 import { formatApiDetail } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -344,7 +345,78 @@ function ProfileSection() {
         </button>
       </div>
 
+      <AccountingModeCard />
       <OrgRequisitesCard />
+    </div>
+  )
+}
+
+function AccountingModeCard() {
+  const user = useAuthStore((s) => s.user)
+  const qc = useQueryClient()
+  const role = (user?.role || '').toLowerCase()
+  const allowed = role === 'owner' || role === 'admin' || role === 'accountant'
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['accounting-mode'],
+    queryFn: () => accountingApi.getMode().then((r) => r.data as { accounting_mode?: string }),
+    enabled: allowed,
+  })
+
+  const modeMutation = useMutation({
+    mutationFn: (accounting_mode: 'simple' | 'advanced') => accountingApi.setMode(accounting_mode),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['accounting-mode'] })
+      setMsg({ type: 'success', text: 'Режим учёта обновлён' })
+    },
+    onError: (e: unknown) =>
+      setMsg({ type: 'error', text: formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail) || 'Ошибка' }),
+  })
+
+  if (!allowed) return null
+  const mode = (data?.accounting_mode || 'simple') as 'simple' | 'advanced'
+
+  return (
+    <div className="page-section p-5">
+      <h3 className="mb-1 text-sm font-bold text-on-surface">Режим учёта</h3>
+      <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">
+        <strong>Простой</strong> — журнал операций для SMB. <strong>Расширенный</strong> — план счетов и проводки для бухгалтера.
+      </p>
+      {isLoading ? (
+        <p className="text-xs text-on-surface-variant">Загрузка…</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ['simple', 'Простой (журнал)'],
+              ['advanced', 'Расширенный (план счетов)'],
+            ] as const
+          ).map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              disabled={modeMutation.isPending}
+              onClick={() => modeMutation.mutate(val)}
+              className={`rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
+                mode === val
+                  ? 'border-primary bg-primary/12 text-primary ring-1 ring-primary/25'
+                  : 'border-outline-variant/40 text-on-surface-variant hover:border-primary/30'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {mode === 'advanced' && (
+        <Link to="/accounting/chart" className="mt-3 inline-flex text-xs font-bold text-primary hover:underline">
+          Открыть план счетов →
+        </Link>
+      )}
+      {msg && (
+        <p className={`mt-3 text-xs ${msg.type === 'success' ? 'text-emerald-600' : 'text-error'}`}>{msg.text}</p>
+      )}
     </div>
   )
 }

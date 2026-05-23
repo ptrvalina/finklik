@@ -80,7 +80,23 @@ async def get_trust_surface(
 async def acknowledge_work_pack(
     pack_id: str,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Фиксация намерения по пакету (без автопроведения в ERP). Мобильный свайп / десктоп-кнопка."""
-    _ = current_user
+    from app.events.bootstrap import get_event_store
+    from app.events.constants import EV_WORK_PACK_ACKNOWLEDGED
+
+    oid = _org_id(current_user)
+    store = get_event_store()
+    await store.append(
+        db,
+        organization_id=oid,
+        event_type=EV_WORK_PACK_ACKNOWLEDGED,
+        actor=str(current_user.id),
+        target_id=pack_id,
+        target_kind="work_pack",
+        payload={"pack_id": pack_id},
+        idempotency_key=f"WorkPackAck:{pack_id}:{current_user.id}"[:128],
+    )
+    await db.commit()
     return WorkPackAckResponse(pack_id=pack_id)

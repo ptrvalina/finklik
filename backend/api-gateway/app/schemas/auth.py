@@ -62,6 +62,22 @@ class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ChangePasswordRequest(BaseModel):
+    """Смена пароля: инвалидирует все refresh-сессии (jti сбрасывается)."""
+
+    current_password: str = Field(min_length=1, max_length=200)
+    new_password: str = Field(min_length=8, max_length=100)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Пароль должен содержать хотя бы одну заглавную букву")
+        if not re.search(r"\d", v):
+            raise ValueError("Пароль должен содержать хотя бы одну цифру")
+        return v
+
+
 class UserNotificationsPatch(BaseModel):
     """Обновление каналов уведомлений. Пустая строка снимает привязку Telegram."""
 

@@ -32,7 +32,10 @@ import AssistantPage from './pages/AssistantPage'
 import WorkspaceCommandPage from './pages/WorkspaceCommandPage'
 import OperationsPage from './pages/OperationsPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
+import BusinessProfilePage from './pages/BusinessProfilePage'
+import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
 import Layout from './components/layout/Layout'
+import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -74,12 +77,16 @@ export default function App() {
   const router = useHash
     ? (
       <HashRouter>
-        <AppRoutes />
+        <AppErrorBoundary>
+          <AppRoutes />
+        </AppErrorBoundary>
       </HashRouter>
     )
     : (
       <BrowserRouter basename={appBasePath || undefined}>
-        <AppRoutes />
+        <AppErrorBoundary>
+          <AppRoutes />
+        </AppErrorBoundary>
       </BrowserRouter>
     )
 
@@ -97,6 +104,7 @@ function AppRoutes() {
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
+        <Route path="/onboarding/business-profile" element={<PrivateRoute><BusinessProfilePage /></PrivateRoute>} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
           <Route
@@ -128,6 +136,7 @@ function AppRoutes() {
             <Route path="planner" element={<EmployeesHrPlanner />} />
           </Route>
           <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
+          <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Websites />} />
           <Route path="notes" element={<Notes />} />

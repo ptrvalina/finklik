@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 import binascii
+import uuid
 
 import bcrypt
 from jose import JWTError, jwt
@@ -43,12 +44,15 @@ def create_access_token(user_id: str, org_id: str, role: str) -> str:
     )
 
 
-def create_refresh_token(user_id: str) -> str:
-    return _create_token(
-        {"sub": user_id, "type": "refresh"},
+def create_refresh_token_pair(user_id: str) -> tuple[str, str]:
+    """Пара (token, jti) для ротации refresh и обнаружения повторного использования."""
+    jti = str(uuid.uuid4())
+    token = _create_token(
+        {"sub": user_id, "type": "refresh", "jti": jti},
         settings.JWT_REFRESH_SECRET_KEY,
         timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
+    return token, jti
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
@@ -65,11 +69,17 @@ def decode_access_token(token: str) -> dict[str, Any]:
         )
 
 
-def decode_refresh_token(token: str) -> str:
+def decode_refresh_token(token: str) -> dict[str, Any]:
+    """Возвращает sub и jti (jti может быть None у старых токенов до ротации)."""
     try:
         payload = jwt.decode(token, settings.JWT_REFRESH_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный тип токена")
-        return payload["sub"]
+        sub = payload.get("sub")
+        if not sub:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный refresh токен")
+        raw_jti = payload.get("jti")
+        jti = str(raw_jti) if raw_jti else None
+        return {"sub": str(sub), "jti": jti}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh токен недействителен")

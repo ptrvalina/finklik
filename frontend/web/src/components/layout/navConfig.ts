@@ -25,17 +25,17 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       {
         to: '/',
-        label: 'Обзор',
+        label: 'Главная',
         icon: 'hub',
         end: true,
         description: 'AI, метрики и пульс бизнеса',
       },
       {
         to: '/operations',
-        label: 'Исполнение',
+        label: 'Лента работы',
         icon: 'bolt',
         end: true,
-        description: 'Один поток задач на день',
+        description: 'Что требует внимания и следующий шаг',
       },
     ],
   },
@@ -54,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Учёт и КУДиР',
         icon: 'menu_book',
         description: 'Документы, категории, автоматизация',
+        flyout: [{ to: '/accounting/chart', label: 'План счетов' }],
       },
       {
         to: '/counterparties',

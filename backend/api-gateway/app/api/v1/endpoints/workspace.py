@@ -20,7 +20,7 @@ from app.core.deps import (
     resolve_workspace_organization_id,
     workspace_organization_id,
 )
-from app.core.security import create_access_token, create_refresh_token
+from app.core.security import create_access_token, create_refresh_token_pair
 from app.events.emit import (
     emit_approval_completed,
     emit_approval_requested,
@@ -143,7 +143,9 @@ async def switch_workspace(
         await db.flush()
     await emit_organization_switched(db, oid, user_id=str(current_user.id))
     access_token = create_access_token(str(current_user.id), oid, current_user.role)
-    refresh_token = create_refresh_token(str(current_user.id))
+    refresh_token, jti = create_refresh_token_pair(str(current_user.id))
+    current_user.refresh_token_jti = jti
+    await db.flush()
     payload = TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,

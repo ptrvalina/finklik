@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
 
@@ -8,6 +8,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate()
   const { register, isLoading, error, clearError } = useAuthStore()
   const [form, setForm] = useState({
     email: '',
@@ -30,6 +31,7 @@ export default function RegisterPage() {
     e.preventDefault()
     try {
       await register(form)
+      navigate('/onboarding/business-profile', { replace: true })
     } catch {
       /* error in store */
     }

@@ -12,8 +12,18 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     unp: Mapped[str] = mapped_column(String(9), unique=True, nullable=False)
-    legal_form: Mapped[str] = mapped_column(String(10), default="ip")  # ip / ooo
+    legal_form: Mapped[str] = mapped_column(String(10), default="ip")  # ip / ooo / odo / chup / self_employed
     tax_regime: Mapped[str] = mapped_column(String(20), default="usn_no_vat")  # usn_no_vat / usn_vat / osn_vat
+    #: Основной ОКЭД (Общегосударственный классификатор видов экономической деятельности РБ).
+    oked_primary: Mapped[str | None] = mapped_column(String(12), nullable=True, index=True)
+    #: JSON-массив кодов дополнительных ОКЭД.
+    oked_secondary_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: none | up_to_5 | up_to_20 | over_20
+    employee_count_band: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    #: Завершён мастер профиля (ОКЭД, режим, сотрудники).
+    business_profile_completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    #: simple — журнал; advanced — дебет/кредит, план счетов, проводки.
+    accounting_mode: Mapped[str] = mapped_column(String(16), default="simple")
     max_users: Mapped[int] = mapped_column(default=2)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -74,6 +84,9 @@ class User(Base):
     organization_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    #: Актуальный jti refresh-токена (ротация; несовпадение — отказ или признак повторного использования).
+    refresh_token_jti: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     #: Личный chat_id в Telegram (бот должен получить /start от пользователя).
     telegram_chat_id: Mapped[str | None] = mapped_column(String(64), nullable=True)

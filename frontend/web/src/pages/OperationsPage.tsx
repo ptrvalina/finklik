@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { operationsApi } from '../api/client'
+import { useAuthStore } from '../store/authStore'
 import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 
@@ -215,7 +216,7 @@ const TRUST_LEVEL_RU: Record<string, string> = {
   auto_execute_safe: 'безопасные авто-действия',
 }
 
-function HealthMeter({ label, value }: { label: string; value: number }) {
+const HealthMeter = memo(function HealthMeter({ label, value }: { label: string; value: number }) {
   return (
     <div className="min-w-0">
       <div className="flex justify-between gap-2 text-[10px] text-on-surface-variant">
@@ -230,7 +231,7 @@ function HealthMeter({ label, value }: { label: string; value: number }) {
       </div>
     </div>
   )
-}
+})
 
 const GOV_TAG_RU: Record<string, string> = {
   conflict_detected: 'Конфликт источников',
@@ -269,7 +270,7 @@ function typeIcon(t: string) {
   }
 }
 
-function FeedRow({
+const FeedRow = memo(function FeedRow({
   item,
   onOpen,
   prominent,
@@ -378,7 +379,7 @@ function FeedRow({
       </div>
     </GlassCard>
   )
-}
+})
 
 const MODE_LABEL: Record<ExperienceMode, string> = {
   solo: 'Спокойный режим',
@@ -390,34 +391,40 @@ const MODE_LABEL: Record<ExperienceMode, string> = {
 export default function OperationsPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
   const [stateDetailsOpen, setStateDetailsOpen] = useState(false)
 
+  const executionFeedKey = ['operations', 'execution-feed', orgId || '__none__'] as const
+
   const { data, isLoading, isError, error: feedError, refetch, isFetching } = useQuery({
-    queryKey: ['operations', 'execution-feed'],
+    queryKey: executionFeedKey,
     queryFn: () => operationsApi.executionFeed().then((r) => r.data as ExecutionFeedResponse),
+    staleTime: 45_000,
+    placeholderData: (prev) => prev,
+    enabled: !!orgId,
   })
 
   const { data: trustData } = useQuery({
-    queryKey: ['operations', 'trust-surface'],
+    queryKey: ['operations', 'trust-surface', orgId || '__none__'],
     queryFn: () => operationsApi.trustSurface().then((r) => r.data as TrustSurfaceResponse),
     staleTime: 60_000,
     retry: 1,
     throwOnError: false,
+    enabled: !!orgId,
   })
 
   const ackPack = useMutation({
     mutationFn: (packId: string) => operationsApi.ackWorkPack(packId).then((r) => r.data),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['operations', 'execution-feed'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: executionFeedKey, exact: true }),
   })
 
   const openPath = useCallback(
     (path: string | null | undefined) => {
       if (!path) return
-      void qc.invalidateQueries({ queryKey: ['operations', 'execution-feed'] })
       navigate(path)
     },
-    [navigate, qc],
+    [navigate],
   )
 
   const items = data?.items ?? []

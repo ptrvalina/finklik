@@ -298,6 +298,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {
         "/",
         "/health",
+        "/health/live",
+        "/health/ready",
         "/api/v1/health",
         "/metrics",
         "/docs",

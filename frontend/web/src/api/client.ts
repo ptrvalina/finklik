@@ -85,11 +85,22 @@ export const api = axios.create({
   withCredentials: true,
 })
 
+function newRequestId(): string {
+  try {
+    return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  }
+}
+
 api.interceptors.request.use((config) => {
   const base = resolveApiBase()
   config.baseURL = `${base}/api/v1`
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  const rid = newRequestId()
+  config.headers['X-Request-ID'] = rid
+  ;(config as { _requestId?: string })._requestId = rid
   // Default Content-Type: application/json ломает multipart: браузер должен сам подставить boundary.
   if (config.data instanceof FormData) {
     const h = config.headers
@@ -136,7 +147,10 @@ api.interceptors.response.use(
             /* localStorage */
           }
           refreshPromise = axios
-            .post(`${resolveApiBase()}/api/v1/auth/refresh`, body, { withCredentials: true })
+            .post(`${resolveApiBase()}/api/v1/auth/refresh`, body, {
+              withCredentials: true,
+              headers: { 'X-Request-ID': newRequestId() },
+            })
             .then(({ data }) => {
               localStorage.setItem('access_token', data.access_token)
               return data.access_token as string
@@ -324,9 +338,13 @@ export const authApi = {
   // режется как third-party — токен доступа приходит в JSON.
   register: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/register', data)),
   login: (data: any) => withColdStartRetry(() => fetchAuthTokens('/auth/login', data)),
+  /** Сброс refresh (httpOnly) на сервере + очистка cookie в ответе. */
+  logout: () => api.post('/auth/logout', {}),
   me: () => api.get('/auth/me'),
   patchNotifications: (data: { telegram_chat_id?: string | null }) =>
     api.patch('/auth/me/notifications', data),
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    api.patch('/auth/me/password', data),
 }
 
 /** Мульти-орг, inbox, согласования, комментарии (Flow 3). */
@@ -595,7 +613,29 @@ export const demoApi = {
   seed: () => api.post('/demo/seed'),
 }
 
+export const okedApi = {
+  search: (q: string, limit = 20) => api.get('/oked/search', { params: { q, limit } }),
+  popular: (limit = 15) => api.get('/oked/popular', { params: { limit } }),
+}
+
+export const accountingApi = {
+  chart: () => api.get('/accounting/chart'),
+  chartTree: () => api.get('/accounting/chart/tree'),
+  createSubaccount: (data: { parent_account_code: string; suffix: string; name_ru: string }) =>
+    api.post('/accounting/subaccounts', data),
+  postLedger: (data: Record<string, unknown>) => api.post('/accounting/ledger', data),
+  ledger: (limit = 50) => api.get('/accounting/ledger', { params: { limit } }),
+  okedContext: () => api.get('/accounting/oked-context'),
+  getMode: () => api.get('/accounting/mode'),
+  setMode: (accounting_mode: 'simple' | 'advanced') => api.patch('/accounting/mode', { accounting_mode }),
+  runAmortization: (year: number, month: number) =>
+    api.post('/accounting/amortization/run', null, { params: { year, month } }),
+}
+
 export const teamApi = {
+  getBusinessProfile: () => api.get('/team/organization/business-profile'),
+  patchBusinessProfile: (data: Record<string, unknown>) =>
+    api.patch('/team/organization/business-profile', data),
   listMembers: () => api.get('/team/members'),
   listInvitations: () => api.get('/team/invitations'),
   invite: (data: { email: string; role: string }) => api.post('/team/invite', data),
@@ -632,6 +672,64 @@ export const submissionsApi = {
     api.post(`/submissions/${id}/reject`, null, { params: { reason } }),
   readiness: (id: string) => api.get(`/submissions/${id}/readiness`),
   autoSubmit: (limit = 20) => api.post('/submissions/auto-submit', null, { params: { limit } }),
+}
+
+export type SigningDocumentKind = 'primary_document' | 'scanned_document' | 'report_submission'
+
+export type SigningRequestResponse = {
+  signing_request_id: string
+  document_id: string
+  document_kind: SigningDocumentKind
+  document_hash: string
+  algorithm: string
+  expires_at: string
+  mock_signature_base64?: string | null
+  default_provider?: string
+}
+
+export const signingApi = {
+  request: (body: {
+    document_id: string
+    document_kind: SigningDocumentKind
+    client_metadata?: Record<string, unknown> | null
+  }) => api.post<SigningRequestResponse>('/signing/request', body),
+  complete: (body: {
+    signing_request_id: string
+    signature_base64: string
+    certificate_pem?: string | null
+    certificate_metadata?: Record<string, unknown> | null
+  }) =>
+    api.post<{
+      signing_request_id: string
+      signed_document_id: string
+      document_kind: SigningDocumentKind
+      status: string
+      audit_event: string
+    }>('/signing/complete', body),
+  status: (signingRequestId: string) =>
+    api.get<{
+      id: string
+      status: string
+      document_kind: SigningDocumentKind
+      document_id: string
+      document_hash: string
+      hash_algorithm: string
+      created_at: string | null
+      expires_at: string | null
+      signed_at: string | null
+      rejection_reason: string | null
+      default_provider?: string
+    }>(`/signing/status/${signingRequestId}`),
+  submissionDigest: (submissionId: string) =>
+    api.get<{
+      submission_id: string
+      algorithm: string
+      sha256_hex: string
+      canonical_json_length: number
+      mock_signature_base64?: string | null
+      default_provider?: string
+      hint?: string
+    }>(`/signing/submissions/${submissionId}/digest`),
 }
 
 export type AssistantSource = {

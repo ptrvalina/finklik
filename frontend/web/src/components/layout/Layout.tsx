@@ -16,6 +16,7 @@ import {
   type NavItem,
 } from './navConfig'
 import OrgSwitcher from '../workspace/OrgSwitcher'
+import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -49,7 +50,6 @@ export default function Layout() {
   const [notifOpen, setNotifOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const notifMenuRef = useRef<HTMLDivElement>(null)
-  const queryClient = useQueryClient()
   const role = (user?.role || '').toLowerCase()
   const isManager = role === 'manager'
   const navGroups = getNavGroupsForRole(role)
@@ -61,11 +61,11 @@ export default function Layout() {
   const unreadCount = plannerNotifications.filter((n: any) => !n.is_read).length
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationsApi.markRead(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
   const markAllReadMutation = useMutation({
     mutationFn: () => notificationsApi.markAllRead(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 
   useEffect(() => {
@@ -119,9 +119,9 @@ export default function Layout() {
     return () => document.removeEventListener('click', onDocClick)
   }, [])
 
-  function handleLogout() {
+  async function handleLogout() {
     setUserOpen(false)
-    logout()
+    await logout()
     navigate('/login')
   }
 
@@ -470,6 +470,7 @@ export default function Layout() {
 
         <main className="fc-main-atmosphere min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
+            <BusinessProfileBanner />
             <Outlet />
           </div>
         </main>

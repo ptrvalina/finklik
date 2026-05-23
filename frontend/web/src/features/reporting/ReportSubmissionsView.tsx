@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { submissionsApi } from '../../api/client'
+import { useAuthStore } from '../../store/authStore'
 import { formatApiDetail } from '../../utils/apiError'
 import { buildSubmissionExportActions, parseReportPeriod } from '../../utils/submissionExport'
 import AppModal from '../../components/ui/AppModal'
+import SignatureModal from '../signing/SignatureModal'
 import { CardSkeleton, PremiumEmptyState } from '../../components/premium'
 
 export type ReportingAuthority = 'imns' | 'fsszn' | 'belgosstrakh' | 'belstat'
@@ -159,6 +161,7 @@ function authorityShortLabel(auth: string) {
 
 export default function ReportSubmissionsView({ authorityFilter }: { authorityFilter: ReportingAuthority | null }) {
   const qc = useQueryClient()
+  const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState({
     authority: (authorityFilter || 'fsszn') as string,
@@ -168,11 +171,13 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [previewData, setPreviewData] = useState<any>(null)
   const [exportLoading, setExportLoading] = useState<string | null>(null)
+  const [signForId, setSignForId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['submissions', authorityFilter ?? 'all'],
+    queryKey: ['submissions', orgId || '__none__', authorityFilter ?? 'all'],
     queryFn: () =>
       submissionsApi.list(authorityFilter ? { authority: authorityFilter } : undefined).then((r) => r.data),
+    enabled: !!orgId,
   })
 
   const { data: reportTypesData } = useQuery({
@@ -210,7 +215,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         authority: authorityFilter ?? createForm.authority,
       }),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       setShowCreate(false)
       setPreviewData(res.data)
       flash('success', 'Отчёт сформирован — проверьте и подтвердите')
@@ -221,7 +226,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   const confirmMutation = useMutation({
     mutationFn: (id: string) => submissionsApi.confirm(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       flash('success', 'Отчёт подтверждён')
     },
   })
@@ -230,7 +235,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
     mutationFn: (payload: { id: string; portal_sim?: 'accept' | 'reject' }) =>
       submissionsApi.submit(payload.id, payload.portal_sim ? { portal_sim: payload.portal_sim } : undefined),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       const rejected = res.data?.status === 'rejected'
       const pending = res.data?.portal_outcome === 'pending'
       const msg =
@@ -243,7 +248,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   const autoSubmitMutation = useMutation({
     mutationFn: () => submissionsApi.autoSubmit(30),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       const payload = res.data || {}
       flash(
         'success',
@@ -257,7 +262,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
     mutationFn: (args: { id: string; reason?: string; returnToDraftFromRejected?: boolean }) =>
       submissionsApi.reject(args.id, args.reason),
     onSuccess: (_res, vars) => {
-      qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       flash('success', vars.returnToDraftFromRejected ? 'Отчёт снова в черновике' : 'Отчёт отклонён')
     },
     onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка'),
@@ -269,6 +274,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   }
 
   const submissions = data?.submissions ?? []
+  const signTarget = signForId ? submissions.find((s: { id: string }) => s.id === signForId) : null
   const confirmedCount = submissions.filter((s: any) => s.status === 'confirmed').length
   const statsKeys = authorityFilter ? [authorityFilter] : AUTH_KEYS
   const currentAuthorityTypes = reportTypes[createForm.authority] || {}
@@ -377,6 +383,16 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                   {s.rejection_reason && <p className="mt-1 text-xs text-error">Причина: {s.rejection_reason}</p>}
                 </div>
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                  {(s.status === 'pending_review' || s.status === 'confirmed') && (
+                    <button
+                      type="button"
+                      onClick={() => setSignForId(s.id)}
+                      className="btn-secondary !py-1.5 !text-xs"
+                      title="Электронная подпись (хэш на сервере, ключ на клиенте)"
+                    >
+                      <Icon name="draw" className="text-sm" /> ЭЦП
+                    </button>
+                  )}
                   {(s.status === 'pending_review' ||
                     s.status === 'confirmed' ||
                     s.status === 'submitting' ||
@@ -592,26 +608,54 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
           onClose={() => setPreviewData(null)}
           footer={
             previewData.status === 'pending_review' ? (
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary min-h-11 w-full"
+                  onClick={() => {
+                    setSignForId(previewData.id)
+                    setPreviewData(null)
+                  }}
+                >
+                  <Icon name="draw" className="text-sm" /> Подписать (ЭЦП)
+                </button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                  <button
+                    type="button"
+                    className="btn-ghost min-h-12 flex-1 text-error"
+                    onClick={() => {
+                      rejectMutation.mutate({ id: previewData.id })
+                      setPreviewData(null)
+                    }}
+                  >
+                    Отклонить
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary min-h-12 flex-1"
+                    onClick={() => {
+                      confirmMutation.mutate(previewData.id)
+                      setPreviewData(null)
+                    }}
+                  >
+                    Подтвердить
+                  </button>
+                </div>
+              </div>
+            ) : previewData.status === 'confirmed' ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                 <button
                   type="button"
-                  className="btn-ghost min-h-12 flex-1 text-error"
+                  className="btn-secondary min-h-12 flex-1"
                   onClick={() => {
-                    rejectMutation.mutate({ id: previewData.id })
+                    setSignForId(previewData.id)
                     setPreviewData(null)
                   }}
                 >
-                  Отклонить
+                  <Icon name="draw" className="text-sm" /> Подписать (ЭЦП)
                 </button>
-                <button
-                  type="button"
-                  className="btn-primary min-h-12 flex-1"
-                  onClick={() => {
-                    confirmMutation.mutate(previewData.id)
-                    setPreviewData(null)
-                  }}
-                >
-                  Подтвердить
+                <button type="button" className="btn-primary min-h-12 flex-1" onClick={() => setPreviewData(null)}>
+                  Закрыть
                 </button>
               </div>
             ) : previewData.status === 'rejected' ? (
@@ -741,6 +785,21 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
           })()}
         </AppModal>
       )}
+      <SignatureModal
+        open={!!signForId}
+        onClose={() => setSignForId(null)}
+        documentId={signForId ?? ''}
+        documentKind="report_submission"
+        previewLabel={
+          signTarget
+            ? `${signTarget.authority_name} · ${signTarget.report_type_name} · ${signTarget.report_period}`
+            : null
+        }
+        onCompleted={() => {
+          void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
+          flash('success', 'Документ подписан; проверка и аудит зафиксированы на сервере.')
+        }}
+      />
     </div>
   )
 }

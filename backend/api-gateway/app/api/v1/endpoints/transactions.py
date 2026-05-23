@@ -23,6 +23,7 @@ from app.events.emit import (
     emit_transaction_deleted,
     emit_transaction_updated,
 )
+from app.services.financial_state_service import refresh_financial_state_audit
 
 router = APIRouter(
     tags=["transactions"],
@@ -232,6 +233,7 @@ async def create_transaction(
     db.add(tx)
     await db.flush()
     await emit_transaction_created(db, workspace_organization_id(current_user), tx, actor="user")
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
     await cache.invalidate_org(workspace_organization_id(current_user))
     return _serialize_transaction(tx)
 
@@ -288,6 +290,7 @@ async def update_transaction(
             new_category=tx.category,
             actor="user",
         )
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
     await cache.invalidate_org(workspace_organization_id(current_user))
     return _serialize_transaction(tx)
 
@@ -319,6 +322,7 @@ async def delete_transaction(
         "source": tx.source,
     }
     await emit_transaction_deleted(db, workspace_organization_id(current_user), tx.id, snapshot=snap, actor="user")
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
     await db.delete(tx)
     await cache.invalidate_org(workspace_organization_id(current_user))
 

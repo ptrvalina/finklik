@@ -24,6 +24,8 @@
 - [ ] `python -m alembic heads` без конфликтов.
 - [ ] На target БД: `python -m alembic upgrade head`.
 - [ ] Таблицы доступны: `audit_log`, `salary_calculations`, `fszn_reports` (+ новые поля employee).
+- [ ] Belarus FOS: `oked_reference`, поля ОКЭД на `organizations`, `chart_accounts`, `chart_subaccounts`, `ledger_entries`, `fixed_assets`, `amortization_entries`.
+- [ ] `scanned_documents.requires_review`, `field_confidence_json`.
 
 ## 4) Production smoke (безопасный)
 
@@ -47,4 +49,14 @@
 - [ ] Логи без всплеска `401/429/5xx` после релиза.
 - [ ] Метрики `/metrics` доступны.
 - [ ] Подготовлен rollback plan (snapshot БД/предыдущий образ).
+
+## 7) Belarus FOS smoke (после миграций)
+
+- [ ] `GET /api/v1/oked/popular` → 200.
+- [ ] `GET /api/v1/team/organization/business-profile` (owner/admin).
+- [ ] `GET /api/v1/accounting/chart/tree` (после seed при первом запросе).
+- [ ] `POST /api/v1/scanner/upload` (тестовый PNG/PDF) → `field_confidence` в ответе.
+- [ ] `POST /api/v1/operations/work-packs/{id}/ack` → событие в ленте.
+- [ ] UI: регистрация → `/onboarding/business-profile`; настройки → режим учёта.
+- [ ] Runbook: [FIRST_CLIENT_RUNBOOK.md](./FIRST_CLIENT_RUNBOOK.md), backup: [BACKUP_AUDIT.md](./BACKUP_AUDIT.md).
 

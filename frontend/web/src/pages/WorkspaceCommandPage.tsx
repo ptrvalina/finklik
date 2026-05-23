@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
@@ -12,6 +13,22 @@ export default function WorkspaceCommandPage() {
     queryKey: ['workspace', 'accountantOverview'],
     queryFn: () => workspaceApi.accountantOverview().then((r) => r.data),
   })
+
+  const organizations = useMemo(() => {
+    const rows = data?.organizations ?? []
+    return [...rows].sort((a: any, b: any) => {
+      const ap = a.is_pinned ? 0 : 1
+      const bp = b.is_pinned ? 0 : 1
+      if (ap !== bp) return ap - bp
+      const as = a.readiness_score != null ? Number(a.readiness_score) : 999
+      const bs = b.readiness_score != null ? Number(b.readiness_score) : 999
+      if (as !== bs) return as - bs
+      const aw = (a.open_inbox ?? 0) + (a.pending_approvals ?? 0) + (a.attention_issues ?? 0)
+      const bw = (b.open_inbox ?? 0) + (b.pending_approvals ?? 0) + (b.attention_issues ?? 0)
+      if (aw !== bw) return bw - aw
+      return String(a.organization_name || '').localeCompare(String(b.organization_name || ''), 'ru')
+    })
+  }, [data?.organizations])
 
   async function activate(orgId: string) {
     await switchOrganization(orgId)
@@ -50,9 +67,9 @@ export default function WorkspaceCommandPage() {
         </div>
       )}
 
-      {data?.organizations && (
+      {organizations.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {data.organizations.map((row: any) => (
+          {organizations.map((row: any) => (
             <button
               key={row.organization_id}
               type="button"
@@ -70,6 +87,11 @@ export default function WorkspaceCommandPage() {
                   </span>
                 )}
               </div>
+              {(row.attention_issues ?? 0) > 0 && (
+                <p className="mt-2 text-[11px] font-medium text-amber-700/95 dark:text-amber-300/95">
+                  Замечаний по согласованности: {row.attention_issues}
+                </p>
+              )}
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-2xl bg-surface-container-low/90 py-2 dark:bg-white/[0.04]">
                   <p className="text-lg font-bold text-on-surface">{row.readiness_score ?? '—'}</p>

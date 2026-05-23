@@ -137,7 +137,43 @@ def build_work_packs(items: list[OperationalItem], fs: FinancialState) -> list[W
         )
 
     nonempty = [p for p in packs if p.operational_item_ids]
-    return sort_work_packs_by_urgency(nonempty, items)
+    if nonempty:
+        return sort_work_packs_by_urgency(nonempty, items)
+
+    return [
+        WorkPack(
+            id="pack-baseline-coherence",
+            title="Операционная целостность",
+            mode="observe",
+            summary_lines=[
+                WorkPackLine(
+                    kind="mixed",
+                    count=0,
+                    detail="Активных очередей без решения не выявлено — удерживайте журнал, сканы и отчётность в актуальном состоянии.",
+                )
+            ],
+            operational_item_ids=[],
+            recommended_action="Периодически проверяйте журнал и ленту исполнения.",
+            expected_outcome="Сохранение текущего уровня operational readiness и reporting readiness.",
+            risk_if_ignored="Постепенное накопление мелких расхождений без внимания.",
+            primary_action_path="/operations",
+        )
+    ]
+
+
+def sort_work_packs_by_urgency(packs: list[WorkPack], items: list[OperationalItem]) -> list[WorkPack]:
+    idx = {it.id: it for it in items}
+
+    def score(p: WorkPack) -> int:
+        s = 0
+        for oid in p.operational_item_ids:
+            it = idx.get(oid)
+            if not it:
+                continue
+            s = max(s, _PRI.get(it.priority, 0))
+        return s
+
+    return sorted(packs, key=score, reverse=True)
 
 
 def _lines_from_items(sub: list[OperationalItem]) -> list[WorkPackLine]:

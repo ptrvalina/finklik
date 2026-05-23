@@ -57,7 +57,7 @@ export function deriveIssuesForStep(stepId: FlowStepId, data: CalmOverviewLike |
       if (obl) out.push(`Обязательств в фокусе: ${obl}`)
       if (tl) out.push(`Событий в шкале времени: ${tl}`)
       const overdue = data.timeline?.filter((t) => (t.state || '') === 'overdue').length ?? 0
-      if (overdue) out.push(`Просрочено в календаре: ${overdue}`)
+      if (overdue) out.push(`В календаре ${overdue} просроченных событий — их стоит закрыть в первую очередь`)
       return out
     }
     case 'fix': {
@@ -68,8 +68,8 @@ export function deriveIssuesForStep(stepId: FlowStepId, data: CalmOverviewLike |
     case 'validate': {
       const n = data.consistency_issues?.length ?? 0
       const risk = data.consistency_issues?.filter((x) => x.severity === 'risk').length ?? 0
-      if (n === 0) return ['Замечаний по согласованности не найдено']
-      return [`Замечаний: ${n}`, ...(risk ? [`Риск: ${risk}`] : [])]
+      if (n === 0) return ['Согласованность в порядке — можно переходить дальше']
+      return [`Замечаний: ${n}`, ...(risk ? [`Из них важнее обратить внимание: ${risk}`] : [])]
     }
     default:
       return []
@@ -107,15 +107,15 @@ export function readinessBlockedReason(data: CalmOverviewLike | undefined): stri
 /** Короткая операционная подсказка ИИ по блокерам (не чат). */
 export function operationalAiHint(data: CalmOverviewLike | undefined): string {
   if (!data?.readiness?.blockers?.length && !data?.consistency_issues?.length) {
-    return data?.ai_summary || 'Данные согласованы для текущего снимка — можно двигаться по шагам.'
+    return data?.ai_summary || 'На этом снимке всё сходится — можно спокойно переходить к следующему шагу.'
   }
   const firstBlocker = data.readiness?.blockers?.[0]?.label
   const firstIssue = data.consistency_issues?.[0] as { title: string; severity?: string } | undefined
-  if (firstBlocker) return `Сначала снимите блок: ${firstBlocker}.`
+  if (firstBlocker) return `Начните с этого пункта: ${firstBlocker} — после этого картина станет яснее.`
   if (firstIssue) {
-    return `Устраните: ${firstIssue.title} — ${
-      firstIssue.severity === 'risk' ? 'повышенный риск для отчёта.' : 'желательно до проверки.'
+    return `Имеет смысл закрыть: ${firstIssue.title} — ${
+      firstIssue.severity === 'risk' ? 'так спокойнее перед отчётом.' : 'до проверки будет удобнее.'
     }`
   }
-  return data?.ai_summary || 'Проверьте замечания ниже и обновите проверку.'
+  return data?.ai_summary || 'Посмотрите замечания ниже и обновите проверку, когда будет готово.'
 }

@@ -1,10 +1,11 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { dashboardApi, documentsApi, scannerApi } from '../api/client'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { JournalCommandPalette } from '../components/journal/JournalCommandPalette'
+import { JournalMobileVirtualList } from '../components/journal/JournalMobileVirtualList'
 import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
@@ -13,6 +14,8 @@ import {
   JOURNAL_CATEGORY_LABELS,
   suggestJournalCategory,
 } from '../lib/journalCategories'
+import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSession'
+import { useAuthStore } from '../store/authStore'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
 export function suggestCategory(text: string) {
@@ -41,6 +44,56 @@ function buildTxUpdateBody(tx: any, patch: Partial<{ category: string; descripti
   }
 }
 
+const FC_JOURNAL_CAT = 'fc_journal_cat_v1'
+const FC_JOURNAL_AMOUNTS = 'fc_journal_amounts_v1'
+
+function loadJournalCatPrefs(): { income: string; expense: string } {
+  try {
+    const r = localStorage.getItem(FC_JOURNAL_CAT)
+    if (!r) return { income: 'other', expense: 'other' }
+    const j = JSON.parse(r) as { income?: string; expense?: string }
+    const keys = JOURNAL_CATEGORY_KEYS as readonly string[]
+    const inc = j.income && keys.includes(j.income) ? j.income : 'other'
+    const exp = j.expense && keys.includes(j.expense) ? j.expense : 'other'
+    return { income: inc, expense: exp }
+  } catch {
+    return { income: 'other', expense: 'other' }
+  }
+}
+
+function saveJournalCatPrefs(part: Partial<{ income: string; expense: string }>) {
+  try {
+    const cur = loadJournalCatPrefs()
+    localStorage.setItem(FC_JOURNAL_CAT, JSON.stringify({ ...cur, ...part }))
+  } catch {
+    /* ignore */
+  }
+}
+
+function loadAmountPresets(): string[] {
+  try {
+    const r = localStorage.getItem(FC_JOURNAL_AMOUNTS)
+    if (!r) return []
+    const arr = JSON.parse(r) as unknown
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string').slice(0, 8) : []
+  } catch {
+    return []
+  }
+}
+
+function pushAmountPreset(amountStr: string) {
+  const n = Number(amountStr)
+  if (!(n > 0)) return
+  try {
+    const s = String(n)
+    const prev = loadAmountPresets()
+    const next = [s, ...prev.filter((x) => x !== s)].slice(0, 8)
+    localStorage.setItem(FC_JOURNAL_AMOUNTS, JSON.stringify(next))
+  } catch {
+    /* ignore */
+  }
+}
+
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
     <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
@@ -62,10 +115,13 @@ function TransactionSideContent({
   tx,
   allItems,
   onClose,
+  ledgerQueryKey,
 }: {
   tx: any
   allItems: any[]
   onClose: () => void
+  /** Ключ кэша журнала (с org) — узкая инвалидация без «глушения» всего префикса transactions */
+  ledgerQueryKey: readonly unknown[]
 }) {
   const qc = useQueryClient()
   const suggestion = useMemo(() => suggestJournalCategory(String(tx.description || '')), [tx.description])
@@ -100,7 +156,9 @@ function TransactionSideContent({
         }),
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['transactions'] })
+      void qc.invalidateQueries({ queryKey: ledgerQueryKey, exact: true })
+      void qc.invalidateQueries({ queryKey: ['transactions', 'recent'], exact: true })
+      void qc.invalidateQueries({ queryKey: ['dashboard'], exact: true })
       onClose()
     },
   })
@@ -208,7 +266,7 @@ export default function Accounting() {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10))
-  const [category, setCategory] = useState('other')
+  const [category, setCategory] = useState(() => loadJournalCatPrefs().expense)
   const [scanFile, setScanFile] = useState<File | null>(null)
   const [source, setSource] = useState<'manual' | 'scan' | 'bank'>('manual')
   const [receiptUrl, setReceiptUrl] = useState('')
@@ -224,6 +282,59 @@ export default function Accounting() {
   const [paletteQuery, setPaletteQuery] = useState('')
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null)
   const captureAmountRef = useRef<HTMLInputElement>(null)
+  const [scanDropActive, setScanDropActive] = useState(false)
+  const [amountPresets, setAmountPresets] = useState<string[]>(() => loadAmountPresets())
+
+  const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
+  const journalSaveReady = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!orgId) return
+    journalSaveReady.current = false
+    const snap = loadJournalUiSession(orgId)
+    if (snap) {
+      setFilterDateFrom(snap.filterDateFrom)
+      setFilterDateTo(snap.filterDateTo)
+      setFilterType(snap.filterType)
+      setFilterSearch(snap.filterSearch)
+      setAttentionFilter(snap.attentionFilter)
+      setWorkspaceFocus(snap.workspaceFocus)
+    } else {
+      setFilterDateFrom(monthStartStr)
+      setFilterDateTo(todayStr)
+      setFilterType('all')
+      setFilterSearch('')
+      setAttentionFilter('all')
+      setWorkspaceFocus('ledger')
+    }
+    journalSaveReady.current = true
+    // monthStartStr / todayStr read from render — only org boundary should rehydrate.
+  }, [orgId])
+
+  useEffect(() => {
+    if (!orgId || !journalSaveReady.current) return
+    const t = window.setTimeout(() => {
+      saveJournalUiSession(orgId, {
+        v: 1,
+        filterDateFrom,
+        filterDateTo,
+        filterType,
+        filterSearch,
+        attentionFilter,
+        workspaceFocus,
+      })
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [orgId, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter, workspaceFocus])
+
+  const ledgerQueryKey = useMemo(() => ['transactions', 'accounting', orgId || '__none__'] as const, [orgId])
+
+  const refreshLedgerRelated = useCallback(() => {
+    if (!orgId) return
+    void qc.invalidateQueries({ queryKey: ledgerQueryKey, exact: true })
+    void qc.invalidateQueries({ queryKey: ['transactions', 'recent'], exact: true })
+    void qc.invalidateQueries({ queryKey: ['dashboard'], exact: true })
+  }, [qc, ledgerQueryKey, orgId])
 
   const aiSuggestion = useMemo(() => suggestJournalCategory(description), [description])
 
@@ -250,8 +361,11 @@ export default function Accounting() {
   }, [searchParams, setSearchParams])
 
   const txQuery = useQuery({
-    queryKey: ['transactions', 'accounting'],
+    queryKey: ledgerQueryKey,
     queryFn: () => dashboardApi.getTransactions({ per_page: 500 }).then((r) => r.data),
+    staleTime: 25_000,
+    placeholderData: (prev) => prev,
+    enabled: !!orgId,
   })
 
   const filteredItems = useMemo(() => {
@@ -307,7 +421,7 @@ export default function Accounting() {
       return scannerApi.uploadToKudir(scanFile)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['transactions'] })
+      refreshLedgerRelated()
     },
   })
 
@@ -319,9 +433,9 @@ export default function Accounting() {
       return dashboardApi.updateTransaction(id, buildTxUpdateBody(tx, { category }))
     },
     onMutate: async ({ id, category }) => {
-      await qc.cancelQueries({ queryKey: ['transactions', 'accounting'] })
-      const prev = qc.getQueryData(['transactions', 'accounting']) as any
-      qc.setQueryData(['transactions', 'accounting'], (old: any) => {
+      await qc.cancelQueries({ queryKey: ledgerQueryKey })
+      const prev = qc.getQueryData(ledgerQueryKey) as any
+      qc.setQueryData(ledgerQueryKey, (old: any) => {
         if (!old?.items) return old
         return {
           ...old,
@@ -331,9 +445,16 @@ export default function Accounting() {
       return { prev }
     },
     onError: (_e, _v, ctx: { prev?: unknown }) => {
-      if (ctx?.prev) qc.setQueryData(['transactions', 'accounting'], ctx.prev as any)
+      if (ctx?.prev) qc.setQueryData(ledgerQueryKey, ctx.prev as any)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess: (_d, { id, category }) => {
+      const raw = qc.getQueryData(ledgerQueryKey) as { items?: any[] } | undefined
+      const tx = raw?.items?.find((t) => t.id === id)
+      if (tx?.type === 'expense' || tx?.type === 'income') {
+        saveJournalCatPrefs({ [tx.type]: category })
+      }
+    },
+    onSettled: () => refreshLedgerRelated(),
   })
 
   const bulkAiCategoriesMutation = useMutation({
@@ -354,14 +475,14 @@ export default function Accounting() {
       )
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['transactions'] })
+      refreshLedgerRelated()
       selection.clear()
     },
   })
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      dashboardApi.createTransaction({
+    mutationFn: async () => {
+      const { data } = await dashboardApi.createTransaction({
         type,
         amount: Number(amount || 0),
         vat_amount: 0,
@@ -372,9 +493,54 @@ export default function Accounting() {
         receipt_image_url: receiptUrl || null,
         transaction_date: transactionDate,
         counterparty_id: linkedCounterpartyId || undefined,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['transactions'] })
+      })
+      return data
+    },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ledgerQueryKey })
+      const prev = qc.getQueryData(ledgerQueryKey) as any
+      const tempId = `optimistic:${Date.now()}`
+      const optimisticTx = {
+        id: tempId,
+        type,
+        amount: Number(amount || 0),
+        vat_amount: 0,
+        category,
+        description,
+        source,
+        transaction_date: transactionDate,
+        status: 'posted',
+        counterparty_id: linkedCounterpartyId ?? null,
+        receipt_image_url: receiptUrl || null,
+        ai_category_confidence: aiSuggestion.confidence,
+      }
+      qc.setQueryData(ledgerQueryKey, (old: any) => {
+        if (!old?.items) return old
+        return {
+          ...old,
+          total: (Number(old.total) || 0) + 1,
+          items: [optimisticTx, ...old.items],
+        }
+      })
+      return { prev, tempId }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev !== undefined) qc.setQueryData(ledgerQueryKey, ctx.prev as any)
+    },
+    onSuccess: (created, _vars, ctx) => {
+      const t = (created as { type?: string }).type || type
+      const c = (created as { category?: string }).category || category
+      if (t === 'expense' || t === 'income') saveJournalCatPrefs({ [t]: c })
+      pushAmountPreset(amount)
+      setAmountPresets(loadAmountPresets())
+      qc.setQueryData(ledgerQueryKey, (old: any) => {
+        if (!old?.items) return old
+        const tid = ctx?.tempId
+        return {
+          ...old,
+          items: old.items.map((t: any) => (tid && t.id === tid ? { ...created } : t)),
+        }
+      })
       setAmount('')
       setDescription('')
       setReceiptUrl('')
@@ -383,6 +549,9 @@ export default function Accounting() {
       setSavedFlash(true)
       window.setTimeout(() => setSavedFlash(false), 4200)
       setWorkspaceFocus('ledger')
+    },
+    onSettled: () => {
+      refreshLedgerRelated()
     },
   })
 
@@ -550,19 +719,43 @@ export default function Accounting() {
             className="card-elevated grid gap-4 rounded-3xl p-6 shadow-card ring-1 ring-primary/[0.05] md:grid-cols-2"
             onSubmit={submit}
           >
-            <select className="input min-h-11 rounded-xl" value={type} onChange={(e) => setType(e.target.value as 'income' | 'expense')}>
+            <select
+              className="input min-h-11 rounded-xl"
+              value={type}
+              onChange={(e) => {
+                const nt = e.target.value as 'income' | 'expense'
+                setType(nt)
+                setCategory(loadJournalCatPrefs()[nt])
+              }}
+            >
               <option value="expense">Расход</option>
               <option value="income">Доход</option>
             </select>
             <input className="input min-h-11 rounded-xl" type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} />
-            <input
-              ref={captureAmountRef}
-              className="input min-h-11 rounded-xl"
-              placeholder="Сумма"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputMode="decimal"
-            />
+            <div className="flex flex-col gap-2">
+              <input
+                ref={captureAmountRef}
+                className="input min-h-11 rounded-xl"
+                placeholder="Сумма"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                inputMode="decimal"
+              />
+              {amountPresets.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {amountPresets.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className="rounded-lg border border-outline-variant/40 bg-surface-container-low/80 px-2.5 py-1 text-xs font-semibold tabular-nums text-on-surface hover:border-primary/35"
+                      onClick={() => setAmount(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <select className="input min-h-11 rounded-xl" value={source} onChange={(e) => setSource(e.target.value as 'manual' | 'scan' | 'bank')}>
               <option value="manual">Ручной ввод</option>
               <option value="scan">Скан / OCR</option>
@@ -602,14 +795,35 @@ export default function Accounting() {
                 )}
               </div>
             </div>
-            <div className="md:col-span-2 rounded-3xl border-2 border-dashed border-emerald-400/35 bg-gradient-to-br from-emerald-500/[0.07] via-transparent to-cyan-500/[0.05] p-5 shadow-inner backdrop-blur-sm dark:border-emerald-400/25">
+            <div
+              className={`md:col-span-2 rounded-3xl border-2 border-dashed p-5 shadow-inner backdrop-blur-sm transition-colors ${
+                scanDropActive
+                  ? 'border-primary/60 bg-primary/[0.08]'
+                  : 'border-emerald-400/35 bg-gradient-to-br from-emerald-500/[0.07] via-transparent to-cyan-500/[0.05] dark:border-emerald-400/25'
+              }`}
+              onDragEnter={(e) => {
+                e.preventDefault()
+                setScanDropActive(true)
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'copy'
+              }}
+              onDragLeave={() => setScanDropActive(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setScanDropActive(false)
+                const f = e.dataTransfer.files?.[0]
+                if (f) setScanFile(f)
+              }}
+            >
               <div className="mb-3 flex items-center gap-2">
                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                   <Icon name="document_scanner" className="text-xl" />
                 </span>
                 <div>
                   <p className="font-headline text-sm font-bold text-on-surface">OCR · загрузка скана</p>
-                  <p className="text-xs text-on-surface-variant">Извлечение полей и подстановка в форму.</p>
+                  <p className="text-xs text-on-surface-variant">Перетащите файл сюда или выберите с диска — поля подставятся в форму.</p>
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
@@ -707,7 +921,7 @@ export default function Accounting() {
           }
           bulkBar={
             <>
-              <span className="text-xs font-semibold text-emerald-100">Выбрано: {selection.selectedCount}</span>
+              <span className="text-xs font-medium text-on-surface-variant">Выбрано: {selection.selectedCount}</span>
               <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
                 Очистить
               </button>
@@ -743,51 +957,18 @@ export default function Accounting() {
             </div>
           ) : (
             <>
-              <ul className="divide-y divide-outline-variant/10 md:hidden">
-                {(filteredItems as any[]).map((tx: any, idx: number) => {
-                  const sug = suggestJournalCategory(String(tx.description || ''))
-                  const aiMismatch = tx.type === 'expense' && sug.category !== (tx.category || 'other')
-                  const accent =
-                    tx.status === 'draft'
-                      ? 'border-l-[3px] border-amber-400'
-                      : aiMismatch
-                        ? 'border-l-[3px] border-emerald-500/45'
-                        : ''
-                  const focusRing = focusedRowIndex === idx ? 'bg-emerald-500/[0.06]' : ''
-                  return (
-                    <li key={tx.id} className={`p-4 ${accent} ${focusRing}`}>
-                      <div className="flex gap-3">
-                        <input
-                          type="checkbox"
-                          className="mt-1 h-4 w-4 rounded border-outline-variant"
-                          checked={selection.isSelected(String(tx.id))}
-                          onChange={() => selection.toggle(String(tx.id))}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label="Выбрать"
-                        />
-                        <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPanelTx(tx)}>
-                          <p className="font-semibold text-on-surface">{tx.description || '—'}</p>
-                          <p className="text-xs text-on-surface-variant">
-                            {tx.transaction_date} · {JOURNAL_CATEGORY_LABELS[tx.category] || tx.category || 'Прочее'}
-                          </p>
-                          {aiMismatch && (
-                            <span className="mt-1 inline-block rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
-                              ИИ: {JOURNAL_CATEGORY_LABELS[sug.category]}
-                            </span>
-                          )}
-                        </button>
-                        <span className="shrink-0 font-headline font-bold tabular-nums">{fmt(Number(tx.amount))}</span>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+              <JournalMobileVirtualList
+                items={filteredItems as Record<string, unknown>[]}
+                focusedRowIndex={focusedRowIndex}
+                selection={selection}
+                onOpenRow={(tx) => setPanelTx(tx)}
+              />
 
-              <div className="fc-premium-table hidden overflow-x-auto md:block">
+              <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky hidden md:block">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
-                      <th className="w-10 px-3 py-3">
+                      <th className="w-10 px-2.5 py-2">
                         <input
                           type="checkbox"
                           className="rounded border-outline-variant"
@@ -796,11 +977,11 @@ export default function Accounting() {
                           aria-label="Выбрать все"
                         />
                       </th>
-                      <th className="px-4 py-3">Дата</th>
-                      <th className="px-4 py-3">Описание</th>
-                      <th className="px-4 py-3">Категория</th>
-                      <th className="px-4 py-3 text-right">Сумма</th>
-                      <th className="w-28 px-4 py-3 text-right">Действия</th>
+                      <th className="px-2.5 py-2 text-[10px] font-semibold">Дата</th>
+                      <th className="px-2.5 py-2 text-[10px] font-semibold">Описание</th>
+                      <th className="px-2.5 py-2 text-[10px] font-semibold">Категория</th>
+                      <th className="px-2.5 py-2 text-right text-[10px] font-semibold">Сумма</th>
+                      <th className="w-24 px-2.5 py-2 text-right text-[10px] font-semibold">Действия</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
@@ -809,18 +990,21 @@ export default function Accounting() {
                       const aiMismatch = tx.type === 'expense' && sug.category !== (tx.category || 'other')
                       const accent =
                         tx.status === 'draft'
-                          ? 'border-l-[3px] border-amber-400'
+                          ? 'border-l-[2px] border-amber-400/70'
                           : aiMismatch
-                            ? 'border-l-[3px] border-emerald-500/45'
+                            ? 'border-l-[2px] border-emerald-500/30'
                             : ''
-                      const focusRing = focusedRowIndex === idx ? 'ring-2 ring-primary/25 ring-inset bg-emerald-500/[0.04]' : ''
+                      const focusRing =
+                        focusedRowIndex === idx ? 'ring-1 ring-inset ring-primary/18 bg-primary/[0.03]' : ''
+                      const rowPending =
+                        patchCategoryMutation.isPending && patchCategoryMutation.variables?.id === tx.id
                       return (
                         <tr
                           key={tx.id}
-                          className={`cursor-pointer transition-colors hover:bg-emerald-500/[0.04] ${accent} ${focusRing}`}
+                          className={`accounting-journal-row cursor-pointer transition-[background-color,box-shadow] duration-[var(--fc-duration-fast)] ease-premium ${accent} ${focusRing}`}
                           onClick={() => setPanelTx(tx)}
                         >
-                          <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                          <td className="px-2.5 py-2 align-middle" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               className="rounded border-outline-variant"
@@ -829,23 +1013,28 @@ export default function Accounting() {
                               aria-label="Выбрать"
                             />
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-on-surface-variant">{tx.transaction_date}</td>
-                          <td className="max-w-[240px] px-4 py-3">
-                            <p className="truncate font-medium text-on-surface">{tx.description || '—'}</p>
+                          <td className="whitespace-nowrap px-2.5 py-2 align-middle text-[11px] tabular-nums text-on-surface-variant/85">
+                            {tx.transaction_date}
+                          </td>
+                          <td className="max-w-[min(280px,28vw)] px-2.5 py-2 align-middle">
+                            <p className="truncate text-[13px] font-normal leading-snug text-on-surface-variant">
+                              {tx.description || '—'}
+                            </p>
                             {aiMismatch && (
-                              <span className="mt-0.5 inline-block text-[10px] text-emerald-600/90 dark:text-emerald-400/90">
+                              <span className="mt-0.5 inline-block text-[10px] font-medium text-emerald-600/75 dark:text-emerald-400/75">
                                 ИИ → {JOURNAL_CATEGORY_LABELS[sug.category]}
                               </span>
                             )}
                           </td>
-                          <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                          <td className="px-2 py-2 align-middle" onClick={(e) => e.stopPropagation()}>
                             <select
-                              className="input max-w-[148px] min-h-9 rounded-lg py-1 text-xs"
+                              className="input max-w-[140px] min-h-8 rounded-lg border-outline/50 bg-surface/60 py-1 text-[11px] font-medium text-on-surface-variant shadow-none backdrop-blur-sm transition-opacity dark:bg-white/[0.04]"
                               value={tx.category || 'other'}
                               onChange={(e) =>
                                 patchCategoryMutation.mutate({ id: tx.id, category: e.target.value })
                               }
-                              disabled={patchCategoryMutation.isPending}
+                              disabled={rowPending}
+                              aria-busy={rowPending}
                             >
                               {JOURNAL_CATEGORY_KEYS.map((k) => (
                                 <option key={k} value={k}>
@@ -854,9 +1043,15 @@ export default function Accounting() {
                               ))}
                             </select>
                           </td>
-                          <td className="px-4 py-3 text-right font-headline font-bold tabular-nums text-on-surface">{fmt(Number(tx.amount))}</td>
-                          <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                            <button type="button" className="btn-ghost min-h-9 px-2 text-xs font-bold text-primary" onClick={() => setPanelTx(tx)}>
+                          <td className="px-2.5 py-2 text-right align-middle text-[15px] font-semibold tabular-nums tracking-tight text-on-surface">
+                            {fmt(Number(tx.amount))}
+                          </td>
+                          <td className="px-2.5 py-2 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              className="btn-ghost min-h-8 px-2 text-[11px] font-medium text-primary"
+                              onClick={() => setPanelTx(tx)}
+                            >
                               Обзор
                             </button>
                           </td>
@@ -894,6 +1089,16 @@ export default function Accounting() {
           focusCaptureForm()
           setCommandOpen(false)
         }}
+        onQuickExpense={() => {
+          setType('expense')
+          setCategory(loadJournalCatPrefs().expense)
+          focusCaptureForm()
+        }}
+        onQuickIncome={() => {
+          setType('income')
+          setCategory(loadJournalCatPrefs().income)
+          focusCaptureForm()
+        }}
         onClearFilters={() => {
           setFilterDateFrom(monthStartStr)
           setFilterDateTo(todayStr)
@@ -910,19 +1115,28 @@ export default function Accounting() {
         subtitle={panelTx ? String(panelTx.transaction_date) : undefined}
       >
         {panelTx && (
-          <TransactionSideContent tx={panelTx} allItems={(txQuery.data?.items as any[]) || []} onClose={() => setPanelTx(null)} />
+          <TransactionSideContent
+            tx={panelTx}
+            allItems={(txQuery.data?.items as any[]) || []}
+            onClose={() => setPanelTx(null)}
+            ledgerQueryKey={ledgerQueryKey}
+          />
         )}
       </WorkflowSidePanel>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-2 border-t border-white/[0.08] bg-[rgb(var(--color-surface)/0.92)] p-3 backdrop-blur-xl lg:hidden">
-        <button type="button" className="btn-secondary min-h-12 flex-1 text-sm font-bold" onClick={() => setWorkspaceFocus('ledger')}>
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-2 border-t border-outline/40 bg-[rgb(var(--color-surface)/0.94)] px-3 pt-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.88)] pb-[max(0.65rem,env(safe-area-inset-bottom))] dark:border-white/[0.07] lg:hidden">
+        <button type="button" className="btn-secondary min-h-11 flex-1 text-sm font-semibold" onClick={() => setWorkspaceFocus('ledger')}>
           Журнал
         </button>
-        <button type="button" className="btn-primary min-h-12 flex-1 text-sm font-bold" onClick={() => focusCaptureForm()}>
+        <button type="button" className="btn-primary min-h-11 flex-1 text-sm font-semibold" onClick={() => focusCaptureForm()}>
           Ввод
         </button>
-        <Link to="/scan" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" aria-label="Сканер">
-          <Icon name="document_scanner" className="text-2xl" />
+        <Link
+          to="/scan"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-outline/35 bg-surface/80 text-emerald-700 shadow-xs dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-emerald-300"
+          aria-label="Сканер"
+        >
+          <Icon name="document_scanner" className="text-[1.35rem]" />
         </Link>
       </div>
     </section>

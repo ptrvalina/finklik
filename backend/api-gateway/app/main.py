@@ -7,7 +7,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
 import structlog
 
@@ -51,8 +51,11 @@ from app.api.v1.endpoints.domain_events import router as domain_events_router
 from app.api.v1.endpoints.reporting_calm import router as reporting_calm_router
 from app.api.v1.endpoints.workspace import router as workspace_router
 from app.api.v1.endpoints.operations_feed import router as operations_feed_router
+from app.api.v1.endpoints.oked import router as oked_router
+from app.api.v1.endpoints.chart_accounts import router as chart_accounts_router
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
+from app.security.correlation import CorrelationIdMiddleware
 from app.services.onec_sync_service import process_onec_sync_jobs_forever
 from app.services.calendar_reminder_worker import process_calendar_reminders_forever
 from app.services.nbrb_fx_service import start_nbrb_background_loop, stop_nbrb_background_loop
@@ -193,7 +196,6 @@ def _calm_error_payload(
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     log.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
-    from starlette.responses import JSONResponse
 
     if settings.DEBUG:
         detail = f"Internal error: {type(exc).__name__}: {exc}"
@@ -204,6 +206,10 @@ async def global_exception_handler(request, exc):
             "Не удалось завершить операцию. Система может повторить попытку автоматически; "
             "если сообщение не исчезнет, обновите страницу или вернитесь чуть позже."
         )
+    headers = {}
+    cid = getattr(request.state, "correlation_id", None)
+    if cid:
+        headers["X-Request-ID"] = str(cid)
     return JSONResponse(
         status_code=500,
         content=_calm_error_payload(
@@ -212,6 +218,7 @@ async def global_exception_handler(request, exc):
             retry_suggested=True,
             error_code="INTERNAL",
         ),
+        headers=headers,
     )
 
 # Метрики Prometheus (до прочих middleware — корректный учёт latency)
@@ -230,8 +237,9 @@ app.add_middleware(
 )
 if settings.allowed_hosts:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
-# Последним в цепочке add_middleware → первым на входящий запрос: блокировать JWT в query ASAP.
+# Последним в цепочке add_middleware → первым на входящий запрос: correlation id → JWT в query.
 app.add_middleware(JwtQueryParamBlockMiddleware)
+app.add_middleware(CorrelationIdMiddleware)
 
 if USE_LOCAL_DOCS:
     app.mount(
@@ -299,6 +307,8 @@ app.include_router(domain_events_router, prefix="/api/v1")
 app.include_router(reporting_calm_router, prefix="/api/v1")
 app.include_router(workspace_router, prefix="/api/v1")
 app.include_router(operations_feed_router, prefix="/api/v1")
+app.include_router(oked_router, prefix="/api/v1")
+app.include_router(chart_accounts_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 
@@ -312,6 +322,8 @@ async def root():
         "version": settings.APP_VERSION,
         "docs_assets": "static" if USE_LOCAL_DOCS else "cdn",
         "health": "/health",
+        "health_live": "/health/live",
+        "health_ready": "/health/ready",
         "docs": "/docs",
         "api": "/api/v1",
         "spa_hint": "При деплое фронта в образ откройте этот же URL для входа без cross-origin на другой домен.",
@@ -337,6 +349,24 @@ async def health(db: AsyncSession = Depends(get_db)):
 
     overall = "ok" if checks.get("db") == "ok" else "degraded"
     return {"status": overall, **checks}
+
+
+@app.get("/health/live", tags=["system"])
+async def health_live():
+    """Liveness: процесс отвечает (оркестраторы не проверяют БД)."""
+    return {"status": "ok", "service": settings.APP_NAME, "version": settings.APP_VERSION}
+
+
+@app.get("/health/ready", tags=["system"])
+async def health_ready(db: AsyncSession = Depends(get_db)):
+    """Readiness: БД доступна для запросов."""
+    from sqlalchemy import text
+
+    try:
+        await db.execute(text("SELECT 1"))
+        return JSONResponse({"status": "ready", "db": "ok"}, status_code=200)
+    except Exception as exc:
+        return JSONResponse({"status": "not_ready", "db": f"error: {exc}"}, status_code=503)
 
 
 @app.get("/api/v1/health", tags=["system"])
@@ -384,7 +414,7 @@ if _spa_available():
         if (
             spa_route.startswith("api/")
             or spa_route.startswith("static/")
-            or spa_route in {"health", "metrics", "openapi.json"}
+            or spa_route in {"health", "health/live", "health/ready", "metrics", "openapi.json"}
             or spa_route.startswith("docs")
             or spa_route.startswith("redoc")
             or spa_route == "ws"

@@ -15,6 +15,9 @@ from app.services.ocr_service import tesseract_ocr_process, parse_text_document
 from app.services.expense_ai_classifier import classify_expense_category
 from app.internal.audit.service import safe_log_audit
 from app.events.emit import emit_document_ocr_processed, emit_ocr_linked, emit_transaction_created
+from app.services.financial_state_service import refresh_financial_state_audit
+from app.security.upload_validation import bytes_match_declared_type, sanitize_upload_filename
+from app.security.metrics import OCR_FAILED_TOTAL, UPLOAD_REJECTED_TOTAL
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -26,6 +29,46 @@ class TextParseRequest(BaseModel):
 MAX_SIZE = 25 * 1024 * 1024  # 25 MB (как в UI сканера)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"}
 LOW_CONFIDENCE_THRESHOLD = 75
+
+
+def _load_field_confidence(raw: str | None) -> dict[str, int]:
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            return {str(k): int(v) for k, v in data.items() if v is not None}
+    except (json.JSONDecodeError, TypeError, ValueError):
+        pass
+    return {}
+
+
+def _scan_result_payload(
+    doc: ScannedDocument,
+    parsed: dict,
+    *,
+    warnings: list | None = None,
+    is_duplicate: bool = False,
+    linked_transaction_id: str | None = None,
+    field_confidence: dict | None = None,
+) -> dict:
+    fc = field_confidence if field_confidence is not None else _load_field_confidence(doc.field_confidence_json)
+    return {
+        "id": doc.id,
+        "filename": doc.filename,
+        "doc_type": doc.doc_type,
+        "status": doc.status,
+        "confidence": doc.confidence,
+        "requires_review": bool(doc.requires_review),
+        "field_confidence": fc,
+        "ocr_text": doc.ocr_text,
+        "parsed": parsed,
+        "warnings": warnings or [],
+        "is_duplicate": is_duplicate,
+        "linked_transaction_id": linked_transaction_id,
+        "lifecycle_status": doc.lifecycle_status,
+        "created_at": doc.created_at.isoformat(),
+    }
 
 
 def _normalize_upload_content_type(content_type: str | None, filename: str) -> str | None:
@@ -94,6 +137,7 @@ async def upload_and_scan(
 ):
     effective_type = _normalize_upload_content_type(file.content_type, file.filename or "")
     if effective_type not in ALLOWED_TYPES:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_upload").inc()
         raise HTTPException(
             400,
             f"Неподдерживаемый формат: {file.content_type or 'не указан'}. Разрешены: JPEG, PNG, WebP, HEIC, PDF",
@@ -101,13 +145,23 @@ async def upload_and_scan(
 
     contents = await file.read()
     if not contents:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_upload").inc()
         raise HTTPException(400, "Пустой файл")
     if len(contents) > MAX_SIZE:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_upload").inc()
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
+    if not bytes_match_declared_type(contents, effective_type):
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_upload").inc()
+        raise HTTPException(
+            400,
+            "Содержимое файла не совпадает с допустимым форматом (JPEG, PNG, WebP, HEIC, PDF). Учёт не изменён.",
+        )
 
+    safe_filename = sanitize_upload_filename(file.filename)
     try:
-        ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+        ocr_result = tesseract_ocr_process(safe_filename or "doc.jpg", contents, effective_type)
     except Exception:
+        OCR_FAILED_TOTAL.labels(endpoint="scanner_upload").inc()
         raise HTTPException(
             503,
             "Распознавание временно не завершилось. Попробуйте загрузить файл ещё раз — данные учёта не изменены.",
@@ -119,15 +173,18 @@ async def upload_and_scan(
         parsed=parsed,
     )
 
+    needs_review = bool(ocr_result.get("requires_review")) or int(ocr_result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD
     doc = ScannedDocument(
         organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
-        filename=file.filename or "unknown",
+        filename=safe_filename,
         doc_type=ocr_result["doc_type"],
-        status="needs_review" if int(ocr_result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD else "done",
+        status="needs_review" if needs_review else "done",
         ocr_text=ocr_result.get("ocr_text", ""),
         parsed_data=json.dumps(parsed, ensure_ascii=False),
         confidence=ocr_result.get("confidence", 0),
+        requires_review=needs_review,
+        field_confidence_json=json.dumps(ocr_result.get("field_confidence") or {}, ensure_ascii=False),
         transaction_id=linked_tx_id,
         lifecycle_status="matched" if linked_tx_id else "parsed",
     )
@@ -155,21 +212,16 @@ async def upload_and_scan(
         metadata={"doc_type": doc.doc_type, "filename": doc.filename},
     )
     await db.refresh(doc)
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
 
-    return {
-        "id": doc.id,
-        "filename": doc.filename,
-        "doc_type": doc.doc_type,
-        "status": doc.status,
-        "confidence": doc.confidence,
-        "ocr_text": doc.ocr_text,
-        "parsed": parsed,
-        "warnings": ocr_result.get("warnings", []),
-        "is_duplicate": is_duplicate,
-        "linked_transaction_id": linked_tx_id,
-        "lifecycle_status": doc.lifecycle_status,
-        "created_at": doc.created_at.isoformat(),
-    }
+    return _scan_result_payload(
+        doc,
+        parsed,
+        warnings=ocr_result.get("warnings", []),
+        is_duplicate=is_duplicate,
+        linked_transaction_id=linked_tx_id,
+        field_confidence=ocr_result.get("field_confidence") or {},
+    )
 
 
 @router.post("/upload-to-kudir")
@@ -180,17 +232,28 @@ async def upload_to_kudir(
 ):
     effective_type = _normalize_upload_content_type(file.content_type, file.filename or "")
     if effective_type not in ALLOWED_TYPES:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_kudir").inc()
         raise HTTPException(400, "Неподдерживаемый формат файла")
 
     contents = await file.read()
     if not contents:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_kudir").inc()
         raise HTTPException(400, "Пустой файл")
     if len(contents) > MAX_SIZE:
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_kudir").inc()
         raise HTTPException(400, "Файл слишком большой (макс. 25 МБ)")
+    if not bytes_match_declared_type(contents, effective_type):
+        UPLOAD_REJECTED_TOTAL.labels(endpoint="scanner_kudir").inc()
+        raise HTTPException(
+            400,
+            "Содержимое файла не совпадает с допустимым форматом. Проводка не создана.",
+        )
 
+    safe_filename = sanitize_upload_filename(file.filename)
     try:
-        ocr_result = tesseract_ocr_process(file.filename or "doc.jpg", contents, effective_type)
+        ocr_result = tesseract_ocr_process(safe_filename or "doc.jpg", contents, effective_type)
     except Exception:
+        OCR_FAILED_TOTAL.labels(endpoint="scanner_kudir").inc()
         raise HTTPException(
             503,
             "Распознавание временно не завершилось. Попробуйте загрузить файл ещё раз — проводка ещё не создана.",
@@ -209,7 +272,7 @@ async def upload_to_kudir(
     doc = ScannedDocument(
         organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
-        filename=file.filename or "unknown",
+        filename=safe_filename,
         doc_type=ocr_result["doc_type"],
         status="needs_review" if int(ocr_result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD else "done",
         ocr_text=ocr_result.get("ocr_text", ""),
@@ -226,7 +289,7 @@ async def upload_to_kudir(
         amount=amount if amount > 0 else Decimal("0.01"),
         vat_amount=vat_amount if vat_amount >= 0 else Decimal("0"),
         category=category,
-        description=parsed.get("description") or f"Скан {file.filename or ''}".strip(),
+        description=parsed.get("description") or f"Скан {safe_filename}".strip(),
         transaction_date=tx_date,
         source="scan",
         ai_category_confidence=Decimal(str(confidence)),
@@ -258,6 +321,7 @@ async def upload_to_kudir(
         entity_id=str(tx.id),
         metadata={"document_id": str(doc.id), "source": tx.source, "category": tx.category},
     )
+    await refresh_financial_state_audit(db, oid)
     return {
         "document_id": doc.id,
         "transaction_id": tx.id,
@@ -331,6 +395,8 @@ async def list_scanned_documents(
             "doc_type": d.doc_type,
             "status": d.status,
             "confidence": d.confidence,
+            "requires_review": bool(d.requires_review),
+            "field_confidence": _load_field_confidence(d.field_confidence_json),
             "parsed": parsed,
             "transaction_id": d.transaction_id,
             "lifecycle_status": d.lifecycle_status,
@@ -351,21 +417,24 @@ async def parse_text(
         raise HTTPException(400, "Текст слишком короткий")
 
     result = parse_text_document(body.text, body.doc_type)
+    parsed_out = result.get("parsed", {}) or {}
+    needs_review = bool(result.get("requires_review")) or int(result.get("confidence", 0)) < LOW_CONFIDENCE_THRESHOLD
 
     doc = ScannedDocument(
         organization_id=workspace_organization_id(current_user),
         user_id=current_user.id,
         filename="text_input",
         doc_type=result["doc_type"],
-        status="done",
+        status="needs_review" if needs_review else "done",
         ocr_text=result.get("ocr_text", ""),
-        parsed_data=json.dumps(result.get("parsed", {}), ensure_ascii=False),
+        parsed_data=json.dumps(parsed_out, ensure_ascii=False),
         confidence=result.get("confidence", 0),
+        requires_review=needs_review,
+        field_confidence_json=json.dumps(result.get("field_confidence") or {}, ensure_ascii=False),
         lifecycle_status="parsed",
     )
     db.add(doc)
     await db.flush()
-    parsed_out = result.get("parsed", {}) or {}
     await emit_document_ocr_processed(
         db,
         workspace_organization_id(current_user),
@@ -378,19 +447,14 @@ async def parse_text(
         actor="system",
     )
     await db.refresh(doc)
+    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
 
-    return {
-        "id": doc.id,
-        "filename": "text_input",
-        "doc_type": result["doc_type"],
-        "status": doc.status,
-        "confidence": result.get("confidence", 0),
-        "ocr_text": result.get("ocr_text", ""),
-        "parsed": result.get("parsed", {}),
-        "warnings": result.get("warnings", []),
-        "lifecycle_status": doc.lifecycle_status,
-        "created_at": doc.created_at.isoformat(),
-    }
+    return _scan_result_payload(
+        doc,
+        parsed_out,
+        warnings=result.get("warnings", []),
+        field_confidence=result.get("field_confidence") or {},
+    )
 
 
 @router.delete("/documents/{doc_id}")
@@ -407,6 +471,8 @@ async def delete_scanned_document(
     doc = result.scalar_one_or_none()
     if not doc:
         raise HTTPException(404, "Документ не найден")
+    oid = doc.organization_id
     await db.delete(doc)
-    await db.commit()
+    await db.flush()
+    await refresh_financial_state_audit(db, oid)
     return {"ok": True}

@@ -289,3 +289,13 @@ async def derive_financial_state(
     )
 
     return fs, predictions
+
+
+async def refresh_financial_state_audit(db: AsyncSession, organization_id: str) -> None:
+    """После мутаций учёта — пересчитать FinancialState и зафиксировать аудит при изменении."""
+    from app.services.reporting_calm_service import build_reporting_calm_overview
+    from app.services.state_truth_governance_service import persist_state_audit_if_changed
+
+    overview = await build_reporting_calm_overview(db, organization_id, include_financial_state=False)
+    fs, _ = await derive_financial_state(db, organization_id, overview=overview)
+    await persist_state_audit_if_changed(db, organization_id, fs)

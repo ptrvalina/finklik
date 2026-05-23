@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi, reportsApi, bankApi, businessOsApi } from '../api/client'
 import { Link } from 'react-router-dom'
@@ -6,7 +6,11 @@ import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import { ExecutiveBriefing } from '../components/dashboard/ExecutiveBriefing'
-import { CashflowPulse } from '../components/dashboard/CashflowPulse'
+
+const CashflowPulse = lazy(async () => {
+  const m = await import('../components/dashboard/CashflowPulse')
+  return { default: m.CashflowPulse }
+})
 import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { AIRecommendationPanel } from '../components/premium-os'
@@ -32,12 +36,16 @@ export default function DashboardPage() {
     queryFn: () => dashboardApi.getMetrics().then((r) => r.data),
     enabled: !isManager,
     retry: 1,
+    staleTime: 45_000,
+    placeholderData: (prev) => prev,
   })
 
   const { data: txData } = useQuery({
     queryKey: ['transactions', 'recent'],
     queryFn: () => dashboardApi.getTransactions({ per_page: 5 }).then((r) => r.data),
     enabled: !isManager,
+    staleTime: 45_000,
+    placeholderData: (prev) => prev,
   })
 
   const dashboardYear = new Date().getFullYear()
@@ -45,6 +53,8 @@ export default function DashboardPage() {
     queryKey: ['monthly-summary-dashboard', dashboardYear],
     queryFn: () => reportsApi.monthlySummary(dashboardYear).then((r) => r.data),
     enabled: !isManager,
+    staleTime: 120_000,
+    placeholderData: (prev) => prev,
   })
 
   const { data: bankData } = useQuery({
@@ -242,7 +252,9 @@ export default function DashboardPage() {
 
       <div className="mt-6">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Денежный пульс</p>
-        <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
+        <Suspense fallback={<div className="h-52 rounded-3xl border border-outline/30 bg-surface-container-low/40 animate-pulse dark:border-white/[0.06]" aria-hidden />}>
+          <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
+        </Suspense>
       </div>
 
       {/* Налоги и журнал */}

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FinClick — Financial Operating System for SMB · Investor Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-2: #070b1e;
+      --surface: #0d1530;
+      --surface-2: #111a3c;
+      --card: rgba(20, 31, 65, 0.62);
+      --card-strong: rgba(28, 41, 80, 0.92);
+      --border: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.24);
+      --text: #f1f5ff;
+      --muted: #93a3c6;
+      --dim: #5f6f93;
+      --teal: #14b8a6;
+      --teal-2: #2dd4bf;
+      --cyan: #22d3ee;
+      --emerald: #10b981;
+      --emerald-2: #34d399;
+      --amber: #fbbf24;
+      --rose: #f87171;
+      --violet: #a78bfa;
+      --indigo: #818cf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      background:
+        radial-gradient(1100px 600px at 8% -10%, rgba(20, 184, 166, 0.16), transparent 55%),
+        radial-gradient(900px 520px at 92% -5%, rgba(34, 211, 238, 0.14), transparent 55%),
+        radial-gradient(800px 480px at 50% 110%, rgba(167, 139, 250, 0.10), transparent 55%),
+        var(--bg);
+    }
+    .deck { height: 100vh; position: relative; }
+    .slide {
+      position: absolute; inset: 0;
+      padding: clamp(1rem, 2.4vw, 2.2rem) clamp(1.2rem, 3.6vw, 3rem);
+      padding-top: clamp(1.4rem, 3vw, 2.6rem);
+      padding-bottom: 4.2rem;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      opacity: 0; pointer-events: none; transform: translateY(14px);
+      transition: opacity .45s cubic-bezier(.2,.7,.2,1), transform .45s cubic-bezier(.2,.7,.2,1);
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .slide::-webkit-scrollbar { width: 8px; }
+    .slide::-webkit-scrollbar-thumb { background: rgba(148,163,184,.12); border-radius: 99px; }
+
+    /* Typography */
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: .55rem;
+      font-size: .66rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--teal-2);
+      padding: .35rem .65rem; border-radius: 999px;
+      background: rgba(20, 184, 166, .08); border: 1px solid rgba(20, 184, 166, .22);
+    }
+    .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-2); box-shadow: 0 0 14px var(--teal-2); }
+    h1.title {
+      font-size: clamp(1.9rem, 4.4vw, 3.4rem);
+      font-weight: 800; letter-spacing: -.035em; line-height: 1.04;
+      margin-top: 1rem;
+    }
+    h1.title .grad { background: linear-gradient(120deg, #5eead4 0%, #22d3ee 60%, #818cf8 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    h2.section {
+      font-size: clamp(1.2rem, 2.6vw, 1.9rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.15;
+      margin-top: .8rem; margin-bottom: .35rem;
+    }
+    .lead { font-size: clamp(.92rem, 1.45vw, 1.08rem); color: var(--muted); line-height: 1.6; max-width: 56rem; }
+    .micro { font-size: .76rem; color: var(--dim); letter-spacing: .03em; }
+    .accent { color: var(--teal-2); }
+    .accent-cyan { color: var(--cyan); }
+    .accent-emerald { color: var(--emerald-2); }
+    .accent-amber { color: var(--amber); }
+    .accent-rose { color: var(--rose); }
+    .num-xl {
+      font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: -.035em;
+      font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1; background: linear-gradient(120deg, #5eead4, #22d3ee); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    /* Layout helpers */
+    .grid { display: grid; gap: clamp(.75rem, 1.4vw, 1.2rem); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-2-3 { grid-template-columns: 1.05fr 1fr; }
+    .stack { display: flex; flex-direction: column; gap: clamp(.7rem, 1.2vw, 1.05rem); }
+    .row { display: flex; gap: clamp(.75rem, 1.4vw, 1.2rem); align-items: stretch; }
+    .row-wrap { display: flex; flex-wrap: wrap; gap: .55rem; }
+    .grow { flex: 1; }
+    .center { display: flex; align-items: center; justify-content: center; }
+    .between { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .mt-1 { margin-top: .35rem; }
+    .mt-2 { margin-top: .8rem; }
+    .mt-3 { margin-top: 1.2rem; }
+    .mt-4 { margin-top: 1.8rem; }
+    .mt-5 { margin-top: 2.4rem; }
+
+    /* Cards */
+    .card {
+      position: relative; padding: clamp(.95rem, 1.6vw, 1.35rem);
+      background: linear-gradient(180deg, rgba(20, 31, 65, 0.72), rgba(13, 21, 48, 0.78));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .card.tight { padding: .85rem 1rem; border-radius: 14px; }
+    .card .hairline { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+    .card-title { font-size: .76rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .card-h { font-size: clamp(1rem, 1.6vw, 1.18rem); font-weight: 700; letter-spacing: -.015em; }
+    .card-sub { color: var(--muted); font-size: .88rem; line-height: 1.55; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .32rem .65rem; border-radius: 999px;
+      background: rgba(148, 163, 184, .08); border: 1px solid var(--border);
+      color: var(--text); font-size: .78rem; font-weight: 600; letter-spacing: .01em;
+    }
+    .chip .material-symbols-outlined { font-size: 15px; }
+    .chip.teal { background: rgba(20,184,166,.12); border-color: rgba(20,184,166,.32); color: #99f6e4; }
+    .chip.cyan { background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.3); color: #a5f3fc; }
+    .chip.amber { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.3); color: #fde68a; }
+    .chip.rose { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.3); color: #fecaca; }
+    .chip.violet { background: rgba(167,139,250,.13); border-color: rgba(167,139,250,.3); color: #ddd6fe; }
+    .chip.emerald { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.32); color: #a7f3d0; }
+    .chip.ghost { background: transparent; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .2rem .55rem; border-radius: 6px;
+      font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      background: rgba(148,163,184,.1); color: var(--muted);
+    }
+    .pill.live { background: rgba(16,185,129,.18); color: #a7f3d0; }
+    .pill.warn { background: rgba(251,191,36,.18); color: #fde68a; }
+    .pill.alarm { background: rgba(248,113,113,.18); color: #fecaca; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+      padding: .55rem .95rem; border-radius: 10px;
+      font-weight: 700; font-size: .82rem; letter-spacing: .01em;
+      background: linear-gradient(120deg, #14b8a6, #22d3ee); color: #052330; border: 0;
+      box-shadow: 0 8px 30px rgba(20,184,166,.25);
+    }
+    .btn.ghost {
+      background: rgba(148,163,184,.06); color: var(--text); border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .btn.danger { background: rgba(248,113,113,.12); color: #fecaca; border: 1px solid rgba(248,113,113,.3); }
+    .btn.sm { padding: .35rem .65rem; font-size: .74rem; }
+
+    /* Cover slide */
+    .cover { justify-content: center; }
+    .cover .logo {
+      display: inline-flex; align-items: center; gap: .65rem;
+      font-weight: 800; letter-spacing: -.02em; font-size: 1.05rem;
+    }
+    .cover .logo .mark {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, #14b8a6, #22d3ee);
+      display: grid; place-items: center; color: #052330; font-weight: 900;
+      box-shadow: 0 8px 30px rgba(34,211,238,.35);
+    }
+    .cover .stats {
+      margin-top: 2rem; display: grid; gap: .8rem;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .cover .stat .v { font-size: clamp(1.4rem, 2.4vw, 1.8rem); font-weight: 800; letter-spacing: -.025em; }
+    .cover .stat .l { color: var(--muted); font-size: .82rem; margin-top: .15rem; }
+
+    /* Counters and bars */
+    .kpi { display: flex; align-items: baseline; gap: .5rem; }
+    .kpi .v { font-size: clamp(1.6rem, 2.4vw, 2rem); font-weight: 800; letter-spacing: -.025em; }
+    .kpi .u { color: var(--muted); font-size: .85rem; }
+    .delta { display: inline-flex; align-items: center; gap: .2rem; font-size: .8rem; font-weight: 700; }
+    .delta.up { color: var(--emerald-2); }
+    .delta.dn { color: var(--rose); }
+
+    .bar { height: 6px; border-radius: 999px; background: rgba(148,163,184,.12); overflow: hidden; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(120deg, #14b8a6, #22d3ee); border-radius: inherit; }
+    .bar.warn > i { background: linear-gradient(120deg, #fbbf24, #f59e0b); }
+    .bar.rose > i { background: linear-gradient(120deg, #f87171, #fb7185); }
+    .bar.emerald > i { background: linear-gradient(120deg, #10b981, #34d399); }
+
+    /* Gauge for Health */
+    .gauge-wrap { position: relative; width: clamp(180px, 18vw, 240px); aspect-ratio: 1; }
+    .gauge-num { position: absolute; inset: 0; display: grid; place-items: center; }
+    .gauge-num .n { font-size: clamp(2.4rem, 4vw, 3.4rem); font-weight: 800; letter-spacing: -.03em; }
+    .gauge-num .s { font-size: .8rem; color: var(--muted); }
+
+    /* Execution Feed */
+    .feed { display: grid; gap: .55rem; }
+    .feed-item {
+      display: grid; grid-template-columns: 38px 1fr auto;
+      gap: .8rem; align-items: center;
+      padding: .7rem .9rem; border-radius: 12px;
+      background: rgba(14, 22, 49, .65);
+      border: 1px solid var(--border);
+      transition: border-color .2s, background .2s;
+    }
+    .feed-item:hover { border-color: rgba(34,211,238,.35); background: rgba(20, 30, 65, .9); }
+    .feed-item .ico {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: rgba(148,163,184,.08); color: var(--text);
+    }
+    .feed-item .ico.teal { background: rgba(20,184,166,.16); color: #99f6e4; }
+    .feed-item .ico.cyan { background: rgba(34,211,238,.16); color: #a5f3fc; }
+    .feed-item .ico.amber { background: rgba(251,191,36,.16); color: #fde68a; }
+    .feed-item .ico.rose { background: rgba(248,113,113,.16); color: #fecaca; }
+    .feed-item .ico.violet { background: rgba(167,139,250,.16); color: #ddd6fe; }
+    .feed-item .ico .material-symbols-outlined { font-size: 20px; }
+    .feed-item .t { font-weight: 600; font-size: .92rem; }
+    .feed-item .m { color: var(--muted); font-size: .8rem; margin-top: .1rem; }
+
+    /* Sparkline */
+    .spark { width: 100%; height: 110px; display: block; }
+
+    /* Comparison columns */
+    .vs {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: stretch;
+    }
+    .vs .col { padding: 1.1rem 1.2rem; border-radius: 16px; border: 1px solid var(--border); background: rgba(14, 22, 49, .55); }
+    .vs .col.them { background: rgba(75, 85, 99, .14); border-color: rgba(148,163,184,.18); }
+    .vs .col.us { background: linear-gradient(180deg, rgba(20,184,166,.10), rgba(34,211,238,.07)); border-color: rgba(20,184,166,.28); }
+    .vs .div { display: grid; place-items: center; color: var(--dim); font-weight: 800; letter-spacing: .2em; }
+    .vs h3 { font-size: .82rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+    .vs ul { list-style: none; display: grid; gap: .4rem; font-size: .92rem; color: var(--text); }
+    .vs ul li { display: flex; gap: .55rem; align-items: flex-start; }
+    .vs ul li .material-symbols-outlined { font-size: 18px; margin-top: 2px; }
+    .vs .them li .material-symbols-outlined { color: var(--rose); }
+    .vs .us li .material-symbols-outlined { color: var(--emerald-2); }
+
+    /* Belarus / strategy timeline */
+    .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; position: relative; }
+    .timeline .step { padding: 1.1rem 1.2rem; border-radius: 16px; border: 1px solid var(--border); background: rgba(14, 22, 49, .55); position: relative; }
+    .timeline .step .ph { font-size: .7rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--teal-2); }
+    .timeline .step h4 { font-size: 1.05rem; font-weight: 700; margin-top: .35rem; }
+    .timeline .step p { color: var(--muted); font-size: .88rem; line-height: 1.55; margin-top: .35rem; }
+
+    /* Navigation */
+    .nav {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      padding: .65rem clamp(1rem, 2vw, 1.8rem);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      background: linear-gradient(180deg, transparent, rgba(5,8,22,.85) 35%);
+      pointer-events: none; z-index: 50;
+    }
+    .nav .left, .nav .right { display: flex; gap: .5rem; pointer-events: auto; align-items: center; }
+    .nav .dots { display: flex; gap: 6px; pointer-events: auto; flex-wrap: wrap; max-width: 60vw; justify-content: center; }
+    .nav .dots .d {
+      width: 8px; height: 8px; border-radius: 999px;
+      background: rgba(148,163,184,.25); cursor: pointer; transition: background .2s, transform .2s;
+    }
+    .nav .dots .d:hover { transform: scale(1.25); }
+    .nav .dots .d.active { background: linear-gradient(120deg, #14b8a6, #22d3ee); width: 22px; }
+    .nav button {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .5rem .8rem; border-radius: 10px;
+      background: rgba(20, 31, 65, .8); border: 1px solid var(--border);
+      color: var(--text); font-weight: 600; font-size: .82rem; cursor: pointer;
+    }
+    .nav button:hover { border-color: rgba(34,211,238,.4); }
+    .progress-bar { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: rgba(148,163,184,.08); z-index: 51; }
+    .progress-bar > i { display: block; height: 100%; background: linear-gradient(120deg, #14b8a6, #22d3ee); transition: width .35s ease; }
+
+    .slide-header {
+      position: absolute; top: 1rem; right: clamp(1.2rem, 3.6vw, 3rem); left: clamp(1.2rem, 3.6vw, 3rem);
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--dim); font-size: .76rem; letter-spacing: .04em;
+      pointer-events: none;
+    }
+    .slide-header .l { display: inline-flex; align-items: center; gap: .55rem; }
+    .slide-header .l .mark {
+      width: 18px; height: 18px; border-radius: 5px;
+      background: linear-gradient(135deg, #14b8a6, #22d3ee);
+      display: grid; place-items: center; color: #052330; font-weight: 900; font-size: .7rem;
+    }
+
+    /* Final / vision */
+    .hero {
+      flex: 1; display: grid; place-items: center; text-align: center;
+    }
+    .hero .big {
+      font-size: clamp(2rem, 5.4vw, 4.4rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.05;
+      max-width: 60rem;
+    }
+    .hero .big .grad { background: linear-gradient(120deg, #5eead4, #22d3ee 60%, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero .sub { color: var(--muted); margin-top: 1rem; font-size: clamp(.95rem, 1.6vw, 1.15rem); max-width: 42rem; line-height: 1.55; }
+
+    /* Mock browser frame for UX screens */
+    .mock {
+      border-radius: 18px; overflow: hidden; border: 1px solid var(--border-strong);
+      background: linear-gradient(180deg, rgba(8, 14, 35, .96), rgba(5, 10, 26, .98));
+      box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .mock-top {
+      display: flex; align-items: center; gap: .55rem; padding: .55rem .85rem;
+      background: rgba(13, 21, 48, .9); border-bottom: 1px solid var(--border);
+    }
+    .mock-top .lights { display: flex; gap: .35rem; }
+    .mock-top .lights span { width: 10px; height: 10px; border-radius: 999px; background: rgba(148,163,184,.25); }
+    .mock-top .lights span:nth-child(1) { background: #ef4444; }
+    .mock-top .lights span:nth-child(2) { background: #f59e0b; }
+    .mock-top .lights span:nth-child(3) { background: #10b981; }
+    .mock-top .addr {
+      flex: 1; display: inline-flex; align-items: center; gap: .45rem;
+      padding: .3rem .6rem; border-radius: 6px; background: rgba(148,163,184,.06);
+      font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: var(--muted);
+    }
+    .mock-body { padding: clamp(.9rem, 1.4vw, 1.2rem); display: grid; gap: clamp(.75rem, 1.2vw, 1rem); }
+
+    /* Score donut svg utility */
+    .score-ring { transform: rotate(-90deg); }
+    .score-ring .track { stroke: rgba(148,163,184,.16); }
+    .score-ring .fg { stroke: url(#gradTeal); filter: drop-shadow(0 0 12px rgba(34,211,238,.35)); }
+
+    /* Work pack list */
+    .pack {
+      display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center;
+      padding: .65rem .8rem; border-radius: 12px; border: 1px solid var(--border);
+      background: rgba(20, 31, 65, .55);
+    }
+    .pack .num { width: 28px; height: 28px; border-radius: 8px; background: rgba(34,211,238,.15); color: #a5f3fc; display: grid; place-items: center; font-weight: 800; font-size: .82rem; }
+    .pack .t { font-weight: 600; font-size: .9rem; }
+    .pack .m { color: var(--muted); font-size: .78rem; margin-top: .15rem; }
+
+    /* AI dialog */
+    .ai-block {
+      display: grid; grid-template-columns: 36px 1fr; gap: .8rem; align-items: flex-start;
+      padding: .9rem 1rem; border-radius: 14px;
+      background: linear-gradient(120deg, rgba(34,211,238,.10), rgba(167,139,250,.07));
+      border: 1px solid rgba(34,211,238,.25);
+    }
+    .ai-block .avatar {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(135deg, #22d3ee, #a78bfa);
+      display: grid; place-items: center; color: #07142a; font-weight: 900;
+    }
+    .ai-block .name { font-size: .78rem; font-weight: 700; color: #a5f3fc; letter-spacing: .04em; }
+    .ai-block p { font-size: .92rem; line-height: 1.55; color: var(--text); margin-top: .2rem; }
+    .ai-actions { display: flex; gap: .45rem; margin-top: .65rem; }
+
+    /* Mini chart bars */
+    .bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+    .bars i { display: block; width: 14px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #22d3ee, #14b8a6); opacity: .85; }
+    .bars i.exp { background: linear-gradient(180deg, #f87171, #ef4444); opacity: .65; }
+
+    .legend { display: inline-flex; align-items: center; gap: .35rem; color: var(--muted); font-size: .78rem; }
+    .legend .sw { width: 10px; height: 10px; border-radius: 3px; }
+    .legend .sw.inc { background: linear-gradient(180deg, #22d3ee, #14b8a6); }
+    .legend .sw.exp { background: linear-gradient(180deg, #f87171, #ef4444); }
+
+    /* Footer caption */
+    .caption {
+      margin-top: .9rem; color: var(--dim); font-size: .8rem;
+    }
+
+    /* Two-pane "left content + right UX mock" */
+    .pane { display: grid; grid-template-columns: 1.05fr 1.2fr; gap: clamp(1rem, 2vw, 1.8rem); align-items: stretch; min-height: 0; }
+
+    .pane > .left, .pane > .right { min-width: 0; }
+
+    /* Why-now / why-we-win lists */
+    .neat-list { display: grid; gap: .55rem; }
+    .neat-list li { list-style: none; display: flex; gap: .65rem; align-items: flex-start; font-size: .94rem; line-height: 1.5; }
+    .neat-list li .material-symbols-outlined { color: var(--teal-2); font-size: 18px; margin-top: 2px; }
+
+    /* PRINT — раскладка для PDF: каждый слайд — отдельная landscape‑страница */
+    @media print {
+      @page { size: 1600px 1000px; margin: 0; }
+      html, body { height: auto !important; overflow: visible !important; background: var(--bg) !important; }
+      .deck { height: auto !important; }
+      .nav, .progress-bar { display: none !important; }
+      .slide {
+        position: relative !important; inset: auto !important;
+        opacity: 1 !important; transform: none !important; pointer-events: auto !important;
+        width: 1600px !important; height: 1000px !important;
+        padding: 56px 72px 56px 72px !important;
+        page-break-after: always; break-after: page;
+        overflow: hidden !important;
+        display: flex !important; flex-direction: column !important;
+      }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
+      .slide-header { top: 28px !important; left: 72px !important; right: 72px !important; }
+      .hero { flex: 1 !important; }
+      /* Тёмная тема при печати */
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .pane, .grid-2-3, .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .timeline { grid-template-columns: 1fr; }
+      .vs { grid-template-columns: 1fr; }
+      .vs .div { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"><i id="progress"></i></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1. COVER -->
+  <section class="slide cover active" data-title="Cover">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> FinClick · Investor Deck</div><div>2026</div></div>
+    <div style="margin: auto; max-width: 66rem;">
+      <div class="logo"><span class="mark">F</span> FinClick</div>
+      <span class="eyebrow mt-3"><span class="dot"></span> Financial Operating System for SMB</span>
+      <h1 class="title mt-2">
+        Execution‑first <span class="grad">financial platform</span>
+        для малого и среднего бизнеса.
+      </h1>
+      <p class="lead mt-3">
+        Мы не строим бухгалтерию, ERP или dashboard.
+        Мы строим <strong style="color:var(--text)">операционную финансовую систему</strong>,
+        которая превращает хаос документов, операций и отчётности в единый рабочий поток.
+      </p>
+
+      <div class="stats">
+        <div class="stat card tight">
+          <div class="v accent">v0.4</div>
+          <div class="l">Production runtime, Render + Postgres</div>
+        </div>
+        <div class="stat card tight">
+          <div class="v accent-cyan">202k+</div>
+          <div class="l">ИП в Беларуси — wedge market</div>
+        </div>
+        <div class="stat card tight">
+          <div class="v">$2–6M</div>
+          <div class="l">ARR в консервативной модели</div>
+        </div>
+        <div class="stat card tight">
+          <div class="v">7+</div>
+          <div class="l">этапов архитектуры реализовано</div>
+        </div>
+      </div>
+
+      <div class="row-wrap mt-4">
+        <span class="chip teal"><span class="material-symbols-outlined">bolt</span> execution feed</span>
+        <span class="chip cyan"><span class="material-symbols-outlined">activity_zone</span> FinancialState engine</span>
+        <span class="chip violet"><span class="material-symbols-outlined">spa</span> calm UX</span>
+        <span class="chip emerald"><span class="material-symbols-outlined">verified_user</span> trust &amp; governance</span>
+        <span class="chip amber"><span class="material-symbols-outlined">smart_toy</span> operational AI</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. PROBLEM -->
+  <section class="slide" data-title="Проблема">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Проблема</div><div>02</div></div>
+    <span class="eyebrow"><span class="dot"></span> Проблема рынка</span>
+    <h1 class="title">Малый бизнес работает <span class="grad">в хаосе</span>.</h1>
+    <p class="lead mt-2">
+      SMB в СНГ и Беларуси теряет часы на ручные операции,
+      разрозненные системы и реактивную отчётность. Большинство продуктов на рынке
+      перегружены, построены вокруг форм и меню и требуют бухгалтера как оператора системы.
+    </p>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card">
+        <div class="card-title">Учёт</div>
+        <div class="card-h mt-1">Устаревшие ERP</div>
+        <p class="card-sub mt-2">Тяжёлые меню, формы из 90‑х, пугающий UX. Невозможно делегировать не‑бухгалтеру.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Документы</div>
+        <div class="card-h mt-1">Папки и мессенджеры</div>
+        <p class="card-sub mt-2">PDF, сканы, фото в Telegram — нет связи с операциями, нет автоматизации.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Отчётность</div>
+        <div class="card-h mt-1">Отдельные кабинеты</div>
+        <p class="card-sub mt-2">Несколько систем для налогов, ФСЗН, банка. Контекст бизнеса распадается.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Согласования</div>
+        <div class="card-h mt-1">Ручные процессы</div>
+        <p class="card-sub mt-2">Подписи по почте, копии «на флешку», ошибки и переделки.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Видимость</div>
+        <div class="card-h mt-1">Нет состояния бизнеса</div>
+        <p class="card-sub mt-2">Собственник не понимает реальную картину: cashflow, риски, что мешает закрытию периода.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Реакция</div>
+        <div class="card-h mt-1">Тушение пожаров</div>
+        <p class="card-sub mt-2">Работают реактивно, а не операционно. Решения принимаются «по ощущению».</p>
+      </div>
+    </div>
+
+    <p class="caption">Рынок до сих пор живёт в парадигме «учёт ради учёта».</p>
+  </section>
+
+  <!-- 3. THESIS -->
+  <section class="slide" data-title="Тезис">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Тезис</div><div>03</div></div>
+    <div class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Наш тезис</span>
+        <div class="big mt-3">
+          Бизнесу нужен не учёт.<br/>
+          Бизнесу нужна <span class="grad">операционная финансовая система</span>.
+        </div>
+        <p class="sub mt-3">
+          FinClick превращает хаос документов, операций и отчётности
+          в единый execution workspace, где работа реально завершается.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. WHAT IS FINCLICK + UX MOCK: DASHBOARD -->
+  <section class="slide" data-title="Что такое FinClick">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Продукт</div><div>04</div></div>
+    <div class="pane">
+      <div class="left">
+        <span class="eyebrow"><span class="dot"></span> Что такое FinClick</span>
+        <h1 class="title mt-2"><span class="grad">Financial Operating System</span> для бизнеса.</h1>
+        <p class="lead mt-3">
+          Один рабочий поток вместо десятков разрозненных действий.
+          Журнал доходов и расходов, OCR документов, операционные workflow,
+          AI‑рекомендации и отчётность — в одном calm‑интерфейсе.
+        </p>
+        <div class="row-wrap mt-3">
+          <span class="chip teal"><span class="material-symbols-outlined">receipt_long</span> Журнал доходов/расходов</span>
+          <span class="chip cyan"><span class="material-symbols-outlined">document_scanner</span> OCR документов</span>
+          <span class="chip emerald"><span class="material-symbols-outlined">activity_zone</span> Financial State</span>
+          <span class="chip violet"><span class="material-symbols-outlined">smart_toy</span> Operational AI</span>
+          <span class="chip amber"><span class="material-symbols-outlined">groups</span> Бухгалтер‑воркспейс</span>
+          <span class="chip"><span class="material-symbols-outlined">workspaces</span> Multi‑organization</span>
+        </div>
+        <p class="caption">Не бухгалтерия. Не ERP. Не dashboard. Operational system behavior.</p>
+      </div>
+
+      <div class="right">
+        <!-- UX MOCK: Dashboard -->
+        <div class="mock">
+          <div class="mock-top">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <div class="addr"><span class="material-symbols-outlined" style="font-size:14px">lock</span> app.finklik.by / dashboard</div>
+            <span class="pill live">LIVE</span>
+          </div>
+          <div class="mock-body" style="grid-template-columns: 1.1fr 1fr;">
+            <!-- Health -->
+            <div class="card">
+              <div class="between">
+                <div>
+                  <div class="card-title">Financial State</div>
+                  <div class="card-h mt-1">Health Score</div>
+                </div>
+                <span class="pill live">в зелёной зоне</span>
+              </div>
+              <div class="center mt-2">
+                <div class="gauge-wrap">
+                  <svg viewBox="0 0 120 120" class="score-ring" width="100%" height="100%">
+                    <defs>
+                      <linearGradient id="gradTeal" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0" stop-color="#14b8a6"/>
+                        <stop offset="1" stop-color="#22d3ee"/>
+                      </linearGradient>
+                    </defs>
+                    <circle class="track" cx="60" cy="60" r="50" fill="none" stroke-width="10"/>
+                    <circle class="fg" cx="60" cy="60" r="50" fill="none" stroke-width="10"
+                            stroke-linecap="round"
+                            stroke-dasharray="314" stroke-dashoffset="56"/>
+                  </svg>
+                  <div class="gauge-num"><div><div class="n">82</div><div class="s">из 100 · стабильно</div></div></div>
+                </div>
+              </div>
+              <p class="card-sub mt-2">Показатели в зелёной зоне: держите черновики и сроки под контролем.</p>
+            </div>
+
+            <!-- Cashflow Pulse -->
+            <div class="card">
+              <div class="between">
+                <div>
+                  <div class="card-title">Денежный пульс</div>
+                  <div class="card-h mt-1">Доходы и расходы, 6 мес</div>
+                </div>
+                <span class="delta up">▲ +14%</span>
+              </div>
+
+              <svg class="spark mt-2" viewBox="0 0 320 110" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="gradInc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#22d3ee" stop-opacity=".55"/>
+                    <stop offset="1" stop-color="#14b8a6" stop-opacity="0"/>
+                  </linearGradient>
+                  <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#f87171" stop-opacity=".4"/>
+                    <stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,80 C40,60 60,55 90,52 C120,49 150,42 180,38 C210,34 240,28 270,22 C290,18 310,16 320,15 L320,110 L0,110 Z" fill="url(#gradInc)"/>
+                <path d="M0,80 C40,60 60,55 90,52 C120,49 150,42 180,38 C210,34 240,28 270,22 C290,18 310,16 320,15" stroke="#22d3ee" stroke-width="2" fill="none"/>
+                <path d="M0,90 C40,80 70,78 100,76 C130,74 160,70 190,66 C220,62 250,60 280,56 C300,54 315,53 320,53 L320,110 L0,110 Z" fill="url(#gradExp)"/>
+                <path d="M0,90 C40,80 70,78 100,76 C130,74 160,70 190,66 C220,62 250,60 280,56 C300,54 315,53 320,53" stroke="#f87171" stroke-width="1.5" fill="none"/>
+              </svg>
+              <div class="row-wrap mt-2">
+                <span class="legend"><span class="sw inc"></span> Доходы</span>
+                <span class="legend"><span class="sw exp"></span> Расходы</span>
+                <span class="legend" style="margin-left:auto">Net: <strong style="color:var(--text)">+12 480 BYN</strong></span>
+              </div>
+            </div>
+
+            <!-- Mini KPI row -->
+            <div class="card tight" style="grid-column: span 2; padding: .65rem .85rem;">
+              <div class="row" style="gap:1.4rem; flex-wrap: wrap;">
+                <div><div class="micro">Счёт</div><div class="kpi"><div class="v">38 920</div><div class="u">BYN</div></div></div>
+                <div><div class="micro">Доход · апрель</div><div class="kpi"><div class="v">62 410</div><div class="u">BYN</div></div></div>
+                <div><div class="micro">УСН квартал</div><div class="kpi"><div class="v">3 124</div><div class="u">BYN</div></div></div>
+                <div style="margin-left:auto"><div class="micro">Срок ближайшего отчёта</div><div class="kpi"><div class="v">12</div><div class="u">дней</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">Реальный UX продукта: FinancialHealthWidget + CashflowPulse, calm‑композиция.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. WHY DIFFERENT -->
+  <section class="slide" data-title="Почему мы другие">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Отличие</div><div>05</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему мы другие</span>
+    <h1 class="title mt-2">Все строят учёт. Мы строим <span class="grad">execution</span>.</h1>
+
+    <div class="vs mt-4">
+      <div class="col them">
+        <h3>Конкуренты строят</h3>
+        <ul>
+          <li><span class="material-symbols-outlined">close</span> бухгалтерию</li>
+          <li><span class="material-symbols-outlined">close</span> ERP</li>
+          <li><span class="material-symbols-outlined">close</span> формы и меню</li>
+          <li><span class="material-symbols-outlined">close</span> отчёты ради отчётов</li>
+          <li><span class="material-symbols-outlined">close</span> dashboard «посмотреть аналитику»</li>
+        </ul>
+      </div>
+      <div class="div">VS</div>
+      <div class="col us">
+        <h3>FinClick строит</h3>
+        <ul>
+          <li><span class="material-symbols-outlined">check</span> execution‑first financial workspace</li>
+          <li><span class="material-symbols-outlined">check</span> систему, которая понимает состояние бизнеса</li>
+          <li><span class="material-symbols-outlined">check</span> следующий шаг, а не очередное меню</li>
+          <li><span class="material-symbols-outlined">check</span> operational context — собран автоматически</li>
+          <li><span class="material-symbols-outlined">check</span> меньше когнитивной нагрузки на пользователя</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. KEY DIFFERENCE -->
+  <section class="slide" data-title="Главное отличие">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Главное</div><div>06</div></div>
+    <div class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Наше главное отличие</span>
+        <div class="big mt-3">
+          FinClick — <span class="grad">не dashboard</span>.<br/>
+          FinClick — execution system.
+        </div>
+        <p class="sub mt-3">
+          Пользователь не «смотрит аналитику». Пользователь
+          <strong style="color:var(--text)">закрывает операции, проводит сверку, готовит отчётность,
+          подписывает документы и управляет состоянием бизнеса</strong>
+          внутри одной operational среды.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. WHAT'S BUILT -->
+  <section class="slide" data-title="Что построено">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Архитектура</div><div>07</div></div>
+    <span class="eyebrow"><span class="dot"></span> Что уже построено</span>
+    <h1 class="title mt-2">Архитектура уровня <span class="grad">modern fintech SaaS</span>.</h1>
+    <p class="lead mt-2">Уже в продакшене — не roadmap, а работающий код.</p>
+
+    <div class="grid grid-4 mt-3">
+      <div class="card"><div class="card-title">Core</div><div class="card-h mt-1">Event‑driven</div><p class="card-sub mt-1">Доменные события, идемпотентные обработчики.</p></div>
+      <div class="card"><div class="card-title">Engine</div><div class="card-h mt-1">FinancialState</div><p class="card-sub mt-1">Состояние бизнеса как объект в системе.</p></div>
+      <div class="card"><div class="card-title">UX</div><div class="card-h mt-1">Execution Feed</div><p class="card-sub mt-1">Действия вместо меню.</p></div>
+      <div class="card"><div class="card-title">Process</div><div class="card-h mt-1">Work Packs</div><p class="card-sub mt-1">Готовые пакеты задач для закрытия периода.</p></div>
+      <div class="card"><div class="card-title">Layer</div><div class="card-h mt-1">Trust &amp; Governance</div><p class="card-sub mt-1">Аудит, роли, подписи, immutable log.</p></div>
+      <div class="card"><div class="card-title">UX</div><div class="card-h mt-1">Progressive modes</div><p class="card-sub mt-1">Calm → expert по мере зрелости пользователя.</p></div>
+      <div class="card"><div class="card-title">Account</div><div class="card-h mt-1">Multi‑organization</div><p class="card-sub mt-1">Workspace, инвайты, accountant network.</p></div>
+      <div class="card"><div class="card-title">AI</div><div class="card-h mt-1">Operational AI</div><p class="card-sub mt-1">Классификация, сверка, рекомендации.</p></div>
+      <div class="card"><div class="card-title">Reports</div><div class="card-h mt-1">Calm reporting</div><p class="card-sub mt-1">Отчётность без паники и формы из 90‑х.</p></div>
+      <div class="card"><div class="card-title">Docs</div><div class="card-h mt-1">OCR + reconciliation</div><p class="card-sub mt-1">Документы и операции — связаны.</p></div>
+      <div class="card"><div class="card-title">Security</div><div class="card-h mt-1">Session hardening</div><p class="card-sub mt-1">Cookie‑refresh, JWT, аудит входов.</p></div>
+      <div class="card"><div class="card-title">Runtime</div><div class="card-h mt-1">Stability layer</div><p class="card-sub mt-1">Spинно‑sensitive error surface, calm runtime.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. FINANCIAL STATE ENGINE + MOCK -->
+  <section class="slide" data-title="Financial State Engine">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> FinancialState Engine</div><div>08</div></div>
+    <div class="pane">
+      <div class="left">
+        <span class="eyebrow"><span class="dot"></span> Financial State Engine</span>
+        <h1 class="title mt-2">Операционное <span class="grad">состояние бизнеса</span> в реальном времени.</h1>
+        <p class="lead mt-3">
+          Система непрерывно считает не «отчёт за период», а <strong style="color:var(--text)">текущее состояние бизнеса</strong>:
+          здоровье cashflow, готовность к отчётности, полноту документов,
+          операционный риск, compliance и узкие места в исполнении.
+        </p>
+        <ul class="neat-list mt-3">
+          <li><span class="material-symbols-outlined">water_drop</span> Cashflow health — запас прочности и маржа месяца</li>
+          <li><span class="material-symbols-outlined">task_alt</span> Reporting readiness — готовность к УСН/НДС/ФСЗН</li>
+          <li><span class="material-symbols-outlined">description</span> Document completeness — закрыто ли по документам</li>
+          <li><span class="material-symbols-outlined">warning</span> Operational risk — что может сорвать период</li>
+          <li><span class="material-symbols-outlined">verified</span> Compliance status — где есть отставание</li>
+          <li><span class="material-symbols-outlined">timer</span> Execution bottlenecks — кто и что задерживает работу</li>
+        </ul>
+      </div>
+
+      <div class="right">
+        <div class="mock">
+          <div class="mock-top">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <div class="addr"><span class="material-symbols-outlined" style="font-size:14px">lock</span> app.finklik.by / state</div>
+            <span class="pill live">REAL‑TIME</span>
+          </div>
+          <div class="mock-body">
+            <div class="card">
+              <div class="between">
+                <div>
+                  <div class="card-title">Health Score</div>
+                  <div class="card-h mt-1">82 · стабильно</div>
+                </div>
+                <span class="chip emerald"><span class="material-symbols-outlined">trending_up</span> +6 за неделю</span>
+              </div>
+              <div class="bar mt-2"><i style="width: 82%"></i></div>
+            </div>
+
+            <div class="grid grid-2">
+              <div class="card">
+                <div class="card-title">Cashflow</div>
+                <div class="card-h mt-1">Запас прочности</div>
+                <div class="bar emerald mt-2"><i style="width: 78%"></i></div>
+                <p class="card-sub mt-2">Доходы покрывают расходы с комфортным запасом.</p>
+              </div>
+              <div class="card">
+                <div class="card-title">Reporting</div>
+                <div class="card-h mt-1">Готовность к отчётности</div>
+                <div class="bar mt-2"><i style="width: 64%"></i></div>
+                <p class="card-sub mt-2">2 операции в черновиках искажают период.</p>
+              </div>
+              <div class="card">
+                <div class="card-title">Documents</div>
+                <div class="card-h mt-1">Полнота документов</div>
+                <div class="bar warn mt-2"><i style="width: 52%"></i></div>
+                <p class="card-sub mt-2">3 документа в очереди OCR.</p>
+              </div>
+              <div class="card">
+                <div class="card-title">Risk</div>
+                <div class="card-h mt-1">Операционный риск</div>
+                <div class="bar emerald mt-2"><i style="width: 22%"></i></div>
+                <p class="card-sub mt-2">Низкий риск — ближайший срок в 12 днях.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">Архитектурный модуль: FinancialState engine + Health Widget.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. EXECUTION FEED + MOCK -->
+  <section class="slide" data-title="Execution Feed">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Execution Feed</div><div>09</div></div>
+    <div class="pane">
+      <div class="left">
+        <span class="eyebrow"><span class="dot"></span> Execution Feed</span>
+        <h1 class="title mt-2">Вместо меню — <span class="grad">система действий</span>.</h1>
+        <p class="lead mt-3">
+          Пользователь видит не «разделы». Он видит <strong style="color:var(--text)">что требует внимания</strong>,
+          что мешает закрытию отчётности, какие документы отсутствуют, где операции
+          ждут подтверждения, где есть риск — и какой следующий шаг.
+        </p>
+        <ul class="neat-list mt-3">
+          <li><span class="material-symbols-outlined">priority_high</span> Triaged по влиянию на состояние бизнеса</li>
+          <li><span class="material-symbols-outlined">checklist</span> Each item → завершимое действие, а не «открой раздел»</li>
+          <li><span class="material-symbols-outlined">link</span> Контекст уже собран — никакой переключательной работы</li>
+          <li><span class="material-symbols-outlined">history</span> Audit trail каждого действия — для бухгалтера и собственника</li>
+        </ul>
+      </div>
+      <div class="right">
+        <div class="mock">
+          <div class="mock-top">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <div class="addr"><span class="material-symbols-outlined" style="font-size:14px">lock</span> app.finklik.by / inbox</div>
+            <span class="pill warn">8 действий</span>
+          </div>
+          <div class="mock-body">
+            <div class="feed">
+              <div class="feed-item">
+                <div class="ico rose"><span class="material-symbols-outlined">priority_high</span></div>
+                <div>
+                  <div class="t">Закрыть период · апрель</div>
+                  <div class="m">2 операции в черновике искажают отчёт. Нужно 4 действия.</div>
+                </div>
+                <button class="btn sm">Завершить</button>
+              </div>
+              <div class="feed-item">
+                <div class="ico amber"><span class="material-symbols-outlined">document_scanner</span></div>
+                <div>
+                  <div class="t">3 документа в OCR‑очереди</div>
+                  <div class="m">Распознано · 78%. Подтвердите счета на 14 320 BYN.</div>
+                </div>
+                <button class="btn sm ghost">Открыть</button>
+              </div>
+              <div class="feed-item">
+                <div class="ico teal"><span class="material-symbols-outlined">account_balance</span></div>
+                <div>
+                  <div class="t">Сверка с банком · 17 операций</div>
+                  <div class="m">AI предложил соответствия · подтвердите 17, оспорьте 0.</div>
+                </div>
+                <button class="btn sm">Сверить</button>
+              </div>
+              <div class="feed-item">
+                <div class="ico cyan"><span class="material-symbols-outlined">receipt_long</span></div>
+                <div>
+                  <div class="t">УСН за 1 кв. · 12 дней до срока</div>
+                  <div class="m">Готовность 64%. Закройте черновики и документы.</div>
+                </div>
+                <button class="btn sm ghost">Открыть</button>
+              </div>
+              <div class="feed-item">
+                <div class="ico violet"><span class="material-symbols-outlined">groups</span></div>
+                <div>
+                  <div class="t">Бухгалтер ждёт подтверждения 2 проводок</div>
+                  <div class="m">@anna · отправлено в work pack «Апрель → Закрытие».</div>
+                </div>
+                <button class="btn sm">Согласовать</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">Скрин‑слой: Inbox / Execution Feed (real UI patterns).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. OPERATIONAL AI -->
+  <section class="slide" data-title="Operational AI">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Operational AI</div><div>10</div></div>
+    <div class="pane">
+      <div class="left">
+        <span class="eyebrow"><span class="dot"></span> AI без «AI‑шоу»</span>
+        <h1 class="title mt-2">AI встроен в workflow, <span class="grad">а не вынесен в чат</span>.</h1>
+        <p class="lead mt-3">
+          Мы не строим ассистента в углу экрана. Мы строим <strong style="color:var(--text)">operational AI</strong>,
+          который классифицирует операции, помогает сверке, формирует work packs,
+          уменьшает ручную работу и подсказывает следующий шаг —
+          там, где это действительно нужно.
+        </p>
+        <div class="grid grid-2 mt-3">
+          <div class="card"><div class="card-h">Классификация</div><p class="card-sub mt-1">Автокатегоризация операций и контрагентов.</p></div>
+          <div class="card"><div class="card-h">Сверка</div><p class="card-sub mt-1">Match операций банка и документов.</p></div>
+          <div class="card"><div class="card-h">Work packs</div><p class="card-sub mt-1">Пакеты действий: «закрыть апрель», «сдать УСН».</p></div>
+          <div class="card"><div class="card-h">Readiness flow</div><p class="card-sub mt-1">Что нужно сделать, чтобы сдать отчётность.</p></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="mock">
+          <div class="mock-top">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <div class="addr"><span class="material-symbols-outlined" style="font-size:14px">lock</span> app.finklik.by / period / 04‑2026</div>
+            <span class="pill live">AI · v1</span>
+          </div>
+          <div class="mock-body">
+            <div class="ai-block">
+              <div class="avatar">AI</div>
+              <div>
+                <div class="name">FinClick · operational AI</div>
+                <p>
+                  Выручка по месяцам выросла примерно на <strong>14%</strong> относительно предыдущего периода.
+                  Расходы стабильны, но <strong>2 операции остаются в черновиках</strong> — это искажает отчётность и прогноз.
+                  Рекомендую сразу закрыть и затем подтвердить сверку с банком: <strong>17 операций</strong> ждут.
+                </p>
+                <div class="ai-actions">
+                  <button class="btn sm">Сформировать work pack</button>
+                  <button class="btn sm ghost">Открыть черновики</button>
+                  <button class="btn sm ghost">Отложить</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Work Pack · Закрытие апреля</div>
+              <div class="stack mt-2">
+                <div class="pack"><div class="num">1</div><div><div class="t">Закрыть 2 черновика операций</div><div class="m">14 320 BYN · приход и расход</div></div><span class="chip emerald"><span class="material-symbols-outlined">check</span> готово</span></div>
+                <div class="pack"><div class="num">2</div><div><div class="t">Подтвердить 17 матчей банк ↔ документы</div><div class="m">AI предложил соответствия с уверенностью 92%</div></div><button class="btn sm">Открыть</button></div>
+                <div class="pack"><div class="num">3</div><div><div class="t">Проверить 3 документа в OCR</div><div class="m">Распознавание 78–94%</div></div><span class="chip amber"><span class="material-symbols-outlined">hourglass_top</span> в работе</span></div>
+                <div class="pack"><div class="num">4</div><div><div class="t">Сформировать отчёт УСН</div><div class="m">Готовность 64% → ожидается 96% после шагов 1‑3</div></div><span class="chip"><span class="material-symbols-outlined">lock_clock</span> заблокирован</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">AI работает на уровне процесса, а не как чат‑бот «в углу».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. WHY UX IS THE WEAPON -->
+  <section class="slide" data-title="UX">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> UX</div><div>11</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему UX — наше оружие</span>
+    <h1 class="title mt-2">Calm UI с <span class="grad">operational density</span>.</h1>
+    <p class="lead mt-3">
+      Stripe / Ramp / Linear подход в финансовой системе. Mobile‑first execution quality.
+      Минимум когнитивной нагрузки — максимум плотности нужной информации.
+    </p>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card">
+        <div class="card-title">Calm</div>
+        <div class="card-h mt-1">Спокойный интерфейс</div>
+        <p class="card-sub mt-2">Тихие цвета, понятные иерархии, осмысленные пустые состояния — не «404 form».</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Density</div>
+        <div class="card-h mt-1">Операционная плотность</div>
+        <p class="card-sub mt-2">Каждый блок несёт смысл: статус, действие, контекст. Никаких «декоративных» окон.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Predictable</div>
+        <div class="card-h mt-1">Предсказуемый runtime</div>
+        <p class="card-sub mt-2">Все ошибки — calm error surface. Пользователь никогда не остаётся «у разбитого экрана».</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Mobile</div>
+        <div class="card-h mt-1">Mobile‑first execution</div>
+        <p class="card-sub mt-2">Журнал, сверка, OCR, отчёты — полноценно с телефона, без «упрощённой версии».</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Progressive</div>
+        <div class="card-h mt-1">Прогрессивные режимы</div>
+        <p class="card-sub mt-2">Новичок видит calm‑слой, эксперт — operational density. Один продукт, два режима.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Trust</div>
+        <div class="card-h mt-1">Trust surface</div>
+        <p class="card-sub mt-2">Журнал событий, подписи, аудит — встроены в UX, а не «где‑то в логах».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. BELARUS as wedge market -->
+  <section class="slide" data-title="Беларусь">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Wedge market</div><div>12</div></div>
+    <span class="eyebrow"><span class="dot"></span> Беларусь — идеальный стартовый рынок</span>
+    <h1 class="title mt-2">Заходим не как ещё одна бухгалтерия. <span class="grad">Создаём новый стандарт</span>.</h1>
+    <div class="grid grid-2-3 mt-4" style="grid-template-columns: 1.05fr 1fr;">
+      <div class="stack">
+        <div class="card">
+          <div class="card-h">Огромный пласт SMB на журнале доходов/расходов</div>
+          <p class="card-sub mt-2">Простая модель учёта, идеально ложится на execution‑first подход.</p>
+        </div>
+        <div class="card">
+          <div class="card-h">Слабый UX у существующих решений</div>
+          <p class="card-sub mt-2">Устаревшие ERP, неудобный мобильный опыт, перегруженные интерфейсы.</p>
+        </div>
+        <div class="card">
+          <div class="card-h">Фрагментированный рынок бухгалтеров</div>
+          <p class="card-sub mt-2">Бухгалтеры готовы переходить на современный operational workspace.</p>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="card-title">Размер</div>
+          <div class="num-xl mt-2">202k+</div>
+          <p class="card-sub mt-1">ИП в Беларуси (2026). Плюс SMB — основа экономики.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Цель Wave 1</div>
+          <div class="num-xl mt-2">40–60k</div>
+          <p class="card-sub mt-1">активных пользователей, high‑frequency weekly usage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. MARKET SIZE & MODEL -->
+  <section class="slide" data-title="Рынок и модель">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Размер рынка</div><div>13</div></div>
+    <span class="eyebrow"><span class="dot"></span> Размер рынка и модель</span>
+    <h1 class="title mt-2"><span class="grad">$2–6M ARR</span> только на стартовом рынке.</h1>
+    <p class="lead mt-2">Консервативная модель — без банковских интеграций, enterprise sales и международного expansion.</p>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card">
+        <div class="card-title">Целевая база</div>
+        <div class="num-xl mt-2">10 000</div>
+        <p class="card-sub mt-1">платящих бизнесов на стартовом рынке.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">ARPU · SMB</div>
+        <div class="num-xl mt-2" style="background: linear-gradient(120deg, #34d399, #22d3ee); -webkit-background-clip: text; background-clip: text; color: transparent;">$15–30</div>
+        <p class="card-sub mt-1">в месяц на бизнес.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">ARPU · Бухгалтер</div>
+        <div class="num-xl mt-2" style="background: linear-gradient(120deg, #a78bfa, #22d3ee); -webkit-background-clip: text; background-clip: text; color: transparent;">$50–150</div>
+        <p class="card-sub mt-1">в месяц accountant workspace.</p>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="between">
+        <div>
+          <div class="card-title">Воронка модели</div>
+          <div class="card-h mt-1">202k+ ИП → 40–60k активных → 10k платящих</div>
+        </div>
+        <span class="chip teal"><span class="material-symbols-outlined">trending_up</span> high‑frequency weekly usage</span>
+      </div>
+      <div class="bar mt-3"><i style="width: 100%"></i></div>
+      <div class="row" style="margin-top:.6rem; gap:.6rem;">
+        <span class="chip ghost">TAM: 202k+ ИП</span>
+        <span class="chip ghost">SAM: 40–60k активных</span>
+        <span class="chip ghost">SOM Wave 1: 10k платящих</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14. HARD TO REPLICATE -->
+  <section class="slide" data-title="Сложно повторить">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Defensibility</div><div>14</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему нас сложно повторить</span>
+    <h1 class="title mt-2">Конкуренты повторят фичи. <span class="grad">Не повторят систему</span>.</h1>
+    <div class="vs mt-4">
+      <div class="col them">
+        <h3>Легко повторить</h3>
+        <ul>
+          <li><span class="material-symbols-outlined">close</span> таблицы и формы</li>
+          <li><span class="material-symbols-outlined">close</span> отчёты как pdf</li>
+          <li><span class="material-symbols-outlined">close</span> OCR через стандартные API</li>
+          <li><span class="material-symbols-outlined">close</span> AI‑чат в углу</li>
+        </ul>
+      </div>
+      <div class="div">VS</div>
+      <div class="col us">
+        <h3>Сложно повторить</h3>
+        <ul>
+          <li><span class="material-symbols-outlined">check</span> execution architecture</li>
+          <li><span class="material-symbols-outlined">check</span> FinancialState model</li>
+          <li><span class="material-symbols-outlined">check</span> trust / governance system</li>
+          <li><span class="material-symbols-outlined">check</span> operational UX discipline</li>
+          <li><span class="material-symbols-outlined">check</span> calm runtime behavior</li>
+          <li><span class="material-symbols-outlined">check</span> unified execution workflows</li>
+        </ul>
+      </div>
+    </div>
+    <p class="caption">Мы строим не «фичи». Мы строим operational system behavior.</p>
+  </section>
+
+  <!-- 15. MOAT -->
+  <section class="slide" data-title="Moat">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Moat</div><div>15</div></div>
+    <span class="eyebrow"><span class="dot"></span> Наш moat</span>
+    <h1 class="title mt-2">Execution layer как <span class="grad">flywheel</span>.</h1>
+    <p class="lead mt-2">
+      Чем больше бизнес работает через FinClick — тем глубже система понимает его состояние,
+      тем точнее operational recommendations, тем плотнее workflows и тем выше switching cost.
+    </p>
+
+    <div class="grid grid-4 mt-4">
+      <div class="card"><div class="card-h">+ Данные операций</div><p class="card-sub mt-1">FinancialState становится точнее с каждой неделей.</p></div>
+      <div class="card"><div class="card-h">+ Качество AI</div><p class="card-sub mt-1">Match‑rate банк/документы растёт на исторических данных.</p></div>
+      <div class="card"><div class="card-h">+ Глубина workflow</div><p class="card-sub mt-1">Work packs «обрастают» специфичными шагами клиента.</p></div>
+      <div class="card"><div class="card-h">+ Switching cost</div><p class="card-sub mt-1">Бизнес перестаёт «вести учёт» отдельно — FinClick и есть учёт.</p></div>
+    </div>
+    <p class="caption">Мы становимся system of financial execution.</p>
+  </section>
+
+  <!-- 16. TECH ADVANTAGE -->
+  <section class="slide" data-title="Технологии">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Tech</div><div>16</div></div>
+    <span class="eyebrow"><span class="dot"></span> Технологическое преимущество</span>
+    <h1 class="title mt-2">Архитектура уровня <span class="grad">post‑Series A</span> уже сегодня.</h1>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card"><div class="card-title">Core</div><div class="card-h mt-1">Event‑driven core</div></div>
+      <div class="card"><div class="card-title">State</div><div class="card-h mt-1">Deterministic state system</div></div>
+      <div class="card"><div class="card-title">Orchestration</div><div class="card-h mt-1">Operational orchestration</div></div>
+      <div class="card"><div class="card-title">UX</div><div class="card-h mt-1">Progressive UX engine</div></div>
+      <div class="card"><div class="card-title">Audit</div><div class="card-h mt-1">Audit & governance layer</div></div>
+      <div class="card"><div class="card-title">Security</div><div class="card-h mt-1">Production‑grade sessions</div></div>
+      <div class="card"><div class="card-title">Trust</div><div class="card-h mt-1">Trust surface system</div></div>
+      <div class="card"><div class="card-title">Errors</div><div class="card-h mt-1">Calm error architecture</div></div>
+      <div class="card"><div class="card-title">Runtime</div><div class="card-h mt-1">Stable runtime layer</div></div>
+    </div>
+
+    <p class="caption">Это архитектура, которую обычно строят команды после Series A. У нас она уже в коде.</p>
+  </section>
+
+  <!-- 17. WHY NOW -->
+  <section class="slide" data-title="Почему сейчас">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Why now</div><div>17</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему сейчас</span>
+    <h1 class="title mt-2">Окно для <span class="grad">нового поколения</span> financial OS.</h1>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">workspaces</span> SMB устали от ERP</div><p class="card-sub mt-1">Им нужна одна операционная среда, а не 5 систем и таблица.</p></div>
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">smart_toy</span> AI меняет ожидания</div><p class="card-sub mt-1">Пользователь ждёт, что система «понимает», а не только «считает».</p></div>
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">groups</span> Бухгалтер ≠ оператор</div><p class="card-sub mt-1">Бухгалтерия становится operational layer бизнеса.</p></div>
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">smartphone</span> Mobile стал нормой</div><p class="card-sub mt-1">Учёт «только с десктопа» — мёртвая парадигма.</p></div>
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">spa</span> Бизнес хочет меньше хаоса</div><p class="card-sub mt-1">Спрос на calm‑интерфейс и предсказуемость растёт.</p></div>
+      <div class="card"><div class="card-h"><span class="material-symbols-outlined" style="vertical-align:-4px">timeline</span> Окно открыто 12–24 мес</div><p class="card-sub mt-1">Старые игроки слишком инертны, чтобы пересобрать архитектуру.</p></div>
+    </div>
+  </section>
+
+  <!-- 18. STRATEGY -->
+  <section class="slide" data-title="Стратегия">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Strategy</div><div>18</div></div>
+    <span class="eyebrow"><span class="dot"></span> Наша стратегия</span>
+    <h1 class="title mt-2">Три этапа от <span class="grad">wedge market</span> до execution platform.</h1>
+
+    <div class="timeline mt-4">
+      <div class="step">
+        <div class="ph">Этап 1 · 0–12 мес</div>
+        <h4>Wedge: Беларусь SMB + бухгалтеры</h4>
+        <p>Журнал доходов/расходов, OCR, FinancialState, execution feed, work packs, accountant workspace.</p>
+        <div class="row-wrap mt-2">
+          <span class="chip teal">v0.4 → v1.0</span>
+          <span class="chip cyan">10k платящих бизнесов</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="ph">Этап 2 · 12–24 мес</div>
+        <h4>Полная отчётность + банк</h4>
+        <p>ЭЦП workflows, отчётность УСН/НДС/ФСЗН end‑to‑end, банковские интеграции, полный execution цикл.</p>
+        <div class="row-wrap mt-2">
+          <span class="chip violet">расширение wedge</span>
+          <span class="chip emerald">retention &gt; 90%</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="ph">Этап 3 · 24–36 мес</div>
+        <h4>Execution platform</h4>
+        <p>Multi‑company orchestration, network бухгалтеров, financial operations network, выход за пределы Беларуси.</p>
+        <div class="row-wrap mt-2">
+          <span class="chip amber">СНГ rollout</span>
+          <span class="chip cyan">platform play</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 19. BUILT TODAY -->
+  <section class="slide" data-title="Сегодня">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Today</div><div>19</div></div>
+    <span class="eyebrow"><span class="dot"></span> Что уже есть сегодня</span>
+    <h1 class="title mt-2">Мы не «строим идею». Мы строим <span class="grad">готовую платформу</span>.</h1>
+
+    <div class="grid grid-4 mt-4">
+      <div class="card"><div class="card-title">Frontend</div><div class="card-h mt-1">Production‑grade</div><p class="card-sub mt-1">React + TS, calm UX, premium components.</p></div>
+      <div class="card"><div class="card-title">Backend</div><div class="card-h mt-1">Operational core</div><p class="card-sub mt-1">FastAPI, async, event‑driven слой.</p></div>
+      <div class="card"><div class="card-title">Security</div><div class="card-h mt-1">Hardened sessions</div><p class="card-sub mt-1">JWT, cookie‑refresh, аудит, CORS/host policy.</p></div>
+      <div class="card"><div class="card-title">Reports</div><div class="card-h mt-1">Calm reporting</div><p class="card-sub mt-1">Workflow готовности и сдачи.</p></div>
+      <div class="card"><div class="card-title">Workspace</div><div class="card-h mt-1">Multi‑org</div><p class="card-sub mt-1">Инвайты, роли, accountant scope.</p></div>
+      <div class="card"><div class="card-title">Mobile</div><div class="card-h mt-1">Operational UX</div><p class="card-sub mt-1">Полноценный мобильный поток.</p></div>
+      <div class="card"><div class="card-title">Runtime</div><div class="card-h mt-1">Scalable</div><p class="card-sub mt-1">Render + Postgres, миграции Alembic.</p></div>
+      <div class="card"><div class="card-title">AI</div><div class="card-h mt-1">Operational engine</div><p class="card-sub mt-1">Класс., сверка, рекомендации, work packs.</p></div>
+    </div>
+  </section>
+
+  <!-- 20. VISION -->
+  <section class="slide" data-title="Видение">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Vision</div><div>20</div></div>
+    <div class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Видение</span>
+        <div class="big mt-3">
+          Система, через которую SMB <span class="grad">управляет бизнесом каждый день</span>.
+        </div>
+        <p class="sub mt-3">
+          Не «ведёт учёт» и не «сдаёт отчётность» — а
+          <strong style="color:var(--text)">управляет операциями, принимает решения,
+          понимает состояние бизнеса и выполняет работу быстрее</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 21. WHY WE WIN -->
+  <section class="slide" data-title="Почему победим">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Why we win</div><div>21</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему мы победим</span>
+    <h1 class="title mt-2">Мы думаем как <span class="grad">fintech platform</span>, а не как ERP.</h1>
+
+    <div class="grid grid-2 mt-4">
+      <div class="card">
+        <ul class="neat-list">
+          <li><span class="material-symbols-outlined">check</span> execution‑first UX, а не «формы и меню»</li>
+          <li><span class="material-symbols-outlined">check</span> AI как часть workflow, а не «помощник в углу»</li>
+          <li><span class="material-symbols-outlined">check</span> calm runtime — никаких корпоративных «ошибок»</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="neat-list">
+          <li><span class="material-symbols-outlined">check</span> trust + governance с первого дня</li>
+          <li><span class="material-symbols-outlined">check</span> один продукт для бизнеса и бухгалтера</li>
+          <li><span class="material-symbols-outlined">check</span> архитектура, которую сложно догнать формами</li>
+        </ul>
+      </div>
+    </div>
+    <p class="caption">Спокойно, быстро и без enterprise‑хаоса.</p>
+  </section>
+
+  <!-- 22. HARD TO CATCH UP -->
+  <section class="slide" data-title="Догнать сложно">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Catch up</div><div>22</div></div>
+    <span class="eyebrow"><span class="dot"></span> Почему сейчас нас трудно догнать</span>
+    <h1 class="title mt-2">Конкуренты <span class="grad">оптимизируют формы</span>. Мы строим execution architecture.</h1>
+
+    <div class="grid grid-3 mt-4">
+      <div class="card"><div class="card-title">Чтобы повторить</div><div class="card-h mt-1">недостаточно</div>
+        <ul class="neat-list mt-2">
+          <li><span class="material-symbols-outlined" style="color:var(--rose)">close</span> добавить AI‑чат</li>
+          <li><span class="material-symbols-outlined" style="color:var(--rose)">close</span> обновить UI</li>
+          <li><span class="material-symbols-outlined" style="color:var(--rose)">close</span> прикрутить OCR</li>
+        </ul>
+      </div>
+      <div class="card"><div class="card-title">Нужно повторить</div><div class="card-h mt-1">всё, что ниже</div>
+        <ul class="neat-list mt-2">
+          <li><span class="material-symbols-outlined">check</span> event‑driven core</li>
+          <li><span class="material-symbols-outlined">check</span> FinancialState system</li>
+          <li><span class="material-symbols-outlined">check</span> operational execution feed</li>
+          <li><span class="material-symbols-outlined">check</span> trust / governance engine</li>
+          <li><span class="material-symbols-outlined">check</span> runtime stability layer</li>
+          <li><span class="material-symbols-outlined">check</span> progressive UX architecture</li>
+        </ul>
+      </div>
+      <div class="card"><div class="card-title">Сколько это занимает</div><div class="num-xl mt-2">3–5</div><p class="card-sub mt-2">лет системной инженерии — даже если команда уже есть.</p></div>
+    </div>
+  </section>
+
+  <!-- 23. SCALE -->
+  <section class="slide" data-title="Масштабирование">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Scale</div><div>23</div></div>
+    <span class="eyebrow"><span class="dot"></span> Потенциал масштабирования</span>
+    <h1 class="title mt-2">После Беларуси платформа масштабируется как <span class="grad">financial OS</span>.</h1>
+
+    <div class="grid grid-4 mt-4">
+      <div class="card"><div class="card-h">СНГ SMB</div><p class="card-sub mt-1">Схожие модели учёта, общая ментальная модель пользователя.</p></div>
+      <div class="card"><div class="card-h">Accountant networks</div><p class="card-sub mt-1">Бухгалтеры приводят клиентов — distribution flywheel.</p></div>
+      <div class="card"><div class="card-h">Digital reporting</div><p class="card-sub mt-1">Интеграции с порталами и ЭЦП — operational standard.</p></div>
+      <div class="card"><div class="card-h">Financial ops network</div><p class="card-sub mt-1">Платформа эффектов: бизнес ↔ бухгалтер ↔ контрагент.</p></div>
+    </div>
+    <p class="caption">Платформа изначально строится как scalable Financial Operating System.</p>
+  </section>
+
+  <!-- 24. FINAL -->
+  <section class="slide" data-title="Финал">
+    <div class="slide-header"><div class="l"><span class="mark">F</span> Финал</div><div>24</div></div>
+    <div class="hero">
+      <div>
+        <div class="logo center" style="justify-content:center"><span class="mark">F</span> FinClick</div>
+        <div class="big mt-3">
+          The <span class="grad">Financial Operating System</span> for SMB.
+        </div>
+        <p class="sub mt-3">
+          Execution‑first. Calm by design. Built for real business operations.
+        </p>
+        <div class="row-wrap mt-4" style="justify-content:center">
+          <span class="chip teal"><span class="material-symbols-outlined">bolt</span> execution layer</span>
+          <span class="chip cyan"><span class="material-symbols-outlined">activity_zone</span> FinancialState</span>
+          <span class="chip violet"><span class="material-symbols-outlined">smart_toy</span> operational AI</span>
+          <span class="chip emerald"><span class="material-symbols-outlined">verified_user</span> trust &amp; governance</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <div class="left">
+    <button id="prev"><span class="material-symbols-outlined">chevron_left</span> Назад</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="right">
+    <span class="micro" id="counter" style="margin-right:.5rem">01 / 24</span>
+    <button id="next">Дальше <span class="material-symbols-outlined">chevron_right</span></button>
+  </div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsEl = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  slides.forEach((_, idx) => {
+    const d = document.createElement('span');
+    d.className = 'd' + (idx === 0 ? ' active' : '');
+    d.title = slides[idx].dataset.title || ('Slide ' + (idx + 1));
+    d.addEventListener('click', () => go(idx));
+    dotsEl.appendChild(d);
+  });
+
+  function pad(n) { return n.toString().padStart(2, '0'); }
+
+  function go(idx) {
+    i = Math.max(0, Math.min(slides.length - 1, idx));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    Array.from(dotsEl.children).forEach((d, k) => d.classList.toggle('active', k === i));
+    counter.textContent = pad(i + 1) + ' / ' + pad(slides.length);
+    progress.style.width = (((i + 1) / slides.length) * 100) + '%';
+  }
+
+  document.getElementById('prev').addEventListener('click', () => go(i - 1));
+  document.getElementById('next').addEventListener('click', () => go(i + 1));
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(i + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End')  go(slides.length - 1);
+  });
+
+  // initial
+  go(0);
+</script>
+
+</body>
+</html>

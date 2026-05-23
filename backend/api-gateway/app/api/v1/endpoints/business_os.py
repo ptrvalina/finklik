@@ -42,6 +42,7 @@ from app.schemas.business_os import (
     WorkflowActionResponse,
 )
 from app.services.business_state_service import compute_business_state
+from app.services.financial_state_service import refresh_financial_state_audit
 from app.services.structured_ai_analysis import analyze_transaction_ai
 from app.events.emit import (
     emit_ai_suggestion_recorded,
@@ -292,6 +293,7 @@ async def create_reconciliation_match(
             confidence=float(body.confidence),
             actor="user",
         )
+    await refresh_financial_state_audit(db, oid)
     return row
 
 

@@ -34,10 +34,22 @@
     --fc-motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --fc-motion-snappy: cubic-bezier(0.34, 1.02, 0.68, 1);
     --fc-duration-fast: 160ms;
-    --fc-duration-medium: 260ms;
-    --fc-blur-glass: 20px;
+    --fc-duration-medium: 240ms;
+    --fc-duration-slow: 320ms;
+    --fc-blur-glass: 18px;
+    --fc-blur-modal: 16px;
     --fc-radius-xl: 1.5rem;
-    --fc-glow-emerald: 0 0 40px -8px rgba(16, 185, 129, 0.35);
+    --fc-radius-lg: 1.25rem;
+    /* Вертикальный ритм секций (px → rem) */
+    --fc-space-section-xs: 1.25rem;
+    --fc-space-section-sm: 1.5rem;
+    --fc-space-section-md: 2rem;
+    --fc-space-section-lg: 2.25rem;
+    --fc-toolbar-y: 0.625rem;
+    --fc-toolbar-y-sm: 0.75rem;
+    --fc-table-cell-y: 0.625rem;
+    --fc-table-cell-x: 0.875rem;
+    --fc-glow-emerald: 0 0 36px -10px rgba(16, 185, 129, 0.28);
   }
 
   .dark {
@@ -71,7 +83,7 @@
     @apply bg-canvas text-on-surface antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 15px;
-    line-height: 1.58;
+    line-height: 1.55;
     letter-spacing: -0.011em;
     height: 100%;
     overflow: hidden;
@@ -112,65 +124,68 @@
   /** Единый скрим для AppModal, WorkflowSidePanel и fullscreen-потоков */
   .fc-modal-backdrop {
     background-color: rgba(3, 9, 20, 0.78);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(var(--fc-blur-modal)) saturate(1.15);
   }
-  @supports (backdrop-filter: blur(14px)) {
+  @supports (backdrop-filter: blur(1px)) {
     .fc-modal-backdrop {
-      background-color: rgba(3, 9, 20, 0.65);
+      background-color: rgba(3, 9, 20, 0.64);
     }
   }
   .btn-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-7 py-2.5
            font-headline text-sm font-semibold tracking-wide text-on-primary
            bg-gradient-to-br from-emerald-500 via-primary to-[#007a5a]
-           shadow-[0_2px_12px_rgba(16,185,129,0.35),0_12px_32px_-8px_rgba(0,77,64,0.35)]
-           ring-1 ring-white/[0.2]
-           transition-all duration-300 ease-smooth
-           hover:brightness-110 hover:shadow-[0_4px_20px_rgba(16,185,129,0.45),0_16px_40px_-8px_rgba(0,77,64,0.4)]
-           active:scale-[0.98] active:brightness-[0.98]
-           disabled:cursor-not-allowed disabled:opacity-50;
+           shadow-[0_1px_10px_rgba(16,185,129,0.28),0_10px_28px_-10px_rgba(0,77,64,0.28)]
+           ring-1 ring-white/[0.18]
+           transition-[transform,box-shadow,filter,background-color] duration-[var(--fc-duration-fast)] ease-premium
+           hover:brightness-[1.06] hover:shadow-[0_3px_16px_rgba(16,185,129,0.34),0_14px_36px_-12px_rgba(0,77,64,0.32)]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
+           active:scale-[0.985] active:brightness-[0.99]
+           disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:brightness-100 disabled:hover:shadow-[0_1px_10px_rgba(16,185,129,0.28),0_10px_28px_-10px_rgba(0,77,64,0.28)];
   }
   .btn-secondary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-outline/90 bg-surface/90 px-5 py-2
            text-sm font-semibold text-on-surface shadow-xs backdrop-blur-md
-           transition-all duration-300 ease-smooth
+           transition-[border-color,background-color,box-shadow,transform] duration-[var(--fc-duration-fast)] ease-premium
            hover:border-primary/25 hover:bg-surface-container-low hover:shadow-soft
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
            dark:border-white/[0.1] dark:bg-white/[0.04] dark:hover:border-emerald-400/25 dark:hover:bg-white/[0.07];
   }
   .btn-ghost {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-3 py-2
            text-sm font-medium text-on-surface-variant
-           transition-colors duration-200 ease-smooth
-           hover:bg-surface-container-high hover:text-on-surface;
+           transition-[background-color,color] duration-[var(--fc-duration-fast)] ease-premium
+           hover:bg-surface-container-high hover:text-on-surface
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))];
   }
   .card {
-    @apply rounded-3xl border border-outline/70 bg-surface/95 shadow-card backdrop-blur-md transition-all duration-300 ease-out
+    @apply rounded-3xl border border-outline/70 bg-surface/95 shadow-card backdrop-blur-md transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
            dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.72)];
   }
   .card:hover {
-    box-shadow: 0 20px 56px -24px rgba(16, 185, 129, 0.14), 0 8px 24px -12px rgba(0, 77, 64, 0.1);
+    box-shadow: 0 18px 52px -22px rgba(16, 185, 129, 0.12), 0 6px 20px -10px rgba(0, 77, 64, 0.08);
   }
   .dark .card:hover {
     border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 28px 72px -28px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(16, 185, 129, 0.12);
+    box-shadow: 0 26px 68px -28px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(16, 185, 129, 0.1);
   }
   .card-elevated {
-    @apply rounded-3xl border border-outline/60 bg-surface shadow-[0_16px_48px_-20px_rgba(0,77,64,0.12),0_4px_16px_-4px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-300 ease-out
-           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.55)] dark:shadow-[0_28px_80px_-32px_rgba(0,0,0,0.65)];
+    @apply rounded-3xl border border-outline/60 bg-surface shadow-[0_14px_44px_-18px_rgba(0,77,64,0.11),0_3px_14px_-4px_rgba(0,0,0,0.05)] backdrop-blur-xl transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
+           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.55)] dark:shadow-[0_26px_76px_-30px_rgba(0,0,0,0.6)];
   }
   .card-elevated:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 24px 64px -28px rgba(16, 185, 129, 0.18), 0 12px 32px -16px rgba(0, 77, 64, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 20px 58px -26px rgba(16, 185, 129, 0.15), 0 10px 28px -14px rgba(0, 77, 64, 0.12);
   }
   .dark .card-elevated:hover {
     border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 36px 96px -36px rgba(0, 0, 0, 0.75), 0 0 60px -20px rgba(16, 185, 129, 0.08);
+    box-shadow: 0 32px 88px -34px rgba(0, 0, 0, 0.68), 0 0 48px -20px rgba(16, 185, 129, 0.07);
   }
   .input {
     @apply w-full min-h-11 rounded-2xl border border-outline/90 bg-surface/95 px-4 py-2.5 text-sm text-on-surface
-           shadow-xs backdrop-blur-sm transition-shadow duration-200 ease-smooth
-           placeholder:text-on-surface-variant/65
-           focus:border-emerald-500/45 focus:outline-none focus:ring-2 focus:ring-emerald-500/20
+           shadow-xs backdrop-blur-sm transition-[border-color,box-shadow,ring] duration-[var(--fc-duration-fast)] ease-premium
+           placeholder:text-on-surface-variant/60
+           focus:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-500/20
            dark:border-white/[0.1] dark:bg-[rgb(var(--color-surface)/0.5)];
   }
   .input[type='date'],
@@ -193,20 +208,20 @@
     @apply mb-1.5 block font-label text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant;
   }
   .metric-blade {
-    @apply relative overflow-hidden rounded-3xl border border-outline/60 bg-surface/90 p-6 shadow-[0_12px_40px_-24px_rgba(0,77,64,0.18)] backdrop-blur-xl transition-all duration-300 ease-smooth
-           hover:border-emerald-400/25 hover:shadow-[0_20px_56px_-28px_rgba(16,185,129,0.22)]
+    @apply relative overflow-hidden rounded-3xl border border-outline/60 bg-surface/90 p-6 shadow-[0_12px_40px_-24px_rgba(0,77,64,0.16)] backdrop-blur-xl transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
+           hover:border-emerald-400/25 hover:shadow-[0_18px_52px_-26px_rgba(16,185,129,0.18)]
            dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.5)] dark:hover:border-emerald-400/20;
   }
   .glass-panel {
-    backdrop-filter: blur(24px) saturate(1.35);
+    backdrop-filter: blur(var(--fc-blur-glass)) saturate(1.22);
     background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 12px 48px rgb(0 77 64 / 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    box-shadow: 0 10px 40px rgb(0 77 64 / 0.07);
   }
   .dark .glass-panel {
-    background: rgba(12, 24, 36, 0.72);
+    background: rgba(12, 24, 36, 0.74);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 24px 80px rgb(0 0 0 / 0.45);
+    box-shadow: 0 22px 72px rgb(0 0 0 / 0.42);
   }
   /* Main scroll region — atmospheric canvas + subtle noise */
   .fc-main-atmosphere {
@@ -261,22 +276,24 @@
     bottom: 0;
     z-index: 10;
     background: rgb(var(--color-surface) / 0.88);
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(var(--fc-blur-modal)) saturate(1.08);
+    -webkit-backdrop-filter: blur(var(--fc-blur-modal)) saturate(1.08);
     border-top: 1px solid rgb(var(--color-outline) / 0.55);
     padding-top: 0.75rem;
     padding-bottom: max(0.75rem, var(--safe-bottom));
   }
   .page-heading {
-    @apply font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-[1.75rem];
-    letter-spacing: -0.035em;
-    line-height: 1.15;
+    @apply font-headline text-2xl font-semibold tracking-tight text-on-surface sm:text-[1.75rem] sm:font-bold;
+    letter-spacing: -0.032em;
+    line-height: 1.18;
   }
   .page-heading-brand {
-    @apply font-headline text-3xl font-bold tracking-tight text-primary sm:text-3xl;
-    letter-spacing: -0.04em;
+    @apply font-headline text-3xl font-semibold tracking-tight text-primary sm:text-3xl sm:font-bold;
+    letter-spacing: -0.038em;
+    line-height: 1.12;
   }
   .page-section {
-    @apply rounded-3xl border border-outline/55 bg-surface/90 p-4 shadow-[0_8px_32px_-16px_rgba(0,77,64,0.12)] backdrop-blur-xl ring-1 ring-emerald-500/[0.05] transition-all duration-300 ease-out sm:p-6
+    @apply rounded-3xl border border-outline/55 bg-surface/90 p-4 shadow-[0_8px_32px_-16px_rgba(0,77,64,0.12)] backdrop-blur-xl ring-1 ring-emerald-500/[0.05] transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium sm:p-6
            dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)] dark:ring-emerald-400/[0.06];
   }
   .page-section:hover {
@@ -290,13 +307,13 @@
     @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center;
   }
   .empty-state {
-    @apply p-12 text-center text-on-surface-variant;
+    @apply px-4 py-10 text-center text-on-surface-variant sm:px-8 sm:py-14;
   }
   .table-head-row {
-    @apply bg-surface-container-high/40 text-[10px] font-label uppercase tracking-widest text-on-surface-variant backdrop-blur-sm;
+    @apply bg-surface-container-high/40 py-2.5 text-[10px] font-label font-semibold uppercase leading-none tracking-widest text-on-surface-variant backdrop-blur-sm;
   }
   .fc-page-shell {
-    @apply mx-auto max-w-7xl space-y-6 sm:space-y-9 lg:space-y-10;
+    @apply mx-auto max-w-7xl space-y-6 sm:space-y-8 lg:space-y-9;
   }
   /* Асимметрия премиум-сетки: чуть больше воздуха слева на широких экранах */
   @media (min-width: 1024px) {
@@ -352,12 +369,11 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   transition:
     background-color var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease),
-    box-shadow var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease),
-    transform var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease);
+    box-shadow var(--fc-duration-fast, 160ms) var(--fc-motion-smooth, ease);
 }
 .fc-premium-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.042);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .fc-premium-table tbody tr:last-child {
   border-bottom: none;
@@ -373,8 +389,8 @@
   top: 0;
   z-index: 2;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--fc-blur-modal)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--fc-blur-modal)) saturate(1.1);
 }
 html:not(.dark) .fc-premium-table--sticky thead th {
   box-shadow: 0 1px 0 rgba(0, 77, 64, 0.08);
@@ -394,6 +410,20 @@ html:not(.dark) .fc-premium-table tbody tr {
 }
 html:not(.dark) .fc-premium-table tbody tr:hover {
   background: rgba(16, 185, 129, 0.055);
+}
+
+/* Таблица + массовый режим — единая поверхность без «отдельной зоны» */
+.fc-datatable-shell--bulk {
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.1);
+}
+html:not(.dark) .fc-datatable-shell--bulk {
+  box-shadow: inset 0 0 0 1px rgba(0, 77, 64, 0.12);
+}
+
+/* Журнал (десктоп): снижение стоимости отрисовки длинных списков */
+.accounting-journal-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 44px;
 }
 
 /* Экраны входа / регистрации — тот же атмосферный язык, что и основное приложение */
@@ -453,7 +483,7 @@ html:not(.dark) .fc-premium-table tbody tr:hover {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: fc-shimmer-slide 1.25s ease-in-out infinite;
+  animation: fc-shimmer-slide 1.12s ease-in-out infinite;
 }
 .dark .fc-skeleton-shimmer::after {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);

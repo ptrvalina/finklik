@@ -1,4 +1,5 @@
 """Team management: invite users, list org members, manage roles."""
+import json
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -15,6 +16,11 @@ from app.core.security import hash_password
 from app.models.user import User, Organization, Invitation, UserOrganizationMembership
 from app.models.bank_account import BankAccount
 from app.services.email_service import send_invite_email
+from app.events.emit import (
+    emit_business_profile_completed,
+    emit_oked_selected,
+    emit_tax_mode_selected,
+)
 
 router = APIRouter(
     prefix="/team",
@@ -62,6 +68,27 @@ class OrganizationRequisitesPatch(BaseModel):
     ceo_name: str | None = None
 
 
+class BusinessProfileOut(BaseModel):
+    legal_form: str
+    tax_regime: str
+    oked_primary: str | None = None
+    oked_secondary: list[str] = Field(default_factory=list)
+    employee_count_band: str | None = None
+    business_profile_completed: bool = False
+
+
+class BusinessProfilePatch(BaseModel):
+    legal_form: str | None = Field(default=None, max_length=20)
+    tax_regime: str | None = Field(default=None, max_length=32)
+    oked_primary: str | None = Field(default=None, max_length=12)
+    oked_secondary: list[str] | None = None
+    employee_count_band: str | None = Field(
+        default=None,
+        pattern="^(none|up_to_5|up_to_20|over_20)$",
+    )
+    mark_completed: bool = False
+
+
 def _tax_regime_label(code: str) -> str:
     m = {
         "usn_no_vat": "УСН без НДС",
@@ -73,11 +100,90 @@ def _tax_regime_label(code: str) -> str:
 
 def _legal_form_label(v: str) -> str:
     x = (v or "").strip().lower()
-    if x == "ip":
-        return "ИП"
-    if x == "ooo":
-        return "ООО"
-    return v or "—"
+    labels = {
+        "ip": "ИП",
+        "ooo": "ООО",
+        "odo": "ОДО",
+        "chup": "ЧУП",
+        "self_employed": "Самозанятый",
+    }
+    return labels.get(x, v or "—")
+
+
+def _parse_oked_secondary(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return [str(x) for x in data if x]
+    except json.JSONDecodeError:
+        pass
+    return []
+
+
+@router.get("/organization/business-profile", response_model=BusinessProfileOut)
+async def get_business_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    oid = workspace_organization_id(current_user)
+    org = (await db.execute(select(Organization).where(Organization.id == oid))).scalar_one_or_none()
+    if not org:
+        raise HTTPException(404, "Организация не найдена")
+    return BusinessProfileOut(
+        legal_form=org.legal_form,
+        tax_regime=org.tax_regime,
+        oked_primary=org.oked_primary,
+        oked_secondary=_parse_oked_secondary(org.oked_secondary_json),
+        employee_count_band=org.employee_count_band,
+        business_profile_completed=org.business_profile_completed_at is not None,
+    )
+
+
+@router.patch("/organization/business-profile", response_model=BusinessProfileOut)
+async def patch_business_profile(
+    body: BusinessProfilePatch,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.role not in ("owner", "admin"):
+        raise HTTPException(403, "Только владелец может изменять профиль организации")
+    oid = workspace_organization_id(current_user)
+    org = (await db.execute(select(Organization).where(Organization.id == oid))).scalar_one_or_none()
+    if not org:
+        raise HTTPException(404, "Организация не найдена")
+
+    if body.legal_form is not None:
+        org.legal_form = body.legal_form.strip().lower()
+    if body.tax_regime is not None:
+        org.tax_regime = body.tax_regime.strip().lower()
+        await emit_tax_mode_selected(
+            db, oid, tax_regime=org.tax_regime, legal_form=org.legal_form, actor=str(current_user.id)
+        )
+    if body.oked_primary is not None:
+        org.oked_primary = body.oked_primary.strip()
+        secondary = body.oked_secondary if body.oked_secondary is not None else _parse_oked_secondary(org.oked_secondary_json)
+        org.oked_secondary_json = json.dumps(secondary, ensure_ascii=False)
+        await emit_oked_selected(db, oid, oked_primary=org.oked_primary, oked_secondary=secondary, actor=str(current_user.id))
+    elif body.oked_secondary is not None:
+        org.oked_secondary_json = json.dumps(body.oked_secondary, ensure_ascii=False)
+    if body.employee_count_band is not None:
+        org.employee_count_band = body.employee_count_band
+    if body.mark_completed:
+        org.business_profile_completed_at = datetime.now(timezone.utc)
+        await emit_business_profile_completed(db, oid, actor=str(current_user.id))
+
+    await db.commit()
+    await db.refresh(org)
+    return BusinessProfileOut(
+        legal_form=org.legal_form,
+        tax_regime=org.tax_regime,
+        oked_primary=org.oked_primary,
+        oked_secondary=_parse_oked_secondary(org.oked_secondary_json),
+        employee_count_band=org.employee_count_band,
+        business_profile_completed=org.business_profile_completed_at is not None,
+    )
 
 
 def _build_requisites_text(org: Organization, banks: list[BankAccount], director_fallback: str | None) -> bytes:
@@ -289,11 +395,13 @@ async def accept_invitation(
     )
     await db.flush()
 
-    from app.core.security import create_access_token, create_refresh_token
+    from app.core.security import create_access_token, create_refresh_token_pair
     from app.core.config import settings
 
     access_token = create_access_token(str(user.id), str(user.organization_id), user.role)
-    refresh_token = create_refresh_token(str(user.id))
+    refresh_token, jti = create_refresh_token_pair(str(user.id))
+    user.refresh_token_jti = jti
+    await db.flush()
 
     return {
         "access_token": access_token,

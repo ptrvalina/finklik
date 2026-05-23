@@ -1,4 +1,12 @@
 from app.models.user import Organization, User, Invitation, UserOrganizationMembership
+from app.models.oked_reference import OkedReference
+from app.models.accounting import (
+    AmortizationEntry,
+    ChartAccount,
+    ChartSubaccount,
+    FixedAsset,
+    LedgerEntry,
+)
 from app.models.collaboration import OperationalInboxItem, ApprovalRequest, CollaborationComment
 from app.models.transaction import Transaction
 from app.models.employee import Employee, SalaryRecord, CalendarEvent, AuditLog
@@ -16,6 +24,7 @@ from app.models.automation_policy import AutomationPolicy
 from app.models.user_note import UserNote
 from app.models.calendar_reminder import CalendarReminderDelivery
 from app.models.domain_event import DomainEvent
+from app.models.signing_request import SigningRequest, SigningSession
 from app.models.state_audit import FinancialStateAuditEntry
 from app.models.business_os import (
     AIMemoryEntry,
@@ -28,7 +37,8 @@ from app.models.business_os import (
 )
 
 __all__ = [
-    "Organization", "User", "Invitation", "UserOrganizationMembership",
+    "Organization", "User", "Invitation", "UserOrganizationMembership", "OkedReference",
+    "ChartAccount", "ChartSubaccount", "LedgerEntry", "FixedAsset", "AmortizationEntry",
     "OperationalInboxItem", "ApprovalRequest", "CollaborationComment",
     "Transaction",
     "Employee", "SalaryRecord", "CalendarEvent", "AuditLog",
@@ -49,4 +59,6 @@ __all__ = [
     "WorkflowAction",
     "DomainEvent",
     "FinancialStateAuditEntry",
+    "SigningRequest",
+    "SigningSession",
 ]

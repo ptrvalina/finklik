@@ -42,6 +42,8 @@ class ScannedDocument(Base):
     ocr_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsed_data: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence: Mapped[int] = mapped_column(Integer, default=0)
+    requires_review: Mapped[bool] = mapped_column(default=False)
+    field_confidence_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     transaction_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     #: Жизненный цикл документа ОС: uploaded | parsed | matched | confirmed

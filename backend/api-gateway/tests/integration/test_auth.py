@@ -16,6 +16,55 @@ async def test_health(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_health_live(client: AsyncClient):
+    resp = await client.get("/health/live")
+    assert resp.status_code == 200
+    assert resp.json().get("status") == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_ready(client: AsyncClient):
+    resp = await client.get("/health/ready")
+    assert resp.status_code == 200
+    assert resp.json().get("status") == "ready"
+
+
+@pytest.mark.asyncio
+async def test_refresh_rejects_reused_token_after_rotation(client: AsyncClient):
+    """После ротации refresh повтор со старым jti даёт 401 (защита от повторного использования)."""
+    suffix = int(time.time() * 1000) % 999999999
+    email = f"reuse_{suffix}@example.com"
+    password = "ReusePass1"
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Reuse Test",
+            "org_name": f"ReuseOrg {suffix}",
+            "org_unp": str(suffix).zfill(9)[:9],
+        },
+    )
+    login = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    assert login.status_code == 200
+    first_refresh = login.json()["refresh_token"]
+
+    client.cookies.set("refresh_token", first_refresh)
+    r1 = await client.post("/api/v1/auth/refresh", json={})
+    assert r1.status_code == 200
+    second_refresh = r1.json()["refresh_token"]
+    assert second_refresh != first_refresh
+
+    client.cookies.set("refresh_token", first_refresh)
+    r_stale = await client.post("/api/v1/auth/refresh", json={})
+    assert r_stale.status_code == 401
+
+    client.cookies.set("refresh_token", second_refresh)
+    r2 = await client.post("/api/v1/auth/refresh", json={})
+    assert r2.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_register_new_user(client: AsyncClient):
     suffix = int(time.time() * 1000) % 999999999
     resp = await client.post("/api/v1/auth/register", json={
@@ -179,3 +228,64 @@ async def test_jwt_query_param_is_rejected(client: AsyncClient):
     resp = await client.get("/health?access_token=fake")
     assert resp.status_code == 400
     assert "JWT" in str(resp.json().get("detail", ""))
+
+
+@pytest.mark.asyncio
+async def test_logout_invalidates_refresh_chain(client: AsyncClient):
+    suffix = int(time.time() * 1000) % 999999999
+    email = f"logout_{suffix}@example.com"
+    password = "LogoutPass1"
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Logout Test",
+            "org_name": f"LogoutOrg {suffix}",
+            "org_unp": str(suffix).zfill(9)[:9],
+        },
+    )
+    login = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    assert login.status_code == 200
+    rt = login.json()["refresh_token"]
+    client.cookies.set("refresh_token", rt)
+
+    out = await client.post("/api/v1/auth/logout")
+    assert out.status_code == 200
+    assert out.json().get("ok") is True
+
+    client.cookies.set("refresh_token", rt)
+    stale = await client.post("/api/v1/auth/refresh", json={})
+    assert stale.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_change_password_invalidates_refresh(client: AsyncClient):
+    suffix = int(time.time() * 1000) % 999999999
+    email = f"pwdchg_{suffix}@example.com"
+    password = "OldPass123"
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Pwd Chg",
+            "org_name": f"PwdOrg {suffix}",
+            "org_unp": str(suffix).zfill(9)[:9],
+        },
+    )
+    assert reg.status_code == 201
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    login = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    assert login.status_code == 200
+    client.cookies.set("refresh_token", login.json()["refresh_token"])
+
+    patch = await client.patch(
+        "/api/v1/auth/me/password",
+        headers=headers,
+        json={"current_password": password, "new_password": "NewPass456"},
+    )
+    assert patch.status_code == 200
+
+    bad = await client.post("/api/v1/auth/refresh", json={})
+    assert bad.status_code == 401

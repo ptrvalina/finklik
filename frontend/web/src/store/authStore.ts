@@ -23,7 +23,7 @@ interface AuthStore {
   register: (data: any) => Promise<void>
   /** Переключить активную организацию (новый JWT, тот же аккаунт). */
   switchOrganization: (organizationId: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   clearError: () => void
 }
 
@@ -121,6 +121,7 @@ export const useAuthStore = create<AuthStore>()(
           }
           const { data: user } = await authApi.me()
           set({ user, isAuthenticated: true, isLoading: false })
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('finklik:org-changed'))
         } catch (e: any) {
           const rawDetail = e.response?.data?.detail
           const detail =
@@ -132,8 +133,17 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      logout: () => {
-        localStorage.removeItem('access_token')
+      logout: async () => {
+        try {
+          await authApi.logout()
+        } catch {
+          /* сеть / уже без сессии — всё равно чистим клиент */
+        }
+        try {
+          localStorage.removeItem('access_token')
+        } catch {
+          /* storage */
+        }
         try {
           localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY)
         } catch {

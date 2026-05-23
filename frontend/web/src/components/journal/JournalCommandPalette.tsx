@@ -13,6 +13,10 @@ type Props = {
   onPickTransaction: (tx: Tx) => void
   onGoCapture: () => void
   onClearFilters: () => void
+  /** Быстрый расход: тип + фокус формы ввода */
+  onQuickExpense?: () => void
+  /** Быстрый доход */
+  onQuickIncome?: () => void
 }
 
 export function JournalCommandPalette({
@@ -24,6 +28,8 @@ export function JournalCommandPalette({
   onPickTransaction,
   onGoCapture,
   onClearFilters,
+  onQuickExpense,
+  onQuickIncome,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -88,6 +94,32 @@ export function JournalCommandPalette({
             <span className="material-symbols-outlined text-emerald-500">edit_note</span>
             <span className="font-medium">Новая операция (как N)</span>
           </button>
+          {onQuickExpense && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-emerald-500/[0.08]"
+              onClick={() => {
+                onQuickExpense()
+                onClose()
+              }}
+            >
+              <span className="material-symbols-outlined text-red-400">north_east</span>
+              <span className="font-medium">Быстрый расход</span>
+            </button>
+          )}
+          {onQuickIncome && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-emerald-500/[0.08]"
+              onClick={() => {
+                onQuickIncome()
+                onClose()
+              }}
+            >
+              <span className="material-symbols-outlined text-emerald-500">south_west</span>
+              <span className="font-medium">Быстрый доход</span>
+            </button>
+          )}
           <Link
             to="/scan"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-emerald-500/[0.08]"

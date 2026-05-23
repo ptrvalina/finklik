@@ -1,23 +1,66 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from datetime import datetime, timezone
 
 from app.core.datetime_utils import utc_now_naive
 
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_refresh_token
+from app.core.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    create_refresh_token_pair,
+    decode_refresh_token,
+)
 from app.core.deps import get_current_user, resolve_workspace_organization_id, workspace_organization_id
 from app.core.config import settings
 from app.models.user import User, Organization, UserOrganizationMembership
 from app.services.onec_contour_service import ensure_onec_contour_record
-from app.schemas.auth import RegisterRequest, LoginRequest, RefreshRequest, TokenResponse, UserResponse, UserNotificationsPatch
+from app.schemas.auth import (
+    RegisterRequest,
+    LoginRequest,
+    RefreshRequest,
+    TokenResponse,
+    UserResponse,
+    UserNotificationsPatch,
+    ChangePasswordRequest,
+)
 from app.security import check_brute_force, record_failed_login, record_successful_login, audit_log
+from app.security.metrics import (
+    AUTH_FAILED_LOGIN_TOTAL,
+    AUTH_REFRESH_REUSE_TOTAL,
+    SESSION_REVOKED_TOTAL,
+)
+from app.events.auth_security_events import (
+    emit_failed_login_attempt,
+    emit_password_changed,
+    emit_refresh_reuse_detected,
+    emit_refresh_rotated,
+    emit_session_revoked,
+    emit_user_logged_in,
+    emit_user_logged_out,
+)
+import structlog
 
+_log = structlog.get_logger()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 REFRESH_COOKIE_NAME = "refresh_token"
+
+
+def _clear_refresh_cookie(response: JSONResponse) -> JSONResponse:
+    sm = settings.REFRESH_COOKIE_SAMESITE
+    secure = sm == "none" or not settings.DEBUG
+    response.delete_cookie(
+        REFRESH_COOKIE_NAME,
+        path="/",
+        secure=secure,
+        httponly=True,
+        samesite=sm,
+    )
+    return response
 
 
 def _attach_refresh_cookie(response: JSONResponse, refresh_token: str) -> JSONResponse:
@@ -44,10 +87,7 @@ def _attach_refresh_cookie(response: JSONResponse, refresh_token: str) -> JSONRe
     summary="Register tenant owner",
     description="Creates organization + owner user and returns access/refresh tokens. Also sets httpOnly refresh cookie.",
 )
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    import structlog
-    _log = structlog.get_logger()
-
+async def register(body: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
@@ -89,7 +129,6 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
             )
         )
         await db.flush()
-        await db.commit()
     except HTTPException:
         raise
     except Exception as exc:
@@ -97,8 +136,10 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         _log.error("register_failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Ошибка регистрации: {type(exc).__name__}: {exc}")
 
+    refresh_token, jti = create_refresh_token_pair(str(user.id))
+    user.refresh_token_jti = jti
+    await db.flush()
     access_token = create_access_token(str(user.id), str(org.id), user.role)
-    refresh_token = create_refresh_token(str(user.id))
 
     payload = TokenResponse(
         access_token=access_token,
@@ -106,6 +147,8 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     ).model_dump()
     resp = JSONResponse(content=payload, status_code=201)
+    ip = request.client.host if request.client else "unknown"
+    await emit_user_logged_in(db, user, ip=ip)
     return _attach_refresh_cookie(resp, refresh_token)
 
 
@@ -122,9 +165,17 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(body.password, user.hashed_password):
+    if not user:
         record_failed_login(body.email)
         audit_log("login_failed", None, "auth", None, ip, {"email": body.email}, success=False)
+        AUTH_FAILED_LOGIN_TOTAL.labels(reason="unknown_user").inc()
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")
+
+    if not verify_password(body.password, user.hashed_password):
+        record_failed_login(body.email)
+        audit_log("login_failed", str(user.id), "auth", None, ip, {"email": body.email}, success=False)
+        AUTH_FAILED_LOGIN_TOTAL.labels(reason="bad_password").inc()
+        await emit_failed_login_attempt(db, user, ip=ip)
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
 
     if not user.is_active:
@@ -134,9 +185,12 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     user.last_login = utc_now_naive()
     org_id = str(user.organization_id) if user.organization_id else ""
     access_token = create_access_token(str(user.id), org_id, user.role)
-    refresh_token = create_refresh_token(str(user.id))
+    refresh_token, jti = create_refresh_token_pair(str(user.id))
+    user.refresh_token_jti = jti
+    await db.flush()
 
     audit_log("login_success", str(user.id), "auth", None, ip)
+    await emit_user_logged_in(db, user, ip=ip)
     payload = TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -157,10 +211,13 @@ async def refresh_tokens(
     body: RefreshRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
+    ip = request.client.host if request.client else "unknown"
     raw = request.cookies.get(REFRESH_COOKIE_NAME)
     if not raw:
         raise HTTPException(status_code=401, detail="Требуется refresh token в httpOnly cookie")
-    user_id = decode_refresh_token(raw)
+    claims = decode_refresh_token(raw)
+    user_id = claims["sub"]
+    token_jti = claims.get("jti")
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
     user = result.scalar_one_or_none()
     if not user:
@@ -171,7 +228,37 @@ async def refresh_tokens(
         body_org = str(body.organization_id).strip()
     org_id_str = await resolve_workspace_organization_id(db, user, body_org)
     access_token = create_access_token(str(user.id), org_id_str, user.role)
-    new_refresh = create_refresh_token(str(user.id))
+    new_refresh, new_jti = create_refresh_token_pair(str(user.id))
+
+    if token_jti is not None:
+        lock_cond = User.refresh_token_jti == token_jti
+    else:
+        lock_cond = User.refresh_token_jti.is_(None)
+
+    res = await db.execute(
+        update(User)
+        .where(User.id == user.id, User.is_active == True, lock_cond)
+        .values(refresh_token_jti=new_jti)
+    )
+    if res.rowcount != 1:
+        AUTH_REFRESH_REUSE_TOTAL.inc()
+        audit_log(
+            "refresh_token_mismatch",
+            str(user.id),
+            "auth",
+            None,
+            ip,
+            {"reason": "reuse_or_stale_refresh"},
+            success=False,
+        )
+        await emit_refresh_reuse_detected(db, user, ip=ip)
+        _log.warning("security_refresh_token_mismatch", user_id=str(user.id))
+        raise HTTPException(
+            status_code=401,
+            detail="Обнаружено повторное использование сессии. Войдите снова.",
+        )
+
+    await emit_refresh_rotated(db, user, new_jti=new_jti)
 
     payload = TokenResponse(
         access_token=access_token,
@@ -180,6 +267,59 @@ async def refresh_tokens(
     ).model_dump()
     resp = JSONResponse(content=payload)
     return _attach_refresh_cookie(resp, new_refresh)
+
+
+@router.post("/logout")
+async def logout(request: Request, db: AsyncSession = Depends(get_db)):
+    """Завершить сессию на устройстве: сброс refresh jti и очистка httpOnly cookie."""
+    ip = request.client.host if request.client else "unknown"
+    raw = request.cookies.get(REFRESH_COOKIE_NAME)
+    resp = JSONResponse(
+        content={
+            "ok": True,
+            "user_message": "Вы вышли из аккаунта на этом устройстве. Данные в журнале и отчётах не затронуты.",
+        }
+    )
+    if raw:
+        try:
+            claims = decode_refresh_token(raw)
+            uid = claims["sub"]
+            r = await db.execute(select(User).where(User.id == uid))
+            u = r.scalar_one_or_none()
+            if u:
+                u.refresh_token_jti = None
+                await db.flush()
+                SESSION_REVOKED_TOTAL.labels(reason="logout").inc()
+                await emit_user_logged_out(db, u, ip=ip)
+                await emit_session_revoked(db, u, reason="logout", ip=ip)
+        except HTTPException:
+            pass
+    return _clear_refresh_cookie(resp)
+
+
+@router.patch("/me/password")
+async def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ip = request.client.host if request.client else "unknown"
+    if not verify_password(body.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Текущий пароль указан неверно")
+    current_user.hashed_password = hash_password(body.new_password)
+    current_user.refresh_token_jti = None
+    await db.flush()
+    SESSION_REVOKED_TOTAL.labels(reason="password_change").inc()
+    await emit_password_changed(db, current_user, ip=ip)
+    await emit_session_revoked(db, current_user, reason="password_change", ip=ip)
+    resp = JSONResponse(
+        content={
+            "ok": True,
+            "user_message": "Пароль обновлён. На других устройствах потребуется войти снова.",
+        }
+    )
+    return _clear_refresh_cookie(resp)
 
 
 @router.get("/me", response_model=UserResponse)
