@@ -19,7 +19,12 @@ from app.services.chart_account_service import (
     list_subaccounts,
     post_ledger_entry,
     seed_chart_accounts_if_empty,
+    seed_official_subaccounts_for_org,
 )
+from app.services.ledger_engine import validate_posting
+from app.services.period_close_service import close_period
+from app.services.ledger_engine import create_reversal_entry
+from app.services.ledger_trust_service import run_ledger_trust_suite
 from app.services.oked_context_service import get_organization_oked_hints
 
 router = APIRouter(prefix="/accounting", tags=["accounting"])
@@ -53,6 +58,7 @@ class LedgerPost(BaseModel):
     debit_account: str
     credit_account: str
     amount: Decimal = Field(gt=0)
+    vat_amount: Decimal | None = Field(default=None, ge=0)
     description: str | None = None
     analytics: dict | None = None
 
@@ -98,6 +104,7 @@ async def get_chart_tree(
 ):
     oid = workspace_organization_id(current_user)
     await seed_chart_accounts_if_empty(db)
+    await seed_official_subaccounts_for_org(db, oid)
     accounts = await list_chart_accounts(db)
     subs = await list_subaccounts(db, oid)
     by_parent: dict[str, list] = {}
@@ -147,6 +154,58 @@ async def add_subaccount(
     )
 
 
+@router.post("/subaccounts/seed-official")
+async def seed_official_subaccounts(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    n = await seed_official_subaccounts_for_org(db, oid)
+    await db.commit()
+    return {"created": n}
+
+
+@router.post("/ledger/preview")
+async def preview_ledger_entry(
+    body: LedgerPost,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    preview = await validate_posting(
+        db,
+        oid,
+        entry_date=body.entry_date,
+        debit_account=body.debit_account,
+        credit_account=body.credit_account,
+        amount=body.amount,
+        vat_amount=body.vat_amount,
+    )
+    return {
+        "valid": preview.valid,
+        "errors": preview.errors,
+        "debit_account": preview.debit_account,
+        "credit_account": preview.credit_account,
+        "amount": str(preview.amount),
+        "vat_amount": str(preview.vat_amount) if preview.vat_amount is not None else None,
+    }
+
+
+@router.post("/periods/{year}/{month}/close")
+async def close_accounting_period(
+    year: int,
+    month: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    if current_user.role not in ("owner", "admin"):
+        raise HTTPException(403, "Только владелец может закрывать период")
+    oid = workspace_organization_id(current_user)
+    period = await close_period(db, oid, year=year, month=month, closed_by=str(current_user.id))
+    await db.commit()
+    return {"year": period.year, "month": period.month, "status": period.status}
+
+
 @router.post("/ledger", status_code=201)
 async def create_ledger_entry(
     body: LedgerPost,
@@ -164,6 +223,7 @@ async def create_ledger_entry(
         debit_account=body.debit_account,
         credit_account=body.credit_account,
         amount=body.amount,
+        vat_amount=body.vat_amount,
         description=body.description,
         analytics=body.analytics,
         created_by=current_user.id,
@@ -237,6 +297,33 @@ async def amortization_run(
     created = await run_monthly_amortization(db, oid, year=year, month=month, actor=str(current_user.id))
     await db.commit()
     return {"created": len(created)}
+
+
+@router.get("/trust")
+async def ledger_trust(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    from datetime import date
+
+    oid = workspace_organization_id(current_user)
+    report = await run_ledger_trust_suite(db, oid, period_end=date.today())
+    return {"ok": report.ok, "checks": report.checks}
+
+
+@router.post("/ledger/{entry_id}/reverse", status_code=201)
+async def reverse_ledger_entry(
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    entry = await db.get(LedgerEntry, entry_id)
+    if not entry or entry.organization_id != oid:
+        raise HTTPException(404, "Проводка не найдена")
+    rev = await create_reversal_entry(db, oid, entry, actor=str(current_user.id))
+    await db.commit()
+    return {"id": rev.id, "reversal_of": entry_id}
 
 
 @router.get("/oked-context")

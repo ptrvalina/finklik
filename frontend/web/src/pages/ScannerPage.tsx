@@ -18,12 +18,24 @@ type ParsedData = {
   type?: string; amount?: number; vat_amount?: number; description?: string
   transaction_date?: string; counterparty_name?: string; doc_number?: string; items_count?: number
 }
+type ExecutionSuggestions = {
+  message?: string
+  suggested_transaction?: ParsedData & { category?: string; debit_account?: string; credit_account?: string }
+  suggested_category?: string
+  create_work_pack?: boolean
+  auto_link_transaction_id?: string | null
+}
+
 type ScanResult = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
   ocr_text: string; parsed: ParsedData; created_at: string
   warnings?: string[]
   requires_review?: boolean
   field_confidence?: Record<string, number>
+  field_validation?: Record<string, string>
+  doc_type_confidence?: number
+  vendor_hints?: Record<string, unknown>
+  execution_suggestions?: ExecutionSuggestions
 }
 
 function fieldNeedsReview(fc: Record<string, number> | undefined, key: string): boolean {
@@ -135,14 +147,25 @@ export default function ScannerPage() {
     lastScanIdRef.current = scanResult.id
     const p = scanResult.parsed
     const d0 = (p.transaction_date?.slice(0, 10) || new Date().toISOString().slice(0, 10))
+    const sug = scanResult.execution_suggestions?.suggested_transaction
     setEditDraft({
       docType: scanResult.doc_type || 'unknown',
-      counterparty: p.counterparty_name || '',
-      transactionDate: d0,
-      amount: p.amount != null && Number(p.amount) > 0 ? String(p.amount) : '',
-      vatAmount: p.vat_amount != null && Number(p.vat_amount) > 0 ? String(p.vat_amount) : '',
-      txType: p.type || 'expense',
-      description: p.description || '',
+      counterparty: (sug?.counterparty_name as string) || p.counterparty_name || '',
+      transactionDate: (sug?.transaction_date as string)?.slice(0, 10) || d0,
+      amount:
+        sug?.amount != null && Number(sug.amount) > 0
+          ? String(sug.amount)
+          : p.amount != null && Number(p.amount) > 0
+            ? String(p.amount)
+            : '',
+      vatAmount:
+        sug?.vat_amount != null && Number(sug.vat_amount) > 0
+          ? String(sug.vat_amount)
+          : p.vat_amount != null && Number(p.vat_amount) > 0
+            ? String(p.vat_amount)
+            : '',
+      txType: (sug?.type as string) || p.type || 'expense',
+      description: (sug?.description as string) || p.description || '',
     })
     setAmountError(null)
     setTxSaved(false)
@@ -407,6 +430,16 @@ export default function ScannerPage() {
                     <span className="font-bold text-emerald-700 dark:text-emerald-300">ИИ · разбор:</span> поля ниже извлечены из документа;
                     при низкой уверенности сверьте сумму и контрагента с оригиналом слева.
                   </div>
+                  {scanResult.execution_suggestions?.message && (
+                    <div className="rounded-xl border border-primary/25 bg-primary/8 px-3 py-2 text-xs text-on-surface">
+                      {scanResult.execution_suggestions.message}
+                      {scanResult.execution_suggestions.suggested_category && (
+                        <span className="mt-1 block text-on-surface-variant">
+                          Категория: {scanResult.execution_suggestions.suggested_category}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <h4 className="label">Данные для операции</h4>
                     <p className="mt-1 text-xs text-on-surface-variant">

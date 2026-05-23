@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceApi } from '../../api/client'
+import { useMutation } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
 
 type Placement = 'sidebar' | 'header'
@@ -16,9 +17,15 @@ export default function OrgSwitcher({
   const switchOrganization = useAuthStore((s) => s.switchOrganization)
   const activeId = useAuthStore((s) => s.user?.organization_id)
 
-  const { data } = useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ['workspace', 'memberships'],
     queryFn: () => workspaceApi.memberships().then((r) => r.data),
+  })
+
+  const pinMutation = useMutation({
+    mutationFn: ({ orgId, pinned }: { orgId: string; pinned: boolean }) =>
+      workspaceApi.pinMembership(orgId, pinned),
+    onSuccess: () => refetch(),
   })
 
   const list = data?.memberships ?? []
@@ -60,10 +67,23 @@ export default function OrgSwitcher({
       >
         {list.map((m: any) => (
           <option key={m.organization_id} value={m.organization_id}>
-            {m.name}
+            {m.is_pinned ? '★ ' : ''}{m.name}
           </option>
         ))}
       </select>
+      {activeId && (
+        <button
+          type="button"
+          title="Закрепить клиента"
+          className="tap-highlight-none rounded-lg px-1.5 py-1 text-lg leading-none text-amber-400 hover:bg-white/10"
+          onClick={() => {
+            const cur = list.find((m: { organization_id: string }) => m.organization_id === activeId)
+            if (cur) pinMutation.mutate({ orgId: activeId, pinned: !cur.is_pinned })
+          }}
+        >
+          ★
+        </button>
+      )}
     </label>
   )
 }

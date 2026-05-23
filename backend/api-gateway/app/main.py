@@ -53,6 +53,11 @@ from app.api.v1.endpoints.workspace import router as workspace_router
 from app.api.v1.endpoints.operations_feed import router as operations_feed_router
 from app.api.v1.endpoints.oked import router as oked_router
 from app.api.v1.endpoints.chart_accounts import router as chart_accounts_router
+from app.api.v1.endpoints.accounting_reports import router as accounting_reports_router
+from app.api.v1.endpoints.ops_diagnostics import router as ops_diagnostics_router
+from app.api.v1.endpoints.pilot import router as pilot_router
+from app.services.production_workers import amortization_scheduler_forever, integrity_verification_forever
+from app.services.startup_checks import run_startup_checks
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
 from app.security.correlation import CorrelationIdMiddleware
@@ -125,6 +130,8 @@ async def lifespan(application: FastAPI):
     )
     sync_poller_task: asyncio.Task | None = None
     calendar_reminder_task: asyncio.Task | None = None
+    integrity_task: asyncio.Task | None = None
+    amortization_task: asyncio.Task | None = None
     nbrb_task = start_nbrb_background_loop()
     if nbrb_task:
         log.info("nbrb_fx_background_started", interval_sec=settings.NBRB_FX_REFRESH_SECONDS)
@@ -134,11 +141,15 @@ async def lifespan(application: FastAPI):
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             log.info("db_startup_ready", attempt=attempt)
-            # Render free plan fallback: run 1C sync poller in API process.
+            checks = await run_startup_checks(engine)
+            log.info("startup_checks", ok=checks.get("ok"), overall=checks.get("checks", {}).get("overall"))
             sync_poller_task = asyncio.create_task(process_onec_sync_jobs_forever())
             log.info("onec_sync_poller_started", mode="in_process")
             calendar_reminder_task = asyncio.create_task(process_calendar_reminders_forever())
             log.info("calendar_reminder_worker_started", mode="in_process")
+            integrity_task = asyncio.create_task(integrity_verification_forever())
+            amortization_task = asyncio.create_task(amortization_scheduler_forever())
+            log.info("production_workers_started", integrity=True, amortization_scheduler=True)
             break
         except Exception as exc:
             if attempt == max_attempts:
@@ -165,6 +176,13 @@ async def lifespan(application: FastAPI):
             await sync_poller_task
         except asyncio.CancelledError:
             pass
+    for task in (integrity_task, amortization_task):
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
     await engine.dispose()
     log.info("shutdown")
 
@@ -309,6 +327,9 @@ app.include_router(workspace_router, prefix="/api/v1")
 app.include_router(operations_feed_router, prefix="/api/v1")
 app.include_router(oked_router, prefix="/api/v1")
 app.include_router(chart_accounts_router, prefix="/api/v1")
+app.include_router(accounting_reports_router, prefix="/api/v1")
+app.include_router(ops_diagnostics_router, prefix="/api/v1")
+app.include_router(pilot_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 

@@ -105,7 +105,10 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
 
     from app.services.belarus_ocr_parse import detect_document_type as detect_by_ru
 
-    doc_type = detect_by_ru(text, filename) or detect_doc_type(filename)
+    doc_type, doc_type_confidence = detect_by_ru(text, filename)
+    if not doc_type or doc_type == "unknown":
+        doc_type = detect_doc_type(filename)
+        doc_type_confidence = min(doc_type_confidence, 40)
     try:
         parsed = parse_text_document(text, doc_type)
     except Exception as exc:
@@ -120,6 +123,8 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
     if parsed.get("parsed", {}).get("amount", 0) > 0:
         conf += 10
     parsed["confidence"] = min(95, max(parsed.get("confidence", 0), conf))
+    parsed["doc_type"] = doc_type
+    parsed["doc_type_confidence"] = doc_type_confidence
     return _attach_field_confidence(parsed)
 
 
@@ -484,8 +489,10 @@ def _attach_field_confidence(result: dict) -> dict:
         if v and not parsed.get(k):
             parsed[k] = v
     overall = int(result.get("confidence") or 0)
-    meta = build_confidence_result(overall, fc)
+    meta = build_confidence_result(overall, fc, fields=parsed)
     out = {**result, "parsed": parsed, **meta}
+    if not out.get("warnings") and result.get("warnings"):
+        out["warnings"] = list(result.get("warnings") or [])
     return out
 
 

@@ -34,6 +34,7 @@ import OperationsPage from './pages/OperationsPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
 import BusinessProfilePage from './pages/BusinessProfilePage'
 import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
+import OpsDiagnosticsPage from './pages/OpsDiagnosticsPage'
 import Layout from './components/layout/Layout'
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
 
@@ -165,6 +166,7 @@ function AppRoutes() {
           <Route path="legacy/currency" element={<CurrencyPage />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<RoleRoute allow={['admin', 'accountant']}><SettingsPage /></RoleRoute>} />
+          <Route path="admin/ops" element={<RoleRoute allow={['admin']}><OpsDiagnosticsPage /></RoleRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

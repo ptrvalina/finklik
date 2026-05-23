@@ -1,12 +1,15 @@
 from app.models.user import Organization, User, Invitation, UserOrganizationMembership
 from app.models.oked_reference import OkedReference
 from app.models.accounting import (
+    AccountingPeriod,
     AmortizationEntry,
     ChartAccount,
     ChartSubaccount,
     FixedAsset,
     LedgerEntry,
+    VendorMemory,
 )
+from app.models.pilot_analytics import PilotUsageEvent
 from app.models.collaboration import OperationalInboxItem, ApprovalRequest, CollaborationComment
 from app.models.transaction import Transaction
 from app.models.employee import Employee, SalaryRecord, CalendarEvent, AuditLog

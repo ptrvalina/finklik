@@ -618,6 +618,18 @@ export const okedApi = {
   popular: (limit = 15) => api.get('/oked/popular', { params: { limit } }),
 }
 
+export const opsApi = {
+  diagnostics: () => api.get('/ops/diagnostics'),
+}
+
+export const pilotApi = {
+  seedTemplate: (template: 'retail' | 'it' | 'services' | 'horeca' | 'logistics') =>
+    api.post('/pilot/seed-template', { template }),
+  track: (event_name: string, payload?: Record<string, unknown>) =>
+    api.post('/pilot/analytics/track', { event_name, payload }),
+  friction: (days = 30) => api.get('/pilot/analytics/friction', { params: { days } }),
+}
+
 export const accountingApi = {
   chart: () => api.get('/accounting/chart'),
   chartTree: () => api.get('/accounting/chart/tree'),
@@ -630,6 +642,11 @@ export const accountingApi = {
   setMode: (accounting_mode: 'simple' | 'advanced') => api.patch('/accounting/mode', { accounting_mode }),
   runAmortization: (year: number, month: number) =>
     api.post('/accounting/amortization/run', null, { params: { year, month } }),
+  previewLedger: (data: Record<string, unknown>) => api.post('/accounting/ledger/preview', data),
+  seedOfficialSubaccounts: () => api.post('/accounting/subaccounts/seed-official'),
+  closePeriod: (year: number, month: number) => api.post(`/accounting/periods/${year}/${month}/close`),
+  trialBalance: (date_from: string, date_to: string) =>
+    api.get('/accounting/reports/trial-balance', { params: { date_from, date_to } }),
 }
 
 export const teamApi = {

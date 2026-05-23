@@ -1,81 +1,720 @@
 {
   "meta": {
-    "standard": "Постановление Минфина РБ №50 (структура счетов)",
-    "version": "2026-05-22",
-    "note": "Официальные синтетические счета; субсчета создаются организацией."
+    "standard": "Постановление Минфина РБ №50 (Приложение 1, Инструкция)",
+    "version": "2026-05-23-full",
+    "source": "chart_corpus_instruction50.py",
+    "accounts_count": 79,
+    "subaccounts_count": 86,
+    "reserved_numbers": [
+      "12",
+      "13",
+      "17",
+      "19",
+      "24",
+      "27",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "46",
+      "48",
+      "49",
+      "53",
+      "54",
+      "56",
+      "61",
+      "64",
+      "72",
+      "74",
+      "78",
+      "85",
+      "87",
+      "88",
+      "89",
+      "92",
+      "010",
+      "012",
+      "013",
+      "015"
+    ]
   },
   "classes": [
-    {"id": 1, "name": "Долгосрочные активы"},
-    {"id": 2, "name": "Производственные запасы"},
-    {"id": 3, "name": "Затраты на производство"},
-    {"id": 4, "name": "Готовая продукция и товары"},
-    {"id": 5, "name": "Денежные средства"},
-    {"id": 6, "name": "Расчёты"},
-    {"id": 7, "name": "Источники собственных средств"},
-    {"id": 8, "name": "Доходы и расходы"},
-    {"id": 9, "name": "Забалансовые счета"}
+    {
+      "id": 1,
+      "name": "Долгосрочные активы"
+    },
+    {
+      "id": 2,
+      "name": "Производственные запасы"
+    },
+    {
+      "id": 3,
+      "name": "Затраты на производство"
+    },
+    {
+      "id": 4,
+      "name": "Готовая продукция и товары"
+    },
+    {
+      "id": 5,
+      "name": "Денежные средства и краткосрочные финансовые вложения"
+    },
+    {
+      "id": 6,
+      "name": "Расчёты"
+    },
+    {
+      "id": 7,
+      "name": "Собственный капитал"
+    },
+    {
+      "id": 8,
+      "name": "Финансовые результаты"
+    },
+    {
+      "id": 9,
+      "name": "Забалансовые счета"
+    }
   ],
   "accounts": [
-    {"code": "01", "class": 1, "name": "Основные средства", "type": "active"},
-    {"code": "02", "class": 1, "name": "Амортизация основных средств", "type": "passive"},
-    {"code": "03", "class": 1, "name": "Доходные вложения в материальные активы", "type": "active"},
-    {"code": "04", "class": 1, "name": "Нематериальные активы", "type": "active"},
-    {"code": "05", "class": 1, "name": "Амортизация нематериальных активов", "type": "passive"},
-    {"code": "07", "class": 1, "name": "Оборудование к установке", "type": "active"},
-    {"code": "08", "class": 1, "name": "Вложения в долгосрочные активы", "type": "active"},
-    {"code": "09", "class": 1, "name": "Отложенные налоговые активы", "type": "active"},
-    {"code": "10", "class": 2, "name": "Материалы", "type": "active"},
-    {"code": "18", "class": 2, "name": "НДС по приобретённым товарам", "type": "active"},
-    {"code": "19", "class": 2, "name": "НДС по приобретённым ценностям", "type": "active"},
-    {"code": "20", "class": 3, "name": "Основное производство", "type": "active"},
-    {"code": "23", "class": 3, "name": "Вспомогательные производства", "type": "active"},
-    {"code": "25", "class": 3, "name": "Общепроизводственные затраты", "type": "active"},
-    {"code": "26", "class": 3, "name": "Общехозяйственные затраты", "type": "active"},
-    {"code": "41", "class": 4, "name": "Товары", "type": "active"},
-    {"code": "43", "class": 4, "name": "Готовая продукция", "type": "active"},
-    {"code": "44", "class": 4, "name": "Расходы на реализацию", "type": "active"},
-    {"code": "45", "class": 4, "name": "Товары отгруженные", "type": "active"},
-    {"code": "50", "class": 5, "name": "Касса", "type": "active"},
-    {"code": "51", "class": 5, "name": "Расчётные счета", "type": "active"},
-    {"code": "52", "class": 5, "name": "Валютные счета", "type": "active"},
-    {"code": "55", "class": 5, "name": "Специальные счета в банках", "type": "active"},
-    {"code": "57", "class": 5, "name": "Денежные средства в пути", "type": "active"},
-    {"code": "58", "class": 5, "name": "Финансовые вложения", "type": "active"},
-    {"code": "60", "class": 6, "name": "Расчёты с поставщиками и подрядчиками", "type": "active_passive"},
-    {"code": "62", "class": 6, "name": "Расчёты с покупателями и заказчиками", "type": "active_passive"},
-    {"code": "66", "class": 6, "name": "Расчёты по краткосрочным кредитам и займам", "type": "passive"},
-    {"code": "67", "class": 6, "name": "Расчёты по долгосрочным кредитам и займам", "type": "passive"},
-    {"code": "68", "class": 6, "name": "Расчёты по налогам и сборам", "type": "active_passive"},
-    {"code": "69", "class": 6, "name": "Расчёты по социальному страхованию и обеспечению", "type": "passive"},
-    {"code": "70", "class": 6, "name": "Расчёты с персоналом по оплате труда", "type": "passive"},
-    {"code": "71", "class": 6, "name": "Расчёты с подотчётными лицами", "type": "active_passive"},
-    {"code": "73", "class": 6, "name": "Расчёты с разными дебиторами и кредиторами", "type": "active_passive"},
-    {"code": "75", "class": 6, "name": "Расчёты с учредителями", "type": "active_passive"},
-    {"code": "76", "class": 6, "name": "Расчёты с разными дебиторами и кредиторами", "type": "active_passive"},
-    {"code": "77", "class": 6, "name": "Отложенные налоговые обязательства", "type": "passive"},
-    {"code": "79", "class": 6, "name": "Внутрихозяйственные расчёты", "type": "active_passive"},
-    {"code": "80", "class": 7, "name": "Уставный капитал", "type": "passive"},
-    {"code": "82", "class": 7, "name": "Резервный капитал", "type": "passive"},
-    {"code": "83", "class": 7, "name": "Добавочный капитал", "type": "passive"},
-    {"code": "84", "class": 7, "name": "Нераспределённая прибыль (непокрытый убыток)", "type": "active_passive"},
-    {"code": "90", "class": 8, "name": "Доходы и расходы по текущей деятельности", "type": "active_passive"},
-    {"code": "91", "class": 8, "name": "Прочие доходы и расходы", "type": "active_passive"},
-    {"code": "92", "class": 8, "name": "Внереализационные доходы и расходы", "type": "active_passive"},
-    {"code": "94", "class": 8, "name": "Недостачи и потери от порчи ценностей", "type": "active_passive"},
-    {"code": "96", "class": 8, "name": "Резервы предстоящих расходов", "type": "passive"},
-    {"code": "97", "class": 8, "name": "Расходы будущих периодов", "type": "active"},
-    {"code": "98", "class": 8, "name": "Доходы будущих периодов", "type": "passive"},
-    {"code": "99", "class": 8, "name": "Прибыли и убытки", "type": "active_passive"},
-    {"code": "001", "class": 9, "name": "Арендованные основные средства", "type": "off_balance", "off_balance": true},
-    {"code": "002", "class": 9, "name": "Товарно-материальные ценности, принятые на ответственное хранение", "type": "off_balance", "off_balance": true},
-    {"code": "003", "class": 9, "name": "Материалы, принятые для переработки", "type": "off_balance", "off_balance": true},
-    {"code": "004", "class": 9, "name": "Товары, принятые на комиссию", "type": "off_balance", "off_balance": true},
-    {"code": "005", "class": 9, "name": "Оборудование, принятое для монтажа", "type": "off_balance", "off_balance": true},
-    {"code": "006", "class": 9, "name": "Бланки строгой отчётности", "type": "off_balance", "off_balance": true},
-    {"code": "007", "class": 9, "name": "Списанная в убыток задолженность неплатёжеспособных дебиторов", "type": "off_balance", "off_balance": true},
-    {"code": "008", "class": 9, "name": "Обеспечения обязательств и платежей, полученные", "type": "off_balance", "off_balance": true},
-    {"code": "009", "class": 9, "name": "Обеспечения обязательств и платежей, выданные", "type": "off_balance", "off_balance": true},
-    {"code": "010", "class": 9, "name": "Износ основных средств", "type": "off_balance", "off_balance": true},
-    {"code": "011", "class": 9, "name": "Основные средства, сданные в аренду", "type": "off_balance", "off_balance": true}
+    {
+      "code": "01",
+      "class": 1,
+      "name": "Основные средства",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "02",
+      "class": 1,
+      "name": "Амортизация основных средств",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "03",
+      "class": 1,
+      "name": "Доходные вложения в материальные активы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "04",
+      "class": 1,
+      "name": "Нематериальные активы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "05",
+      "class": 1,
+      "name": "Амортизация нематериальных активов",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "06",
+      "class": 1,
+      "name": "Долгосрочные финансовые вложения",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "07",
+      "class": 1,
+      "name": "Оборудование к установке и строительные материалы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "08",
+      "class": 1,
+      "name": "Вложения в долгосрочные активы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "09",
+      "class": 1,
+      "name": "Отложенные налоговые активы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "10",
+      "class": 2,
+      "name": "Материалы",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "11",
+      "class": 2,
+      "name": "Животные на выращивании и откорме",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "14",
+      "class": 2,
+      "name": "Резервы под снижение стоимости запасов",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "15",
+      "class": 2,
+      "name": "Заготовление и приобретение материалов",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "16",
+      "class": 2,
+      "name": "Отклонение в стоимости материалов",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "18",
+      "class": 2,
+      "name": "Налог на добавленную стоимость по приобретенным товарам, работам, услугам",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "20",
+      "class": 3,
+      "name": "Основное производство",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "21",
+      "class": 3,
+      "name": "Полуфабрикаты собственного производства",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "22",
+      "class": 3,
+      "name": "Страховые выплаты",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "23",
+      "class": 3,
+      "name": "Вспомогательные производства",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "25",
+      "class": 3,
+      "name": "Общепроизводственные затраты",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "26",
+      "class": 3,
+      "name": "Общехозяйственные затраты",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "28",
+      "class": 3,
+      "name": "Брак в производстве",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "29",
+      "class": 3,
+      "name": "Обслуживающие производства и хозяйства",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "41",
+      "class": 4,
+      "name": "Товары",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "42",
+      "class": 4,
+      "name": "Торговая наценка",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "43",
+      "class": 4,
+      "name": "Готовая продукция",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "44",
+      "class": 4,
+      "name": "Расходы на реализацию",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "45",
+      "class": 4,
+      "name": "Товары отгруженные",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "47",
+      "class": 4,
+      "name": "Долгосрочные активы, предназначенные для реализации",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "50",
+      "class": 5,
+      "name": "Касса",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "51",
+      "class": 5,
+      "name": "Расчетные счета",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "52",
+      "class": 5,
+      "name": "Валютные счета",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "55",
+      "class": 5,
+      "name": "Специальные счета в банках",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "57",
+      "class": 5,
+      "name": "Денежные средства в пути",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "58",
+      "class": 5,
+      "name": "Краткосрочные финансовые вложения",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "59",
+      "class": 5,
+      "name": "Резервы под обесценение краткосрочных финансовых вложений",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "60",
+      "class": 6,
+      "name": "Расчеты с поставщиками и подрядчиками",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "62",
+      "class": 6,
+      "name": "Расчеты с покупателями и заказчиками",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "63",
+      "class": 6,
+      "name": "Резервы по сомнительным долгам",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "65",
+      "class": 6,
+      "name": "Отложенные налоговые обязательства",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "66",
+      "class": 6,
+      "name": "Расчеты по краткосрочным кредитам и займам",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "67",
+      "class": 6,
+      "name": "Расчеты по долгосрочным кредитам и займам",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "68",
+      "class": 6,
+      "name": "Расчеты по налогам и сборам",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "69",
+      "class": 6,
+      "name": "Расчеты по социальному страхованию и обеспечению",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "70",
+      "class": 6,
+      "name": "Расчеты с персоналом по оплате труда",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "71",
+      "class": 6,
+      "name": "Расчеты с подотчетными лицами",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "73",
+      "class": 6,
+      "name": "Расчеты с персоналом по прочим операциям",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "75",
+      "class": 6,
+      "name": "Расчеты с учредителями",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "76",
+      "class": 6,
+      "name": "Расчеты с разными дебиторами и кредиторами",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "77",
+      "class": 6,
+      "name": "Расчеты по прямому страхованию и перестрахованию",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "79",
+      "class": 6,
+      "name": "Внутрихозяйственные расчеты",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "80",
+      "class": 7,
+      "name": "Уставный капитал",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "81",
+      "class": 7,
+      "name": "Собственные акции (доли в уставном капитале)",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "82",
+      "class": 7,
+      "name": "Резервный капитал",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "83",
+      "class": 7,
+      "name": "Добавочный капитал",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "84",
+      "class": 7,
+      "name": "Нераспределенная прибыль (непокрытый убыток)",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "86",
+      "class": 7,
+      "name": "Целевое финансирование",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "90",
+      "class": 8,
+      "name": "Доходы и расходы по текущей деятельности",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "91",
+      "class": 8,
+      "name": "Прочие доходы и расходы",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "93",
+      "class": 8,
+      "name": "Страховые взносы (премии)",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "94",
+      "class": 8,
+      "name": "Недостачи и потери от порчи имущества",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "95",
+      "class": 8,
+      "name": "Страховые резервы",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "96",
+      "class": 8,
+      "name": "Резервы предстоящих платежей",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "97",
+      "class": 8,
+      "name": "Расходы будущих периодов",
+      "type": "active",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "98",
+      "class": 8,
+      "name": "Доходы будущих периодов",
+      "type": "passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "99",
+      "class": 8,
+      "name": "Прибыли и убытки",
+      "type": "active_passive",
+      "off_balance": false,
+      "optional": false
+    },
+    {
+      "code": "001",
+      "class": 9,
+      "name": "Арендованные основные средства",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "002",
+      "class": 9,
+      "name": "Имущество, принятое на ответственное хранение",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "003",
+      "class": 9,
+      "name": "Материалы, принятые в переработку",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "004",
+      "class": 9,
+      "name": "Товары, принятые на комиссию",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "005",
+      "class": 9,
+      "name": "Оборудование, принятое для монтажа",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "006",
+      "class": 9,
+      "name": "Бланки строгой отчетности",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "007",
+      "class": 9,
+      "name": "Списанная безнадежная к получению дебиторская задолженность",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "008",
+      "class": 9,
+      "name": "Обеспечения обязательств полученные",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "009",
+      "class": 9,
+      "name": "Обеспечения обязательств выданные",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "011",
+      "class": 9,
+      "name": "Основные средства, сданные в аренду",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "014",
+      "class": 9,
+      "name": "Потеря стоимости основных средств",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "016",
+      "class": 9,
+      "name": "Недвижимое имущество, находящееся в совместном домовладении",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    },
+    {
+      "code": "017",
+      "class": 9,
+      "name": "Именные приватизационные чеки \"Имущество\"",
+      "type": "off_balance",
+      "off_balance": true,
+      "optional": false
+    }
   ]
 }

@@ -212,9 +212,21 @@ async def upload_and_scan(
         metadata={"doc_type": doc.doc_type, "filename": doc.filename},
     )
     await db.refresh(doc)
-    await refresh_financial_state_audit(db, workspace_organization_id(current_user))
+    oid = workspace_organization_id(current_user)
+    vendor_hints = None
+    cp_name = (parsed.get("counterparty_name") or "").strip()
+    if cp_name:
+        try:
+            from app.services.vendor_memory_service import lookup_vendor_hints, remember_vendor
 
-    return _scan_result_payload(
+            vendor_hints = await lookup_vendor_hints(db, oid, cp_name)
+            await remember_vendor(db, oid, display_name=cp_name, unp=parsed.get("unp"))
+            vendor_hints = vendor_hints or await lookup_vendor_hints(db, oid, cp_name)
+        except Exception:
+            vendor_hints = None
+    await refresh_financial_state_audit(db, oid)
+
+    payload = _scan_result_payload(
         doc,
         parsed,
         warnings=ocr_result.get("warnings", []),
@@ -222,6 +234,37 @@ async def upload_and_scan(
         linked_transaction_id=linked_tx_id,
         field_confidence=ocr_result.get("field_confidence") or {},
     )
+    if vendor_hints:
+        payload["vendor_hints"] = vendor_hints
+
+    try:
+        from app.services.ocr_execution_service import build_execution_suggestions
+        from app.services.pilot_analytics_service import track_pilot_event
+
+        payload["execution_suggestions"] = await build_execution_suggestions(
+            db,
+            oid,
+            parsed=parsed,
+            doc_type=doc.doc_type,
+            vendor_hints=vendor_hints,
+            requires_review=needs_review,
+            linked_transaction_id=linked_tx_id,
+        )
+        await track_pilot_event(
+            db,
+            organization_id=oid,
+            user_id=str(current_user.id),
+            event_name="ocr_scan_completed",
+            payload={"doc_type": doc.doc_type, "requires_review": needs_review},
+        )
+    except Exception:
+        pass
+
+    if ocr_result.get("doc_type_confidence"):
+        payload["doc_type_confidence"] = ocr_result.get("doc_type_confidence")
+    if ocr_result.get("field_validation"):
+        payload["field_validation"] = ocr_result.get("field_validation")
+    return payload
 
 
 @router.post("/upload-to-kudir")

@@ -36,6 +36,9 @@ class ChartAccount(Base):
     balance_type: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     is_off_balance: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    normal_balance: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    is_optional: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    requires_analytics: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class ChartSubaccount(Base):
@@ -54,7 +57,43 @@ class ChartSubaccount(Base):
     full_code: Mapped[str] = mapped_column(String(32), nullable=False)
     name_ru: Mapped[str] = mapped_column(String(255), nullable=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_official_template: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
+class AccountingPeriod(Base):
+    __tablename__ = "accounting_periods"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "year", "month", name="uq_accounting_period_org_ym"),
+        Index("ix_accounting_period_org", "organization_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    month: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="open", nullable=False)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    closed_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+
+
+class VendorMemory(Base):
+    __tablename__ = "vendor_memory"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "normalized_name", name="uq_vendor_memory_org_name"),
+        Index("ix_vendor_memory_org", "organization_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    normalized_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    unp: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    default_category: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    default_debit_account: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    default_credit_account: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    scan_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
 class LedgerEntry(Base):
@@ -78,6 +117,11 @@ class LedgerEntry(Base):
     source_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
     source_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    vat_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    is_reversal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    reversal_of_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    period_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    period_month: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
