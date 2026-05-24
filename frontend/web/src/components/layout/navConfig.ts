@@ -54,7 +54,10 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Учёт и КУДиР',
         icon: 'menu_book',
         description: 'Документы, категории, автоматизация',
-        flyout: [{ to: '/accounting/chart', label: 'План счетов' }],
+        flyout: [
+          { to: '/accounting/chart', label: 'План счетов' },
+          { to: '/accounting/fixed-assets', label: 'ОС и амортизация' },
+        ],
       },
       {
         to: '/counterparties',

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
+import { FocusStrip } from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -42,36 +44,73 @@ export default function BankPage() {
   const [oauthCode, setOauthCode] = useState('')
   const [oauthState, setOauthState] = useState('')
 
-  const { data: balanceData } = useQuery({ queryKey: ['bank-balance'], queryFn: () => bankApi.getBalance().then(r => r.data), refetchInterval: 15000 })
-  const { data: statementsData, isLoading: statementsLoading } = useQuery({ queryKey: ['bank-statements'], queryFn: () => bankApi.getStatements(30).then(r => r.data) })
-  const { data: accountsData } = useQuery({ queryKey: ['bank-accounts'], queryFn: () => bankApi.listAccounts().then(r => r.data) })
-  const { data: banksData } = useQuery({ queryKey: ['available-banks'], queryFn: () => bankApi.listBanks().then(r => r.data) })
+  const { data: balanceData } = useQuery({
+    queryKey: orgQueryKey('bank-balance'),
+    queryFn: () => bankApi.getBalance().then((r) => r.data),
+    refetchInterval: 15000,
+    placeholderData: (prev) => prev,
+  })
+  const { data: statementsData, isLoading: statementsLoading } = useQuery({
+    queryKey: orgQueryKey('bank-statements'),
+    queryFn: () => bankApi.getStatements(30).then((r) => r.data),
+    placeholderData: (prev) => prev,
+  })
+  const { data: accountsData } = useQuery({
+    queryKey: orgQueryKey('bank-accounts'),
+    queryFn: () => bankApi.listAccounts().then((r) => r.data),
+    placeholderData: (prev) => prev,
+  })
+  const { data: banksData } = useQuery({
+    queryKey: orgQueryKey('available-banks'),
+    queryFn: () => bankApi.listBanks().then((r) => r.data),
+    staleTime: 300_000,
+  })
   const { data: recData, isLoading: recLoading, refetch: refetchRec } = useQuery({
-    queryKey: ['bank-reconciliation', recDateFrom, recDateTo],
+    queryKey: orgQueryKey(['bank-reconciliation', recDateFrom, recDateTo]),
     queryFn: () => bankApi.reconciliation(recDateFrom, recDateTo).then((r) => r.data),
     enabled: tab === 'reconciliation',
   })
 
   const addAccountMutation = useMutation({
     mutationFn: () => bankApi.createAccount(accountForm),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bank-accounts'] }); setShowAddAccount(false); setAccountForm({ bank_name: '', bank_bic: '', account_number: '', is_primary: false }); flash('success', 'Счёт добавлен') },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') })
+      setShowAddAccount(false)
+      setAccountForm({ bank_name: '', bank_bic: '', account_number: '', is_primary: false })
+      flash('success', 'Счёт добавлен')
+    },
     onError: () => flash('error', 'Ошибка добавления'),
   })
-  const setPrimaryMutation = useMutation({ mutationFn: (id: string) => bankApi.updateAccount(id, { is_primary: true }), onSuccess: () => qc.invalidateQueries({ queryKey: ['bank-accounts'] }) })
-  const deleteAccountMutation = useMutation({ mutationFn: (id: string) => bankApi.deleteAccount(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['bank-accounts'] }); flash('success', 'Счёт удалён') } })
+  const setPrimaryMutation = useMutation({
+    mutationFn: (id: string) => bankApi.updateAccount(id, { is_primary: true }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') }),
+  })
+  const deleteAccountMutation = useMutation({
+    mutationFn: (id: string) => bankApi.deleteAccount(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') })
+      flash('success', 'Счёт удалён')
+    },
+  })
   const paymentMutation = useMutation({
     mutationFn: () => bankApi.createPayment({ amount: parseFloat(paymentForm.amount), recipient_name: paymentForm.recipient_name, description: paymentForm.description }),
-    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['bank-balance'] }); qc.invalidateQueries({ queryKey: ['bank-statements'] }); setShowPayment(false); setPaymentForm({ amount: '', recipient_name: '', description: '' }); flash('success', `Платёж: ${res.data.payment_id?.slice(0, 8)}…`) },
+    onSuccess: (res) => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-balance') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
+      setShowPayment(false)
+      setPaymentForm({ amount: '', recipient_name: '', description: '' })
+      flash('success', `Платёж: ${res.data.payment_id?.slice(0, 8)}…`)
+    },
     onError: () => flash('error', 'Ошибка платежа'),
   })
   const importStatementMutation = useMutation({
     mutationFn: (lines: any[]) => bankApi.importStatement(lines),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['bank-balance'] })
-      qc.invalidateQueries({ queryKey: ['bank-statements'] })
-      qc.invalidateQueries({ queryKey: ['bank-reconciliation'] })
-      qc.invalidateQueries({ queryKey: ['transactions'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-balance') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-reconciliation') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
       flash('success', `Импорт: создано ${res.data.created}, пропущено дублей ${res.data.skipped_duplicates}`)
     },
     onError: () => flash('error', 'Ошибка импорта (проверьте JSON)'),
@@ -92,7 +131,7 @@ export default function BankPage() {
   const oauthCallbackMutation = useMutation({
     mutationFn: (data: { account_id: string; code: string; state: string }) => bankApi.oauthCallback(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bank-accounts'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') })
       flash('success', 'Банк подключен через OAuth2')
     },
     onError: () => flash('error', 'Ошибка OAuth callback'),
@@ -100,11 +139,11 @@ export default function BankPage() {
   const oauthImportMutation = useMutation({
     mutationFn: (data: { account_id: string; date_from: string; date_to: string }) => bankApi.oauthImport(data),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['bank-balance'] })
-      qc.invalidateQueries({ queryKey: ['bank-statements'] })
-      qc.invalidateQueries({ queryKey: ['bank-reconciliation'] })
-      qc.invalidateQueries({ queryKey: ['transactions'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-balance') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-reconciliation') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
       flash('success', `OAuth импорт завершён: ${res.data?.import_result?.created ?? 0} новых`)
     },
     onError: () => flash('error', 'Ошибка OAuth импорта'),
@@ -162,6 +201,15 @@ export default function BankPage() {
       <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
         Автопайплайн: банковские движения подхватываются в учёт, затем проходят статусы `new → parsed → categorized → verified → reported`.
       </div>
+
+      {accounts.length === 0 && (
+        <FocusStrip
+          headline="Подключите расчётный счёт"
+          supporting="Добавьте счёт вручную или через OAuth — тогда заработают выписка и сверка с журналом."
+          ctaLabel="Добавить счёт"
+          onCta={() => setShowAddAccount(true)}
+        />
+      )}
 
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${

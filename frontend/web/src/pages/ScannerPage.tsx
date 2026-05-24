@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi, dashboardApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { Link } from 'react-router-dom'
+import { OcrFieldLabel } from '../components/scanner/OcrFieldConfidence'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -96,11 +98,11 @@ export default function ScannerPage() {
   const [textDocType, setTextDocType] = useState('')
 
   const { data: history = [] } = useQuery<HistoryItem[]>({
-    queryKey: ['scanner-history'],
+    queryKey: orgQueryKey('scanner-history'),
     queryFn: () => scannerApi.list({ limit: 20 }).then((r) => r.data),
   })
   const { data: reviewQueueData } = useQuery({
-    queryKey: ['scanner-review-queue'],
+    queryKey: orgQueryKey('scanner-review-queue'),
     queryFn: () => scannerApi.reviewQueue(50).then((r) => r.data as { items: any[] }),
   })
 
@@ -463,12 +465,11 @@ export default function ScannerPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="label">
-                          Контрагент
-                          {fieldNeedsReview(fc, 'counterparty_name') && (
-                            <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
-                          )}
-                        </label>
+                        <OcrFieldLabel
+                          label="Контрагент"
+                          confidence={fc?.counterparty_name}
+                          validation={scanResult.field_validation?.counterparty_name}
+                        />
                         <input
                           className={reviewInputClass(fieldNeedsReview(fc, 'counterparty_name'))}
                           value={editDraft.counterparty}
@@ -495,12 +496,11 @@ export default function ScannerPage() {
                       </div>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                          <label className="label">
-                            Сумма, BYN
-                            {fieldNeedsReview(fc, 'amount') && (
-                              <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
-                            )}
-                          </label>
+                          <OcrFieldLabel
+                            label="Сумма, BYN"
+                            confidence={fc?.amount}
+                            validation={scanResult.field_validation?.amount}
+                          />
                           <input
                             type="text"
                             inputMode="decimal"

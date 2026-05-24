@@ -640,6 +640,11 @@ export const accountingApi = {
   okedContext: () => api.get('/accounting/oked-context'),
   getMode: () => api.get('/accounting/mode'),
   setMode: (accounting_mode: 'simple' | 'advanced') => api.patch('/accounting/mode', { accounting_mode }),
+  listFixedAssets: () => api.get('/accounting/fixed-assets'),
+  createFixedAsset: (data: Record<string, unknown>) => api.post('/accounting/fixed-assets', data),
+  patchFixedAsset: (id: string, data: { is_active?: boolean }) =>
+    api.patch(`/accounting/fixed-assets/${encodeURIComponent(id)}`, data),
+  listAmortization: (limit = 48) => api.get('/accounting/amortization', { params: { limit } }),
   runAmortization: (year: number, month: number) =>
     api.post('/accounting/amortization/run', null, { params: { year, month } }),
   previewLedger: (data: Record<string, unknown>) => api.post('/accounting/ledger/preview', data),

@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi, scannerApi, businessOsApi, reportingCalmApi, teamApi } from '../../api/client'
+import { orgQueryKey } from '../../lib/queryKeys'
 
 const STORAGE_KEY = 'finklik_onboarding_checklist_v2_dismissed'
 
@@ -55,7 +56,7 @@ export default function OnboardingChecklist() {
   })
 
   const { data: bizProfile, isFetched: profileFetched } = useQuery({
-    queryKey: ['business-profile'],
+    queryKey: orgQueryKey('business-profile'),
     queryFn: () => teamApi.getBusinessProfile().then((r) => r.data),
     staleTime: 120_000,
     retry: false,

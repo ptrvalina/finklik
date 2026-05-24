@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { pingApi, PRODUCTION_API_BASE, resolveApiBase } from '../api/client'
+import { pingApi, PRODUCTION_API_BASE, resolveApiBase, teamApi } from '../api/client'
 import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -9,6 +9,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 }
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const { login, isLoading, error, clearError } = useAuthStore()
   const [form, setForm] = useState({ email: '', password: '' })
   const [apiReachable, setApiReachable] = useState<boolean | null>(null)
@@ -28,6 +29,16 @@ export default function LoginPage() {
     clearError()
     try {
       await login(form)
+      try {
+        const { data } = await teamApi.getBusinessProfile()
+        if (!data?.business_profile_completed) {
+          navigate('/onboarding/business-profile', { replace: true })
+          return
+        }
+      } catch {
+        /* профиль опционален */
+      }
+      navigate('/', { replace: true })
     } catch {
       /* error in store */
     }

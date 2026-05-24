@@ -15,7 +15,9 @@ import {
   suggestJournalCategory,
 } from '../lib/journalCategories'
 import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSession'
+import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
+import { FocusStrip } from '../components/shell/OperationalPage'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
 export function suggestCategory(text: string) {
@@ -327,7 +329,7 @@ export default function Accounting() {
     return () => window.clearTimeout(t)
   }, [orgId, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter, workspaceFocus])
 
-  const ledgerQueryKey = useMemo(() => ['transactions', 'accounting', orgId || '__none__'] as const, [orgId])
+  const ledgerQueryKey = useMemo(() => orgQueryKey(['transactions', 'accounting']), [orgId])
 
   const refreshLedgerRelated = useCallback(() => {
     if (!orgId) return
@@ -659,6 +661,12 @@ export default function Accounting() {
             <Link to="/bank" className="btn-secondary shrink-0 rounded-[1rem]">
               <Icon name="sync_alt" className="text-lg" /> Банк
             </Link>
+            <Link to="/accounting/fixed-assets" className="btn-secondary shrink-0 rounded-[1rem]">
+              <Icon name="inventory_2" className="text-lg" /> ОС
+            </Link>
+            <Link to="/operations" className="btn-secondary shrink-0 rounded-[1rem]">
+              <Icon name="bolt" className="text-lg" /> Задачи
+            </Link>
           </div>
         </div>
 
@@ -699,6 +707,18 @@ export default function Accounting() {
           ))}
         </div>
       </div>
+
+      {stats.drafts > 0 && (
+        <div className="mt-4">
+          <FocusStrip
+            tone="amber"
+            headline={`${stats.drafts} ${stats.drafts === 1 ? 'черновик' : 'черновика'} в журнале`}
+            supporting="Проведите операции — иначе отчётность и налоги будут неполными."
+            ctaLabel="Показать черновики"
+            onCta={() => setAttentionFilter('drafts')}
+          />
+        </div>
+      )}
 
       <div className="mt-4">
         <AnimatePresence mode="wait">
@@ -977,10 +997,10 @@ export default function Accounting() {
                           aria-label="Выбрать все"
                         />
                       </th>
+                      <th className="px-2.5 py-2 text-right text-[10px] font-semibold">Сумма</th>
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Дата</th>
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Описание</th>
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Категория</th>
-                      <th className="px-2.5 py-2 text-right text-[10px] font-semibold">Сумма</th>
                       <th className="w-24 px-2.5 py-2 text-right text-[10px] font-semibold">Действия</th>
                     </tr>
                   </thead>
@@ -1013,6 +1033,14 @@ export default function Accounting() {
                               aria-label="Выбрать"
                             />
                           </td>
+                          <td
+                            className={`px-2.5 py-2 text-right align-middle text-[15px] font-bold tabular-nums tracking-tight ${
+                              tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-on-surface'
+                            }`}
+                          >
+                            {tx.type === 'income' ? '+' : '−'}
+                            {fmt(Number(tx.amount))}
+                          </td>
                           <td className="whitespace-nowrap px-2.5 py-2 align-middle text-[11px] tabular-nums text-on-surface-variant/85">
                             {tx.transaction_date}
                           </td>
@@ -1042,9 +1070,6 @@ export default function Accounting() {
                                 </option>
                               ))}
                             </select>
-                          </td>
-                          <td className="px-2.5 py-2 text-right align-middle text-[15px] font-semibold tabular-nums tracking-tight text-on-surface">
-                            {fmt(Number(tx.amount))}
                           </td>
                           <td className="px-2.5 py-2 text-right align-middle" onClick={(e) => e.stopPropagation()}>
                             <button

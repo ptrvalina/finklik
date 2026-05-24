@@ -1,125 +1,255 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+import { orgQueryKey } from '../lib/queryKeys'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { CardSkeleton } from '../components/premium'
 
-/** Командный центр бухгалтера: несколько клиентов без CRM-шума. */
+type OrgRow = {
+  organization_id: string
+  organization_name: string
+  unp: string
+  is_pinned?: boolean
+  readiness_score?: number | null
+  open_inbox?: number
+  pending_approvals?: number
+  attention_issues?: number
+  ai_summary?: string | null
+}
+
+function workloadScore(row: OrgRow): number {
+  return (row.open_inbox ?? 0) + (row.pending_approvals ?? 0) * 2 + (row.attention_issues ?? 0) * 3
+}
+
+function readinessLabel(score: number | null | undefined): { text: string; tone: 'ok' | 'warn' | 'risk' } {
+  if (score == null) return { text: 'нет данных', tone: 'warn' }
+  if (score >= 80) return { text: 'готов к сдаче', tone: 'ok' }
+  if (score >= 55) return { text: 'нужна доработка', tone: 'warn' }
+  return { text: 'блокеры', tone: 'risk' }
+}
+
 export default function WorkspaceCommandPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const switchOrganization = useAuthStore((s) => s.switchOrganization)
+  const [activatingId, setActivatingId] = useState<string | null>(null)
+
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['workspace', 'accountantOverview'],
+    queryKey: orgQueryKey('workspace-accountant-overview'),
     queryFn: () => workspaceApi.accountantOverview().then((r) => r.data),
+    staleTime: 45_000,
+    placeholderData: (prev) => prev,
   })
 
   const organizations = useMemo(() => {
-    const rows = data?.organizations ?? []
-    return [...rows].sort((a: any, b: any) => {
-      const ap = a.is_pinned ? 0 : 1
-      const bp = b.is_pinned ? 0 : 1
-      if (ap !== bp) return ap - bp
-      const as = a.readiness_score != null ? Number(a.readiness_score) : 999
-      const bs = b.readiness_score != null ? Number(b.readiness_score) : 999
-      if (as !== bs) return as - bs
-      const aw = (a.open_inbox ?? 0) + (a.pending_approvals ?? 0) + (a.attention_issues ?? 0)
-      const bw = (b.open_inbox ?? 0) + (b.pending_approvals ?? 0) + (b.attention_issues ?? 0)
-      if (aw !== bw) return bw - aw
-      return String(a.organization_name || '').localeCompare(String(b.organization_name || ''), 'ru')
+    const rows: OrgRow[] = data?.organizations ?? []
+    return [...rows].sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1
+      if (!a.is_pinned && b.is_pinned) return 1
+      return workloadScore(b) - workloadScore(a)
     })
   }, [data?.organizations])
 
+  const totals = useMemo(() => {
+    let inbox = 0
+    let approvals = 0
+    let issues = 0
+    for (const o of organizations) {
+      inbox += o.open_inbox ?? 0
+      approvals += o.pending_approvals ?? 0
+      issues += o.attention_issues ?? 0
+    }
+    return { inbox, approvals, issues, clients: organizations.length }
+  }, [organizations])
+
+  const needsAttention = organizations.filter((o) => workloadScore(o) > 0)
+  const stable = organizations.filter((o) => workloadScore(o) === 0)
+
   async function activate(orgId: string) {
-    await switchOrganization(orgId)
-    await qc.invalidateQueries()
-    await refetch()
-    navigate('/')
+    setActivatingId(orgId)
+    try {
+      await switchOrganization(orgId)
+      await qc.cancelQueries()
+      await qc.invalidateQueries()
+      navigate('/operations')
+    } finally {
+      setActivatingId(null)
+    }
   }
 
+  const topClient = needsAttention[0]
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
-      <header className="mb-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Рабочее пространство</p>
-        <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
-          Клиенты и очереди
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
-          Спокойный обзор компаний, к которым у вас есть доступ: готовность отчётности, входящие задачи и согласования.
-          Выберите клиента — контекст переключится для всего интерфейса.
-        </p>
-      </header>
+    <OperationalPage
+      eyebrow="Рабочее пространство"
+      title="Командный центр бухгалтера"
+      description="Очереди по клиентам: кто ждёт согласования, что блокирует отчётность, куда перейти одним кликом."
+      focusStrip={
+        !isLoading && topClient ? (
+          <FocusStrip
+            tone={totals.issues > 0 ? 'amber' : 'primary'}
+            headline={
+              totals.issues > 0
+                ? `${totals.issues} замечаний по ${needsAttention.length} клиентам`
+                : `${totals.inbox} входящих по ${totals.clients} клиентам`
+            }
+            supporting={
+              topClient
+                ? `Сначала: ${topClient.organization_name} — готовность ${topClient.readiness_score ?? '—'}%`
+                : undefined
+            }
+            ctaLabel={topClient ? 'Открыть приоритетного клиента' : 'Обновить'}
+            onCta={() => topClient && void activate(topClient.organization_id)}
+          />
+        ) : undefined
+      }
+    >
+      {!isLoading && !isError && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: 'Клиентов', value: totals.clients },
+            { label: 'Входящие', value: totals.inbox },
+            { label: 'Согласования', value: totals.approvals },
+            { label: 'Замечания', value: totals.issues },
+          ].map((m) => (
+            <div key={m.label} className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-3 py-3 text-center">
+              <p className="font-headline text-xl font-bold tabular-nums text-on-surface">{m.value}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">{m.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[1, 2, 3].map((k) => (
-            <div
-              key={k}
-              className="h-36 animate-pulse rounded-3xl border border-outline/40 bg-surface-container-low/80"
-            />
-          ))}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       )}
 
       {isError && (
-        <div className="rounded-3xl border border-amber-400/25 bg-amber-500/[0.06] px-5 py-4 text-sm text-on-surface">
-          Не удалось загрузить обзор. Проверьте права (роль бухгалтер) и попробуйте обновить страницу.
+        <div className="rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] px-4 py-3 text-sm">
+          Не удалось загрузить обзор. Проверьте роль бухгалтера и обновите страницу.
+          <button type="button" className="btn-secondary ml-3 !min-h-8 text-xs" onClick={() => void refetch()}>
+            Повторить
+          </button>
         </div>
       )}
 
-      {organizations.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {organizations.map((row: any) => (
-            <button
-              key={row.organization_id}
-              type="button"
-              onClick={() => void activate(row.organization_id)}
-              className="group flex flex-col rounded-3xl border border-outline/50 bg-surface/95 p-5 text-left shadow-soft transition hover:border-primary/35 hover:shadow-float dark:border-outline/35 dark:bg-[rgb(var(--color-surface)/0.92)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-headline text-base font-semibold text-on-surface">{row.organization_name}</p>
-                  <p className="truncate text-xs text-on-surface-variant">УНП {row.unp}</p>
-                </div>
-                {row.is_pinned && (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                    закреплён
-                  </span>
-                )}
-              </div>
-              {(row.attention_issues ?? 0) > 0 && (
-                <p className="mt-2 text-[11px] font-medium text-amber-700/95 dark:text-amber-300/95">
-                  Замечаний по согласованности: {row.attention_issues}
-                </p>
-              )}
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-2xl bg-surface-container-low/90 py-2 dark:bg-white/[0.04]">
-                  <p className="text-lg font-bold text-on-surface">{row.readiness_score ?? '—'}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">готовность</p>
-                </div>
-                <div className="rounded-2xl bg-surface-container-low/90 py-2 dark:bg-white/[0.04]">
-                  <p className="text-lg font-bold text-on-surface">{row.open_inbox ?? 0}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">входящие</p>
-                </div>
-                <div className="rounded-2xl bg-surface-container-low/90 py-2 dark:bg-white/[0.04]">
-                  <p className="text-lg font-bold text-on-surface">{row.pending_approvals ?? 0}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">согласования</p>
-                </div>
-              </div>
-              {row.ai_summary && (
-                <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-on-surface-variant">{row.ai_summary}</p>
-              )}
-              <p className="mt-4 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
-                Открыть этот клиент →
-              </p>
-            </button>
-          ))}
-        </div>
+      {needsAttention.length > 0 && (
+        <section>
+          <h2 className="fc-section-label mb-3">Требуют внимания ({needsAttention.length})</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {needsAttention.map((row) => (
+              <OrgQueueCard
+                key={row.organization_id}
+                row={row}
+                busy={activatingId === row.organization_id}
+                onActivate={() => void activate(row.organization_id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {stable.length > 0 && (
+        <section>
+          <h2 className="fc-section-label mb-3">Стабильные ({stable.length})</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {stable.map((row) => (
+              <OrgQueueCard
+                key={row.organization_id}
+                row={row}
+                busy={activatingId === row.organization_id}
+                onActivate={() => void activate(row.organization_id)}
+                muted
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {data?.generated_at && (
-        <p className="mt-8 text-center text-[11px] text-on-surface-variant">Обновлено: {String(data.generated_at)}</p>
+        <p className="text-center text-[11px] text-on-surface-variant">Обновлено: {String(data.generated_at)}</p>
       )}
-    </div>
+    </OperationalPage>
+  )
+}
+
+function OrgQueueCard({
+  row,
+  onActivate,
+  busy,
+  muted,
+}: {
+  row: OrgRow
+  onActivate: () => void
+  busy: boolean
+  muted?: boolean
+}) {
+  const readiness = readinessLabel(row.readiness_score)
+  const wl = workloadScore(row)
+
+  return (
+    <article
+      className={`flex flex-col rounded-2xl border p-4 text-left transition ${
+        muted
+          ? 'border-outline/35 bg-surface/60'
+          : 'border-primary/25 bg-surface/95 shadow-soft hover:border-primary/40'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-headline text-base font-semibold text-on-surface">{row.organization_name}</p>
+          <p className="text-xs text-on-surface-variant">УНП {row.unp}</p>
+        </div>
+        {row.is_pinned && (
+          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">★</span>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+        <span
+          className={`rounded-full px-2 py-0.5 font-semibold ${
+            readiness.tone === 'ok'
+              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+              : readiness.tone === 'risk'
+                ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                : 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
+          }`}
+        >
+          {readiness.text}
+          {row.readiness_score != null ? ` · ${row.readiness_score}%` : ''}
+        </span>
+        {wl > 0 && (
+          <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-on-surface-variant">
+            нагрузка {wl}
+          </span>
+        )}
+      </div>
+
+      <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
+        <li className="rounded-xl bg-surface-container-low/80 py-2">
+          <strong className="block text-sm text-on-surface">{row.open_inbox ?? 0}</strong>
+          входящие
+        </li>
+        <li className="rounded-xl bg-surface-container-low/80 py-2">
+          <strong className="block text-sm text-on-surface">{row.pending_approvals ?? 0}</strong>
+          согласования
+        </li>
+        <li className="rounded-xl bg-surface-container-low/80 py-2">
+          <strong className="block text-sm text-on-surface">{row.attention_issues ?? 0}</strong>
+          замечания
+        </li>
+      </ul>
+
+      {row.ai_summary && <p className="mt-2 line-clamp-2 text-xs text-on-surface-variant">{row.ai_summary}</p>}
+
+      <button type="button" className="btn-primary mt-4 min-h-10 w-full text-sm" disabled={busy} onClick={onActivate}>
+        {busy ? 'Переключаем…' : 'Работать с клиентом'}
+      </button>
+    </article>
   )
 }

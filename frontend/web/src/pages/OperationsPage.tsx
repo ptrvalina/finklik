@@ -5,6 +5,9 @@ import { operationsApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
+import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
+import OperationalPage from '../components/shell/OperationalPage'
+import { operationTypeLabel } from '../lib/executionLabels'
 
 type OperationalItem = {
   id: string
@@ -331,8 +334,8 @@ const FeedRow = memo(function FeedRow({
                 {STATE_DIM_RU[item.state_dimension] || item.state_dimension}
               </span>
             )}
-            <span className="text-[10px] uppercase tracking-wide text-on-surface-variant">
-              {item.type}
+            <span className="text-[10px] font-medium text-on-surface-variant">
+              {operationTypeLabel(item.type)}
             </span>
           </div>
           <p className="mt-1.5 font-headline text-[15px] font-semibold leading-snug text-on-surface">
@@ -394,6 +397,7 @@ export default function OperationsPage() {
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
   const [stateDetailsOpen, setStateDetailsOpen] = useState(false)
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
 
   const executionFeedKey = ['operations', 'execution-feed', orgId || '__none__'] as const
 
@@ -437,9 +441,10 @@ export default function OperationsPage() {
   const feedCompact = pe?.feed_density === 'minimal'
   const simplified = pe?.simplified_state
   const showTechnicalStateByDefault = mode === 'advanced'
+  const showDiagnostics = showTechnicalStateByDefault || diagnosticsOpen
 
   return (
-    <div className="relative mx-auto max-w-3xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-10">
+    <div className="fc-scroll-region relative mx-auto max-w-3xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-10">
       {/* Мобильный state-dashboard: риск + готовность + следующий микро-шаг */}
       {!isLoading && !isError && data?.financial_state && (
         <div className="fixed inset-x-0 top-0 z-20 border-b border-outline/30 bg-[rgb(var(--color-surface)/0.92)] px-3 py-2 shadow-sm backdrop-blur-md sm:hidden">
@@ -496,6 +501,15 @@ export default function OperationsPage() {
                 ? 'Работа по клиентам: пакеты, конфликты данных и готовность к сдаче.'
                 : 'Полная картина состояния, истины и аудита для глубокого контроля.'}
         </p>
+        {mode !== 'advanced' && (
+          <button
+            type="button"
+            className="btn-ghost mt-3 min-h-9 px-0 text-xs font-semibold text-primary"
+            onClick={() => setDiagnosticsOpen((v) => !v)}
+          >
+            {diagnosticsOpen ? 'Скрыть техническую диагностику' : 'Показать техническую диагностику'}
+          </button>
+        )}
       </header>
 
       {!isLoading && !isError && trustData && (
@@ -575,7 +589,7 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && data?.operational_health && (
+      {!isLoading && !isError && showDiagnostics && data?.operational_health && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -602,7 +616,7 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && data?.trusted_automation && (
+      {!isLoading && !isError && showDiagnostics && data?.trusted_automation && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Доверие к автоматизации
@@ -635,7 +649,7 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && (data?.workflow_maintenance?.length ?? 0) > 0 && (
+      {!isLoading && !isError && showDiagnostics && (data?.workflow_maintenance?.length ?? 0) > 0 && (
         <section className="mb-6">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Самообслуживание процессов
@@ -652,7 +666,7 @@ export default function OperationsPage() {
         </section>
       )}
 
-      {!isLoading && !isError && (data?.operational_memory_hints?.length ?? 0) > 0 && (
+      {!isLoading && !isError && showDiagnostics && (data?.operational_memory_hints?.length ?? 0) > 0 && (
         <div className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/50 px-4 py-3 text-xs leading-relaxed text-on-surface-variant dark:bg-white/[0.03]">
           <p className="font-bold uppercase tracking-wide text-primary">Операционная память</p>
           <ul className="mt-2 space-y-2">
@@ -663,18 +677,18 @@ export default function OperationsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && data?.calm_ui_budget && mode === 'solo' && (
+      {!isLoading && !isError && showDiagnostics && data?.calm_ui_budget && mode === 'solo' && (
         <p className="mb-6 text-center text-[10px] leading-relaxed text-on-surface-variant">
           На экране одновременно не больше {data.calm_ui_budget.max_visible_alerts} заметных сигналов — приоритет у одного
           следующего шага.
         </p>
       )}
 
-      {!isLoading && !isError && data?.financial_state && (
+      {!isLoading && !isError && showDiagnostics && data?.financial_state && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-              {showTechnicalStateByDefault ? 'Состояние (детально)' : 'Технические детали состояния'}
+              Состояние (детально)
             </p>
             {!showTechnicalStateByDefault && (
               <button
@@ -742,10 +756,10 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && data?.truth_governance && (
+      {!isLoading && !isError && showDiagnostics && data?.truth_governance && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Управление истиной (Flow 7)
+            Согласованность данных
           </p>
           <p className="mt-3 text-sm text-on-surface">
             Уверенность снимка:{' '}
@@ -780,7 +794,7 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && (data?.recent_state_audit?.length ?? 0) > 0 && (
+      {!isLoading && !isError && showDiagnostics && (data?.recent_state_audit?.length ?? 0) > 0 && (
         <div className="mb-6 rounded-3xl border border-outline/35 bg-surface-container-low/50 px-4 py-3 text-xs text-on-surface-variant dark:bg-white/[0.03]">
           <p className="font-bold uppercase tracking-wide text-primary">Аудит состояния</p>
           <ul className="mt-2 space-y-2">
@@ -793,7 +807,7 @@ export default function OperationsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && (data?.state_predictions?.length ?? 0) > 0 && (
+      {!isLoading && !isError && showDiagnostics && (data?.state_predictions?.length ?? 0) > 0 && (
         <div className="mb-6 space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Прогноз состояния
@@ -819,7 +833,7 @@ export default function OperationsPage() {
       {!isLoading && !isError && (data?.work_packs?.length ?? 0) > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Пакеты подготовки (Work Pack)
+            Пакеты подготовки
           </h2>
           <div className="grid gap-4">
             {(data?.work_packs ?? []).map((pack) => (
@@ -925,42 +939,14 @@ export default function OperationsPage() {
         />
       )}
 
-      {!isLoading && !isError && top && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Главное действие
-          </h2>
-          <FeedRow item={top} onOpen={openPath} prominent compact={feedCompact} />
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => top.action_path && openPath(top.action_path)}
-              className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-on hover:opacity-95"
-            >
-              Перейти к выполнению
-            </button>
-            <button
-              type="button"
-              onClick={() => setPanelItem(top)}
-              className="rounded-2xl border border-outline/45 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-white/5"
-            >
-              Контекст
-            </button>
-          </div>
-        </section>
-      )}
-
-      {!isLoading && !isError && rest.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Дальше по важности ({rest.length})
-          </h2>
-          <div className="grid gap-3">
-            {rest.map((item) => (
-              <FeedRow key={item.id} item={item} onOpen={openPath} compact={feedCompact} />
-            ))}
-          </div>
-        </section>
+      {!isLoading && !isError && items.length > 0 && (
+        <GroupedExecutionFeed
+          top={top}
+          rest={rest}
+          compact={feedCompact}
+          onOpen={openPath}
+          onInspect={(item) => setPanelItem(item as OperationalItem)}
+        />
       )}
 
       {isFetching && !isLoading && (

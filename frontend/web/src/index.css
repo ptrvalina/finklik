@@ -207,6 +207,51 @@
   .label {
     @apply mb-1.5 block font-label text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant;
   }
+  /** Вертикальный ритм секций (design tokens) */
+  .fc-section-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fc-space-section-md);
+  }
+  .fc-section-stack-sm {
+    gap: var(--fc-space-section-sm);
+  }
+  .fc-onboarding-card {
+    @apply card-elevated rounded-2xl border border-outline/50 p-5;
+    min-height: 8rem;
+  }
+  .fc-onboarding-shell main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .fc-scroll-region {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .fc-page-header {
+    flex-shrink: 0;
+  }
+  .fc-section-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant;
+  }
+  .fc-section-stack-sm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fc-space-section-sm);
+  }
+  .fc-stat-tile {
+    min-height: 4.5rem;
+  }
+  .accounting-journal-row td {
+    padding-top: var(--fc-table-cell-y);
+    padding-bottom: var(--fc-table-cell-y);
+  }
+  .fc-skeleton-pulse {
+    @apply animate-pulse rounded-lg bg-surface-container-high/80;
+    min-height: 2.5rem;
+  }
   .metric-blade {
     @apply relative overflow-hidden rounded-3xl border border-outline/60 bg-surface/90 p-6 shadow-[0_12px_40px_-24px_rgba(0,77,64,0.16)] backdrop-blur-xl transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
            hover:border-emerald-400/25 hover:shadow-[0_18px_52px_-26px_rgba(16,185,129,0.18)]

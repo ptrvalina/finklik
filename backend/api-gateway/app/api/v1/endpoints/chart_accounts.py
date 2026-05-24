@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_roles, workspace_organization_id
-from app.models.accounting import ChartAccount, ChartSubaccount, FixedAsset, LedgerEntry
+from app.models.accounting import AmortizationEntry, ChartAccount, ChartSubaccount, FixedAsset, LedgerEntry
 from app.models.user import Organization, User
 from app.services.amortization_service import run_monthly_amortization
 from app.services.chart_account_service import (
@@ -71,6 +71,10 @@ class FixedAssetCreate(BaseModel):
     useful_life_months: int = Field(ge=1, le=600)
     depreciation_method: str = "straight_line"
     salvage_value: Decimal = Field(default=Decimal("0"), ge=0)
+
+
+class FixedAssetPatch(BaseModel):
+    is_active: bool | None = None
 
 
 class AccountingModePatch(BaseModel):
@@ -263,6 +267,39 @@ async def list_ledger(
     }
 
 
+@router.get("/fixed-assets")
+async def list_fixed_assets(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    rows = (
+        await db.execute(
+            select(FixedAsset)
+            .where(FixedAsset.organization_id == oid)
+            .order_by(FixedAsset.purchase_date.desc())
+        )
+    ).scalars().all()
+    return {
+        "items": [
+            {
+                "id": a.id,
+                "inventory_number": a.inventory_number,
+                "name": a.name,
+                "purchase_date": a.purchase_date.isoformat(),
+                "purchase_amount": str(a.purchase_amount),
+                "useful_life_months": a.useful_life_months,
+                "depreciation_method": a.depreciation_method,
+                "salvage_value": str(a.salvage_value),
+                "asset_account": a.asset_account,
+                "depreciation_account": a.depreciation_account,
+                "is_active": a.is_active,
+            }
+            for a in rows
+        ]
+    }
+
+
 @router.post("/fixed-assets", status_code=201)
 async def create_fixed_asset(
     body: FixedAssetCreate,
@@ -284,6 +321,64 @@ async def create_fixed_asset(
     await db.commit()
     await db.refresh(asset)
     return {"id": asset.id}
+
+
+@router.patch("/fixed-assets/{asset_id}")
+async def patch_fixed_asset(
+    asset_id: str,
+    body: FixedAssetPatch,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    asset = await db.get(FixedAsset, asset_id)
+    if not asset or asset.organization_id != oid:
+        raise HTTPException(404, "Основное средство не найдено")
+    if body.is_active is not None:
+        asset.is_active = body.is_active
+    await db.commit()
+    return {"id": asset.id, "is_active": asset.is_active}
+
+
+@router.get("/amortization")
+async def list_amortization(
+    limit: int = Query(48, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "accountant")),
+):
+    oid = workspace_organization_id(current_user)
+    rows = (
+        await db.execute(
+            select(AmortizationEntry)
+            .where(AmortizationEntry.organization_id == oid)
+            .order_by(
+                AmortizationEntry.period_year.desc(),
+                AmortizationEntry.period_month.desc(),
+            )
+            .limit(limit)
+        )
+    ).scalars().all()
+    asset_ids = {r.fixed_asset_id for r in rows}
+    names: dict[str, str] = {}
+    if asset_ids:
+        assets = (
+            await db.execute(select(FixedAsset).where(FixedAsset.id.in_(asset_ids)))
+        ).scalars().all()
+        names = {a.id: a.name for a in assets}
+    return {
+        "items": [
+            {
+                "id": r.id,
+                "fixed_asset_id": r.fixed_asset_id,
+                "asset_name": names.get(r.fixed_asset_id, ""),
+                "period_year": r.period_year,
+                "period_month": r.period_month,
+                "amount": str(r.amount),
+                "ledger_entry_id": r.ledger_entry_id,
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.post("/amortization/run")

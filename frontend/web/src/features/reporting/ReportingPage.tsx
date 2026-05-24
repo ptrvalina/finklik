@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import OperationalPage, { FocusStrip } from '../../components/shell/OperationalPage'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
 
@@ -35,47 +36,56 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   }
   const filter = authority && isReportingAuthority(authority) ? authority : null
 
+  if (filter) {
+    return (
+      <OperationalPage
+        eyebrow="Комплаенс"
+        title={`Сдача отчётности — ${authorityTitle(filter)}`}
+        description={`Подготовка, проверка и отправка отчётов в ${authorityTitle(filter)}.`}
+        primaryAction={
+          <Link to={base} className="btn-secondary !min-h-10 text-xs">
+            Все органы
+          </Link>
+        }
+      >
+        <ReportSubmissionsView authorityFilter={filter} />
+      </OperationalPage>
+    )
+  }
+
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00332e] via-primary to-emerald-400/90" aria-hidden />
-        <h1 className="page-heading">
-          {filter ? `Сдача отчётности — ${authorityTitle(filter)}` : 'Отчетность'}
-        </h1>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          {filter
-            ? `Отчёты и отправка в ${authorityTitle(filter)}`
-            : 'Выберите орган в меню слева или перейдите в раздел ниже'}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
-          <span className="rounded-full border border-primary/20 bg-primary/[0.06] px-2.5 py-1 font-semibold text-primary">Подготовка</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Проверка</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Подача</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Статус</span>
-        </div>
+    <OperationalPage
+      eyebrow="Комплаенс"
+      title="Отчётность"
+      description="Выберите орган, пройдите guided-поток подготовки и отслеживайте статусы подачи."
+      focusStrip={
+        <FocusStrip
+          headline="Начните с ИМНС или ФСЗН"
+          supporting="Система подскажет недостающие данные до отправки."
+          ctaLabel="ИМНС"
+          ctaTo={`${base}/imns`}
+        />
+      }
+    >
+      <ReportingGuidedFlow basePath={base} />
+
+      <div
+        id="fc-report-authorities"
+        className="flex flex-wrap gap-2 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 sm:gap-3 sm:p-4"
+      >
+        <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80">Органы</span>
+        {hubLinks.map((l) => (
+          <Link
+            key={l.to}
+            to={l.to}
+            className="tap-highlight-none rounded-xl border border-outline/70 bg-surface px-4 py-2.5 text-xs font-bold text-on-surface shadow-xs transition hover:border-primary/40 hover:bg-primary/[0.07] hover:text-primary"
+          >
+            {l.label}
+          </Link>
+        ))}
       </div>
 
-      {!filter && <ReportingGuidedFlow basePath={base} />}
-
-      {!filter && (
-        <div
-          id="fc-report-authorities"
-          className="flex flex-wrap gap-2 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 shadow-soft sm:gap-3 sm:p-4"
-        >
-          <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80 lg:hidden">Органы</span>
-          {hubLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="tap-highlight-none rounded-xl border border-outline/70 bg-surface px-4 py-2.5 text-xs font-bold text-on-surface shadow-xs transition hover:border-primary/40 hover:bg-primary/[0.07] hover:text-primary"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      <ReportSubmissionsView authorityFilter={filter} />
-    </div>
+      <ReportSubmissionsView authorityFilter={null} />
+    </OperationalPage>
   )
 }

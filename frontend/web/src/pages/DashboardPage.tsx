@@ -1,11 +1,13 @@
 import { useMemo, lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi, reportsApi, bankApi, businessOsApi } from '../api/client'
+import { dashboardApi, reportsApi, bankApi, businessOsApi, teamApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import { ExecutiveBriefing } from '../components/dashboard/ExecutiveBriefing'
+import DashboardFocusStrip from '../components/dashboard/DashboardFocusStrip'
+import { orgQueryKey } from '../lib/queryKeys'
 
 const CashflowPulse = lazy(async () => {
   const m = await import('../components/dashboard/CashflowPulse')
@@ -32,7 +34,7 @@ export default function DashboardPage() {
   const theme = useThemeStore((s) => s.theme)
   const isManager = (user?.role || '').toLowerCase() === 'manager'
   const { data: metrics, isLoading, isError, refetch } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: orgQueryKey('dashboard'),
     queryFn: () => dashboardApi.getMetrics().then((r) => r.data),
     enabled: !isManager,
     retry: 1,
@@ -66,11 +68,18 @@ export default function DashboardPage() {
 
   /** Business OS snapshot (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
   const { data: businessState } = useQuery({
-    queryKey: ['business-state'],
+    queryKey: orgQueryKey('business-state'),
     queryFn: () => businessOsApi.getState().then((r) => r.data),
     enabled: !isManager,
     retry: false,
     staleTime: 60_000,
+  })
+
+  const { data: businessProfile } = useQuery({
+    queryKey: orgQueryKey('business-profile'),
+    queryFn: () => teamApi.getBusinessProfile().then((r) => r.data),
+    enabled: !isManager,
+    staleTime: 120_000,
   })
 
   const summaryMonths = useMemo(() => {
@@ -168,7 +177,7 @@ export default function DashboardPage() {
         <div className="fc-hero-strip" aria-hidden />
         <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600/90 dark:text-emerald-400/90">Command center</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600/90 dark:text-emerald-400/90">Операционный центр</p>
             <h1 className="page-heading mt-1">Главная</h1>
             <p className="mt-1.5 text-sm leading-relaxed text-on-surface-variant">
               УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
@@ -185,11 +194,19 @@ export default function DashboardPage() {
 
       <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
 
+      <DashboardFocusStrip
+        draftCount={draftCount}
+        pendingOcr={Number(metrics?.documents_pending_ocr ?? 0)}
+        overdueCount={Number(businessState?.overdue_obligations_count ?? 0)}
+        daysLeft={daysLeft}
+        profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
+      />
+
       {businessState && (
         <GlassCard className="mt-6 p-5 sm:p-6" hoverLift={false}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Business OS</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Состояние бизнеса</p>
               <p className="mt-1 font-headline text-lg font-bold text-on-surface">Состояние бизнеса</p>
               <p className="mt-1 text-sm text-on-surface-variant">
                 Выручка и расходы за месяц, прибыль и обязательства — единый снимок для операций.
@@ -231,11 +248,11 @@ export default function DashboardPage() {
         </GlassCard>
       )}
 
+      <OnboardingChecklist />
+
       <div className="mt-8">
         <AIRecommendationPanel metrics={metrics} transactions={transactions} />
       </div>
-
-      <OnboardingChecklist />
 
       <div className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 dark:bg-black/20">
         <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Дальше</span>

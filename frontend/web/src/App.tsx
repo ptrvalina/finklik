@@ -34,6 +34,7 @@ import OperationsPage from './pages/OperationsPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
 import BusinessProfilePage from './pages/BusinessProfilePage'
 import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
+import FixedAssetsPage from './pages/FixedAssetsPage'
 import OpsDiagnosticsPage from './pages/OpsDiagnosticsPage'
 import Layout from './components/layout/Layout'
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
@@ -138,6 +139,7 @@ function AppRoutes() {
           </Route>
           <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
           <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
+          <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Websites />} />
           <Route path="notes" element={<Notes />} />

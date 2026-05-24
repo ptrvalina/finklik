@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { accountingApi } from '../api/client'
 import { terminology } from '../i18n'
+import OperationalPage from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 
 type TreeClass = {
   id: number
@@ -19,11 +21,37 @@ export default function ChartOfAccountsPage() {
   const [suffix, setSuffix] = useState('')
   const [subName, setSubName] = useState('')
   const [parentCode, setParentCode] = useState('60')
+  const [q, setQ] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['chart-tree'],
+    queryKey: orgQueryKey('chart-tree'),
     queryFn: () => accountingApi.chartTree().then((r) => r.data as { classes: TreeClass[] }),
+    staleTime: 120_000,
   })
+
+  const filtered = useMemo(() => {
+    if (!data?.classes) return []
+    const needle = q.trim().toLowerCase()
+    if (!needle) return data.classes
+    return data.classes
+      .map((cls) => ({
+        ...cls,
+        accounts: cls.accounts.filter(
+          (a) =>
+            a.code.includes(needle) ||
+            a.name_ru.toLowerCase().includes(needle) ||
+            a.subaccounts.some(
+              (s) => s.full_code.includes(needle) || s.name_ru.toLowerCase().includes(needle),
+            ),
+        ),
+      }))
+      .filter((c) => c.accounts.length > 0)
+  }, [data?.classes, q])
+
+  const accountCount = useMemo(
+    () => filtered.reduce((n, c) => n + c.accounts.length, 0),
+    [filtered],
+  )
 
   const createSub = useMutation({
     mutationFn: () =>
@@ -35,23 +63,41 @@ export default function ChartOfAccountsPage() {
     onSuccess: () => {
       setSuffix('')
       setSubName('')
-      qc.invalidateQueries({ queryKey: ['chart-tree'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('chart-tree') })
     },
   })
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600/90">Расширенный учёт</p>
-        <h1 className="mt-2 font-headline text-2xl font-bold">{terminology.nav.chartOfAccounts}</h1>
-        <p className="mt-2 text-sm text-on-surface-variant">
-          Официальные счета по Приказу Минфина №50. Субсчета создаёт организация; системные счета не удаляются.
+    <OperationalPage
+      eyebrow="Расширенный учёт · РБ"
+      title={terminology.nav.chartOfAccounts}
+      description="Полный типовой план по Постановлению Минфина №50: синтетические и забалансовые счета, официальные и организационные субсчета."
+      primaryAction={
+        <button
+          type="button"
+          className="btn-secondary !min-h-10 text-xs"
+          onClick={() => void qc.invalidateQueries({ queryKey: orgQueryKey('chart-tree') })}
+        >
+          Обновить
+        </button>
+      }
+    >
+      <div className="fc-onboarding-card">
+        <label className="label">Поиск счёта или субсчёта</label>
+        <input
+          className="input min-h-11 rounded-xl"
+          placeholder="60, материалы, 68.1…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <p className="mt-2 text-xs text-on-surface-variant">
+          Найдено счетов: <strong>{accountCount}</strong>
         </p>
       </div>
 
-      <div className="card-elevated rounded-2xl border border-outline/50 p-4">
-        <p className="label mb-2">Новый субсчёт</p>
-        <div className="grid gap-2 sm:grid-cols-3">
+      <details className="fc-onboarding-card">
+        <summary className="cursor-pointer font-semibold text-on-surface">Добавить субсчёт организации</summary>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <input className="input rounded-xl" placeholder="Счёт (60)" value={parentCode} onChange={(e) => setParentCode(e.target.value)} />
           <input className="input rounded-xl" placeholder="Суффикс (1)" value={suffix} onChange={(e) => setSuffix(e.target.value)} />
           <input className="input rounded-xl" placeholder="Название" value={subName} onChange={(e) => setSubName(e.target.value)} />
@@ -64,13 +110,13 @@ export default function ChartOfAccountsPage() {
         >
           Добавить субсчёт
         </button>
-      </div>
+      </details>
 
       {isLoading ? (
         <p className="text-sm text-on-surface-variant">Загрузка плана счетов…</p>
       ) : (
         <div className="space-y-2">
-          {data?.classes?.map((cls) => (
+          {filtered.map((cls) => (
             <div key={cls.id} className="card-elevated overflow-hidden rounded-2xl border border-outline/50">
               <button
                 type="button"
@@ -85,7 +131,7 @@ export default function ChartOfAccountsPage() {
                 </span>
               </button>
               {openClass === cls.id && (
-                <ul className="border-t border-outline/40 px-2 pb-2">
+                <ul className="max-h-[min(60vh,28rem)] overflow-y-auto border-t border-outline/40 px-2 pb-2">
                   {cls.accounts.map((acc) => (
                     <li key={acc.code} className="rounded-xl px-2 py-2 hover:bg-surface-container-high">
                       <div className="flex items-baseline gap-2">
@@ -112,6 +158,6 @@ export default function ChartOfAccountsPage() {
           ))}
         </div>
       )}
-    </div>
+    </OperationalPage>
   )
 }

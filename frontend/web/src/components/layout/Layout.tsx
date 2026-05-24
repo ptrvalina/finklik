@@ -99,6 +99,7 @@ export default function Layout() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        if (location.pathname.startsWith('/accounting')) return
         e.preventDefault()
         setSearchOpen(true)
       }
@@ -106,7 +107,7 @@ export default function Layout() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [location.pathname])
 
   const bannerNotifications = notifications.filter((n) => n.event !== 'report_status')
 
