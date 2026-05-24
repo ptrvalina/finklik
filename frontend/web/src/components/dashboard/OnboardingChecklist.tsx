@@ -132,6 +132,7 @@ export default function OnboardingChecklist() {
 
   const doneCount = steps.filter((s) => s.done).length
   const allDone = doneCount === steps.length
+  const progressPct = steps.length > 0 ? Math.round((doneCount / steps.length) * 100) : 0
 
   function dismiss() {
     try {
@@ -145,7 +146,7 @@ export default function OnboardingChecklist() {
   if (dismissed || allDone) return null
 
   return (
-    <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/8 to-white p-4 shadow-soft sm:p-5 dark:from-primary/12 dark:to-surface">
+    <div className="fc-calm-surface border-primary/20 p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="font-headline text-sm font-bold text-on-surface sm:text-base">Первые 15 минут</h2>
@@ -161,12 +162,18 @@ export default function OnboardingChecklist() {
           Скрыть
         </button>
       </div>
+      <div className="mb-3 h-1 overflow-hidden rounded-full bg-surface-container-high" aria-hidden>
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-premium"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
       <ul className="space-y-2">
         {steps.map((s) => (
           <li key={s.id}>
             <Link
               to={s.to}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
+              className={`fc-btn-thumb flex min-h-[var(--fc-touch-min)] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
                 s.done
                   ? 'border border-emerald-200/80 bg-emerald-50 text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-100'
                   : 'border border-outline/75 bg-surface text-on-surface hover:border-primary/30 hover:bg-primary/5 dark:border-outline/45 dark:text-on-surface'

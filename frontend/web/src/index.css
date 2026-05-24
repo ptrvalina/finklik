@@ -50,6 +50,9 @@
     --fc-table-cell-y: 0.625rem;
     --fc-table-cell-x: 0.875rem;
     --fc-glow-emerald: 0 0 36px -10px rgba(16, 185, 129, 0.28);
+    --fc-shadow-calm: 0 8px 28px -14px rgba(15, 23, 42, 0.12);
+    --fc-shadow-card: 0 10px 32px -18px rgba(0, 77, 64, 0.1);
+    --fc-touch-min: 2.75rem;
   }
 
   .dark {
@@ -222,9 +225,6 @@
   .fc-accounting-tile {
     min-height: 7.5rem;
   }
-  .fc-section-stack-sm {
-    gap: var(--fc-space-section-sm);
-  }
   .fc-onboarding-card {
     @apply card-elevated rounded-2xl border border-outline/50 p-5;
     min-height: 8rem;
@@ -249,6 +249,16 @@
     display: flex;
     flex-direction: column;
     gap: var(--fc-space-section-sm);
+  }
+  .fc-calm-surface {
+    @apply rounded-2xl border border-outline/60 bg-surface/95 shadow-[var(--fc-shadow-calm)] backdrop-blur-sm
+           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.72)];
+  }
+  .fc-calm-error {
+    box-shadow: var(--fc-shadow-calm);
+  }
+  .fc-btn-thumb {
+    min-height: var(--fc-touch-min);
   }
   .fc-stat-tile {
     min-height: 4.5rem;
@@ -567,12 +577,28 @@ html:not(.dark) .fc-datatable-shell--bulk {
     border-radius: 1.25rem;
   }
 
+  .app-compact-mobile .card:hover,
+  .app-compact-mobile .card-elevated:hover,
+  .app-compact-mobile .page-section:hover {
+    transform: none;
+    box-shadow: var(--fc-shadow-calm);
+  }
+
   .app-compact-mobile .metric-blade {
     padding: 1rem;
+    box-shadow: var(--fc-shadow-calm);
+  }
+
+  .app-compact-mobile .metric-blade:hover {
+    box-shadow: var(--fc-shadow-calm);
   }
 
   .app-compact-mobile .page-heading {
     font-size: 1.5rem;
     line-height: 1.25;
+  }
+
+  .app-compact-mobile .fc-hero {
+    box-shadow: var(--fc-shadow-card);
   }
 }

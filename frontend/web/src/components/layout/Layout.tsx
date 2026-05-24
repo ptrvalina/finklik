@@ -17,6 +17,7 @@ import {
 } from './navConfig'
 import OrgSwitcher from '../workspace/OrgSwitcher'
 import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
+import NetworkStatusBanner from './NetworkStatusBanner'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -471,6 +472,7 @@ export default function Layout() {
 
         <main className="fc-main-atmosphere min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
+            <NetworkStatusBanner />
             <BusinessProfileBanner />
             <Outlet />
           </div>

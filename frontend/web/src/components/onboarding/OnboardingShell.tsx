@@ -75,7 +75,7 @@ export default function OnboardingShell({
         <div className="fc-section-stack mt-6">{children}</div>
       </main>
 
-      <footer className="sticky bottom-0 z-30 border-t border-outline/50 bg-canvas/95 px-4 py-4 backdrop-blur-md sm:px-6">
+      <footer className="app-form-actions sticky bottom-0 z-30 px-4 sm:px-6">
         <div className="mx-auto max-w-2xl space-y-2">{footer}</div>
       </footer>
     </div>

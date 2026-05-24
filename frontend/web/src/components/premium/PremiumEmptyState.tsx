@@ -23,14 +23,13 @@ export function PremiumEmptyState({
   return (
     <div
       className={clsx(
-        'relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.07] via-transparent to-emerald-500/[0.05] text-center backdrop-blur-xl',
-        'dark:border-white/[0.08]',
+        'fc-calm-surface relative overflow-hidden text-center',
         compact ? 'px-5 py-10 sm:px-8' : 'px-8 py-14 sm:px-12',
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/25 to-transparent"
         aria-hidden
       />
       <span

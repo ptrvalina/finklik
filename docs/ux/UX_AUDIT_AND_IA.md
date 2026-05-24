@@ -59,5 +59,5 @@ Settings, assistant, analytics: profile menu / secondary, not primary nav.
 | W1 | IA nav, accounting hub, execution cards, work-now on home | Done |
 | W2 | Operations execution-only; progress strip; work packs | Done |
 | W3 | OCR review banner; reporting readiness hero | Done |
-| W4 | Design tokens cleanup; mobile thumb actions | Planned |
-| W5 | First-client polish (retry, empty, onboarding) | Planned |
+| W4 | Design tokens (`--fc-shadow-calm`, calm surfaces); mobile calmer shadows; thumb targets | Done |
+| W5 | `CalmErrorState`, offline banner, query defaults, onboarding progress | Done |

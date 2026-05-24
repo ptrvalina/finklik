@@ -11,6 +11,7 @@ import { WorkPackCard } from '../components/operations/WorkPackCard'
 import OperationalPage from '../components/shell/OperationalPage'
 import { operationTypeLabel } from '../lib/executionLabels'
 import { orgQueryKey } from '../lib/queryKeys'
+import { CalmErrorState } from '../components/errors/CalmErrorState'
 
 type OperationalItem = {
   id: string
@@ -837,15 +838,12 @@ export default function OperationsPage() {
       )}
 
       {isError && (
-        <div className="rounded-3xl border border-amber-400/25 bg-amber-500/[0.06] px-5 py-4 text-sm text-on-surface">
-          {(feedError as { calmUserMessage?: string } | undefined)?.calmUserMessage?.trim() ||
-            'Не удалось загрузить ленту исполнения. Проверьте доступ к организации и попробуйте снова.'}
-          {(feedError as { retrySuggested?: boolean } | undefined)?.retrySuggested ? (
-            <span className="mt-2 block text-xs text-on-surface-variant">
-              Можно безопасно обновить страницу — черновики на сервере не теряются из‑за этой ошибки.
-            </span>
-          ) : null}
-        </div>
+        <CalmErrorState
+          title="Лента работы недоступна"
+          error={feedError}
+          fallbackMessage="Не удалось загрузить ленту. Проверьте доступ к организации и попробуйте снова."
+          onRetry={() => void refetch()}
+        />
       )}
 
       {!isLoading && !isError && items.length === 0 && (

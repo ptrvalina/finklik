@@ -17,6 +17,7 @@ const CashflowPulse = lazy(async () => {
 })
 import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
+import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { AIRecommendationPanel } from '../components/premium-os'
 
 function fmt(n: any) {
@@ -132,13 +133,12 @@ export default function DashboardPage() {
   if (!isManager && isError) {
     return (
       <div className="max-w-3xl">
-        <GlassCard className="p-6" hoverLift={false}>
-          <h1 className="page-heading">Главная</h1>
-          <p className="mt-2 text-on-surface-variant">Не удалось загрузить данные дашборда. Проверьте подключение к API и повторите попытку.</p>
-          <button type="button" className="btn-primary mt-4" onClick={() => refetch()}>
-            Повторить
-          </button>
-        </GlassCard>
+        <h1 className="page-heading mb-4">Главная</h1>
+        <CalmErrorState
+          title="Главная недоступна"
+          fallbackMessage="Не удалось загрузить данные. Проверьте подключение и повторите попытку."
+          onRetry={() => void refetch()}
+        />
       </div>
     )
   }
