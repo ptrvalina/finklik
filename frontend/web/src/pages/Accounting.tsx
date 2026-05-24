@@ -652,6 +652,9 @@ export default function Accounting() {
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+              <Icon name="apps" className="text-lg" /> Все разделы учёта
+            </Link>
             <button type="button" className="btn-secondary shrink-0 rounded-[1rem]" onClick={downloadKudir}>
               Скачать КУДиР
             </button>

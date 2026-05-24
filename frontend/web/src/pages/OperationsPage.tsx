@@ -6,6 +6,8 @@ import { useAuthStore } from '../store/authStore'
 import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
+import OperationsProgressStrip from '../components/operations/OperationsProgressStrip'
+import { WorkPackCard } from '../components/operations/WorkPackCard'
 import OperationalPage from '../components/shell/OperationalPage'
 import { operationTypeLabel } from '../lib/executionLabels'
 import { orgQueryKey } from '../lib/queryKeys'
@@ -445,75 +447,38 @@ export default function OperationsPage() {
   const showDiagnostics = showTechnicalStateByDefault || diagnosticsOpen
 
   return (
-    <div className="fc-scroll-region relative mx-auto max-w-3xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-10">
-      {/* Мобильный state-dashboard: риск + готовность + следующий микро-шаг */}
-      {!isLoading && !isError && data?.financial_state && (
+    <OperationalPage
+      narrow
+      className="pb-28 sm:pb-10"
+      eyebrow="Исполнение"
+      title="Лента работы"
+      description={
+        mode === 'solo'
+          ? 'Один фокус за раз — что сделать и почему это важно для отчётности.'
+          : 'Задачи в порядке срочности: одна кнопка — одно действие.'
+      }
+      secondaryActions={
+        mode !== 'advanced' ? (
+          <button
+            type="button"
+            className="btn-ghost min-h-10 text-xs font-semibold text-primary"
+            onClick={() => setDiagnosticsOpen((v) => !v)}
+          >
+            {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
+          </button>
+        ) : undefined
+      }
+    >
+      {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') && (
         <div className="fixed inset-x-0 top-0 z-20 border-b border-outline/30 bg-[rgb(var(--color-surface)/0.92)] px-3 py-2 shadow-sm backdrop-blur-md sm:hidden">
-          <div className="mx-auto flex max-w-3xl flex-col gap-1 text-[11px] text-on-surface">
-            {simplified && (mode === 'solo' || mode === 'operator') ? (
-              <>
-                <span className="line-clamp-2 font-medium leading-snug">{simplified.headline}</span>
-                {simplified.readiness_plain && (
-                  <span className="line-clamp-1 text-on-surface-variant">{simplified.readiness_plain}</span>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-between gap-2">
-                <span>
-                  Риск: <strong className="text-on-surface">{data.financial_state.risk_level}</strong>
-                </span>
-                <span>
-                  Готовн.: <strong>{data.financial_state.operational_readiness.score}%</strong>
-                </span>
-                {data.truth_governance != null && (
-                  <span>
-                    Достов.: <strong>{(data.truth_governance.state_confidence * 100).toFixed(0)}%</strong>
-                  </span>
-                )}
-                {!data.truth_governance && data.state_predictions?.[0] && (
-                  <span className="line-clamp-1 min-w-0 text-on-surface-variant" title={data.state_predictions[0].message}>
-                    {data.state_predictions[0].message}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          <p className="mx-auto max-w-3xl line-clamp-2 text-[11px] font-medium leading-snug text-on-surface">
+            {simplified.headline}
+          </p>
         </div>
       )}
 
-      <header className={`mb-8 ${!isLoading && !isError && data?.financial_state ? 'mt-10 sm:mt-0' : ''}`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Исполнение</p>
-          {pe && (
-            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium text-on-surface-variant ring-1 ring-white/10">
-              {MODE_LABEL[mode]}
-            </span>
-          )}
-        </div>
-        <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
-          Что сделать сегодня
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
-          {mode === 'solo'
-            ? 'Один спокойный фокус: что сделать дальше и почему это важно для отчётности — без лишних панелей.'
-            : mode === 'operator'
-              ? 'Операционная лента: задачи, сверки и согласования в порядке важности.'
-              : mode === 'accountant'
-                ? 'Работа по клиентам: пакеты, конфликты данных и готовность к сдаче.'
-                : 'Полная картина состояния, истины и аудита для глубокого контроля.'}
-        </p>
-        {mode !== 'advanced' && (
-          <button
-            type="button"
-            className="btn-ghost mt-3 min-h-9 px-0 text-xs font-semibold text-primary"
-            onClick={() => setDiagnosticsOpen((v) => !v)}
-          >
-            {diagnosticsOpen ? 'Скрыть техническую диагностику' : 'Показать техническую диагностику'}
-          </button>
-        )}
-      </header>
-
-      {!isLoading && !isError && trustData && (
+      <div className={!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') ? 'mt-8 sm:mt-0' : ''}>
+      {!isLoading && !isError && trustData && showDiagnostics && (
         <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
           <summary className="cursor-pointer font-medium text-on-surface/90">
             Надёжность и фоновые процессы
@@ -568,11 +533,23 @@ export default function OperationsPage() {
         </details>
       )}
 
-      {!isLoading && !isError && pe?.primary_focus_hint && (
+      {!isLoading && !isError && pe?.primary_focus_hint && !top && (
         <GlassCard variant="subtle" className="mb-6 border-primary/25 p-5 ring-1 ring-primary/15" hoverLift={false}>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Главный фокус</p>
           <p className="mt-2 text-base font-medium leading-snug text-on-surface">{pe.primary_focus_hint}</p>
         </GlassCard>
+      )}
+
+      {!isLoading && !isError && data?.readiness_score != null && (
+        <div className="mb-6">
+          <OperationsProgressStrip
+            readinessScore={data.readiness_score}
+            pendingCount={data.pending_count}
+            blockedCount={data.blocked_count}
+            onRefresh={() => void refetch()}
+            refreshing={isFetching}
+          />
+        </div>
       )}
 
       {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator' || mode === 'accountant') && (
@@ -832,83 +809,22 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && (data?.work_packs?.length ?? 0) > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Пакеты подготовки
-          </h2>
-          <div className="grid gap-4">
-            {(data?.work_packs ?? []).map((pack) => (
-              <GlassCard key={pack.id} variant="subtle" className="p-5" hoverLift={false}>
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-headline text-base font-semibold text-on-surface">{pack.title}</p>
-                    <p className="mt-1 text-xs uppercase tracking-wide text-on-surface-variant">
-                      Режим: {AUTONOMY_RU[pack.mode] || pack.mode}
-                    </p>
-                  </div>
-                </div>
-                <ul className="mt-3 list-inside list-disc text-sm text-on-surface-variant">
-                  {pack.summary_lines.map((ln, i) => (
-                    <li key={i}>
-                      {ln.count} × {ln.detail || ln.kind}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-sm text-on-surface">{pack.recommended_action}</p>
-                <p className="mt-2 text-xs text-on-surface-variant">
-                  <span className="font-medium text-on-surface/90">Ожидаемый эффект: </span>
-                  {pack.expected_outcome}
-                </p>
-                <p className="mt-1 text-xs text-amber-100/90">
-                  <span className="font-medium">Если игнорировать: </span>
-                  {pack.risk_if_ignored}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={ackPack.isPending}
-                    onClick={() => ackPack.mutate(pack.id)}
-                    className="rounded-2xl border border-primary/40 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
-                  >
-                    Принять к работе
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => pack.primary_action_path && openPath(pack.primary_action_path)}
-                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-on hover:opacity-95"
-                  >
-                    Открыть раздел
-                  </button>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
+        <section className="mb-8 fc-section-stack-sm">
+          <p className="fc-section-label">Пакеты подготовки</p>
+          {(data?.work_packs ?? []).map((pack) => (
+            <WorkPackCard
+              key={pack.id}
+              pack={pack}
+              ackPending={ackPack.isPending}
+              onAck={() => ackPack.mutate(pack.id)}
+              onOpen={openPath}
+            />
+          ))}
         </section>
       )}
 
-      {data?.readiness_score != null && (
-        <div className="mb-6 flex flex-wrap gap-3 text-sm">
-          <span className="rounded-full border border-outline/40 bg-surface/80 px-3 py-1 text-on-surface">
-            Готовность <strong>{data.readiness_score}%</strong>
-          </span>
-          <span className="rounded-full border border-outline/40 bg-surface/80 px-3 py-1 text-on-surface">
-            В очереди <strong>{data.pending_count}</strong>
-          </span>
-          <span className="rounded-full border border-outline/40 bg-surface/80 px-3 py-1 text-on-surface">
-            Блокеры <strong>{data.blocked_count}</strong>
-          </span>
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            className="rounded-full border border-primary/35 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
-          >
-            Обновить
-          </button>
-        </div>
-      )}
-
-      {data?.ai_summary && (
-        <p className="mb-8 rounded-3xl border border-outline/35 bg-surface-container-low/70 px-4 py-3 text-sm leading-relaxed text-on-surface-variant dark:bg-white/[0.04]">
+      {data?.ai_summary && showDiagnostics && (
+        <p className="mb-8 rounded-2xl border border-outline/35 bg-surface-container-low/70 px-4 py-3 text-sm leading-relaxed text-on-surface-variant">
           {data.ai_summary}
         </p>
       )}
@@ -1034,6 +950,7 @@ export default function OperationsPage() {
           </span>
         </button>
       )}
-    </div>
+      </div>
+    </OperationalPage>
   )
 }

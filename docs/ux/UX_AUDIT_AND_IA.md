@@ -56,8 +56,8 @@ Settings, assistant, analytics: profile menu / secondary, not primary nav.
 
 | Wave | Scope | Status |
 |------|--------|--------|
-| W1 | IA nav, accounting hub, execution cards, work-now on home | In progress |
-| W2 | Operations page = execution-only; journal UX density | Planned |
-| W3 | OCR magic flow; reporting readiness hero | Planned |
+| W1 | IA nav, accounting hub, execution cards, work-now on home | Done |
+| W2 | Operations execution-only; progress strip; work packs | Done |
+| W3 | OCR review banner; reporting readiness hero | Done |
 | W4 | Design tokens cleanup; mobile thumb actions | Planned |
 | W5 | First-client polish (retry, empty, onboarding) | Planned |

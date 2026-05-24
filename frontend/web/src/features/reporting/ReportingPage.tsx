@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import OperationalPage, { FocusStrip } from '../../components/shell/OperationalPage'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
+import ReportingReadinessHero from './ReportingReadinessHero'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -67,6 +68,7 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
         />
       }
     >
+      <ReportingReadinessHero />
       <ReportingGuidedFlow basePath={base} />
 
       <div

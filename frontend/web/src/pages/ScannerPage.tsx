@@ -5,6 +5,7 @@ import { scannerApi, dashboardApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { Link } from 'react-router-dom'
 import { OcrFieldLabel } from '../components/scanner/OcrFieldConfidence'
+import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
@@ -432,10 +433,11 @@ export default function ScannerPage() {
                   transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.12 }}
                   className="space-y-4 p-4 sm:p-6"
                 >
-                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-4 py-3 text-xs leading-relaxed text-on-surface-variant">
-                    <span className="font-bold text-emerald-700 dark:text-emerald-300">ИИ · разбор:</span> поля ниже извлечены из документа;
-                    при низкой уверенности сверьте сумму и контрагента с оригиналом слева.
-                  </div>
+                  <OcrReviewBanner
+                    confidence={scanResult.confidence}
+                    fieldConfidence={scanResult.field_confidence}
+                    requiresReview={scanResult.requires_review}
+                  />
                   {scanResult.execution_suggestions?.message && (
                     <div className="rounded-xl border border-primary/25 bg-primary/8 px-3 py-2 text-xs text-on-surface">
                       {scanResult.execution_suggestions.message}
@@ -567,14 +569,16 @@ export default function ScannerPage() {
                     </div>
                   )}
                   {!txSaved ? (
-                    <button
-                      type="button"
-                      onClick={submitTxFromDraft}
-                      className="btn-primary mt-2 min-h-12 w-full"
-                      disabled={!editDraft || createTxMutation.isPending}
-                    >
-                      <Icon name="add" /> {createTxMutation.isPending ? 'Сохраняем...' : 'Создать операцию'}
-                    </button>
+                    <div className="app-form-actions -mx-4 mt-4 px-4 sm:mx-0 sm:px-0 sm:static sm:border-0 sm:bg-transparent sm:p-0">
+                      <button
+                        type="button"
+                        onClick={submitTxFromDraft}
+                        className="btn-primary min-h-12 w-full rounded-xl"
+                        disabled={!editDraft || createTxMutation.isPending}
+                      >
+                        <Icon name="check_circle" /> {createTxMutation.isPending ? 'Сохраняем…' : 'Готово — в журнал'}
+                      </button>
+                    </div>
                   ) : (
                     <AnimatePresence mode="wait">
                       <motion.div
