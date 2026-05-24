@@ -71,3 +71,87 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
 
     ordered = sorted(rows, key=_sort_key)
     return {"organizations": ordered, "generated_at": datetime.now(timezone.utc).isoformat()}
+
+
+_PRIORITY_RANK = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
+
+
+async def build_accountant_global_queues(db: AsyncSession, user_id: str, *, limit: int = 80) -> dict:
+    """Сводные входящие и согласования по всем клиентам бухгалтера (без N переключений org)."""
+    r = await db.execute(
+        select(UserOrganizationMembership.organization_id, Organization.name)
+        .join(Organization, Organization.id == UserOrganizationMembership.organization_id)
+        .where(UserOrganizationMembership.user_id == user_id)
+    )
+    org_map = {row[0]: row[1] for row in r.all()}
+    if not org_map:
+        return {
+            "inbox": [],
+            "approvals": [],
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    org_ids = list(org_map.keys())
+    inbox_r = await db.execute(
+        select(OperationalInboxItem)
+        .where(
+            OperationalInboxItem.organization_id.in_(org_ids),
+            OperationalInboxItem.status == "open",
+        )
+        .order_by(OperationalInboxItem.created_at.desc())
+        .limit(limit)
+    )
+    appr_r = await db.execute(
+        select(ApprovalRequest)
+        .where(
+            ApprovalRequest.organization_id.in_(org_ids),
+            ApprovalRequest.status == "pending",
+        )
+        .order_by(ApprovalRequest.created_at.desc())
+        .limit(limit)
+    )
+
+    inbox_rows = list(inbox_r.scalars().all())
+    _far_future = datetime(9999, 12, 31)
+
+    inbox_rows.sort(
+        key=lambda i: (
+            _PRIORITY_RANK.get((i.priority or "normal").lower(), 9),
+            i.due_at or _far_future,
+        ),
+    )
+
+    inbox = [
+        {
+            "id": i.id,
+            "organization_id": i.organization_id,
+            "organization_name": org_map.get(i.organization_id, ""),
+            "kind": i.kind,
+            "title": i.title,
+            "body": i.body,
+            "priority": i.priority,
+            "linked_transaction_id": i.linked_transaction_id,
+            "linked_document_id": i.linked_document_id,
+            "due_at": i.due_at.isoformat() if i.due_at else None,
+            "created_at": i.created_at.isoformat() if i.created_at else None,
+        }
+        for i in inbox_rows[:limit]
+    ]
+    approvals = [
+        {
+            "id": x.id,
+            "organization_id": x.organization_id,
+            "organization_name": org_map.get(x.organization_id, ""),
+            "subject_kind": x.subject_kind,
+            "subject_id": x.subject_id,
+            "title": x.title,
+            "note": x.note,
+            "created_at": x.created_at.isoformat() if x.created_at else None,
+        }
+        for x in appr_r.scalars().all()
+    ]
+    return {
+        "inbox": inbox,
+        "approvals": approvals,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }

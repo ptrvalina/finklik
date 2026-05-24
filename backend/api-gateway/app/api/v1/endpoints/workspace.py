@@ -31,7 +31,10 @@ from app.events.emit import (
 from app.models.collaboration import ApprovalRequest, CollaborationComment, OperationalInboxItem
 from app.models.user import Organization, User, UserOrganizationMembership
 from app.schemas.auth import TokenResponse
-from app.services.accountant_workspace_service import build_accountant_workspace_summary
+from app.services.accountant_workspace_service import (
+    build_accountant_global_queues,
+    build_accountant_workspace_summary,
+)
 
 REFRESH_COOKIE_NAME = "refresh_token"
 
@@ -184,6 +187,15 @@ async def accountant_overview(
 ):
     """Командный центр: карточки клиентов с готовностью и очередями (не CRM)."""
     return await build_accountant_workspace_summary(db, str(current_user.id))
+
+
+@router.get("/accountant/queues", dependencies=[Depends(require_roles("admin", "accountant"))])
+async def accountant_global_queues(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Сводные входящие и согласования по всем клиентам (мульти-org без переключения)."""
+    return await build_accountant_global_queues(db, str(current_user.id))
 
 
 @router.get("/inbox")

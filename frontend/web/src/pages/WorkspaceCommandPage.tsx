@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { orgQueryKey } from '../lib/queryKeys'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton } from '../components/premium'
+import { listRecentClients, pushRecentClient } from '../lib/recentClients'
 
 type OrgRow = {
   organization_id: string
@@ -67,13 +68,22 @@ export default function WorkspaceCommandPage() {
   const needsAttention = organizations.filter((o) => workloadScore(o) > 0)
   const stable = organizations.filter((o) => workloadScore(o) === 0)
 
-  async function activate(orgId: string) {
+  const recentClients = listRecentClients()
+
+  const pinMutation = useMutation({
+    mutationFn: ({ orgId, pinned }: { orgId: string; pinned: boolean }) =>
+      workspaceApi.pinMembership(orgId, pinned).then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: orgQueryKey('workspace-accountant-overview') }),
+  })
+
+  async function activate(orgId: string, orgName?: string, path = '/operations') {
     setActivatingId(orgId)
     try {
+      if (orgName) pushRecentClient(orgId, orgName)
       await switchOrganization(orgId)
       await qc.cancelQueries()
       await qc.invalidateQueries()
-      navigate('/operations')
+      navigate(path)
     } finally {
       setActivatingId(null)
     }
@@ -101,11 +111,41 @@ export default function WorkspaceCommandPage() {
                 : undefined
             }
             ctaLabel={topClient ? 'Открыть приоритетного клиента' : 'Обновить'}
-            onCta={() => topClient && void activate(topClient.organization_id)}
+            onCta={() => topClient && void activate(topClient.organization_id, topClient.organization_name)}
           />
         ) : undefined
       }
+      primaryAction={
+        <Link to="/workspace/queues" className="btn-primary fc-btn-thumb text-sm">
+          Общие очереди
+        </Link>
+      }
+      secondaryActions={
+        totals.inbox + totals.approvals > 0 ? (
+          <span className="text-xs font-medium text-on-surface-variant">
+            {totals.inbox} входящих · {totals.approvals} согласований
+          </span>
+        ) : undefined
+      }
     >
+      {recentClients.length > 0 && (
+        <section className="mb-6">
+          <h2 className="fc-section-label mb-2">Недавние клиенты</h2>
+          <div className="flex flex-wrap gap-2">
+            {recentClients.map((c) => (
+              <button
+                key={c.organization_id}
+                type="button"
+                className="rounded-full border border-outline/40 bg-surface/80 px-3 py-1.5 text-xs font-semibold text-on-surface hover:border-primary/40"
+                onClick={() => void activate(c.organization_id, c.organization_name)}
+              >
+                {c.organization_name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {!isLoading && !isError && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
@@ -147,7 +187,11 @@ export default function WorkspaceCommandPage() {
                 key={row.organization_id}
                 row={row}
                 busy={activatingId === row.organization_id}
-                onActivate={() => void activate(row.organization_id)}
+                onActivate={() => void activate(row.organization_id, row.organization_name)}
+                onTogglePin={() =>
+                  pinMutation.mutate({ orgId: row.organization_id, pinned: !row.is_pinned })
+                }
+                pinPending={pinMutation.isPending}
               />
             ))}
           </div>
@@ -163,7 +207,11 @@ export default function WorkspaceCommandPage() {
                 key={row.organization_id}
                 row={row}
                 busy={activatingId === row.organization_id}
-                onActivate={() => void activate(row.organization_id)}
+                onActivate={() => void activate(row.organization_id, row.organization_name)}
+                onTogglePin={() =>
+                  pinMutation.mutate({ orgId: row.organization_id, pinned: !row.is_pinned })
+                }
+                pinPending={pinMutation.isPending}
                 muted
               />
             ))}
@@ -181,11 +229,15 @@ export default function WorkspaceCommandPage() {
 function OrgQueueCard({
   row,
   onActivate,
+  onTogglePin,
+  pinPending,
   busy,
   muted,
 }: {
   row: OrgRow
   onActivate: () => void
+  onTogglePin?: () => void
+  pinPending?: boolean
   busy: boolean
   muted?: boolean
 }) {
@@ -205,8 +257,19 @@ function OrgQueueCard({
           <p className="truncate font-headline text-base font-semibold text-on-surface">{row.organization_name}</p>
           <p className="text-xs text-on-surface-variant">УНП {row.unp}</p>
         </div>
-        {row.is_pinned && (
-          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">★</span>
+        {onTogglePin && (
+          <button
+            type="button"
+            className="shrink-0 rounded-full p-1 text-primary hover:bg-primary/10"
+            title={row.is_pinned ? 'Открепить' : 'Закрепить'}
+            disabled={pinPending}
+            onClick={(e) => {
+              e.stopPropagation()
+              onTogglePin()
+            }}
+          >
+            <span className="material-symbols-outlined text-lg">{row.is_pinned ? 'push_pin' : 'push_pin'}</span>
+          </button>
         )}
       </div>
 

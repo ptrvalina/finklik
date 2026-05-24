@@ -1,4 +1,4 @@
-/** Execution-first IA — контекст и задачи, не ERP-меню. */
+/** Execution-first IA — NOW / MONEY / REPORTING / TEAM / CONTROL. */
 export type NavFlyoutItem = { to: string; label: string }
 
 export type NavItem = {
@@ -18,58 +18,73 @@ export type NavGroup = {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    id: 'today',
-    label: 'Сегодня',
+    id: 'now',
+    label: 'Сейчас',
     items: [
       {
         to: '/',
         label: 'Главная',
         icon: 'hub',
         end: true,
-        description: 'Состояние, обязательства, фокус',
+        description: 'Фокус дня, состояние, следующий шаг',
       },
       {
         to: '/operations',
         label: 'Лента работы',
         icon: 'bolt',
         end: true,
-        description: 'Что сделать и почему — центр продукта',
+        description: 'Исполнение и приоритеты',
+      },
+      {
+        to: '/inbox',
+        label: 'Входящие',
+        icon: 'inbox',
+        end: true,
+        description: 'Запросы и поручения по организации',
+      },
+      {
+        to: '/approvals',
+        label: 'Согласования',
+        icon: 'approval',
+        end: true,
+        description: 'Ожидающие подтверждения',
       },
     ],
   },
   {
-    id: 'accounting',
-    label: 'Учёт',
+    id: 'money',
+    label: 'Деньги',
     items: [
       {
         to: '/accounting/hub',
         label: 'Учёт',
         icon: 'menu_book',
         end: true,
-        description: 'Журнал, документы, банк, план счетов',
+        description: 'Журнал, банк, документы, план счетов',
         flyout: [
           { to: '/accounting/journal', label: 'Журнал операций' },
-          { to: '/scan', label: 'Сканер' },
-          { to: '/documents', label: 'Документы' },
           { to: '/bank', label: 'Банк' },
+          { to: '/documents', label: 'Документы' },
+          { to: '/counterparties', label: 'Контрагенты' },
           { to: '/accounting/chart', label: 'План счетов' },
-          { to: '/accounting/fixed-assets', label: 'ОС' },
+          { to: '/accounting/fixed-assets', label: 'Основные средства' },
+          { to: '/scan', label: 'Сканер' },
         ],
       },
     ],
   },
   {
-    id: 'compliance',
-    label: 'Комплаенс',
+    id: 'reporting',
+    label: 'Отчётность',
     items: [
       {
         to: '/reports',
-        label: 'Отчётность',
+        label: 'Отчёты',
         icon: 'assignment_turned_in',
-        description: 'Готовность, ошибки, подача',
+        description: 'Готовность, блокеры, подача',
         flyout: [
-          { to: '/analytics', label: 'Аналитика' },
           { to: '/calendar', label: 'Календарь' },
+          { to: '/employees', label: 'Кадры и ФСЗН' },
         ],
       },
     ],
@@ -79,30 +94,40 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Команда',
     items: [
       {
-        to: '/employees',
-        label: 'Команда',
-        icon: 'groups',
-        description: 'Кадры, зарплата, ФСЗН',
-      },
-    ],
-  },
-  {
-    id: 'more',
-    label: 'Ещё',
-    items: [
-      {
         to: '/planner',
         label: 'Планёр',
         icon: 'event_note',
         description: 'Задачи и поручения',
       },
-      { to: '/notes', label: 'Заметки', icon: 'note_alt' },
-      { to: '/counterparties', label: 'Контрагенты', icon: 'handshake' },
+      {
+        to: '/employees',
+        label: 'Сотрудники',
+        icon: 'groups',
+        description: 'Кадры, зарплата, штат',
+      },
+    ],
+  },
+  {
+    id: 'control',
+    label: 'Контроль',
+    items: [
+      {
+        to: '/control/state',
+        label: 'Контроль',
+        icon: 'monitoring',
+        description: 'Состояние, надёжность, настройки',
+        flyout: [
+          { to: '/control/state', label: 'Финансовое состояние' },
+          { to: '/control/trust', label: 'Надёжность' },
+          { to: '/analytics', label: 'Аналитика' },
+          { to: '/settings', label: 'Настройки' },
+        ],
+      },
     ],
   },
 ]
 
-const MANAGER_ALLOWED = new Set(['/', '/operations', '/scan', '/planner'])
+const MANAGER_ALLOWED = new Set(['/', '/operations', '/scan', '/planner', '/inbox'])
 
 function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
   return groups
@@ -118,17 +143,26 @@ function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
 }
 
 function augmentWorkspaceNav(groups: NavGroup[]): NavGroup[] {
-  const idx = groups.findIndex((g) => g.id === 'today')
+  const idx = groups.findIndex((g) => g.id === 'team')
   if (idx < 0) return groups
-  const cmd = groups[idx]
-  if (cmd.items.some((i) => i.to === '/workspace')) return groups
-  const wsItem: NavItem = {
-    to: '/workspace',
-    label: 'Клиенты',
-    icon: 'corporate_fare',
-    description: 'Пространство бухгалтера',
-  }
-  return groups.map((g, i) => (i === idx ? { ...g, items: [...cmd.items, wsItem] } : g))
+  const team = groups[idx]
+  if (team.items.some((i) => i.to === '/workspace')) return groups
+  const wsItems: NavItem[] = [
+    {
+      to: '/workspace',
+      label: 'Клиенты',
+      icon: 'corporate_fare',
+      description: 'Пространство бухгалтера',
+    },
+    {
+      to: '/workspace/queues',
+      label: 'Общие очереди',
+      icon: 'all_inbox',
+      end: true,
+      description: 'Входящие и согласования по всем клиентам',
+    },
+  ]
+  return groups.map((g, i) => (i === idx ? { ...g, items: [...wsItems, ...team.items] } : g))
 }
 
 export function getNavGroupsForRole(role?: string | null): NavGroup[] {
@@ -194,12 +228,12 @@ export function flattenNavForSheetWithAssistant(
   return dedupeSheet([...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM])
 }
 
-/** Мобильная панель: фокус на работе, не на банке. */
+/** Мобильная панель: исполнение и учёт. */
 export const MOBILE_BAR_ITEMS = [
   { to: '/', label: 'Главная', icon: 'hub', end: true },
   { to: '/operations', label: 'Лента', icon: 'bolt', end: true },
+  { to: '/inbox', label: 'Входящие', icon: 'inbox', end: true },
   { to: '/accounting/hub', label: 'Учёт', icon: 'menu_book' },
-  { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in' },
 ]
 
 export function getMobileBarItemsForRole(role?: string | null) {

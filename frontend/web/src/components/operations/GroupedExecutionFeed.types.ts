@@ -10,4 +10,6 @@ export type OperationalItem = {
   ai_why?: string | null
   state_dimension?: string | null
   state_transition_hint?: string | null
+  truth_confidence?: number | null
+  governance_tags?: string[]
 }

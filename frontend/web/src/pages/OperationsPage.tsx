@@ -1,6 +1,6 @@
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { operationsApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { GlassCard } from '../components/premium/GlassCard'
@@ -11,6 +11,8 @@ import { WorkPackCard } from '../components/operations/WorkPackCard'
 import OperationalPage from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
+import FinancialStateHero from '../components/financial-state/FinancialStateHero'
+import { executionRiskIfIgnored } from '../lib/executionPresentation'
 
 type OperationalItem = {
   id: string
@@ -233,10 +235,15 @@ const MODE_LABEL: Record<ExperienceMode, string> = {
 
 export default function OperationsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const qc = useQueryClient()
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('trust') === '1') setDiagnosticsOpen(true)
+  }, [searchParams])
 
   const executionFeedKey = orgQueryKey('execution-feed')
 
@@ -314,6 +321,11 @@ export default function OperationsPage() {
       )}
 
       <div className={!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') ? 'mt-8 sm:mt-0' : ''}>
+      {!isLoading && !isError && (
+        <div className="mb-6">
+          <FinancialStateHero compact />
+        </div>
+      )}
       {!isLoading && !isError && trustData && showDiagnostics && (
         <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
           <summary className="cursor-pointer font-medium text-on-surface/90">
@@ -618,7 +630,17 @@ export default function OperationsPage() {
               )}
               {panelItem.ai_why && (
                 <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-                  <strong className="text-on-surface">Важность:</strong> {panelItem.ai_why}
+                  <strong className="text-on-surface">Почему сейчас:</strong> {panelItem.ai_why}
+                </p>
+              )}
+              {panelItem.truth_confidence != null && (
+                <p className="mt-2 text-xs text-on-surface-variant">
+                  Уверенность системы: {Math.round(panelItem.truth_confidence * 100)}%
+                </p>
+              )}
+              {executionRiskIfIgnored(panelItem.priority, panelItem.type) && (
+                <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Если отложить:</strong> {executionRiskIfIgnored(panelItem.priority, panelItem.type)}
                 </p>
               )}
               {panelItem.state_transition_hint && (

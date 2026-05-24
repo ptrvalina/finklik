@@ -354,6 +354,7 @@ export const workspaceApi = {
   pinMembership: (organization_id: string, pinned: boolean) =>
     api.patch(`/workspace/memberships/${organization_id}/pin`, { pinned }),
   accountantOverview: () => api.get('/workspace/accountant/overview'),
+  accountantQueues: () => api.get('/workspace/accountant/queues'),
   inbox: (params?: { status?: string }) => api.get('/workspace/inbox', { params }),
   approvals: (params?: { status_filter?: string }) =>
     api.get('/workspace/approvals', { params }),

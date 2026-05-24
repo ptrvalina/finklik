@@ -4,11 +4,19 @@ import { executionCtaLabel } from '../../lib/executionPresentation'
 export type WorkPackLike = {
   id: string
   title: string
+  mode?: string
+  operational_item_ids?: string[]
   recommended_action: string
   expected_outcome: string
   risk_if_ignored: string
   primary_action_path: string | null
   summary_lines: Array<{ kind: string; count: number; detail?: string | null }>
+}
+
+function packProgress(pack: WorkPackLike): { tasks: number; etaMin: number } {
+  const tasks = pack.operational_item_ids?.length ?? pack.summary_lines.reduce((s, ln) => s + ln.count, 0)
+  const etaMin = Math.max(5, Math.min(45, tasks * 4))
+  return { tasks, etaMin }
 }
 
 export const WorkPackCard = memo(function WorkPackCard({
@@ -23,12 +31,31 @@ export const WorkPackCard = memo(function WorkPackCard({
   ackPending?: boolean
 }) {
   const summary = pack.summary_lines.map((ln) => `${ln.count} × ${ln.detail || ln.kind}`).join(' · ')
+  const { tasks, etaMin } = packProgress(pack)
+  const progressPct = tasks > 0 ? Math.min(100, Math.round((1 / (tasks + 1)) * 100)) : 12
 
   return (
     <article className="fc-execution-card rounded-2xl border border-outline/35 bg-surface/90 p-4 sm:p-5">
-      <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Пакет работ</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Пакет работ</p>
+        <p className="text-[10px] font-semibold text-on-surface-variant">
+          ~{etaMin} мин · {tasks} {tasks === 1 ? 'шаг' : tasks < 5 ? 'шага' : 'шагов'}
+        </p>
+      </div>
       <h3 className="mt-1 font-headline text-base font-semibold text-on-surface">{pack.title}</h3>
       {summary && <p className="mt-1 text-xs text-on-surface-variant">{summary}</p>}
+      <div className="mt-3">
+        <div className="flex justify-between text-[10px] text-on-surface-variant">
+          <span>Прогресс сессии</span>
+          <span className="tabular-nums">старт</span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary/70 to-emerald-400/80 transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </div>
       <p className="mt-3 text-sm text-on-surface">{pack.recommended_action}</p>
       <p className="mt-2 text-xs text-on-surface-variant">{pack.expected_outcome}</p>
       <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">

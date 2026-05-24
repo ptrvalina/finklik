@@ -36,6 +36,11 @@ import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
 import FixedAssetsPage from './pages/FixedAssetsPage'
 import AccountingHubPage from './pages/AccountingHubPage'
 import OpsDiagnosticsPage from './pages/OpsDiagnosticsPage'
+import FinancialStatePage from './pages/FinancialStatePage'
+import TrustSurfacePage from './pages/TrustSurfacePage'
+import InboxPage from './pages/InboxPage'
+import ApprovalsPage from './pages/ApprovalsPage'
+import WorkspaceQueuesPage from './pages/WorkspaceQueuesPage'
 import Layout from './components/layout/Layout'
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
 
@@ -128,6 +133,46 @@ function AppRoutes() {
             element={
               <RoleRoute allow={['admin', 'accountant']}>
                 <WorkspaceCommandPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="workspace/queues"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <WorkspaceQueuesPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="inbox"
+            element={
+              <RoleRoute allow={['admin', 'accountant', 'manager']}>
+                <InboxPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="approvals"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <ApprovalsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="control/state"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <FinancialStatePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="control/trust"
+            element={
+              <RoleRoute allow={['admin', 'accountant']}>
+                <TrustSurfacePage />
               </RoleRoute>
             }
           />

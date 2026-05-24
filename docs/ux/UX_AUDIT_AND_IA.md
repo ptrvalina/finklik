@@ -25,17 +25,19 @@
 
 ---
 
-## Target IA (context-first)
+## Target IA (NOW / MONEY / REPORTING / TEAM / CONTROL)
 
-1. **Главная** `/` — work-now, focus strip, onboarding; details collapsed.
-2. **Лента работы** `/operations` — execution center.
-3. **Учёт** `/accounting/hub` — tiles; **журнал** `/accounting/journal`.
-4. **Документы** `/documents` — первичка и импорт.
-5. **Отчётность** `/reports` — readiness hero, guided flow.
-6. **Команда** `/employees` — HR hub.
-7. **Клиенты** `/workspace` — accountant command center.
+| Группа | Маршруты |
+|--------|----------|
+| **Сейчас** | `/` · `/operations` · `/inbox` · `/approvals` |
+| **Деньги** | `/accounting/hub` (+ журнал, банк, документы, контрагенты, план, ОС, скан) |
+| **Отчётность** | `/reports` · `/calendar` · `/employees` (ФСЗН) |
+| **Команда** | `/workspace` (бухгалтер) · `/planner` · `/employees` |
+| **Контроль** | `/control/state` · `/control/trust` · `/analytics` · `/settings` |
 
-Mobile bar: `Главная` · `Лента` · `Учёт` · `Отчёты`.
+**Финансовое состояние** — `FinancialStateHero` на главной и в ленте; полная страница `/control/state`.
+
+Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`.
 
 ---
 
@@ -51,3 +53,6 @@ Mobile bar: `Главная` · `Лента` · `Учёт` · `Отчёты`.
 | W6 | `/accounting/journal`; calendar/planner/counterparties shells | Done |
 | W7 | Dashboard simplify; documents route; reporting steps; execution banners; debt cleanup | Done |
 | W8 | Journal hotkeys (I/E//G/D/?); RU pipeline labels; hotkeys help | Done |
+| P1 | IA NOW/MONEY/REPORTING/TEAM/CONTROL; FinancialStateHero; inbox/approvals; control pages | Done |
+| P2 | Feed: why / if ignored / confidence; type-specific risk copy | Done |
+| P4 | `/workspace/accountant/queues`; global queues UI; recent clients; pin on cards | Done |

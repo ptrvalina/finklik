@@ -22,6 +22,7 @@ import { AIRecommendationPanel } from '../components/premium-os'
 import OperationalPage from '../components/shell/OperationalPage'
 import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
 import OcrQueueCard from '../components/dashboard/OcrQueueCard'
+import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -192,6 +193,8 @@ export default function DashboardPage() {
         </Link>
       }
     >
+      <FinancialStateHero className="mb-6" />
+
       <WorkNowCard />
 
       <DashboardFocusStrip
@@ -210,23 +213,6 @@ export default function DashboardPage() {
 
       <DashboardDetailsPanel title="Аналитика, налоги и операции">
       <ClientJourneyPanel metrics={metrics} transactions={transactions} />
-
-      {businessState && (
-        <GlassCard className="mt-6 p-5 sm:p-6" hoverLift={false}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Состояние бизнеса</p>
-              <p className="mt-1 font-headline text-lg font-bold text-on-surface">
-                {businessState.financial_health_status === 'ok' ? 'Финансы в норме' : 'Требует внимания'}
-              </p>
-            </div>
-            <div className="text-right text-sm">
-              <p className="text-on-surface-variant">Месяц: доход {fmt(businessState.monthly_revenue)} · расход {fmt(businessState.monthly_expenses)}</p>
-              <p className="font-semibold text-on-surface">Прибыль: {fmt(businessState.profit)}</p>
-            </div>
-          </div>
-        </GlassCard>
-      )}
 
       <div className="mt-8">
         <AIRecommendationPanel metrics={metrics} transactions={transactions} />

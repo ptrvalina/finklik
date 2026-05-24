@@ -1,5 +1,7 @@
 import { memo, useCallback, useRef } from 'react'
 import {
+  executionConfidenceLabel,
+  executionConfidenceTone,
   executionCtaLabel,
   executionMetaLine,
   executionRiskIfIgnored,
@@ -52,7 +54,9 @@ export const ExecutionTaskCard = memo(function ExecutionTaskCard({
 }: ExecutionTaskCardProps) {
   const touch = useRef({ x: 0, y: 0 })
   const go = useCallback(() => onOpen(item.action_path), [item.action_path, onOpen])
-  const risk = executionRiskIfIgnored(item.priority)
+  const risk = executionRiskIfIgnored(item.priority, item.type)
+  const confLabel = executionConfidenceLabel(item.truth_confidence)
+  const confTone = executionConfidenceTone(item.truth_confidence)
 
   return (
     <article
@@ -98,7 +102,7 @@ export const ExecutionTaskCard = memo(function ExecutionTaskCard({
               {item.ai_why}
             </p>
           )}
-          {risk && prominent && (
+          {risk && !compact && (
             <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
               <span className="font-semibold">Если отложить: </span>
               {risk}
