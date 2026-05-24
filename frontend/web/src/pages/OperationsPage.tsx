@@ -8,6 +8,7 @@ import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
 import OperationalPage from '../components/shell/OperationalPage'
 import { operationTypeLabel } from '../lib/executionLabels'
+import { orgQueryKey } from '../lib/queryKeys'
 
 type OperationalItem = {
   id: string
@@ -399,7 +400,7 @@ export default function OperationsPage() {
   const [stateDetailsOpen, setStateDetailsOpen] = useState(false)
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
 
-  const executionFeedKey = ['operations', 'execution-feed', orgId || '__none__'] as const
+  const executionFeedKey = orgQueryKey('execution-feed')
 
   const { data, isLoading, isError, error: feedError, refetch, isFetching } = useQuery({
     queryKey: executionFeedKey,
@@ -410,7 +411,7 @@ export default function OperationsPage() {
   })
 
   const { data: trustData } = useQuery({
-    queryKey: ['operations', 'trust-surface', orgId || '__none__'],
+    queryKey: orgQueryKey('trust-surface'),
     queryFn: () => operationsApi.trustSurface().then((r) => r.data as TrustSurfaceResponse),
     staleTime: 60_000,
     retry: 1,

@@ -7,6 +7,7 @@ import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import { ExecutiveBriefing } from '../components/dashboard/ExecutiveBriefing'
 import ClientJourneyPanel from '../components/dashboard/ClientJourneyPanel'
+import WorkNowCard from '../components/dashboard/WorkNowCard'
 import DashboardFocusStrip from '../components/dashboard/DashboardFocusStrip'
 import { orgQueryKey } from '../lib/queryKeys'
 
@@ -192,6 +193,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {!isManager && <WorkNowCard />}
 
       <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
 

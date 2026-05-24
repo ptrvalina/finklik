@@ -1,4 +1,4 @@
-/** Единая навигация Premium OS — группы разделов + сайдбар / мобильный лист. */
+/** Execution-first IA — контекст и задачи, не ERP-меню. */
 export type NavFlyoutItem = { to: string; label: string }
 
 export type NavItem = {
@@ -7,7 +7,6 @@ export type NavItem = {
   icon: string
   end?: boolean
   description?: string
-  /** Подменю при наведении (desktop); на мобильных разворачивается в `flattenNavForSheet`. */
   flyout?: NavFlyoutItem[]
 }
 
@@ -17,77 +16,57 @@ export type NavGroup = {
   items: NavItem[]
 }
 
-/** Полная карта разделов (IA: Центр управления · Деньги · Люди · Инсайты · Рабочее пространство). */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    id: 'command',
-    label: 'Центр управления',
+    id: 'today',
+    label: 'Сегодня',
     items: [
       {
         to: '/',
         label: 'Главная',
         icon: 'hub',
         end: true,
-        description: 'AI, метрики и пульс бизнеса',
+        description: 'Состояние, обязательства, фокус',
       },
       {
         to: '/operations',
         label: 'Лента работы',
         icon: 'bolt',
         end: true,
-        description: 'Что требует внимания и следующий шаг',
+        description: 'Что сделать и почему — центр продукта',
       },
     ],
   },
   {
-    id: 'money',
-    label: 'Деньги',
+    id: 'accounting',
+    label: 'Учёт',
     items: [
       {
-        to: '/bank',
-        label: 'Банк и поток',
-        icon: 'account_balance_wallet',
-        description: 'Счета, выписки, ликвидность',
-      },
-      {
-        to: '/accounting',
-        label: 'Учёт и КУДиР',
+        to: '/accounting/hub',
+        label: 'Учёт',
         icon: 'menu_book',
-        description: 'Документы, категории, автоматизация',
+        end: true,
+        description: 'Журнал, документы, банк, план счетов',
         flyout: [
+          { to: '/accounting', label: 'Журнал операций' },
+          { to: '/scan', label: 'Сканер' },
+          { to: '/legacy/documents', label: 'Документы' },
+          { to: '/bank', label: 'Банк' },
           { to: '/accounting/chart', label: 'План счетов' },
-          { to: '/accounting/fixed-assets', label: 'ОС и амортизация' },
+          { to: '/accounting/fixed-assets', label: 'ОС' },
         ],
       },
-      {
-        to: '/counterparties',
-        label: 'Контрагенты',
-        icon: 'handshake',
-        description: 'Клиенты и поставщики',
-      },
     ],
   },
   {
-    id: 'people',
-    label: 'Люди',
-    items: [
-      {
-        to: '/employees',
-        label: 'Команда и зарплата',
-        icon: 'groups',
-        description: 'Кадры, табель, найм',
-      },
-    ],
-  },
-  {
-    id: 'insights',
-    label: 'Инсайты',
+    id: 'compliance',
+    label: 'Комплаенс',
     items: [
       {
         to: '/reports',
         label: 'Отчётность',
         icon: 'assignment_turned_in',
-        description: 'Регламентные и налоговые отчёты',
+        description: 'Готовность, ошибки, подача',
         flyout: [
           { to: '/analytics', label: 'Аналитика' },
           { to: '/calendar', label: 'Календарь' },
@@ -96,8 +75,20 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: 'workspace',
-    label: 'Рабочее пространство',
+    id: 'team',
+    label: 'Команда',
+    items: [
+      {
+        to: '/employees',
+        label: 'Команда',
+        icon: 'groups',
+        description: 'Кадры, зарплата, ФСЗН',
+      },
+    ],
+  },
+  {
+    id: 'more',
+    label: 'Ещё',
     items: [
       {
         to: '/planner',
@@ -105,25 +96,13 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: 'event_note',
         description: 'Задачи и поручения',
       },
-      { to: '/notes', label: 'Заметки', icon: 'note_alt', description: 'Заметки организации' },
-      {
-        to: '/scan',
-        label: 'Скан и OCR',
-        icon: 'document_scanner',
-        end: true,
-        description: 'Документы и распознавание',
-      },
-      {
-        to: '/websites',
-        label: 'Сервисы',
-        icon: 'language',
-        description: 'Полезные ссылки',
-      },
+      { to: '/notes', label: 'Заметки', icon: 'note_alt' },
+      { to: '/counterparties', label: 'Контрагенты', icon: 'handshake' },
     ],
   },
 ]
 
-const MANAGER_ALLOWED = new Set(['/', '/scan', '/planner'])
+const MANAGER_ALLOWED = new Set(['/', '/operations', '/scan', '/planner'])
 
 function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
   return groups
@@ -139,7 +118,7 @@ function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
 }
 
 function augmentWorkspaceNav(groups: NavGroup[]): NavGroup[] {
-  const idx = groups.findIndex((g) => g.id === 'command')
+  const idx = groups.findIndex((g) => g.id === 'today')
   if (idx < 0) return groups
   const cmd = groups[idx]
   if (cmd.items.some((i) => i.to === '/workspace')) return groups
@@ -147,12 +126,11 @@ function augmentWorkspaceNav(groups: NavGroup[]): NavGroup[] {
     to: '/workspace',
     label: 'Клиенты',
     icon: 'corporate_fare',
-    description: 'Мульти-орг и операционные очереди',
+    description: 'Пространство бухгалтера',
   }
-  return groups.map((g, i) => (i === idx ? { ...g, items: [wsItem, ...g.items] } : g))
+  return groups.map((g, i) => (i === idx ? { ...g, items: [...cmd.items, wsItem] } : g))
 }
 
-/** Группы для сайдбара и мобильного листа с учётом роли. */
 export function getNavGroupsForRole(role?: string | null): NavGroup[] {
   const r = (role || '').toLowerCase()
   if (r === 'manager') {
@@ -170,12 +148,10 @@ export function getNavGroupsForRole(role?: string | null): NavGroup[] {
   return NAV_GROUPS
 }
 
-/** Плоский список пунктов (обратная совместимость, поиск по маршрутам). */
 export function getNavItemsForRole(role?: string | null): NavItem[] {
   return getNavGroupsForRole(role).flatMap((g) => g.items)
 }
 
-/** Плоский список для нижнего листа «Все сервисы» на мобильных. */
 export function flattenNavForSheet(
   items: NavItem[],
 ): Array<{ to: string; label: string; icon: string; end?: boolean; description?: string }> {
@@ -193,7 +169,6 @@ export function flattenNavForSheet(
   return out
 }
 
-/** Убирает дубликаты маршрутов (например /scan из списка и из хвоста). */
 function dedupeSheet(
   rows: Array<{ to: string; label: string; icon: string; end?: boolean; description?: string }>,
 ) {
@@ -205,40 +180,35 @@ function dedupeSheet(
   })
 }
 
-/** Консультант вынесен вниз сайдбара (desktop); в списке «Все сервисы» на мобильных добавляется отдельно. */
 export const ASSISTANT_SHEET_ITEM = {
   to: '/assistant',
   label: 'Консультант',
   icon: 'smart_toy',
   end: true as const,
-  description: 'ИИ-подсказки по учёту',
+  description: 'ИИ по учёту и отчётности',
 }
 
-/** Хвост листа: только консультант (скан уже в «Рабочем пространстве»). */
 export function flattenNavForSheetWithAssistant(
   items: NavItem[],
 ): Array<{ to: string; label: string; icon: string; end?: boolean; description?: string }> {
   return dedupeSheet([...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM])
 }
 
-type BarItem = { to: string; label: string; icon: string; end?: boolean }
-
-/** Нижняя панель: Обзор · Деньги · Отчёты · Скан + кнопка «Сервисы». */
-export const MOBILE_BAR_ITEMS: BarItem[] = [
-  { to: '/', label: 'Обзор', icon: 'hub', end: true },
-  { to: '/bank', label: 'Деньги', icon: 'payments' },
-  { to: '/reports', label: 'Отчёты', icon: 'insights' },
-  { to: '/scan', label: 'Скан', icon: 'document_scanner' },
+/** Мобильная панель: фокус на работе, не на банке. */
+export const MOBILE_BAR_ITEMS = [
+  { to: '/', label: 'Главная', icon: 'hub', end: true },
+  { to: '/operations', label: 'Лента', icon: 'bolt', end: true },
+  { to: '/accounting/hub', label: 'Учёт', icon: 'menu_book' },
+  { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in' },
 ]
 
-export function getMobileBarItemsForRole(role?: string | null): BarItem[] {
+export function getMobileBarItemsForRole(role?: string | null) {
   if ((role || '').toLowerCase() !== 'manager') return MOBILE_BAR_ITEMS
   return [
-    { to: '/', label: 'Обзор', icon: 'hub', end: true },
+    { to: '/', label: 'Главная', icon: 'hub', end: true },
     { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
     { to: '/planner', label: 'Планёр', icon: 'event_note' },
   ]
 }
 
-/** @deprecated используйте NAV_GROUPS / getNavGroupsForRole */
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)

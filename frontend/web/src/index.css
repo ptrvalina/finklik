@@ -213,6 +213,15 @@
     flex-direction: column;
     gap: var(--fc-space-section-md);
   }
+  .fc-execution-card {
+    @apply cursor-pointer;
+  }
+  .fc-execution-card--hero {
+    box-shadow: 0 12px 40px -16px rgba(var(--color-primary-rgb, 0, 77, 64), 0.22);
+  }
+  .fc-accounting-tile {
+    min-height: 7.5rem;
+  }
   .fc-section-stack-sm {
     gap: var(--fc-space-section-sm);
   }
