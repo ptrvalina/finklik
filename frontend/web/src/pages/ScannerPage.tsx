@@ -1,13 +1,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { scannerApi, dashboardApi } from '../api/client'
+import { scannerApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { Link } from 'react-router-dom'
-import { OcrFieldLabel } from '../components/scanner/OcrFieldConfidence'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
+import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
+import { useOcrAutosave } from '../hooks/useOcrAutosave'
+import {
+  buildDraftFromScan,
+  draftToCorrectionPayload,
+  type OcrEditDraft,
+  type OcrFieldKey,
+} from '../lib/ocrCorrectionFields'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -40,26 +47,12 @@ type ScanResult = {
   doc_type_confidence?: number
   vendor_hints?: Record<string, unknown>
   execution_suggestions?: ExecutionSuggestions
+  linked_transaction_id?: string | null
 }
 
-function fieldNeedsReview(fc: Record<string, number> | undefined, key: string): boolean {
-  if (!fc) return false
-  const v = fc[key]
-  return v != null && v < 75
-}
 type HistoryItem = {
   id: string; filename: string; doc_type: string; status: string; confidence: number
   parsed: ParsedData; transaction_id: string | null; created_at: string
-}
-
-type EditDraft = {
-  docType: string
-  counterparty: string
-  transactionDate: string
-  amount: string
-  vatAmount: string
-  txType: string
-  description: string
 }
 
 const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> = {
@@ -69,12 +62,6 @@ const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> 
   invoice: { label: 'Счёт', icon: 'request_quote', color: 'text-error' },
   payment_order: { label: 'Платёжное поручение', icon: 'payments', color: 'text-primary' },
   unknown: { label: 'Другое', icon: 'description', color: 'text-on-surface-variant' },
-}
-
-function reviewInputClass(needsReview: boolean): string {
-  return needsReview
-    ? 'input min-h-11 w-full rounded-xl border-amber-400/50 bg-amber-500/10 ring-1 ring-amber-400/30'
-    : 'input min-h-11 w-full rounded-xl'
 }
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -91,13 +78,24 @@ export default function ScannerPage() {
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
-  const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
+  const [editDraft, setEditDraft] = useState<OcrEditDraft | null>(null)
+  const [correctedFields, setCorrectedFields] = useState<Set<string>>(new Set())
   const lastScanIdRef = useRef<string | null>(null)
   const [amountError, setAmountError] = useState<string | null>(null)
   const [txSaved, setTxSaved] = useState(false)
+  const [createdTxId, setCreatedTxId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'upload' | 'text'>('upload')
   const [textInput, setTextInput] = useState('')
   const [textDocType, setTextDocType] = useState('')
+
+  const applyScanPayload = useCallback((data: ScanResult) => {
+    setScanResult(data)
+    setEditDraft(buildDraftFromScan(data))
+    setCorrectedFields(new Set())
+    setTxSaved(Boolean(data.linked_transaction_id))
+    setCreatedTxId(data.linked_transaction_id ?? null)
+    setAmountError(null)
+  }, [])
 
   const { data: history = [] } = useQuery<HistoryItem[]>({
     queryKey: orgQueryKey('scanner-history'),
@@ -111,18 +109,65 @@ export default function ScannerPage() {
   const uploadMutation = useMutation({
     mutationFn: (file: File) => scannerApi.upload(file),
     onSuccess: (res) => {
-      setScanResult(res.data)
-      setTxSaved(false)
+      applyScanPayload(res.data)
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
     },
   })
 
-  const createTxMutation = useMutation({
-    mutationFn: (data: any) => dashboardApi.createTransaction(data),
-    onSuccess: () => {
+  const loadDocMutation = useMutation({
+    mutationFn: (id: string) => scannerApi.getDocument(id).then((r) => r.data as ScanResult),
+    onSuccess: (data) => {
+      applyScanPayload(data)
+      document.getElementById('scanner-result')?.scrollIntoView({ behavior: 'smooth' })
+    },
+  })
+
+  const confirmMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ReturnType<typeof draftToCorrectionPayload> }) =>
+      scannerApi.confirmTransaction(id, payload).then((r) => r.data),
+    onSuccess: (data: { transaction_id?: string }) => {
       setTxSaved(true)
       setAmountError(null)
+      setCreatedTxId(data.transaction_id ?? null)
+      if (scanResult?.id) {
+        setScanResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                linked_transaction_id: data.transaction_id ?? prev.linked_transaction_id,
+                requires_review: false,
+              }
+            : prev,
+        )
+      }
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
+    },
+  })
+
+  const { saving: autosaving } = useOcrAutosave({
+    docId: scanResult?.id,
+    draft: editDraft,
+    correctedFields,
+    category: scanResult?.execution_suggestions?.suggested_category as string | undefined,
+    debitAccount: scanResult?.execution_suggestions?.suggested_transaction?.debit_account as string | undefined,
+    creditAccount: scanResult?.execution_suggestions?.suggested_transaction?.credit_account as string | undefined,
+    enabled: !txSaved,
+    onSaved: (data) => {
+      if (!data || typeof data !== 'object') return
+      const d = data as ScanResult
+      setScanResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              field_confidence: d.field_confidence,
+              requires_review: d.requires_review,
+              parsed: d.parsed ?? prev.parsed,
+            }
+          : prev,
+      )
     },
   })
 
@@ -134,10 +179,10 @@ export default function ScannerPage() {
   const parseTextMutation = useMutation({
     mutationFn: () => scannerApi.parseText(textInput, textDocType || undefined),
     onSuccess: (res) => {
-      setScanResult(res.data)
-      setTxSaved(false)
+      applyScanPayload(res.data)
       setPreview(null)
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
     },
   })
 
@@ -149,41 +194,22 @@ export default function ScannerPage() {
     }
     if (lastScanIdRef.current === scanResult.id) return
     lastScanIdRef.current = scanResult.id
-    const p = scanResult.parsed
-    const d0 = (p.transaction_date?.slice(0, 10) || new Date().toISOString().slice(0, 10))
-    const sug = scanResult.execution_suggestions?.suggested_transaction
-    setEditDraft({
-      docType: scanResult.doc_type || 'unknown',
-      counterparty: (sug?.counterparty_name as string) || p.counterparty_name || '',
-      transactionDate: (sug?.transaction_date as string)?.slice(0, 10) || d0,
-      amount:
-        sug?.amount != null && Number(sug.amount) > 0
-          ? String(sug.amount)
-          : p.amount != null && Number(p.amount) > 0
-            ? String(p.amount)
-            : '',
-      vatAmount:
-        sug?.vat_amount != null && Number(sug.vat_amount) > 0
-          ? String(sug.vat_amount)
-          : p.vat_amount != null && Number(p.vat_amount) > 0
-            ? String(p.vat_amount)
-            : '',
-      txType: (sug?.type as string) || p.type || 'expense',
-      description: (sug?.description as string) || p.description || '',
-    })
-    setAmountError(null)
-    setTxSaved(false)
+    setEditDraft(buildDraftFromScan(scanResult))
+    setCorrectedFields(new Set())
   }, [scanResult])
 
   const handleFile = useCallback((file: File) => {
-    setPreview(null); setScanResult(null); setTxSaved(false)
+    setPreview(null)
+    setScanResult(null)
+    setTxSaved(false)
+    setCreatedTxId(null)
     if (file.type.startsWith('image/')) {
       const reader = new FileReader()
       reader.onload = (e) => setPreview(e.target?.result as string)
       reader.readAsDataURL(file)
     }
     uploadMutation.mutate(file)
-  }, [uploadMutation.mutate])
+  }, [uploadMutation])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false)
@@ -192,7 +218,7 @@ export default function ScannerPage() {
   }, [handleFile])
 
   function submitTxFromDraft() {
-    if (!editDraft || !scanResult) return
+    if (!editDraft || !scanResult?.id) return
     const raw = editDraft.amount.replace(/\s/g, '').replace(',', '.')
     const amt = parseFloat(raw) || 0
     if (amt <= 0) {
@@ -200,20 +226,21 @@ export default function ScannerPage() {
       return
     }
     setAmountError(null)
-    const vatRaw = editDraft.vatAmount.replace(/\s/g, '').replace(',', '.')
-    const vat = parseFloat(vatRaw) || 0
-    const label = DOC_ICONS[editDraft.docType]?.label || 'Документ'
-    const cp = editDraft.counterparty.trim()
-    const desc =
-      editDraft.description.trim()
-      || (cp ? `${label}: ${cp}` : `${label} (${scanResult.filename})`)
-    createTxMutation.mutate({
-      type: editDraft.txType,
-      amount: amt,
-      vat_amount: vat,
-      description: desc,
-      transaction_date: editDraft.transactionDate,
+    const payload = draftToCorrectionPayload(editDraft, [...correctedFields], {
+      category: scanResult.execution_suggestions?.suggested_category as string | undefined,
+      debit_account: scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined,
+      credit_account: scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined,
     })
+    confirmMutation.mutate({ id: scanResult.id, payload })
+  }
+
+  function markCorrected(fcKey: string) {
+    setCorrectedFields((prev) => new Set(prev).add(fcKey))
+  }
+
+  function handleDraftChange(patch: Partial<OcrEditDraft>, _field: OcrFieldKey) {
+    setEditDraft((d) => (d ? { ...d, ...patch } : d))
+    setAmountError(null)
   }
 
   const reviewCount = reviewQueueData?.items?.length ?? 0
@@ -377,6 +404,7 @@ export default function ScannerPage() {
             const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
             return (
             <motion.div
+              id="scanner-result"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 420, damping: 34 }}
@@ -451,112 +479,33 @@ export default function ScannerPage() {
                   <div>
                     <h4 className="label">Данные для операции</h4>
                     <p className="mt-1 text-xs text-on-surface-variant">
-                      Проверьте распознавание и при необходимости исправьте поля перед созданием операции.
+                      Правки сохраняются автоматически. Enter — следующее поле, Ctrl+Enter — в журнал.
                     </p>
                   </div>
-                  {editDraft && (() => {
-                    const fc = scanResult.field_confidence
-                    return (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="label">Вид документа</label>
-                        <select
-                          className="input min-h-11 w-full rounded-xl"
-                          value={editDraft.docType}
-                          onChange={(e) => setEditDraft((d) => d && { ...d, docType: e.target.value })}
-                        >
-                          {Object.entries(DOC_ICONS).map(([k, v]) => (
-                            <option key={k} value={k}>{v.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <OcrFieldLabel
-                          label="Контрагент"
-                          confidence={fc?.counterparty_name}
-                          validation={scanResult.field_validation?.counterparty_name}
-                        />
-                        <input
-                          className={reviewInputClass(fieldNeedsReview(fc, 'counterparty_name'))}
-                          value={editDraft.counterparty}
-                          onChange={(e) => setEditDraft((d) => d && { ...d, counterparty: e.target.value })}
-                          placeholder="Название организации или ИП"
-                        />
-                      </div>
-                      {scanResult.parsed.doc_number && (
-                        <p className="text-xs text-on-surface-variant">Номер в документе: {scanResult.parsed.doc_number}</p>
-                      )}
-                      <div>
-                        <label className="label">
-                          Дата операции
-                          {fieldNeedsReview(fc, 'transaction_date') && (
-                            <span className="ml-2 text-[10px] font-normal text-amber-400">низкая уверенность</span>
-                          )}
-                        </label>
-                        <input
-                          type="date"
-                          className={reviewInputClass(fieldNeedsReview(fc, 'transaction_date'))}
-                          value={editDraft.transactionDate}
-                          onChange={(e) => setEditDraft((d) => d && { ...d, transactionDate: e.target.value })}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                          <OcrFieldLabel
-                            label="Сумма, BYN"
-                            confidence={fc?.amount}
-                            validation={scanResult.field_validation?.amount}
-                          />
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            className={reviewInputClass(fieldNeedsReview(fc, 'amount'))}
-                            value={editDraft.amount}
-                            onChange={(e) => {
-                              setEditDraft((d) => d && { ...d, amount: e.target.value })
-                              setAmountError(null)
-                            }}
-                            placeholder="Например 44500 или 44 500"
-                          />
-                        </div>
-                        <div>
-                          <label className="label">НДС, BYN</label>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            className="input min-h-11 w-full rounded-xl"
-                            value={editDraft.vatAmount}
-                            onChange={(e) => setEditDraft((d) => d && { ...d, vatAmount: e.target.value })}
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="label">Тип операции</label>
-                        <select
-                          className="input min-h-11 w-full rounded-xl"
-                          value={editDraft.txType}
-                          onChange={(e) => setEditDraft((d) => d && { ...d, txType: e.target.value })}
-                        >
-                          <option value="expense">Расход</option>
-                          <option value="income">Доход</option>
-                          <option value="refund">Возврат</option>
-                          <option value="writeoff">Списание</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="label">Описание в операции</label>
-                        <textarea
-                          className="input min-h-[72px] w-full rounded-xl text-sm"
-                          value={editDraft.description}
-                          onChange={(e) => setEditDraft((d) => d && { ...d, description: e.target.value })}
-                          placeholder="Необязательно; если пусто — подставятся вид документа и контрагент"
-                        />
-                      </div>
-                      {amountError && <p className="text-sm text-error">{amountError}</p>}
-                    </div>
-                    )
-                  })()}
+                  {editDraft && (
+                    <OcrCorrectionPanel
+                      draft={editDraft}
+                      fieldConfidence={scanResult.field_confidence}
+                      fieldValidation={scanResult.field_validation}
+                      docNumber={scanResult.parsed.doc_number}
+                      vendorHints={scanResult.vendor_hints}
+                      amountError={amountError}
+                      autosaving={autosaving}
+                      onChange={handleDraftChange}
+                      onMarkCorrected={markCorrected}
+                      onConfirm={submitTxFromDraft}
+                      confirmPending={confirmMutation.isPending}
+                      confirmed={txSaved}
+                    />
+                  )}
+                  {txSaved && createdTxId && (
+                    <Link
+                      to="/accounting/journal"
+                      className="btn-secondary mt-3 inline-flex min-h-10 w-full justify-center text-sm"
+                    >
+                      Открыть в журнале
+                    </Link>
+                  )}
                   {scanResult.parsed.items_count != null && (
                     <p className="text-xs text-on-surface-variant">Позиций в документе: {scanResult.parsed.items_count}</p>
                   )}
@@ -567,30 +516,6 @@ export default function ScannerPage() {
                         <p key={i} className="text-xs text-on-surface-variant">• {w}</p>
                       ))}
                     </div>
-                  )}
-                  {!txSaved ? (
-                    <div className="app-form-actions -mx-4 mt-4 px-4 sm:mx-0 sm:px-0 sm:static sm:border-0 sm:bg-transparent sm:p-0">
-                      <button
-                        type="button"
-                        onClick={submitTxFromDraft}
-                        className="btn-primary min-h-12 w-full rounded-xl"
-                        disabled={!editDraft || createTxMutation.isPending}
-                      >
-                        <Icon name="check_circle" /> {createTxMutation.isPending ? 'Сохраняем…' : 'Готово — в журнал'}
-                      </button>
-                    </div>
-                  ) : (
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key="saved"
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                        className="mt-4 flex items-center gap-2 rounded-xl border border-secondary/25 bg-secondary/10 px-4 py-3 text-sm font-bold text-secondary"
-                      >
-                        <Icon name="check_circle" filled /> Операция создана
-                      </motion.div>
-                    </AnimatePresence>
                   )}
                 </motion.div>
               </div>
@@ -677,8 +602,29 @@ export default function ScannerPage() {
         </div>
       </div>
 
+      {(reviewQueueData?.items?.length ?? 0) > 0 && (
+        <section id="scanner-review-queue" className="mt-8">
+          <h2 className="fc-section-label mb-3">Очередь проверки</h2>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {reviewQueueData!.items.map((item: { id: string; filename: string; confidence: number; doc_type: string }) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-2xl border border-outline/35 bg-surface/90 px-4 py-3 text-left hover:border-primary/35"
+                  disabled={loadDocMutation.isPending}
+                  onClick={() => loadDocMutation.mutate(item.id)}
+                >
+                  <span className="min-w-0 truncate text-sm font-medium text-on-surface">{item.filename}</span>
+                  <span className="ml-2 shrink-0 text-xs text-amber-700 dark:text-amber-200">{item.confidence}%</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Stats */}
-      <div id="scanner-review-queue" className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
         {[
           { icon: 'account_tree', color: 'primary', label: 'Сканировано', value: String(history.length) },
           { icon: 'rule', color: 'tertiary', label: 'В очереди проверки', value: String(reviewQueueData?.items?.length ?? 0) },

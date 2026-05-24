@@ -4,7 +4,7 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, workspace_organization_id
@@ -25,6 +25,96 @@ router = APIRouter(prefix="/scanner", tags=["scanner"])
 class TextParseRequest(BaseModel):
     text: str
     doc_type: str | None = None
+
+
+class OcrCorrectionFields(BaseModel):
+    doc_type: str | None = None
+    counterparty_name: str | None = None
+    transaction_date: str | None = None
+    amount: str | float | None = None
+    vat_amount: str | float | None = None
+    type: str | None = None
+    description: str | None = None
+    category: str | None = None
+    debit_account: str | None = None
+    credit_account: str | None = None
+    corrected_fields: list[str] = Field(default_factory=list)
+
+
+def _parse_doc_json(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def _apply_correction_fields(parsed: dict, body: OcrCorrectionFields) -> dict:
+    out = dict(parsed)
+    if body.counterparty_name is not None:
+        out["counterparty_name"] = body.counterparty_name.strip()
+    if body.transaction_date is not None:
+        out["transaction_date"] = body.transaction_date
+    if body.amount is not None:
+        out["amount"] = float(_to_decimal(body.amount))
+    if body.vat_amount is not None:
+        out["vat_amount"] = float(_to_decimal(body.vat_amount))
+    if body.type is not None:
+        out["type"] = body.type
+    if body.description is not None:
+        out["description"] = body.description.strip()
+    return out
+
+
+def _bump_field_confidence(fc: dict[str, int], corrected: list[str]) -> dict[str, int]:
+    updated = dict(fc)
+    for key in corrected:
+        updated[key] = max(int(updated.get(key, 0) or 0), 95)
+    return updated
+
+
+def _still_needs_review(confidence: int, fc: dict[str, int]) -> bool:
+    if confidence < LOW_CONFIDENCE_THRESHOLD:
+        return True
+    return any(int(v) < LOW_CONFIDENCE_THRESHOLD for v in fc.values())
+
+
+async def _document_payload(db: AsyncSession, doc: ScannedDocument, oid: str) -> dict:
+    parsed = _parse_doc_json(doc.parsed_data)
+    fc = _load_field_confidence(doc.field_confidence_json)
+    payload = _scan_result_payload(
+        doc,
+        parsed,
+        linked_transaction_id=doc.transaction_id,
+        field_confidence=fc,
+    )
+    cp_name = (parsed.get("counterparty_name") or "").strip()
+    if cp_name:
+        try:
+            from app.services.vendor_memory_service import lookup_vendor_hints
+
+            hints = await lookup_vendor_hints(db, oid, cp_name)
+            if hints:
+                payload["vendor_hints"] = hints
+        except Exception:
+            pass
+    try:
+        from app.services.ocr_execution_service import build_execution_suggestions
+
+        payload["execution_suggestions"] = await build_execution_suggestions(
+            db,
+            oid,
+            parsed=parsed,
+            doc_type=doc.doc_type,
+            vendor_hints=payload.get("vendor_hints"),
+            requires_review=bool(doc.requires_review),
+            linked_transaction_id=doc.transaction_id,
+        )
+    except Exception:
+        pass
+    return payload
 
 MAX_SIZE = 25 * 1024 * 1024  # 25 MB (как в UI сканера)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"}
@@ -447,6 +537,202 @@ async def list_scanned_documents(
         })
 
     return items
+
+
+@router.get("/documents/{doc_id}")
+async def get_scanned_document(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    oid = workspace_organization_id(current_user)
+    result = await db.execute(
+        select(ScannedDocument).where(
+            ScannedDocument.id == doc_id,
+            ScannedDocument.organization_id == oid,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "Документ не найден")
+    return await _document_payload(db, doc, oid)
+
+
+@router.patch("/documents/{doc_id}/corrections")
+async def patch_scanned_corrections(
+    doc_id: str,
+    body: OcrCorrectionFields,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Мгновенное сохранение правок OCR + обучение vendor memory."""
+    oid = workspace_organization_id(current_user)
+    result = await db.execute(
+        select(ScannedDocument).where(
+            ScannedDocument.id == doc_id,
+            ScannedDocument.organization_id == oid,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "Документ не найден")
+
+    parsed = _apply_correction_fields(_parse_doc_json(doc.parsed_data), body)
+    fc = _bump_field_confidence(_load_field_confidence(doc.field_confidence_json), body.corrected_fields)
+    if body.doc_type:
+        doc.doc_type = body.doc_type
+
+    doc.parsed_data = json.dumps(parsed, ensure_ascii=False)
+    doc.field_confidence_json = json.dumps(fc, ensure_ascii=False)
+    doc.requires_review = _still_needs_review(int(doc.confidence or 0), fc)
+    doc.status = "needs_review" if doc.requires_review else "done"
+    await db.flush()
+
+    cp_name = (parsed.get("counterparty_name") or "").strip()
+    if cp_name and body.corrected_fields:
+        try:
+            from app.services.vendor_memory_service import remember_vendor
+
+            await remember_vendor(
+                db,
+                oid,
+                display_name=cp_name,
+                category=body.category,
+                debit_account=body.debit_account,
+                credit_account=body.credit_account,
+            )
+        except Exception:
+            pass
+
+    try:
+        from app.services.pilot_analytics_service import track_pilot_event
+
+        await track_pilot_event(
+            db,
+            organization_id=oid,
+            user_id=str(current_user.id),
+            event_name="ocr_field_edited",
+            payload={"doc_id": doc_id, "fields": body.corrected_fields},
+        )
+    except Exception:
+        pass
+
+    await refresh_financial_state_audit(db, oid)
+    await db.refresh(doc)
+    return await _document_payload(db, doc, oid)
+
+
+@router.post("/documents/{doc_id}/confirm-transaction")
+async def confirm_scanned_transaction(
+    doc_id: str,
+    body: OcrCorrectionFields,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """OCR → учёт: правки, операция в журнале, связь документа."""
+    oid = workspace_organization_id(current_user)
+    result = await db.execute(
+        select(ScannedDocument).where(
+            ScannedDocument.id == doc_id,
+            ScannedDocument.organization_id == oid,
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "Документ не найден")
+    if doc.transaction_id:
+        payload = await _document_payload(db, doc, oid)
+        return {
+            "transaction_id": doc.transaction_id,
+            "document_id": doc.id,
+            "already_linked": True,
+            **payload,
+        }
+
+    parsed = _apply_correction_fields(_parse_doc_json(doc.parsed_data), body)
+    amount = _to_decimal(parsed.get("amount"))
+    if amount <= 0:
+        raise HTTPException(400, "Укажите сумму больше 0")
+    try:
+        tx_date = date.fromisoformat(str(parsed.get("transaction_date")))
+    except Exception:
+        tx_date = date.today()
+
+    vat_amount = _to_decimal(parsed.get("vat_amount"))
+    category = body.category
+    ai_conf = Decimal("0.85")
+    if not category:
+        category, conf_raw = classify_expense_category(
+            f"{parsed.get('description', '')}\n{parsed.get('counterparty_name', '')}\n{doc.ocr_text or ''}"
+        )
+        ai_conf = Decimal(str(conf_raw))
+
+    fc = _bump_field_confidence(_load_field_confidence(doc.field_confidence_json), body.corrected_fields)
+    if body.doc_type:
+        doc.doc_type = body.doc_type
+    doc.parsed_data = json.dumps(parsed, ensure_ascii=False)
+    doc.field_confidence_json = json.dumps(fc, ensure_ascii=False)
+    doc.requires_review = False
+    doc.status = "done"
+
+    cp_name = (parsed.get("counterparty_name") or "").strip()
+    label = doc.doc_type or "document"
+    desc = (parsed.get("description") or "").strip() or (f"{label}: {cp_name}" if cp_name else f"Скан {doc.filename}")
+
+    tx = Transaction(
+        organization_id=oid,
+        type=parsed.get("type") or "expense",
+        amount=amount,
+        vat_amount=vat_amount if vat_amount >= 0 else Decimal("0"),
+        category=category,
+        description=desc[:500],
+        transaction_date=tx_date,
+        source="scan",
+        ai_category_confidence=ai_conf,
+        receipt_image_url=f"scanned://{doc.id}/{doc.filename}",
+    )
+    db.add(tx)
+    await db.flush()
+
+    doc.transaction_id = tx.id
+    doc.lifecycle_status = "confirmed"
+    await db.flush()
+
+    if cp_name:
+        try:
+            from app.services.vendor_memory_service import remember_vendor
+
+            await remember_vendor(
+                db,
+                oid,
+                display_name=cp_name,
+                category=category,
+                debit_account=body.debit_account,
+                credit_account=body.credit_account,
+            )
+        except Exception:
+            pass
+
+    await emit_ocr_linked(db, oid, doc.id, transaction_id=tx.id)
+    await emit_transaction_created(db, oid, tx, actor="user")
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="scan_confirmed_to_journal",
+        entity_type="transaction",
+        entity_id=str(tx.id),
+        metadata={"document_id": str(doc.id), "source": tx.source},
+    )
+    await refresh_financial_state_audit(db, oid)
+    await db.refresh(doc)
+
+    payload = await _document_payload(db, doc, oid)
+    return {
+        "transaction_id": tx.id,
+        "document_id": doc.id,
+        "already_linked": False,
+        **payload,
+    }
 
 
 @router.post("/parse-text")

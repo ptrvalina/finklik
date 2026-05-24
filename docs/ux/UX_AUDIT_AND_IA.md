@@ -56,3 +56,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P1 | IA NOW/MONEY/REPORTING/TEAM/CONTROL; FinancialStateHero; inbox/approvals; control pages | Done |
 | P2 | Feed: why / if ignored / confidence; type-specific risk copy | Done |
 | P4 | `/workspace/accountant/queues`; global queues UI; recent clients; pin on cards | Done |
+| P3 | OCR corrections API; autosave; keyboard flow; vendor memory on edit; review queue load | Done |

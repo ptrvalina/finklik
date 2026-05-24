@@ -536,6 +536,11 @@ export const scannerApi = {
   parseText: (text: string, doc_type?: string) =>
     api.post('/scanner/parse-text', { text, doc_type }),
   list: (params?: any) => api.get('/scanner/documents', { params }),
+  getDocument: (id: string) => api.get(`/scanner/documents/${id}`),
+  patchCorrections: (id: string, data: Record<string, unknown>) =>
+    api.patch(`/scanner/documents/${id}/corrections`, data),
+  confirmTransaction: (id: string, data: Record<string, unknown>) =>
+    api.post(`/scanner/documents/${id}/confirm-transaction`, data),
   reviewQueue: (limit?: number) => api.get('/scanner/review-queue', { params: { limit } }),
   remove: (id: string) => api.delete(`/scanner/documents/${id}`),
   uploadToKudir: (file: File) => {
