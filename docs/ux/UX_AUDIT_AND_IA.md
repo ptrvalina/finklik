@@ -61,3 +61,4 @@ Settings, assistant, analytics: profile menu / secondary, not primary nav.
 | W3 | OCR review banner; reporting readiness hero | Done |
 | W4 | Design tokens (`--fc-shadow-calm`, calm surfaces); mobile calmer shadows; thumb targets | Done |
 | W5 | `CalmErrorState`, offline banner, query defaults, onboarding progress | Done |
+| W6 | `/accounting/journal` alias; OperationalPage on calendar/planner/counterparties; dead FeedRow removed | Done |

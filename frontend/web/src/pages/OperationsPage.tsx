@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { operationsApi } from '../api/client'
@@ -9,7 +9,6 @@ import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
 import OperationsProgressStrip from '../components/operations/OperationsProgressStrip'
 import { WorkPackCard } from '../components/operations/WorkPackCard'
 import OperationalPage from '../components/shell/OperationalPage'
-import { operationTypeLabel } from '../lib/executionLabels'
 import { orgQueryKey } from '../lib/queryKeys'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 
@@ -194,13 +193,6 @@ type ExecutionFeedResponse = {
   calm_ui_budget?: CalmUiBudget
 }
 
-const PRIORITY_LABEL: Record<string, string> = {
-  critical: 'Критично',
-  high: 'Высокий',
-  medium: 'Средний',
-  low: 'Низкий',
-}
-
 const STATE_DIM_RU: Record<string, string> = {
   cashflow_state: 'Касса',
   operational_readiness: 'Готовность',
@@ -237,154 +229,6 @@ const HealthMeter = memo(function HealthMeter({ label, value }: { label: string;
         />
       </div>
     </div>
-  )
-})
-
-const GOV_TAG_RU: Record<string, string> = {
-  conflict_detected: 'Конфликт источников',
-  frozen_state: 'Заморозка',
-  requires_confirmation: 'Нужно подтверждение',
-  governance_violation: 'Нарушение правил',
-}
-
-function priorityStyles(p: string) {
-  switch (p) {
-    case 'critical':
-      return 'bg-red-500/15 text-red-200 ring-red-400/30'
-    case 'high':
-      return 'bg-amber-500/12 text-amber-100 ring-amber-400/25'
-    case 'medium':
-      return 'bg-emerald-500/10 text-emerald-100 ring-emerald-400/20'
-    default:
-      return 'bg-white/8 text-white/70 ring-white/10'
-  }
-}
-
-function typeIcon(t: string) {
-  switch (t) {
-    case 'transaction':
-      return 'menu_book'
-    case 'document':
-      return 'document_scanner'
-    case 'approval':
-      return 'verified_user'
-    case 'reporting':
-      return 'assignment_turned_in'
-    case 'reconciliation':
-      return 'compare_arrows'
-    default:
-      return 'task_alt'
-  }
-}
-
-const FeedRow = memo(function FeedRow({
-  item,
-  onOpen,
-  prominent,
-  compact,
-}: {
-  item: OperationalItem
-  onOpen: (path: string | null | undefined) => void
-  prominent?: boolean
-  /** Скрыть внутренние измерения и уверенность — спокойный режим. */
-  compact?: boolean
-}) {
-  const touch = useRef({ x: 0, y: 0 })
-
-  const go = useCallback(() => onOpen(item.action_path), [item.action_path, onOpen])
-
-  return (
-    <GlassCard
-      variant="subtle"
-      hoverLift={false}
-      className={`p-4 sm:p-5 ${prominent ? 'ring-1 ring-primary/35' : ''}`}
-      onClick={() => go()}
-      onTouchStart={(e) => {
-        touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      }}
-      onTouchEnd={(e) => {
-        const t = e.changedTouches[0]
-        const dx = t.clientX - touch.current.x
-        const dy = Math.abs(t.clientY - touch.current.y)
-        if (dx > 70 && dy < 40 && item.action_path) {
-          go()
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          go()
-        }
-      }}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className="material-symbols-outlined mt-0.5 shrink-0 text-[22px] text-primary/90"
-          aria-hidden
-        >
-          {typeIcon(item.type)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${priorityStyles(item.priority)}`}
-            >
-              {PRIORITY_LABEL[item.priority] || item.priority}
-            </span>
-            {!compact && item.state_dimension && (
-              <span className="rounded-full bg-white/6 px-2 py-0.5 text-[10px] text-on-surface-variant">
-                {STATE_DIM_RU[item.state_dimension] || item.state_dimension}
-              </span>
-            )}
-            <span className="text-[10px] font-medium text-on-surface-variant">
-              {operationTypeLabel(item.type)}
-            </span>
-          </div>
-          <p className="mt-1.5 font-headline text-[15px] font-semibold leading-snug text-on-surface">
-            {item.title}
-          </p>
-          {item.context && (
-            <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{item.context}</p>
-          )}
-          {item.ai_why && (
-            <p className="mt-2 rounded-2xl border border-outline/40 bg-surface-container-low/60 px-3 py-2 text-xs leading-relaxed text-on-surface-variant dark:bg-white/[0.03]">
-              <span className="font-semibold text-primary/90">Зачем это важно: </span>
-              {item.ai_why}
-            </p>
-          )}
-          {item.state_transition_hint && (
-            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant/90">
-              <span className="font-medium text-on-surface/90">{compact ? 'Что изменится: ' : 'Состояние: '}</span>
-              {item.state_transition_hint}
-            </p>
-          )}
-          {!compact && (item.governance_tags?.length ?? 0) > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {item.governance_tags!.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-100 ring-1 ring-violet-400/25"
-                >
-                  {GOV_TAG_RU[t] || t}
-                </span>
-              ))}
-            </div>
-          )}
-          {!compact && item.truth_confidence != null && (
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              Уверенность сигнала: <strong>{(item.truth_confidence * 100).toFixed(0)}%</strong>
-            </p>
-          )}
-          {item.action_path && prominent && (
-            <p className="mt-2 text-[11px] text-on-surface-variant/80">
-              Нажмите карточку или свайпните вправо — откроется нужный раздел.
-            </p>
-          )}
-        </div>
-      </div>
-    </GlassCard>
   )
 })
 

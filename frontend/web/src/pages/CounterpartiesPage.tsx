@@ -5,6 +5,7 @@ import AppModal from '../components/ui/AppModal'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
+import OperationalPage from '../components/shell/OperationalPage'
 import { formatApiDetail } from '../utils/apiError'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -228,14 +229,14 @@ export default function CounterpartiesPage() {
     }).toString()
     return (
       <div className="flex flex-wrap items-center gap-1">
-        <Link to={`/accounting?${qIncome}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Доход">
+        <Link to={`/accounting/journal?${qIncome}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Доход">
           Доход
         </Link>
-        <Link to={`/accounting?${qExpense}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Расход">
+        <Link to={`/accounting/journal?${qExpense}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Расход">
           Расход
         </Link>
         <Link
-          to={`/accounting?${new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()}`}
+          to={`/accounting/journal?${new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()}`}
           className="btn-ghost !px-2 !py-1 !text-[10px]"
         >
           Учёт
@@ -267,31 +268,24 @@ export default function CounterpartiesPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="page-heading">Контрагенты</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              Добавление по УНП (до интеграции ЕГР — название уточняйте вручную), поиск <kbd className="rounded border px-1">/</kbd>
-              , операции из списка.
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
-              <Icon name="description" className="text-lg" /> Учёт
-            </Link>
-            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
-              <Icon name="bolt" className="text-lg" /> По УНП
-            </button>
-            <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-              <Icon name="add" className="text-lg" /> Вручную
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <OperationalPage
+      eyebrow="Справочники"
+      title="Контрагенты"
+      description="Добавление по УНП, поиск /, быстрые операции в журнал из строки."
+      secondaryActions={
+        <>
+          <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
+            <Icon name="description" className="text-lg" /> Журнал
+          </Link>
+          <button type="button" className="btn-secondary fc-btn-thumb w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
+            <Icon name="bolt" className="text-lg" /> По УНП
+          </button>
+          <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
+            <Icon name="add" className="text-lg" /> Вручную
+          </button>
+        </>
+      }
+    >
       <div className="relative overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-r from-[#004d40]/15 via-emerald-500/10 to-cyan-500/10 p-6 shadow-float backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 opacity-50">
           <svg className="h-full w-full" viewBox="0 0 520 140" preserveAspectRatio="none" aria-hidden>
@@ -712,6 +706,6 @@ export default function CounterpartiesPage() {
           </div>
         </AppModal>
       )}
-    </div>
+    </OperationalPage>
   )
 }

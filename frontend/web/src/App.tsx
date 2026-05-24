@@ -1,4 +1,4 @@
-import { BrowserRouter, HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { appBasePath } from './appBase'
 import { useAuthStore } from './store/authStore'
 import ThemeHydration from './components/ThemeHydration'
@@ -74,6 +74,12 @@ function LegacyReportingRedirect() {
   return <Navigate to={`/reports/${authority}`} replace />
 }
 
+/** Старые ссылки `/accounting` → журнал с сохранением query (контрагент, пресеты). */
+function AccountingJournalRedirect() {
+  const location = useLocation()
+  return <Navigate to={`/accounting/journal${location.search}${location.hash}`} replace />
+}
+
 export default function App() {
   const useHash = typeof window !== 'undefined' && window.location.hostname === 'ptrvalina.github.io'
 
@@ -139,9 +145,10 @@ function AppRoutes() {
             <Route path="planner" element={<EmployeesHrPlanner />} />
           </Route>
           <Route path="accounting/hub" element={<RoleRoute allow={['admin', 'accountant']}><AccountingHubPage /></RoleRoute>} />
-          <Route path="accounting" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
+          <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
           <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
           <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
+          <Route path="accounting" element={<AccountingJournalRedirect />} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Websites />} />
           <Route path="notes" element={<Notes />} />
@@ -149,13 +156,13 @@ function AppRoutes() {
           <Route path="planner" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><Planner /></RoleRoute>} />
 
           {/* Legacy route aliases kept for compatibility */}
-          <Route path="transactions" element={<Navigate to="/accounting" replace />} />
+          <Route path="transactions" element={<Navigate to="/accounting/journal" replace />} />
           <Route path="analytics" element={<RoleRoute allow={['admin', 'accountant']}><AnalyticsPage /></RoleRoute>} />
           <Route path="calendar" element={<RoleRoute allow={['admin', 'accountant']}><CalendarPage /></RoleRoute>} />
           <Route path="taxes" element={<Navigate to="/bank" replace />} />
           <Route path="reporting" element={<Navigate to="/reports" replace />} />
           <Route path="reporting/:authority" element={<LegacyReportingRedirect />} />
-          <Route path="documents" element={<Navigate to="/accounting" replace />} />
+          <Route path="documents" element={<Navigate to="/accounting/journal" replace />} />
           <Route path="currency" element={<Navigate to="/bank" replace />} />
           <Route path="scanner" element={<Navigate to="/scan" replace />} />
           <Route path="onec-contour" element={<Navigate to="/settings" replace />} />

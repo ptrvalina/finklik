@@ -92,7 +92,7 @@ export default function OnboardingChecklist() {
         label: 'Импортируйте или введите операции',
         hint: 'Журнал — основа дальнейших шагов',
         done: totalTx > 0,
-        to: '/accounting',
+        to: '/accounting/journal',
         icon: 'receipt_long',
       },
       {
@@ -108,7 +108,7 @@ export default function OnboardingChecklist() {
         label: 'Расставьте категории в журнале',
         hint: 'Хотя бы одна операция не «Прочее»',
         done: totalTx > 0 && categorized,
-        to: '/accounting',
+        to: '/accounting/journal',
         icon: 'category',
       },
       {

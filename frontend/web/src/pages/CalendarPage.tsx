@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, taxApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
+import OperationalPage from '../components/shell/OperationalPage'
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -80,48 +81,42 @@ export default function CalendarPage() {
   function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
 
+  const monthNav = (
+    <div className="flex w-fit items-center rounded-lg bg-surface-container-low p-1">
+      <button type="button" onClick={prevMonth} className="rounded-md p-2 transition-colors hover:bg-surface-container-high" aria-label="Предыдущий месяц">
+        <Icon name="chevron_left" className="text-lg" />
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setYear(today.getFullYear())
+          setMonth(today.getMonth())
+        }}
+        className="px-3 py-1.5 text-xs font-label font-bold uppercase tracking-widest text-primary sm:px-4"
+      >
+        Сегодня
+      </button>
+      <button type="button" onClick={nextMonth} className="rounded-md p-2 transition-colors hover:bg-surface-container-high" aria-label="Следующий месяц">
+        <Icon name="chevron_right" className="text-lg" />
+      </button>
+    </div>
+  )
+
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric flex h-[calc(100vh-8rem)] flex-col">
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <h1 className="page-heading">
-            {MONTHS[month]} {year}
-          </h1>
-          <div className="flex w-fit items-center rounded-lg bg-surface-container-low p-1">
-            <button type="button" onClick={prevMonth} className="rounded-md p-2 transition-colors hover:bg-surface-container-high">
-              <Icon name="chevron_left" className="text-lg" />
-            </button>
-            <button
-              type="button"
-              onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()) }}
-              className="px-3 py-1.5 text-xs font-label font-bold uppercase tracking-widest text-primary sm:px-4"
-            >
-              Сегодня
-            </button>
-            <button type="button" onClick={nextMonth} className="rounded-md p-2 transition-colors hover:bg-surface-container-high">
-              <Icon name="chevron_right" className="text-lg" />
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+    <OperationalPage
+      eyebrow="Календарь"
+      title={`${MONTHS[month]} ${year}`}
+      description="Налоговые сроки и ваши события в одном месячном виде."
+      className="flex min-h-0 flex-col"
+      secondaryActions={
+        <>
+          {monthNav}
           <Link to="/reports" className="btn-secondary w-full sm:w-auto">
             <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
           </Link>
-          <div className="-mx-1 flex overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mr-4 sm:overflow-visible sm:pb-0">
-            <div className="flex min-w-max gap-1 rounded-lg bg-surface-container-low p-1">
-              <button type="button" className="whitespace-nowrap rounded-md bg-surface-container-highest px-3 py-1.5 text-xs font-semibold text-on-surface sm:px-4">
-                Месяц
-              </button>
-              <button type="button" className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-on-surface sm:px-4">
-                Неделя
-              </button>
-            </div>
-          </div>
           <button
             type="button"
-            className="btn-primary min-h-12 w-full sm:w-auto"
+            className="btn-primary fc-btn-thumb w-full sm:w-auto"
             onClick={() => {
               setSelectedDate(today.toISOString().slice(0, 10))
               setShowAddModal(true)
@@ -129,10 +124,9 @@ export default function CalendarPage() {
           >
             <Icon name="add" className="text-lg" /> Событие
           </button>
-        </div>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {/* Calendar grid */}
       <div className="page-section flex min-h-0 flex-1 flex-col overflow-hidden bg-surface p-0 dark:border-outline/45">
         {/* Days header */}
@@ -248,6 +242,6 @@ export default function CalendarPage() {
           </div>
         </AppModal>
       )}
-    </div>
+    </OperationalPage>
   )
 }

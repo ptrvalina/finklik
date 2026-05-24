@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { CardSkeleton } from '../components/premium'
+import OperationalPage from '../components/shell/OperationalPage'
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
@@ -355,22 +356,16 @@ export default function Planner() {
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
 
   return (
-    <section className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="page-heading">Планер</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              Календарь событий и задачи организации. Задачи из списка ниже отображаются в сетке месяца по дате создания.
-            </p>
-          </div>
-          <button type="button" className="btn-primary shrink-0" onClick={() => openCreate()}>
-            + Добавить событие
-          </button>
-        </div>
-      </div>
-
+    <OperationalPage
+      eyebrow="Команда"
+      title="Планер"
+      description="Календарь событий и задачи организации. Задачи из списка отображаются в сетке месяца по дате создания."
+      primaryAction={
+        <button type="button" className="btn-primary fc-btn-thumb shrink-0" onClick={() => openCreate()}>
+          + Событие
+        </button>
+      }
+    >
       <div className="card-elevated space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -735,7 +730,7 @@ export default function Planner() {
           onComment={(taskId, content) => commentMutation.mutate({ taskId, content })}
         />
       </div>
-    </section>
+    </OperationalPage>
   )
 }
 

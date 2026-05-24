@@ -5,7 +5,7 @@ type HubTile = { to: string; icon: string; title: string; desc: string; primary?
 
 const TILES: HubTile[] = [
   {
-    to: '/accounting',
+    to: '/accounting/journal',
     icon: 'menu_book',
     title: 'Журнал операций',
     desc: 'КУДиР-first: суммы, категории, проведение',
@@ -30,7 +30,7 @@ export default function AccountingHubPage() {
       title="Учёт"
       description="Не бухгалтерская программа — рабочее место: журнал, документы, банк и план счетов в одном потоке."
       primaryAction={
-        <Link to="/accounting" className="btn-primary w-full sm:w-auto">
+        <Link to="/accounting/journal" className="btn-primary w-full sm:w-auto">
           <Icon name="edit_note" className="text-lg" /> Открыть журнал
         </Link>
       }
