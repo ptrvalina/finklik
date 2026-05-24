@@ -18,6 +18,7 @@ import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSess
 import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
 export function suggestCategory(text: string) {
@@ -281,9 +282,11 @@ export default function Accounting() {
   const [panelTx, setPanelTx] = useState<any | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
+  const [hotkeysOpen, setHotkeysOpen] = useState(false)
   const [paletteQuery, setPaletteQuery] = useState('')
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null)
   const captureAmountRef = useRef<HTMLInputElement>(null)
+  const filterSearchRef = useRef<HTMLInputElement>(null)
   const [scanDropActive, setScanDropActive] = useState(false)
   const [amountPresets, setAmountPresets] = useState<string[]>(() => loadAmountPresets())
 
@@ -580,6 +583,18 @@ export default function Accounting() {
     window.requestAnimationFrame(() => captureAmountRef.current?.focus())
   }, [])
 
+  const quickIncome = useCallback(() => {
+    setType('income')
+    setCategory(loadJournalCatPrefs().income)
+    focusCaptureForm()
+  }, [focusCaptureForm])
+
+  const quickExpense = useCallback(() => {
+    setType('expense')
+    setCategory(loadJournalCatPrefs().expense)
+    focusCaptureForm()
+  }, [focusCaptureForm])
+
   useEffect(() => {
     setFocusedRowIndex((i) => {
       if (i === null) return null
@@ -606,7 +621,47 @@ export default function Accounting() {
         focusCaptureForm()
         return
       }
+      if (e.key === 'i' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        quickIncome()
+        return
+      }
+      if (e.key === 'e' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        quickExpense()
+        return
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault()
+        setWorkspaceFocus('ledger')
+        window.requestAnimationFrame(() => filterSearchRef.current?.focus())
+        return
+      }
+      if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        setWorkspaceFocus('ledger')
+        return
+      }
+      if (e.key === 'd' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        setAttentionFilter((f) => (f === 'drafts' ? 'all' : 'drafts'))
+        setWorkspaceFocus('ledger')
+        return
+      }
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault()
+        setHotkeysOpen((v) => !v)
+        return
+      }
       if (e.key === 'Escape') {
+        if (hotkeysOpen) {
+          setHotkeysOpen(false)
+          return
+        }
         setCommandOpen(false)
         setPanelTx(null)
         setFocusedRowIndex(null)
@@ -630,7 +685,7 @@ export default function Accounting() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [filteredItems, commandOpen, panelTx, focusCaptureForm, focusedRowIndex])
+  }, [filteredItems, commandOpen, panelTx, focusCaptureForm, focusedRowIndex, quickIncome, quickExpense, hotkeysOpen])
 
   const isLoading = txQuery.isLoading
 
@@ -642,7 +697,7 @@ export default function Accounting() {
       description={
         linkedCounterpartyId
           ? 'Следующая проводка привязана к контрагенту из справочника. Строка — Enter, навигация — стрелки.'
-          : 'Журнал, OCR и классификация в одном потоке. Строка — Enter, навигация — стрелки, палитра — Ctrl+K.'
+          : 'Ctrl+K — команды, N/I/E — ввод, / — поиск, ? — подсказки по клавишам.'
       }
       primaryAction={
         <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-[1rem]" onClick={() => setCommandOpen(true)}>
@@ -651,6 +706,9 @@ export default function Accounting() {
       }
       secondaryActions={
         <>
+          <button type="button" className="btn-ghost shrink-0 rounded-[1rem] text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
+            ?
+          </button>
           <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
             <Icon name="apps" className="text-lg" /> Хаб учёта
           </Link>
@@ -663,6 +721,8 @@ export default function Accounting() {
         </>
       }
     >
+      {hotkeysOpen && <JournalHotkeysHelp onClose={() => setHotkeysOpen(false)} />}
+
       <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
         <div className="flex flex-wrap gap-2 border-b border-outline/30 pb-4">
           <Link to="/bank" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
@@ -897,8 +957,9 @@ export default function Accounting() {
                   <option value="expense">Расход</option>
                 </select>
                 <input
+                  ref={filterSearchRef}
                   className="input min-h-11 rounded-xl"
-                  placeholder="Поиск по описанию"
+                  placeholder="Поиск по описанию (/)"
                   value={filterSearch}
                   onChange={(e) => setFilterSearch(e.target.value)}
                 />
@@ -1100,17 +1161,7 @@ export default function Accounting() {
         </DataTableShell>
       </div>
 
-      <JournalQuickStrip
-        onIncome={() => {
-          setType('income')
-          focusCaptureForm()
-        }}
-        onExpense={() => {
-          setType('expense')
-          focusCaptureForm()
-        }}
-        onFocusCapture={focusCaptureForm}
-      />
+      <JournalQuickStrip onIncome={quickIncome} onExpense={quickExpense} onFocusCapture={focusCaptureForm} />
 
       <JournalCommandPalette
         open={commandOpen}
@@ -1123,16 +1174,8 @@ export default function Accounting() {
           focusCaptureForm()
           setCommandOpen(false)
         }}
-        onQuickExpense={() => {
-          setType('expense')
-          setCategory(loadJournalCatPrefs().expense)
-          focusCaptureForm()
-        }}
-        onQuickIncome={() => {
-          setType('income')
-          setCategory(loadJournalCatPrefs().income)
-          focusCaptureForm()
-        }}
+        onQuickExpense={quickExpense}
+        onQuickIncome={quickIncome}
         onClearFilters={() => {
           setFilterDateFrom(monthStartStr)
           setFilterDateTo(todayStr)

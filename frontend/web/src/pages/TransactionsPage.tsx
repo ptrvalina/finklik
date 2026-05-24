@@ -7,6 +7,7 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
+import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -240,19 +241,11 @@ export default function TransactionsPage() {
   }
 
   function pipelineLabel(status?: PipelineStatus) {
-    if (status === 'parsed') return 'parsed'
-    if (status === 'categorized') return 'categorized'
-    if (status === 'verified') return 'verified'
-    if (status === 'reported') return 'reported'
-    return 'new'
+    return journalPipelineLabel(status)
   }
 
   function pipelineBadgeClass(status?: PipelineStatus) {
-    if (status === 'reported') return 'bg-secondary/10 text-secondary border border-secondary/20'
-    if (status === 'verified') return 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-    if (status === 'categorized') return 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-    if (status === 'parsed') return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-    return 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
+    return journalPipelineBadgeClass(status)
   }
 
   function getSyncBadgeClass(tx: any) {

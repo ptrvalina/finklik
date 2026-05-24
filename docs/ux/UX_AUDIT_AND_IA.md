@@ -20,9 +20,8 @@
 | Reporting | Duplicate calm UI | `ReportingReadinessHero` + guided flow |
 
 ### Optional / backlog
-- `websites` → redirects to settings.
-- Full i18n pass on edge labels.
-- Journal: further keyboard macros (bulk actions).
+- Bulk actions in journal (массовое проведение).
+- Расширить i18n на редкие admin-экраны.
 
 ---
 
@@ -51,3 +50,4 @@ Mobile bar: `Главная` · `Лента` · `Учёт` · `Отчёты`.
 | W5 | CalmErrorState; offline banner; onboarding progress | Done |
 | W6 | `/accounting/journal`; calendar/planner/counterparties shells | Done |
 | W7 | Dashboard simplify; documents route; reporting steps; execution banners; debt cleanup | Done |
+| W8 | Journal hotkeys (I/E//G/D/?); RU pipeline labels; hotkeys help | Done |

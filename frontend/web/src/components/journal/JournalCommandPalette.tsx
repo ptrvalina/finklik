@@ -92,7 +92,7 @@ export function JournalCommandPalette({
             }}
           >
             <span className="material-symbols-outlined text-emerald-500">edit_note</span>
-            <span className="font-medium">Новая операция (как N)</span>
+            <span className="font-medium">Новая операция (N)</span>
           </button>
           {onQuickExpense && (
             <button
