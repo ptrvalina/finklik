@@ -4,6 +4,8 @@ import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -183,7 +185,7 @@ export default function DocumentsPage() {
   })
 
   const { data: primaryDocsData, isLoading: primaryDocsLoading } = useQuery({
-    queryKey: ['primary-documents', docTypeFilter, docStatusFilter],
+    queryKey: orgQueryKey(['primary-documents', docTypeFilter, docStatusFilter]),
     queryFn: () =>
       primaryDocumentsApi
         .list({
@@ -210,18 +212,18 @@ export default function DocumentsPage() {
   }, [primaryDocsData])
 
   const { data: counterpartiesData } = useQuery({
-    queryKey: ['counterparties', 'short'],
+    queryKey: orgQueryKey(['counterparties', 'short']),
     queryFn: () => counterpartiesApi.list().then((r) => r.data as any[]),
   })
 
   const { data: nextNumPreview } = useQuery({
-    queryKey: ['primary-documents', 'next-number', docForm.doc_type],
+    queryKey: orgQueryKey(['primary-documents', 'next-number', docForm.doc_type]),
     queryFn: () => primaryDocumentsApi.nextNumber(docForm.doc_type).then((r) => r.data),
     enabled: useAutoNumber,
   })
 
   const { data: invoiceListForLink } = useQuery({
-    queryKey: ['primary-documents', 'invoices-for-link'],
+    queryKey: orgQueryKey(['primary-documents', 'invoices-for-link']),
     queryFn: () => primaryDocumentsApi.list({ doc_type: 'invoice' }).then((r) => r.data as any[]),
   })
 
@@ -260,9 +262,9 @@ export default function DocumentsPage() {
         counterparty_id: '',
         related_document_id: '',
       })
-      qc.invalidateQueries({ queryKey: ['primary-documents'] })
-      qc.invalidateQueries({ queryKey: ['primary-documents', 'next-number'] })
-      qc.invalidateQueries({ queryKey: ['primary-documents', 'invoices-for-link'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents', 'next-number']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents', 'invoices-for-link']) })
       setMessage({ type: 'success', text: 'Документ создан' })
     },
     onError: (e: any) => {
@@ -273,7 +275,7 @@ export default function DocumentsPage() {
   const deletePrimaryDocMutation = useMutation({
     mutationFn: (id: string) => primaryDocumentsApi.remove(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents']) })
       setMessage({ type: 'success', text: 'Документ удален' })
     },
     onError: () => setMessage({ type: 'error', text: 'Ошибка удаления документа' }),
@@ -327,7 +329,7 @@ export default function DocumentsPage() {
       const paid = Boolean(d?.is_paid)
       setPayQrModal((prev) => (prev ? { ...prev, isPaid: paid } : prev))
       if (paid) {
-        qc.invalidateQueries({ queryKey: ['primary-documents'] })
+        void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents']) })
         setMessage({ type: 'success', text: 'Оплата подтверждена, статус счёта обновлён' })
       } else {
         setMessage({ type: 'success', text: 'Оплата пока не подтверждена' })
@@ -354,7 +356,7 @@ export default function DocumentsPage() {
     mutationFn: (docId: string) => primaryDocumentsApi.markPaid(docId).then((r) => r.data),
     onSuccess: () => {
       setPayQrModal((prev) => (prev ? { ...prev, isPaid: true } : prev))
-      qc.invalidateQueries({ queryKey: ['primary-documents'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents']) })
       setMessage({ type: 'success', text: 'Счёт вручную отмечен как оплаченный' })
     },
     onError: (e: any) =>
@@ -453,9 +455,9 @@ export default function DocumentsPage() {
       setCsvResult(r.data)
       setCsvPreview(null)
       setCsvFile(null)
-      qc.invalidateQueries({ queryKey: ['transactions'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
-      qc.invalidateQueries({ queryKey: ['monthly-summary'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['monthly-summary']) })
       setMessage({ type: 'success', text: `Импортировано ${r.data.imported} операций` })
     } catch {
       setMessage({ type: 'error', text: 'Ошибка при импорте' })
@@ -465,31 +467,31 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero">
-        <div className="fc-hero-strip" aria-hidden />
-        <h1 className="page-heading">Документы</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Импорт и экспорт данных</p>
-      </div>
-
-      <div className="card-elevated flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <p className="text-sm font-semibold text-on-surface">Клиентский поток</p>
-          <p className="mt-1 text-xs text-on-surface-variant">Счёт → оплата → акт/накладная → архив/экспорт</p>
-        </div>
-        <div className="page-actions">
-          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-            <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
-          </Link>
-          <Link to="/scan" className="btn-primary w-full sm:w-auto">
-            <Icon name="document_scanner" className="text-lg" /> В сканер
-          </Link>
-        </div>
-      </div>
-      <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
-        Документы автоматически обогащают учёт; ручная проверка нужна только для низкой уверенности распознавания.
-      </div>
-
+    <>
+    <OperationalPage
+      eyebrow="Первичка"
+      title="Документы"
+      description="Счёт → оплата → акт или накладная → архив и экспорт. Импорт CSV и первичные документы."
+      primaryAction={
+        <Link to="/scan" className="btn-primary w-full sm:w-auto">
+          <Icon name="document_scanner" className="text-lg" /> В сканер
+        </Link>
+      }
+      secondaryActions={
+        <Link to="/reports" className="btn-secondary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
+        </Link>
+      }
+      focusStrip={
+        <FocusStrip
+          tone="neutral"
+          headline="Проверяйте только спорные распознавания"
+          supporting="Уверенные поля из сканера можно принять одним кликом — остальное попадёт в журнал автоматически."
+          ctaLabel="Сканер"
+          ctaTo="/scan"
+        />
+      }
+    >
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
           message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
@@ -878,6 +880,7 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+    </OperationalPage>
 
       {payQrModal && (
         <div
@@ -1026,6 +1029,6 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

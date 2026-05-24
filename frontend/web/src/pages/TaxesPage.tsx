@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { taxApi } from '../api/client'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 
@@ -22,12 +25,12 @@ export default function TaxesPage() {
   const [year, setYear] = useState(new Date().getFullYear())
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['tax-calc', periodStart, periodEnd, withVat],
+    queryKey: orgQueryKey(['tax-calc', periodStart, periodEnd, withVat]),
     queryFn: () => taxApi.calculate({ period_start: periodStart, period_end: periodEnd, with_vat: withVat }).then(r => r.data),
   })
 
   const { data: calendarData, isError: calendarError } = useQuery({
-    queryKey: ['tax-calendar', year],
+    queryKey: orgQueryKey(['tax-calendar', year]),
     queryFn: () => taxApi.calendar(year).then(r => r.data),
   })
   const {
@@ -35,7 +38,7 @@ export default function TaxesPage() {
     refetch: refetchRulesValidation,
     isFetching: isRulesValidationFetching,
   } = useQuery({
-    queryKey: ['tax-rules-validation'],
+    queryKey: orgQueryKey('tax-rules-validation'),
     queryFn: () => taxApi.validateRules().then(r => r.data),
     retry: false,
     refetchInterval: 60_000,
@@ -46,14 +49,37 @@ export default function TaxesPage() {
       ? String(rulesValidation.errors[0])
       : null
 
-  return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero">
-        <div className="fc-hero-strip" aria-hidden />
-        <h1 className="page-heading">Налоги</h1>
-        <p className="mt-1 text-on-surface-variant">Расчёт налогов и календарь дедлайнов</p>
-      </div>
+  const daysToDeadline = data?.deadline
+    ? Math.ceil((new Date(data.deadline).getTime() - Date.now()) / 86400000)
+    : null
 
+  return (
+    <OperationalPage
+      eyebrow="Комплаенс"
+      title="Налоги"
+      description="Расчёт УСН, НДС и взносов за период плюс календарь сроков сдачи."
+      primaryAction={
+        <Link to="/reports" className="btn-primary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
+        </Link>
+      }
+      secondaryActions={
+        <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => refetch()}>
+          <Icon name="calculate" className="text-lg" /> Пересчитать
+        </button>
+      }
+      focusStrip={
+        daysToDeadline !== null && daysToDeadline <= 14 ? (
+          <FocusStrip
+            tone={daysToDeadline <= 3 ? 'amber' : 'neutral'}
+            headline={daysToDeadline <= 0 ? 'Срок уплаты наступил' : `До срока ${daysToDeadline} дн.`}
+            supporting="Подготовьте платёж и подачу в отчётности, пока данные журнала актуальны."
+            ctaLabel="Отчётность"
+            ctaTo="/reports"
+          />
+        ) : undefined
+      }
+    >
       {/* Filters */}
       <div className="page-section grid grid-cols-1 items-end gap-4 md:grid-cols-4">
         <div><label className="label">Период с</label><input type="date" className="input" value={periodStart} onChange={e => setPeriodStart(e.target.value)} /></div>
@@ -61,9 +87,6 @@ export default function TaxesPage() {
         <label className="flex items-center gap-2 text-sm text-on-surface-variant pb-2">
           <input type="checkbox" checked={withVat} onChange={e => setWithVat(e.target.checked)} className="rounded" /> Плательщик НДС
         </label>
-        <button className="btn-primary" onClick={() => refetch()}>
-          <Icon name="calculate" className="text-lg" /> Пересчитать
-        </button>
       </div>
 
       {(isError || calendarError) && (
@@ -94,7 +117,7 @@ export default function TaxesPage() {
             </button>
             {rulesValidation.using_fallback && (
               <span className="rounded bg-error/20 px-2 py-0.5 text-xs font-semibold text-error">
-                fallback
+                резервные правила
               </span>
             )}
             {Array.isArray(rulesValidation.years) && (
@@ -117,7 +140,7 @@ export default function TaxesPage() {
           )}
           {rulesValidation.using_fallback && (
             <div className="mt-3 rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">
-              <span className="font-semibold">Причина fallback:</span>{' '}
+              <span className="font-semibold">Причина резервного режима:</span>{' '}
               {fallbackReason || 'Конфиг налоговых правил недоступен, используются встроенные значения.'}
             </div>
           )}
@@ -226,6 +249,6 @@ export default function TaxesPage() {
           </div>
         </div>
       </div>
-    </div>
+    </OperationalPage>
   )
 }

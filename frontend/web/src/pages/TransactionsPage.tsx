@@ -5,6 +5,8 @@ import AppModal from '../components/ui/AppModal'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -75,7 +77,7 @@ export default function TransactionsPage() {
   })
 
   const { data, isLoading } = useQuery({
-    queryKey: ['transactions', filter, page, search, dateFrom, dateTo],
+    queryKey: orgQueryKey(['transactions', 'list', filter, page, search, dateFrom, dateTo]),
     queryFn: () =>
       dashboardApi
         .getTransactions({
@@ -90,22 +92,22 @@ export default function TransactionsPage() {
   })
 
   const { data: syncJobsData } = useQuery({
-    queryKey: ['onec-sync-jobs'],
+    queryKey: orgQueryKey('onec-sync-jobs'),
     queryFn: () => onecApi.listSyncJobs().then((r) => r.data),
     refetchInterval: 5000,
   })
   const { data: rulesData } = useQuery({
-    queryKey: ['categorization-rules'],
+    queryKey: orgQueryKey('categorization-rules'),
     queryFn: () => categorizationRulesApi.list().then((r) => r.data as any[]),
   })
   const { data: counterpartiesData } = useQuery({
-    queryKey: ['counterparties', 'for-rules'],
+    queryKey: orgQueryKey(['counterparties', 'for-rules']),
     queryFn: () => counterpartiesApi.list().then((r) => r.data as any[]),
   })
 
   const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ['transactions'] })
-    qc.invalidateQueries({ queryKey: ['dashboard'] })
+    void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
+    void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
   }
 
   const addMutation = useMutation({
@@ -283,39 +285,37 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      {/* Header */}
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="page-heading">Операции</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">{total} операций · единый журнал доходов/расходов</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              {['new', 'parsed', 'categorized', 'verified', 'reported'].map((t) => (
-                <span
-                  key={t}
-                  className="rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-2.5 py-1 font-semibold uppercase tracking-wide text-emerald-800 backdrop-blur-sm dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-200/90"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
-              <Icon name="auto_fix_high" className="text-lg" /> Правила
-            </button>
-            <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
-              <Icon name="upload_file" className="text-lg" /> Импорт
-            </Link>
-            <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
-              <Icon name="add" className="text-lg" /> Добавить
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <>
+    <OperationalPage
+      eyebrow="Учёт"
+      title="Операции"
+      description={`${total} в списке · поток: добавить → категория → подтвердить → синхронизация с 1С.`}
+      primaryAction={
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
+          <Icon name="add" className="text-lg" /> Добавить
+        </button>
+      }
+      secondaryActions={
+        <>
+          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
+            <Icon name="auto_fix_high" className="text-lg" /> Правила
+          </button>
+          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+            <Icon name="upload_file" className="text-lg" /> Импорт
+          </Link>
+        </>
+      }
+      focusStrip={
+        !isLoading && total === 0 ? (
+          <FocusStrip
+            headline="Добавьте первую операцию"
+            supporting="Импортируйте CSV, отсканируйте чек или внесите сумму вручную — так заработают налоги и отчётность."
+            ctaLabel="Добавить"
+            onCta={openCreate}
+          />
+        ) : undefined
+      }
+    >
       {/* Filter tabs — горизонтальный скролл на телефоне */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
         <div className="flex min-w-max gap-1 rounded-full border border-white/25 bg-surface/85 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.55)] sm:inline-flex sm:min-w-0">
@@ -688,6 +688,7 @@ export default function TransactionsPage() {
           </button>
         </div>
       )}
+    </OperationalPage>
 
       {showModal && (
         <AppModal
@@ -865,6 +866,6 @@ export default function TransactionsPage() {
           </div>
         </AppModal>
       )}
-    </div>
+    </>
   )
 }
