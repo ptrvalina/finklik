@@ -5,6 +5,7 @@ import { scannerApi, dashboardApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { Link } from 'react-router-dom'
 import { OcrFieldLabel } from '../components/scanner/OcrFieldConfidence'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function clientErrorText(err: unknown): string {
@@ -111,7 +112,7 @@ export default function ScannerPage() {
     onSuccess: (res) => {
       setScanResult(res.data)
       setTxSaved(false)
-      qc.invalidateQueries({ queryKey: ['scanner-history'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
     },
   })
 
@@ -120,13 +121,13 @@ export default function ScannerPage() {
     onSuccess: () => {
       setTxSaved(true)
       setAmountError(null)
-      qc.invalidateQueries({ queryKey: ['transactions'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => scannerApi.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['scanner-history'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') }),
   })
 
   const parseTextMutation = useMutation({
@@ -135,7 +136,7 @@ export default function ScannerPage() {
       setScanResult(res.data)
       setTxSaved(false)
       setPreview(null)
-      qc.invalidateQueries({ queryKey: ['scanner-history'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
     },
   })
 
@@ -214,32 +215,35 @@ export default function ScannerPage() {
     })
   }
 
-  return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero">
-        <div className="fc-hero-strip" aria-hidden />
-        <h1 className="page-heading">Сканер документов</h1>
-        <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-          Загрузите чеки, накладные или счета. AI автоматически извлечёт данные и предложит создать операцию.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Загрузка</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Распознавание</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Операция</span>
-          <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-amber-300">
-            Нужна проверка: {reviewQueueData?.items?.length ?? 0}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/accounting" className="btn-secondary !py-2 text-xs">
-            <Icon name="receipt_long" className="text-base" /> В операции
-          </Link>
-          <Link to="/accounting" className="btn-secondary !py-2 text-xs">
-            <Icon name="description" className="text-base" /> В документы
-          </Link>
-        </div>
-      </div>
+  const reviewCount = reviewQueueData?.items?.length ?? 0
 
+  return (
+    <OperationalPage
+      eyebrow="Первичка"
+      title="Сканер документов"
+      description="Загрузка → распознавание → проверка полей → операция в журнале."
+      primaryAction={
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => fileRef.current?.click()}>
+          <Icon name="cloud_upload" className="text-lg" /> Загрузить файл
+        </button>
+      }
+      secondaryActions={
+        <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
+          <Icon name="receipt_long" className="text-lg" /> Журнал
+        </Link>
+      }
+      focusStrip={
+        reviewCount > 0 ? (
+          <FocusStrip
+            tone="amber"
+            headline={`${reviewCount} док. ждут проверки`}
+            supporting="Поля с низкой уверенностью подсвечены — исправьте перед проведением."
+            ctaLabel="К очереди ниже"
+            onCta={() => document.getElementById('scanner-review-queue')?.scrollIntoView({ behavior: 'smooth' })}
+          />
+        ) : undefined
+      }
+    >
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         <div className="col-span-12 lg:col-span-8">
           <div className="-mx-1 mb-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
@@ -670,7 +674,7 @@ export default function ScannerPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
+      <div id="scanner-review-queue" className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
         {[
           { icon: 'account_tree', color: 'primary', label: 'Сканировано', value: String(history.length) },
           { icon: 'rule', color: 'tertiary', label: 'В очереди проверки', value: String(reviewQueueData?.items?.length ?? 0) },
@@ -689,7 +693,6 @@ export default function ScannerPage() {
           </div>
         ))}
       </div>
-
-    </div>
+    </OperationalPage>
   )
 }

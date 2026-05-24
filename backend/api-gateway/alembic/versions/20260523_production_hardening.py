@@ -3,7 +3,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-revision = "production_hardening_v1"
+revision: str = "production_hardening_v1"
 down_revision = "belarus_fos_accounting_v1"
 branch_labels = None
 depends_on = None

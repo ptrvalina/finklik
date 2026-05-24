@@ -7,6 +7,8 @@ import {
 } from 'recharts'
 import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
+import OperationalPage from '../components/shell/OperationalPage'
+import { orgQueryKey } from '../lib/queryKeys'
 import { useThemeStore } from '../store/themeStore'
 import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { InsightCard, RecommendationCard, WarningCard } from '../components/premium-os'
@@ -48,20 +50,20 @@ export default function AnalyticsPage() {
   const axisFill = theme === 'dark' ? '#94a3b8' : '#64748b'
 
   const { data: summary, isLoading: loadingSummary } = useQuery({
-    queryKey: ['monthly-summary', year],
+    queryKey: orgQueryKey(['monthly-summary', year]),
     queryFn: () => reportsApi.monthlySummary(year).then(r => r.data),
   })
 
   const { data: catData } = useQuery({
-    queryKey: ['expense-categories'],
+    queryKey: orgQueryKey('expense-categories'),
     queryFn: () => reportsApi.expenseCategories().then(r => r.data),
   })
   const { data: automationKpi } = useQuery({
-    queryKey: ['automation-kpi'],
+    queryKey: orgQueryKey('automation-kpi'),
     queryFn: () => automationApi.kpi().then((r) => r.data),
   })
   const { data: dataQuality } = useQuery({
-    queryKey: ['automation-data-quality'],
+    queryKey: orgQueryKey('automation-data-quality'),
     queryFn: () => automationApi.dataQuality().then((r) => r.data),
   })
 
@@ -77,41 +79,27 @@ export default function AnalyticsPage() {
   const categories = catData?.items ?? []
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="page-heading">Аналитика</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">Финансовые показатели за {year} год</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              {['Динамика', 'Структура', 'Рекомендации'].map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-3 py-1 font-semibold text-emerald-800 shadow-soft backdrop-blur-md dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-200/95"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-              <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
-            </Link>
-            <div className="flex rounded-full border border-white/20 bg-surface/80 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.5)]">
-              <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
-                <Icon name="chevron_left" className="text-sm" />
-              </button>
-              <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface sm:py-1.5">{year}</span>
-              <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface sm:py-1.5">
-                <Icon name="chevron_right" className="text-sm" />
-              </button>
-            </div>
-          </div>
+    <OperationalPage
+      eyebrow="Контроль"
+      title="Аналитика"
+      description={`Динамика, структура расходов и рекомендации за ${year} год.`}
+      primaryAction={
+        <Link to="/reports" className="btn-primary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
+        </Link>
+      }
+      secondaryActions={
+        <div className="flex rounded-full border border-outline/75 bg-surface-container-high p-1 shadow-soft">
+          <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
+            <Icon name="chevron_left" className="text-sm" />
+          </button>
+          <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface">{year}</span>
+          <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
+            <Icon name="chevron_right" className="text-sm" />
+          </button>
         </div>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 lg:gap-8">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="metric-blade">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
@@ -370,14 +358,14 @@ export default function AnalyticsPage() {
           )}
         </div>
       </div>
-    </div>
+    </OperationalPage>
   )
 }
 
 
 function CounterpartyTurnover() {
   const { data, isLoading } = useQuery({
-    queryKey: ['counterparty-turnover'],
+    queryKey: orgQueryKey('counterparty-turnover'),
     queryFn: () => reportsApi.counterpartyTurnover().then((r) => r.data),
   })
 

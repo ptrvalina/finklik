@@ -3,8 +3,8 @@
 from alembic import op
 import sqlalchemy as sa
 
-revision = "belarus_fos_accounting_v1"
-down_revision = "oked_org_profile_v1"
+revision: str = "belarus_fos_accounting_v1"
+down_revision: str | None = "oked_org_profile_v1"
 branch_labels = None
 depends_on = None
 

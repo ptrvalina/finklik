@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
 import { CardSkeleton, TableSkeleton } from '../components/premium'
+import OperationalPage from '../components/shell/OperationalPage'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
@@ -177,19 +178,16 @@ export default function SettingsPage() {
   const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      <div className="fc-hero">
-        <div className="fc-hero-strip" aria-hidden />
-        <h1 className="page-heading">Настройки</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Профиль, интеграции, команда и законодательство</p>
-        <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Профиль</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Интеграции</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Команда</span>
-          <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Комплаенс</span>
-        </div>
-      </div>
-
+    <OperationalPage
+      eyebrow="Аккаунт"
+      title="Настройки"
+      description="Профиль, интеграции, команда, биллинг и нормативные обновления."
+      secondaryActions={
+        <Link to="/onboarding/business-profile" className="btn-secondary w-full sm:w-auto">
+          <Icon name="badge" className="text-lg" /> Профиль бизнеса
+        </Link>
+      }
+    >
       <div className="page-section p-4 dark:border-outline/45 sm:p-5">
         <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
         <div className="flex flex-wrap gap-2">
@@ -249,7 +247,7 @@ export default function SettingsPage() {
       {tab === 'billing' && <BillingSection />}
       {tab === 'team' && <TeamSection isOwner={user?.role === 'owner'} />}
       {tab === 'regulatory' && <RegulatorySection />}
-    </div>
+    </OperationalPage>
   )
 }
 
