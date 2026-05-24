@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import { FocusStrip } from '../components/shell/OperationalPage'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) {
@@ -110,7 +110,7 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-reconciliation') })
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
-      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
       flash('success', `Импорт: создано ${res.data.created}, пропущено дублей ${res.data.skipped_duplicates}`)
     },
     onError: () => flash('error', 'Ошибка импорта (проверьте JSON)'),
@@ -143,7 +143,7 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-reconciliation') })
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
-      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
       flash('success', `OAuth импорт завершён: ${res.data?.import_result?.created ?? 0} новых`)
     },
     onError: () => flash('error', 'Ошибка OAuth импорта'),
@@ -174,42 +174,35 @@ export default function BankPage() {
   ]
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      {/* Header */}
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div>
-            <h1 className="page-heading">Банк</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">Мульти-банк, платежи и сверка операций</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Счета</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Платежи</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Сверка</span>
-            </div>
-          </div>
-          <div className="page-actions sm:gap-3">
-            <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
-              <Icon name="send" className="text-lg" /> Новый платёж
-            </button>
-            <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
-              <Icon name="add" className="text-lg" /> Добавить счёт
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
-        Автопайплайн: банковские движения подхватываются в учёт, затем проходят статусы `new → parsed → categorized → verified → reported`.
-      </div>
-
-      {accounts.length === 0 && (
-        <FocusStrip
-          headline="Подключите расчётный счёт"
-          supporting="Добавьте счёт вручную или через OAuth — тогда заработают выписка и сверка с журналом."
-          ctaLabel="Добавить счёт"
-          onCta={() => setShowAddAccount(true)}
-        />
-      )}
+    <>
+    <OperationalPage
+      eyebrow="Деньги"
+      title="Банк"
+      description="Счета, платежи и сверка с журналом."
+      primaryAction={
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
+          <Icon name="add" className="text-lg" /> Добавить счёт
+        </button>
+      }
+      secondaryActions={
+        <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
+          <Icon name="send" className="text-lg" /> Новый платёж
+        </button>
+      }
+      focusStrip={
+        accounts.length === 0 ? (
+          <FocusStrip
+            headline="Подключите расчётный счёт"
+            supporting="Добавьте счёт вручную или через OAuth — тогда заработают выписка и сверка с журналом."
+            ctaLabel="Добавить счёт"
+            onCta={() => setShowAddAccount(true)}
+          />
+        ) : undefined
+      }
+    >
+      <p className="rounded-xl border border-outline/40 bg-surface-container-low/60 px-4 py-3 text-xs text-on-surface-variant">
+        Импорт выписки и сверка связывают банк с журналом — так снижаются расхождения перед отчётностью.
+      </p>
 
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
@@ -568,6 +561,7 @@ export default function BankPage() {
           </div>
         </div>
       )}
+    </OperationalPage>
 
       {showAddAccount && (
         <AppModal
@@ -688,6 +682,6 @@ export default function BankPage() {
           </div>
         </AppModal>
       )}
-    </div>
+    </>
   )
 }

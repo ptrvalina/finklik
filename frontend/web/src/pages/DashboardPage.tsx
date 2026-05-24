@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import { ExecutiveBriefing } from '../components/dashboard/ExecutiveBriefing'
+import ClientJourneyPanel from '../components/dashboard/ClientJourneyPanel'
 import DashboardFocusStrip from '../components/dashboard/DashboardFocusStrip'
 import { orgQueryKey } from '../lib/queryKeys'
 
@@ -43,7 +44,7 @@ export default function DashboardPage() {
   })
 
   const { data: txData } = useQuery({
-    queryKey: ['transactions', 'recent'],
+    queryKey: orgQueryKey(['transactions', 'recent']),
     queryFn: () => dashboardApi.getTransactions({ per_page: 5 }).then((r) => r.data),
     enabled: !isManager,
     staleTime: 45_000,
@@ -52,7 +53,7 @@ export default function DashboardPage() {
 
   const dashboardYear = new Date().getFullYear()
   const { data: summaryData } = useQuery({
-    queryKey: ['monthly-summary-dashboard', dashboardYear],
+    queryKey: orgQueryKey(['monthly-summary-dashboard', dashboardYear]),
     queryFn: () => reportsApi.monthlySummary(dashboardYear).then((r) => r.data),
     enabled: !isManager,
     staleTime: 120_000,
@@ -60,7 +61,7 @@ export default function DashboardPage() {
   })
 
   const { data: bankData } = useQuery({
-    queryKey: ['bank-accounts-dashboard'],
+    queryKey: orgQueryKey('bank-accounts-dashboard'),
     queryFn: () => bankApi.listAccounts().then((r) => r.data),
     enabled: !isManager,
     staleTime: 60_000,
@@ -202,12 +203,16 @@ export default function DashboardPage() {
         profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
       />
 
+      <ClientJourneyPanel metrics={metrics} transactions={transactions} />
+
       {businessState && (
         <GlassCard className="mt-6 p-5 sm:p-6" hoverLift={false}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Состояние бизнеса</p>
-              <p className="mt-1 font-headline text-lg font-bold text-on-surface">Состояние бизнеса</p>
+              <p className="mt-1 font-headline text-lg font-bold text-on-surface">
+                {businessState.financial_health_status === 'ok' ? 'Финансы в норме' : 'Требует внимания'}
+              </p>
               <p className="mt-1 text-sm text-on-surface-variant">
                 Выручка и расходы за месяц, прибыль и обязательства — единый снимок для операций.
               </p>

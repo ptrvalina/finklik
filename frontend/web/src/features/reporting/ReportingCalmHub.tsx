@@ -184,7 +184,7 @@ export default function ReportingCalmHub() {
 
           <div className="card-elevated rounded-3xl p-5 shadow-card ring-1 ring-white/[0.05]">
             <h3 className="font-headline text-base font-bold text-on-surface">Обязательства</h3>
-            <p className="mt-1 text-xs text-on-surface-variant">Кратко — полный список в Business OS.</p>
+            <p className="mt-1 text-xs text-on-surface-variant">Кратко — полный список в разделе «Состояние бизнеса» на главной.</p>
             <ul className="mt-3 space-y-2 text-sm">
               {data?.obligations_preview?.map(
                 (o: { id: string; obligation_type: string; amount: string; due_date: string; status: string }) => (
@@ -197,7 +197,7 @@ export default function ReportingCalmHub() {
                 ),
               )}
               {!data?.obligations_preview?.length && !q.isLoading && (
-                <li className="text-on-surface-variant">Нет записей — добавьте через API Business OS или позже из интерфейса.</li>
+                <li className="text-on-surface-variant">Нет записей — они появятся после расчёта налогов и обязательств в системе.</li>
               )}
             </ul>
           </div>
