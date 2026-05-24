@@ -12,7 +12,7 @@ const TILES: HubTile[] = [
     primary: true,
   },
   { to: '/scan', icon: 'document_scanner', title: 'Сканер', desc: 'Чек → операция за минуту' },
-  { to: '/legacy/documents', icon: 'folder_open', title: 'Документы и импорт', desc: 'CSV, первичка, счета' },
+  { to: '/documents', icon: 'folder_open', title: 'Документы и импорт', desc: 'CSV, первичка, счета' },
   { to: '/bank', icon: 'account_balance_wallet', title: 'Банк и сверка', desc: 'Выписка и сопоставление с журналом' },
   { to: '/accounting/chart', icon: 'account_tree', title: 'План счетов', desc: 'Счета и субсчета РБ' },
   { to: '/accounting/fixed-assets', icon: 'inventory_2', title: 'ОС и амортизация', desc: 'Реестр и начисление' },

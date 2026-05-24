@@ -267,6 +267,15 @@
     padding-top: var(--fc-table-cell-y);
     padding-bottom: var(--fc-table-cell-y);
   }
+  .accounting-journal .accounting-journal-row td {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.8125rem;
+  }
+  .accounting-journal .table-head-row {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
   .fc-skeleton-pulse {
     @apply animate-pulse rounded-lg bg-surface-container-high/80;
     min-height: 2.5rem;

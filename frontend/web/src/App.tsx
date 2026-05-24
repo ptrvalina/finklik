@@ -27,7 +27,6 @@ import BankOAuthCallbackPage from './pages/BankOAuthCallbackPage'
 import ScannerPage from './pages/ScannerPage'
 import SettingsPage from './pages/SettingsPage'
 import ReportingPage from './features/reporting/ReportingPage'
-import CurrencyPage from './features/currency/CurrencyPage'
 import AssistantPage from './pages/AssistantPage'
 import WorkspaceCommandPage from './pages/WorkspaceCommandPage'
 import OperationsPage from './pages/OperationsPage'
@@ -150,7 +149,7 @@ function AppRoutes() {
           <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
           <Route path="accounting" element={<AccountingJournalRedirect />} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
-          <Route path="websites" element={<Websites />} />
+          <Route path="websites" element={<Navigate to="/settings" replace />} />
           <Route path="notes" element={<Notes />} />
           <Route path="scan" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><ScannerPage /></RoleRoute>} />
           <Route path="planner" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><Planner /></RoleRoute>} />
@@ -162,19 +161,19 @@ function AppRoutes() {
           <Route path="taxes" element={<Navigate to="/bank" replace />} />
           <Route path="reporting" element={<Navigate to="/reports" replace />} />
           <Route path="reporting/:authority" element={<LegacyReportingRedirect />} />
-          <Route path="documents" element={<Navigate to="/accounting/journal" replace />} />
+          <Route path="documents" element={<RoleRoute allow={['admin', 'accountant']}><DocumentsPage /></RoleRoute>} />
           <Route path="currency" element={<Navigate to="/bank" replace />} />
           <Route path="scanner" element={<Navigate to="/scan" replace />} />
           <Route path="onec-contour" element={<Navigate to="/settings" replace />} />
           <Route path="onec-sync" element={<Navigate to="/settings" replace />} />
 
-          {/* Existing pages remain available via route aliases */}
-          <Route path="legacy/bank" element={<BankPage />} />
-          <Route path="legacy/documents" element={<DocumentsPage />} />
-          <Route path="legacy/scanner" element={<ScannerPage />} />
-          <Route path="legacy/reporting/:authority" element={<ReportingPage basePath="/legacy/reporting" />} />
-          <Route path="legacy/reporting" element={<ReportingPage basePath="/legacy/reporting" />} />
-          <Route path="legacy/currency" element={<CurrencyPage />} />
+          {/* Legacy route aliases → canonical paths */}
+          <Route path="legacy/bank" element={<Navigate to="/bank" replace />} />
+          <Route path="legacy/documents" element={<Navigate to="/documents" replace />} />
+          <Route path="legacy/scanner" element={<Navigate to="/scan" replace />} />
+          <Route path="legacy/reporting/:authority" element={<LegacyReportingRedirect />} />
+          <Route path="legacy/reporting" element={<Navigate to="/reports" replace />} />
+          <Route path="legacy/currency" element={<Navigate to="/bank" replace />} />
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="settings" element={<RoleRoute allow={['admin', 'accountant']}><SettingsPage /></RoleRoute>} />
           <Route path="admin/ops" element={<RoleRoute allow={['admin']}><OpsDiagnosticsPage /></RoleRoute>} />

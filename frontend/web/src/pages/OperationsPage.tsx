@@ -193,14 +193,6 @@ type ExecutionFeedResponse = {
   calm_ui_budget?: CalmUiBudget
 }
 
-const STATE_DIM_RU: Record<string, string> = {
-  cashflow_state: 'Касса',
-  operational_readiness: 'Готовность',
-  compliance_state: 'Комплаенс',
-  document_completeness: 'Документы',
-  reporting_status: 'Отчётность',
-}
-
 const AUTONOMY_RU: Record<string, string> = {
   observe: 'наблюдение',
   suggest: 'подсказки',
@@ -244,7 +236,6 @@ export default function OperationsPage() {
   const qc = useQueryClient()
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
-  const [stateDetailsOpen, setStateDetailsOpen] = useState(false)
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
 
   const executionFeedKey = orgQueryKey('execution-feed')
@@ -507,150 +498,18 @@ export default function OperationsPage() {
         </p>
       )}
 
-      {!isLoading && !isError && showDiagnostics && data?.financial_state && (
+      {!isLoading && !isError && showDiagnostics && (
         <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-              Состояние (детально)
-            </p>
-            {!showTechnicalStateByDefault && (
-              <button
-                type="button"
-                onClick={() => setStateDetailsOpen((v) => !v)}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                {stateDetailsOpen ? 'Свернуть' : 'Показать детали'}
-              </button>
-            )}
-          </div>
-          {(showTechnicalStateByDefault || stateDetailsOpen) && (
-          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-on-surface-variant">Касса / cashflow_state</p>
-              <p className="mt-0.5 font-medium text-on-surface">
-                {data.financial_state.cashflow_state.level} · нетто месяца{' '}
-                {Number(data.financial_state.cashflow_state.monthly_net).toLocaleString('ru-BY', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{' '}
-                · {data.financial_state.cashflow_state.summary}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant">Готовность / operational_readiness</p>
-              <p className="mt-0.5 font-medium text-on-surface">
-                {data.financial_state.operational_readiness.score}% ({data.financial_state.operational_readiness.confidence})
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant">Комплаенс / compliance_state</p>
-              <p className="mt-0.5 font-medium text-on-surface">
-                {data.financial_state.compliance_state.level} — {data.financial_state.compliance_state.summary}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant">Первичка / document_completeness</p>
-              <p className="mt-0.5 font-medium text-on-surface">
-                {data.financial_state.document_completeness.score}% — очередь OCR {data.financial_state.document_completeness.pending_ocr}, на
-                проверке {data.financial_state.document_completeness.needs_review}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant">Отчётность / reporting_status</p>
-              <p className="mt-0.5 font-medium text-on-surface">
-                {data.financial_state.reporting_status.status} ({data.financial_state.reporting_status.readiness_score}%)
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant">Риск</p>
-              <p className="mt-0.5 font-semibold text-on-surface">{data.financial_state.risk_level}</p>
-            </div>
-          </div>
-          )}
-          {(showTechnicalStateByDefault || stateDetailsOpen) && (
-          <p className="mt-4 text-xs text-on-surface-variant">
-            Автономность ИИ:{' '}
-            <strong className="text-on-surface">
-              {AUTONOMY_RU[data.default_autonomy_mode] || data.default_autonomy_mode}
-            </strong>{' '}
-            — подготовка без массового автопроведения.
+          <p className="text-sm text-on-surface-variant">
+            Расширенные снимки состояния, аудит и прогнозы — в ops-контуре для администратора.
           </p>
-          )}
+          <Link
+            to="/admin/ops"
+            className="btn-secondary fc-btn-thumb mt-3 inline-flex text-sm"
+          >
+            Открыть диагностику
+          </Link>
         </GlassCard>
-      )}
-
-      {!isLoading && !isError && showDiagnostics && data?.truth_governance && (
-        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Согласованность данных
-          </p>
-          <p className="mt-3 text-sm text-on-surface">
-            Уверенность снимка:{' '}
-            <strong>{(data.truth_governance.state_confidence * 100).toFixed(1)}%</strong>
-            {data.truth_governance.frozen_dimensions?.length ? (
-              <>
-                {' '}
-                · Заморожено: <strong>{data.truth_governance.frozen_dimensions.join(', ')}</strong>
-              </>
-            ) : null}
-          </p>
-          {(data.truth_governance.conflicts?.length ?? 0) > 0 && (
-            <ul className="mt-3 list-inside list-disc text-sm text-on-surface-variant">
-              {data.truth_governance.conflicts.map((c) => (
-                <li key={c.id}>
-                  <span className="font-medium text-on-surface">{c.title}</span> — {c.detail}
-                </li>
-              ))}
-            </ul>
-          )}
-          {(data.truth_governance.governance_violations?.length ?? 0) > 0 && (
-            <ul className="mt-2 text-xs text-amber-100/95">
-              {data.truth_governance.governance_violations.map((v, i) => (
-                <li key={i}>{v}</li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 text-[10px] text-on-surface-variant">
-            Правил в каталоге: {data.truth_governance.rules_catalog?.length ?? 0} · версия{' '}
-            {data.truth_governance.governance_version}
-          </p>
-        </GlassCard>
-      )}
-
-      {!isLoading && !isError && showDiagnostics && (data?.recent_state_audit?.length ?? 0) > 0 && (
-        <div className="mb-6 rounded-3xl border border-outline/35 bg-surface-container-low/50 px-4 py-3 text-xs text-on-surface-variant dark:bg-white/[0.03]">
-          <p className="font-bold uppercase tracking-wide text-primary">Аудит состояния</p>
-          <ul className="mt-2 space-y-2">
-            {(data.recent_state_audit ?? []).slice(0, 3).map((a) => (
-              <li key={a.id} className="leading-snug">
-                <span className="text-on-surface">{a.trigger_event}</span> · {a.new_state_summary}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {!isLoading && !isError && showDiagnostics && (data?.state_predictions?.length ?? 0) > 0 && (
-        <div className="mb-6 space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Прогноз состояния
-          </p>
-          {(data?.state_predictions ?? []).map((p) => (
-            <div
-              key={p.id}
-              className={`rounded-2xl border px-4 py-3 text-sm ${
-                p.severity === 'risk'
-                  ? 'border-red-400/25 bg-red-500/[0.06]'
-                  : 'border-outline/40 bg-surface-container-low/60 dark:bg-white/[0.03]'
-              }`}
-            >
-              <span className="text-on-surface-variant">
-                ~{p.horizon_days} дн. · {STATE_DIM_RU[p.affected_dimension] || p.affected_dimension}:{' '}
-              </span>
-              {p.message}
-            </div>
-          ))}
-        </div>
       )}
 
       {!isLoading && !isError && (data?.work_packs?.length ?? 0) > 0 && (

@@ -97,7 +97,7 @@ export default function OnecSyncPage() {
               title="Задач синхронизации нет"
               description="Проводки появятся здесь после отправки операций в 1С из журнала."
               actions={
-                <Link to="/accounting" className="btn-primary min-h-11 px-6 text-sm">
+                <Link to="/accounting/journal" className="btn-primary min-h-11 px-6 text-sm">
                   Журнал операций
                 </Link>
               }

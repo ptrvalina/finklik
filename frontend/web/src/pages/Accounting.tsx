@@ -17,7 +17,7 @@ import {
 import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSession'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
-import { FocusStrip } from '../components/shell/OperationalPage'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
 export function suggestCategory(text: string) {
@@ -635,45 +635,51 @@ export default function Accounting() {
   const isLoading = txQuery.isLoading
 
   return (
-    <section className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-8">
-      <div className="card-elevated relative overflow-hidden rounded-3xl p-6 shadow-lift ring-1 ring-primary/[0.06]">
-        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#004d40] via-emerald-500 to-cyan-400/90" aria-hidden />
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600/90 dark:text-emerald-400/85">Операционный контур</p>
-            <h1 className="page-heading mt-1 text-[1.65rem] sm:text-3xl">Учёт · рабочее место</h1>
-            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-              Журнал, OCR и классификация в одном потоке — откройте строку справа, не уходя со страницы.
-            </p>
-            {linkedCounterpartyId ? (
-              <p className="mt-2 text-xs font-medium text-primary">
-                Следующая проводка привязана к контрагенту из справочника.
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-              <Icon name="apps" className="text-lg" /> Все разделы учёта
-            </Link>
-            <button type="button" className="btn-secondary shrink-0 rounded-[1rem]" onClick={downloadKudir}>
-              Скачать КУДиР
-            </button>
-            <Link to="/scan" className="btn-secondary shrink-0 rounded-[1rem]">
-              <Icon name="document_scanner" className="text-lg" /> Сканер
-            </Link>
-            <Link to="/bank" className="btn-secondary shrink-0 rounded-[1rem]">
-              <Icon name="sync_alt" className="text-lg" /> Банк
-            </Link>
-            <Link to="/accounting/fixed-assets" className="btn-secondary shrink-0 rounded-[1rem]">
-              <Icon name="inventory_2" className="text-lg" /> ОС
-            </Link>
-            <Link to="/operations" className="btn-secondary shrink-0 rounded-[1rem]">
-              <Icon name="bolt" className="text-lg" /> Задачи
-            </Link>
-          </div>
+    <OperationalPage
+      className="accounting-journal pb-24 lg:pb-8"
+      eyebrow="Учёт"
+      title="Журнал операций"
+      description={
+        linkedCounterpartyId
+          ? 'Следующая проводка привязана к контрагенту из справочника. Строка — Enter, навигация — стрелки.'
+          : 'Журнал, OCR и классификация в одном потоке. Строка — Enter, навигация — стрелки, палитра — Ctrl+K.'
+      }
+      primaryAction={
+        <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-[1rem]" onClick={() => setCommandOpen(true)}>
+          <Icon name="keyboard_command_key" className="text-lg" /> Команды
+        </button>
+      }
+      secondaryActions={
+        <>
+          <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+            <Icon name="apps" className="text-lg" /> Хаб учёта
+          </Link>
+          <button type="button" className="btn-secondary shrink-0 rounded-[1rem]" onClick={downloadKudir}>
+            КУДиР
+          </button>
+          <Link to="/scan" className="btn-secondary shrink-0 rounded-[1rem]">
+            <Icon name="document_scanner" className="text-lg" /> Сканер
+          </Link>
+        </>
+      }
+    >
+      <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
+        <div className="flex flex-wrap gap-2 border-b border-outline/30 pb-4">
+          <Link to="/bank" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+            <Icon name="sync_alt" className="text-lg" /> Банк
+          </Link>
+          <Link to="/documents" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+            <Icon name="folder_open" className="text-lg" /> Документы
+          </Link>
+          <Link to="/accounting/fixed-assets" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+            <Icon name="inventory_2" className="text-lg" /> ОС
+          </Link>
+          <Link to="/operations" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
+            <Icon name="bolt" className="text-lg" /> Лента
+          </Link>
         </div>
 
-        <div className="mt-6 flex gap-1 rounded-full border border-outline/60 bg-surface-container-low/80 p-1">
+        <div className="mt-4 flex gap-1 rounded-full border border-outline/60 bg-surface-container-low/80 p-1">
           {(
             [
               { id: 'ledger' as const, label: 'Журнал', icon: 'receipt_long' },
@@ -1167,6 +1173,6 @@ export default function Accounting() {
           <Icon name="document_scanner" className="text-[1.35rem]" />
         </Link>
       </div>
-    </section>
+    </OperationalPage>
   )
 }

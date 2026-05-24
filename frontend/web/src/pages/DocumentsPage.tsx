@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -492,6 +493,8 @@ export default function DocumentsPage() {
         />
       }
     >
+      <ExecutionTopActionBanner className="mb-4" />
+
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
           message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
@@ -759,7 +762,7 @@ export default function DocumentsPage() {
                   <Link to="/scan" className="btn-primary min-h-11 px-6 text-sm">
                     Скан и OCR
                   </Link>
-                  <Link to="/accounting" className="btn-secondary min-h-11 px-6 text-sm">
+                  <Link to="/accounting/journal" className="btn-secondary min-h-11 px-6 text-sm">
                     Журнал учёта
                   </Link>
                 </>
@@ -820,7 +823,7 @@ export default function DocumentsPage() {
                         )}
                         {doc.transaction_id ? (
                           <Link
-                            to="/accounting"
+                            to="/accounting/journal"
                             className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
                           >
                             <Icon name="link" className="text-xs" />

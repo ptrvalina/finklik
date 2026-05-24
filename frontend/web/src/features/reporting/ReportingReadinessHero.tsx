@@ -21,6 +21,7 @@ export default function ReportingReadinessHero() {
   const firstBlocker = blockers[0]?.label
 
   const ready = score != null && score >= 80 && blockers.length === 0
+  const stepsLeft = blockers.length
 
   return (
     <div
@@ -34,19 +35,23 @@ export default function ReportingReadinessHero() {
           <p className="mt-2 font-headline text-lg font-semibold text-on-surface">
             {ready
               ? 'Можно переходить к проверке и отправке'
-              : firstBlocker
-                ? firstBlocker
-                : reason || 'Дозаполните журнал и документы'}
+              : stepsLeft > 0
+                ? `Осталось ${stepsLeft} ${stepsLeft === 1 ? 'шаг' : stepsLeft < 5 ? 'шага' : 'шагов'} до спокойной сдачи`
+                : firstBlocker
+                  ? firstBlocker
+                  : reason || 'Дозаполните журнал и документы'}
           </p>
           {score != null && (
             <p className="mt-2 text-sm text-on-surface-variant">
               Оценка готовности: <strong className="text-on-surface">{score}%</strong>
-              {blockers.length > 1 && <> · ещё {blockers.length - 1} замечаний</>}
+              {!ready && stepsLeft > 0 && firstBlocker && (
+                <> · сейчас: {firstBlocker}</>
+              )}
             </p>
           )}
         </div>
         {!ready && (
-          <Link to="/accounting" className="btn-primary shrink-0 min-h-11 rounded-xl px-5 text-sm">
+          <Link to="/accounting/journal" className="btn-primary fc-btn-thumb shrink-0 rounded-xl px-5 text-sm">
             Исправить в журнале
           </Link>
         )}

@@ -229,7 +229,7 @@ export default function ScannerPage() {
         </button>
       }
       secondaryActions={
-        <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
+        <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
           <Icon name="receipt_long" className="text-lg" /> Журнал
         </Link>
       }

@@ -4,51 +4,39 @@
 
 ### Strengths (keep)
 - Backend: financial state, work packs, trust surface, OCR confidence, execution feed.
-- `OperationalPage` / `FocusStrip` on many screens.
+- `OperationalPage` / `FocusStrip` on core screens.
 - `orgQueryKey` for org-safe React Query.
 - Reporting calm flow, Belarus chart corpus, scanner pipeline.
 
-### Critical friction
-| Area | Issue | Pattern to remove |
-|------|--------|-------------------|
-| Navigation | 5 groups + flyouts + legacy routes | ERP menu maze |
-| `/accounting` | Journal only; no “Учёт” hub | Hidden sub-capabilities |
-| Operations | Diagnostics/trust blocks compete with tasks | Widget soup |
-| Dashboard | Metrics + AI + duplicate “what to do” | Dashboard for charts |
-| Mobile bar | Bank-centric, not work-centric | Desktop shrink |
-| OCR | Technical queue labels | Engineer UX |
-| Routes | `/legacy/*`, `/transactions`, scattered aliases | Cognitive load |
+### Resolved friction (2026-05 waves W1–W7)
+| Area | Was | Now |
+|------|-----|-----|
+| Navigation | ERP maze | Context-first groups + mobile bar |
+| Учёт | Journal hidden | Hub `/accounting/hub`, journal `/accounting/journal` |
+| Operations | Widget soup | Execution feed + diagnostics toggle → `/admin/ops` |
+| Dashboard | Chart-first | WorkNow + focus strip + collapsible details |
+| Documents | `/legacy/documents` | `/documents` |
+| OCR queue | Metric tile | `OcrQueueCard` + focus strip |
+| Reporting | Duplicate calm UI | `ReportingReadinessHero` + guided flow |
 
-### Dead / low-value UX
-- `websites`, duplicate bank/doc paths, manager-unfriendly IA.
-- Technical badges: `fallback`, pipeline status chips on Transactions.
-- “Business OS” remnants (mostly fixed).
-
-### Execution assets underused
-- `top_action`, work packs, `primary_focus_hint`, document completeness → should drive **one primary CTA** per screen.
-- OCR `requires_review` → task card, not stat tile.
-- Reporting blockers → “осталось N шагов”, not red alert.
+### Optional / backlog
+- `websites` → redirects to settings.
+- Full i18n pass on edge labels.
+- Journal: further keyboard macros (bulk actions).
 
 ---
 
-## Phase 2 — Target IA (context-first)
+## Target IA (context-first)
 
-1. **Главная** `/` — state, obligations, cash, OCR queue, one work-now card → `/operations`.
-2. **Лента работы** `/operations` — product center; execution feed only (diagnostics collapsed).
-3. **Учёт** `/accounting/hub` — hub tiles; journal `/accounting/journal`; bank, scan, documents, chart, ОС.
-4. **Отчётность** `/reports` — readiness-first (existing calm flow).
-5. **Команда** `/employees` — HR, payroll, ФСЗН.
-6. **Клиенты** `/workspace` — accountant multi-org command center.
+1. **Главная** `/` — work-now, focus strip, onboarding; details collapsed.
+2. **Лента работы** `/operations` — execution center.
+3. **Учёт** `/accounting/hub` — tiles; **журнал** `/accounting/journal`.
+4. **Документы** `/documents` — первичка и импорт.
+5. **Отчётность** `/reports` — readiness hero, guided flow.
+6. **Команда** `/employees` — HR hub.
+7. **Клиенты** `/workspace` — accountant command center.
 
-Settings, assistant, analytics: profile menu / secondary, not primary nav.
-
-### Mobile bottom bar
-`Главная` · `Лента` · `Учёт` · `Отчёты` (+ sheet for rest).
-
-### Principles
-- Answer: где я? что важно? что дальше? всё ли ок? сколько до результата?
-- No navigation-first; **task-first**.
-- Calm fintech: dense, breathable, minimal glow.
+Mobile bar: `Главная` · `Лента` · `Учёт` · `Отчёты`.
 
 ---
 
@@ -56,9 +44,10 @@ Settings, assistant, analytics: profile menu / secondary, not primary nav.
 
 | Wave | Scope | Status |
 |------|--------|--------|
-| W1 | IA nav, accounting hub, execution cards, work-now on home | Done |
+| W1 | IA nav, accounting hub, execution cards, work-now | Done |
 | W2 | Operations execution-only; progress strip; work packs | Done |
 | W3 | OCR review banner; reporting readiness hero | Done |
-| W4 | Design tokens (`--fc-shadow-calm`, calm surfaces); mobile calmer shadows; thumb targets | Done |
-| W5 | `CalmErrorState`, offline banner, query defaults, onboarding progress | Done |
-| W6 | `/accounting/journal` alias; OperationalPage on calendar/planner/counterparties; dead FeedRow removed | Done |
+| W4 | Design tokens; mobile calm shadows; thumb targets | Done |
+| W5 | CalmErrorState; offline banner; onboarding progress | Done |
+| W6 | `/accounting/journal`; calendar/planner/counterparties shells | Done |
+| W7 | Dashboard simplify; documents route; reporting steps; execution banners; debt cleanup | Done |

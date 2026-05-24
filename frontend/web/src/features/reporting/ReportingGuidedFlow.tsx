@@ -271,7 +271,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
       return
     }
     if (activeId === 'fix') {
-      navigate('/accounting')
+      navigate('/accounting/journal')
       return
     }
     if (activeId === 'validate') {

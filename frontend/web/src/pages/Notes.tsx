@@ -4,6 +4,8 @@ import AppModal from '../components/ui/AppModal'
 import { motion } from 'framer-motion'
 import { notesApi } from '../api/client'
 import { CardSkeleton } from '../components/premium'
+import OperationalPage from '../components/shell/OperationalPage'
+import { CalmErrorState } from '../components/errors/CalmErrorState'
 
 const STORAGE_KEY = 'finklik.notes.v1'
 const IMPORT_FLAG = 'finklik.notes.localImportDone.v1'
@@ -147,40 +149,28 @@ export default function Notes() {
 
   if (notesQuery.isError) {
     return (
-      <div className="mx-auto max-w-3xl">
-        <div className="card-elevated p-6 ring-1 ring-primary/[0.06]">
-          <h1 className="page-heading">Заметки</h1>
-          <p className="mt-2 text-on-surface-variant">
-            Не удалось загрузить заметки. Проверьте сеть и попробуйте снова.
-          </p>
-          <button type="button" className="btn-primary mt-4" onClick={() => notesQuery.refetch()}>
-            Повторить
-          </button>
-        </div>
-      </div>
+      <OperationalPage eyebrow="Ещё" title="Заметки" narrow>
+        <CalmErrorState
+          title="Заметки недоступны"
+          fallbackMessage="Не удалось загрузить заметки. Проверьте сеть и попробуйте снова."
+          onRetry={() => void notesQuery.refetch()}
+        />
+      </OperationalPage>
     )
   }
 
   return (
-    <div className="fc-page-shell-tight fc-page-shell-asymmetric">
-      <div className="fc-hero flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1]">
-          <h1 className="page-heading">Заметки</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Сохраняются в вашем аккаунте и доступны с любого устройства.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn-primary relative z-[1] self-start sm:self-auto"
-          onClick={openCreate}
-          disabled={busy}
-        >
-          <Icon name="add" className="mr-1 align-middle text-lg" /> Новая заметка
+    <OperationalPage
+      eyebrow="Ещё"
+      title="Заметки"
+      description="Личные пометки по организации — синхронизируются с сервером."
+      narrow
+      primaryAction={
+        <button type="button" className="btn-primary fc-btn-thumb" onClick={openCreate} disabled={busy}>
+          <Icon name="add" className="text-lg" /> Новая
         </button>
-      </div>
-
+      }
+    >
       {importUi && (
         <div className="card-elevated flex flex-col gap-3 border border-secondary/30 bg-secondary/5 p-4 ring-1 ring-secondary/15 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-on-surface">
@@ -302,6 +292,6 @@ export default function Notes() {
           </div>
         </AppModal>
       )}
-    </div>
+    </OperationalPage>
   )
 }

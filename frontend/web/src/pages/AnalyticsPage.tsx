@@ -8,6 +8,7 @@ import {
 import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import OperationalPage from '../components/shell/OperationalPage'
+import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useThemeStore } from '../store/themeStore'
 import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
@@ -100,6 +101,8 @@ export default function AnalyticsPage() {
         </div>
       }
     >
+      <ExecutionTopActionBanner className="mb-2" />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 lg:gap-8">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="metric-blade">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
@@ -257,7 +260,7 @@ export default function AnalyticsPage() {
                 title="Структура расходов пока пуста"
                 description="Добавьте операции с категориями — здесь появится распределение затрат."
                 actions={
-                  <Link to="/accounting" className="btn-secondary text-xs">
+                  <Link to="/accounting/journal" className="btn-secondary text-xs">
                     Журнал операций
                   </Link>
                 }
@@ -283,7 +286,7 @@ export default function AnalyticsPage() {
             <InsightCard
               title={`Маржа ${margin}%`}
               action={
-                <Link to="/accounting" className="btn-secondary px-3 py-1.5 text-xs">
+                <Link to="/accounting/journal" className="btn-secondary px-3 py-1.5 text-xs">
                   Журнал
                 </Link>
               }
@@ -294,7 +297,7 @@ export default function AnalyticsPage() {
             <WarningCard
               title="Расходы давят на маржу"
               action={
-                <Link to="/accounting" className="btn-secondary px-3 py-1.5 text-xs">
+                <Link to="/accounting/journal" className="btn-secondary px-3 py-1.5 text-xs">
                   Разбор
                 </Link>
               }
@@ -305,7 +308,7 @@ export default function AnalyticsPage() {
             <RecommendationCard
               title="Нет данных для выводов"
               cta={
-                <Link to="/accounting" className="btn-primary px-4 py-2 text-sm">
+                <Link to="/accounting/journal" className="btn-primary px-4 py-2 text-sm">
                   Открыть журнал
                 </Link>
               }
@@ -375,7 +378,7 @@ function CounterpartyTurnover() {
     <>
       <div className="flex flex-col gap-2 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6 lg:px-8">
         <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Обороты по контрагентам</h3>
-        <Link to="/accounting" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
+        <Link to="/accounting/journal" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
           Журнал операций
         </Link>
       </div>
@@ -390,7 +393,7 @@ function CounterpartyTurnover() {
             description="Укажите контрагента в журнале или при импорте — здесь появятся обороты и сальдо."
             actions={
               <>
-                <Link to="/accounting" className="btn-primary min-h-10 px-5 text-sm">
+                <Link to="/accounting/journal" className="btn-primary min-h-10 px-5 text-sm">
                   Журнал
                 </Link>
                 <Link to="/scan" className="btn-secondary min-h-10 px-5 text-sm">

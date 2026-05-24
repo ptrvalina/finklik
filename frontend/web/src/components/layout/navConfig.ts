@@ -50,7 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
         flyout: [
           { to: '/accounting/journal', label: 'Журнал операций' },
           { to: '/scan', label: 'Сканер' },
-          { to: '/legacy/documents', label: 'Документы' },
+          { to: '/documents', label: 'Документы' },
           { to: '/bank', label: 'Банк' },
           { to: '/accounting/chart', label: 'План счетов' },
           { to: '/accounting/fixed-assets', label: 'ОС' },

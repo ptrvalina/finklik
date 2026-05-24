@@ -436,7 +436,7 @@ export default function Layout() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     setSearchOpen(false)
-                    navigate('/accounting')
+                    navigate('/accounting/journal')
                   }
                 }}
               />

@@ -19,6 +19,9 @@ import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { AIRecommendationPanel } from '../components/premium-os'
+import OperationalPage from '../components/shell/OperationalPage'
+import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
+import OcrQueueCard from '../components/dashboard/OcrQueueCard'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -102,6 +105,7 @@ export default function DashboardPage() {
 
   const transactions = txData?.items ?? []
   const draftCount = transactions.filter((t: any) => t.status === 'draft').length
+  const pendingOcr = Number(metrics?.documents_pending_ocr ?? 0)
 
   const tipStyle = {
     background: theme === 'dark' ? 'rgba(12,24,36,0.94)' : 'rgba(255,255,255,0.96)',
@@ -173,39 +177,38 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric">
-      {/* Page intro */}
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600/90 dark:text-emerald-400/90">Операционный центр</p>
-            <h1 className="page-heading mt-1">Главная</h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-on-surface-variant">
-              УСН · Беларусь · {new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-          <div className="page-actions sm:w-auto sm:flex-row sm:gap-3">
-            <Link to="/accounting" className="btn-secondary !py-2.5 text-sm">
-              <Icon name="file_download" className="text-lg" />
-              Экспорт
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {!isManager && <WorkNowCard />}
-
-      <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
+    <OperationalPage
+      eyebrow="Сегодня"
+      title="Главная"
+      description={`УСН · Беларусь · ${new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}`}
+      primaryAction={
+        <Link to="/operations" className="btn-primary fc-btn-thumb text-sm">
+          Лента работы
+        </Link>
+      }
+      secondaryActions={
+        <Link to="/accounting/journal" className="btn-secondary fc-btn-thumb text-sm">
+          <Icon name="receipt_long" className="text-lg" /> Журнал
+        </Link>
+      }
+    >
+      <WorkNowCard />
 
       <DashboardFocusStrip
         draftCount={draftCount}
-        pendingOcr={Number(metrics?.documents_pending_ocr ?? 0)}
+        pendingOcr={pendingOcr}
         overdueCount={Number(businessState?.overdue_obligations_count ?? 0)}
         daysLeft={daysLeft}
         profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
       />
 
+      <OcrQueueCard count={pendingOcr} />
+
+      <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
+
+      <OnboardingChecklist />
+
+      <DashboardDetailsPanel title="Аналитика, налоги и операции">
       <ClientJourneyPanel metrics={metrics} transactions={transactions} />
 
       {businessState && (
@@ -216,63 +219,17 @@ export default function DashboardPage() {
               <p className="mt-1 font-headline text-lg font-bold text-on-surface">
                 {businessState.financial_health_status === 'ok' ? 'Финансы в норме' : 'Требует внимания'}
               </p>
-              <p className="mt-1 text-sm text-on-surface-variant">
-                Выручка и расходы за месяц, прибыль и обязательства — единый снимок для операций.
-              </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  businessState.financial_health_status === 'ok'
-                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                    : businessState.financial_health_status === 'warning'
-                      ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
-                      : 'bg-red-500/15 text-red-700 dark:text-red-300'
-                }`}
-              >
-                {businessState.financial_health_status === 'ok'
-                  ? 'Норма'
-                  : businessState.financial_health_status === 'warning'
-                    ? 'Внимание'
-                    : 'Риск'}
-              </span>
-              <div className="text-right text-sm">
-                <p className="text-on-surface-variant">Месяц: доход {fmt(businessState.monthly_revenue)} · расход {fmt(businessState.monthly_expenses)}</p>
-                <p className="font-semibold text-on-surface">Прибыль (всего): {fmt(businessState.profit)}</p>
-              </div>
+            <div className="text-right text-sm">
+              <p className="text-on-surface-variant">Месяц: доход {fmt(businessState.monthly_revenue)} · расход {fmt(businessState.monthly_expenses)}</p>
+              <p className="font-semibold text-on-surface">Прибыль: {fmt(businessState.profit)}</p>
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-4 border-t border-outline-variant/20 pt-4 text-sm">
-            <span className="text-on-surface-variant">
-              К оплате: <strong className="text-on-surface">{businessState.pending_obligations_count}</strong>
-            </span>
-            <span className="text-on-surface-variant">
-              Просрочено:{' '}
-              <strong className={businessState.overdue_obligations_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-on-surface'}>
-                {businessState.overdue_obligations_count}
-              </strong>
-            </span>
           </div>
         </GlassCard>
       )}
 
-      <OnboardingChecklist />
-
       <div className="mt-8">
         <AIRecommendationPanel metrics={metrics} transactions={transactions} />
-      </div>
-
-      <div className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 dark:bg-black/20">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Дальше</span>
-        <Link to="/accounting" className="btn-secondary min-h-10 px-4 text-xs font-bold">
-          Журнал
-        </Link>
-        <Link to="/bank" className="btn-secondary min-h-10 px-4 text-xs font-bold">
-          Банк
-        </Link>
-        <Link to="/reports" className="btn-ghost min-h-10 px-3 text-xs font-bold text-primary">
-          Отчётность
-        </Link>
       </div>
 
       <div className="mt-6">
@@ -282,7 +239,6 @@ export default function DashboardPage() {
         </Suspense>
       </div>
 
-      {/* Налоги и журнал */}
       <div className="mt-10 grid grid-cols-12 gap-6">
         <div className="col-span-12 flex flex-col gap-6 lg:col-span-4">
           <div className="page-section flex-1">
@@ -329,7 +285,7 @@ export default function DashboardPage() {
         <div className="page-section col-span-12 overflow-hidden bg-surface/80 p-0 dark:bg-transparent lg:col-span-8">
           <div className="flex flex-col gap-2 border-b border-outline/40 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
-            <Link to="/accounting" className="text-sm font-bold text-emerald-600 hover:underline dark:text-emerald-400">
+            <Link to="/accounting/journal" className="text-sm font-bold text-emerald-600 hover:underline dark:text-emerald-400">
               Все операции
             </Link>
           </div>
@@ -341,7 +297,7 @@ export default function DashboardPage() {
                 title="Журнал пуст"
                 description="Добавьте первую операцию — здесь появится поток."
                 actions={
-                  <Link to="/accounting" className="btn-primary min-h-11 px-6 text-sm font-bold">
+                  <Link to="/accounting/journal" className="btn-primary min-h-11 px-6 text-sm font-bold">
                     Открыть журнал
                   </Link>
                 }
@@ -388,7 +344,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-    </div>
+      </DashboardDetailsPanel>
+    </OperationalPage>
   )
 }

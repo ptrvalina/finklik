@@ -116,7 +116,7 @@ export function ExecutiveBriefing({
 
         <div className="mt-8 flex flex-wrap gap-2 border-t border-white/[0.06] pt-6">
           <Link
-            to="/accounting"
+            to="/accounting/journal"
             className="btn-primary inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-sm font-bold"
           >
             <Icon name="edit_note" className="text-lg" />

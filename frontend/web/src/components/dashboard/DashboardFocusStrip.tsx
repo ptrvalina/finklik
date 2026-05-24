@@ -57,7 +57,7 @@ export default function DashboardFocusStrip({
         headline={`${draftCount} ${draftCount === 1 ? 'черновик' : 'черновика'} в журнале`}
         supporting="Проведите операции — отчётность и прогноз станут точнее."
         ctaLabel="Открыть журнал"
-        ctaTo="/accounting"
+        ctaTo="/accounting/journal"
       />
     )
   }

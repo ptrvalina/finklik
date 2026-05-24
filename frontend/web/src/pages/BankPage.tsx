@@ -5,6 +5,7 @@ import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) {
@@ -200,6 +201,8 @@ export default function BankPage() {
         ) : undefined
       }
     >
+      <ExecutionTopActionBanner pathPrefix="/bank" className="mb-4" />
+
       <p className="rounded-xl border border-outline/40 bg-surface-container-low/60 px-4 py-3 text-xs text-on-surface-variant">
         Импорт выписки и сверка связывают банк с журналом — так снижаются расхождения перед отчётностью.
       </p>
@@ -246,7 +249,7 @@ export default function BankPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link to="/accounting" className="btn-secondary min-h-11 px-4 text-sm font-bold">
+                <Link to="/accounting/journal" className="btn-secondary min-h-11 px-4 text-sm font-bold">
                   Журнал
                 </Link>
                 <button type="button" className="btn-primary min-h-11 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
@@ -319,7 +322,7 @@ export default function BankPage() {
                       <button type="button" className="btn-primary min-h-11 px-5 text-sm" onClick={() => setTab('reconciliation')}>
                         Импорт выписки
                       </button>
-                      <Link to="/accounting" className="btn-ghost min-h-11 px-4 text-sm">
+                      <Link to="/accounting/journal" className="btn-ghost min-h-11 px-4 text-sm">
                         Журнал
                       </Link>
                     </>

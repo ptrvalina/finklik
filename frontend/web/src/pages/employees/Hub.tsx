@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import OperationalPage from '../../components/shell/OperationalPage'
 
 const cards = [
   { to: 'hire', title: 'Приём сотрудников', desc: 'Анкета, приказ, ПУ-2, карточка', icon: 'person_add' },
@@ -10,18 +11,24 @@ const cards = [
 
 export default function EmployeesHub() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {cards.map((c) => (
-        <Link
-          key={c.to}
-          to={c.to}
-          className="card-elevated group flex flex-col gap-2 rounded-3xl p-5 shadow-card ring-1 ring-primary/[0.05] transition hover:border-primary/40"
-        >
-          <span className="material-symbols-outlined text-3xl text-primary">{c.icon}</span>
-          <h2 className="text-lg font-semibold text-on-surface group-hover:text-primary">{c.title}</h2>
-          <p className="text-sm text-on-surface-variant">{c.desc}</p>
-        </Link>
-      ))}
-    </div>
+    <OperationalPage
+      eyebrow="Команда"
+      title="Кадры и ФСЗН"
+      description="Приём, табель, штатное расписание и кадровый планер — без лишних разделов ERP."
+    >
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((c) => (
+          <Link
+            key={c.to}
+            to={c.to}
+            className="card-elevated group flex flex-col gap-2 rounded-3xl p-5 shadow-card ring-1 ring-primary/[0.05] transition hover:border-primary/40"
+          >
+            <span className="material-symbols-outlined text-3xl text-primary">{c.icon}</span>
+            <h2 className="text-lg font-semibold text-on-surface group-hover:text-primary">{c.title}</h2>
+            <p className="text-sm text-on-surface-variant">{c.desc}</p>
+          </Link>
+        ))}
+      </div>
+    </OperationalPage>
   )
 }
