@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi, scannerApi, businessOsApi, reportingCalmApi, teamApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
+import { hasSeenOperations } from '../../lib/pilotProgress'
 
 const STORAGE_KEY = 'finklik_onboarding_checklist_v2_dismissed'
 
@@ -78,6 +79,8 @@ export default function OnboardingChecklist() {
 
     const profileDone = profileFetched && Boolean(bizProfile?.business_profile_completed)
 
+    const seenOps = hasSeenOperations()
+
     return [
       {
         id: 'profile',
@@ -86,6 +89,14 @@ export default function OnboardingChecklist() {
         done: profileDone,
         to: '/onboarding/business-profile',
         icon: 'domain',
+      },
+      {
+        id: 'ops',
+        label: 'Откройте ленту работы',
+        hint: 'Что делать сейчас — без лишних экранов',
+        done: seenOps,
+        to: '/operations',
+        icon: 'bolt',
       },
       {
         id: 'tx',

@@ -11,12 +11,21 @@ export type WorkPackLike = {
   risk_if_ignored: string
   primary_action_path: string | null
   summary_lines: Array<{ kind: string; count: number; detail?: string | null }>
+  progress_pct?: number | null
+  blocked_reason?: string | null
+  acknowledged?: boolean
 }
 
-function packProgress(pack: WorkPackLike): { tasks: number; etaMin: number } {
+function packProgress(pack: WorkPackLike): { tasks: number; etaMin: number; progressPct: number } {
   const tasks = pack.operational_item_ids?.length ?? pack.summary_lines.reduce((s, ln) => s + ln.count, 0)
   const etaMin = Math.max(5, Math.min(45, tasks * 4))
-  return { tasks, etaMin }
+  const progressPct =
+    typeof pack.progress_pct === 'number'
+      ? Math.min(100, Math.max(0, pack.progress_pct))
+      : tasks > 0
+        ? Math.min(100, Math.round((1 / (tasks + 1)) * 100))
+        : 12
+  return { tasks, etaMin, progressPct }
 }
 
 export const WorkPackCard = memo(function WorkPackCard({
@@ -31,8 +40,7 @@ export const WorkPackCard = memo(function WorkPackCard({
   ackPending?: boolean
 }) {
   const summary = pack.summary_lines.map((ln) => `${ln.count} × ${ln.detail || ln.kind}`).join(' · ')
-  const { tasks, etaMin } = packProgress(pack)
-  const progressPct = tasks > 0 ? Math.min(100, Math.round((1 / (tasks + 1)) * 100)) : 12
+  const { tasks, etaMin, progressPct } = packProgress(pack)
 
   return (
     <article className="fc-execution-card rounded-2xl border border-outline/35 bg-surface/90 p-4 sm:p-5">
@@ -46,9 +54,12 @@ export const WorkPackCard = memo(function WorkPackCard({
       {summary && <p className="mt-1 text-xs text-on-surface-variant">{summary}</p>}
       <div className="mt-3">
         <div className="flex justify-between text-[10px] text-on-surface-variant">
-          <span>Прогресс сессии</span>
-          <span className="tabular-nums">старт</span>
+          <span>Прогресс пакета</span>
+          <span className="tabular-nums">{progressPct}%</span>
         </div>
+        {pack.blocked_reason && (
+          <p className="mt-1 text-[10px] text-amber-800 dark:text-amber-200">{pack.blocked_reason}</p>
+        )}
         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
           <div
             className="h-full rounded-full bg-gradient-to-r from-primary/70 to-emerald-400/80 transition-all"

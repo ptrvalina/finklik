@@ -161,6 +161,50 @@ def build_work_packs(items: list[OperationalItem], fs: FinancialState) -> list[W
     ]
 
 
+def enrich_work_packs(
+    packs: list[WorkPack],
+    items: list[OperationalItem],
+    acknowledged_pack_ids: set[str],
+) -> list[WorkPack]:
+    """Добавляет progress_pct / blocked_reason из текущей ленты и факта ack."""
+
+    idx = {it.id: it for it in items}
+    enriched: list[WorkPack] = []
+    for pack in packs:
+        ids = pack.operational_item_ids
+        if not ids:
+            enriched.append(
+                pack.model_copy(
+                    update={"progress_pct": 100 if pack.id in acknowledged_pack_ids else 8, "acknowledged": pack.id in acknowledged_pack_ids},
+                )
+            )
+            continue
+        remaining = [oid for oid in ids if oid in idx]
+        total = len(ids)
+        done = total - len(remaining)
+        base_pct = round(100 * done / total) if total else 0
+        acked = pack.id in acknowledged_pack_ids
+        progress_pct = min(100, base_pct + (18 if acked else 0))
+        if progress_pct < 6:
+            progress_pct = 6
+        crit_left = sum(1 for oid in remaining if idx.get(oid) and idx[oid].priority == "critical")
+        blocked_reason: str | None = None
+        if crit_left:
+            blocked_reason = f"Остаётся {crit_left} критичных шагов в ленте"
+        elif remaining:
+            blocked_reason = f"Остаётся {len(remaining)} из {total} шагов"
+        enriched.append(
+            pack.model_copy(
+                update={
+                    "progress_pct": progress_pct,
+                    "blocked_reason": blocked_reason,
+                    "acknowledged": acked,
+                },
+            )
+        )
+    return enriched
+
+
 def sort_work_packs_by_urgency(packs: list[WorkPack], items: list[OperationalItem]) -> list[WorkPack]:
     idx = {it.id: it for it in items}
 

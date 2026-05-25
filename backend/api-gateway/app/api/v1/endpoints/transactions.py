@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from decimal import Decimal
@@ -293,6 +294,46 @@ async def update_transaction(
     await refresh_financial_state_audit(db, workspace_organization_id(current_user))
     await cache.invalidate_org(workspace_organization_id(current_user))
     return _serialize_transaction(tx)
+
+
+class BulkPostBody(BaseModel):
+    transaction_ids: list[str] = Field(min_length=1, max_length=80)
+
+
+@router.post("/transactions/bulk-post")
+async def bulk_post_transactions(
+    body: BulkPostBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Провести выбранные черновики (status draft → posted) без изменения сумм и категорий."""
+    oid = workspace_organization_id(current_user)
+    r = await db.execute(
+        select(Transaction).where(
+            Transaction.organization_id == oid,
+            Transaction.id.in_(body.transaction_ids),
+        )
+    )
+    rows = list(r.scalars().all())
+    if not rows:
+        raise HTTPException(status_code=404, detail="Операции не найдены")
+    posted = 0
+    for tx in rows:
+        if tx.status == "posted":
+            continue
+        issues = get_transaction_validation_issues(tx)
+        if issues:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Операция {tx.id}: {'; '.join(issues)}",
+            )
+        tx.status = "posted"
+        await db.flush()
+        await emit_transaction_updated(db, oid, tx, actor="user")
+        posted += 1
+    await refresh_financial_state_audit(db, oid)
+    await cache.invalidate_org(oid)
+    return {"posted": posted, "skipped": len(rows) - posted}
 
 
 @router.delete("/transactions/{tx_id}", status_code=204)

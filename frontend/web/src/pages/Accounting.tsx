@@ -499,6 +499,29 @@ export default function Accounting() {
     },
   })
 
+  const bulkPostMutation = useMutation({
+    mutationFn: async () => {
+      const ids = [...selection.selected].filter((id) => {
+        const tx = filteredItems.find((t: any) => t.id === id)
+        return tx?.status === 'draft'
+      })
+      if (!ids.length) return { posted: 0 }
+      const { data } = await dashboardApi.bulkPostTransactions(ids)
+      return data as { posted?: number }
+    },
+    onSettled: () => {
+      refreshLedgerRelated()
+      selection.clear()
+    },
+  })
+
+  const selectedDraftCount = useMemo(() => {
+    return [...selection.selected].filter((id) => {
+      const tx = filteredItems.find((t: any) => t.id === id)
+      return tx?.status === 'draft'
+    }).length
+  }, [selection.selected, filteredItems])
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const { data } = await dashboardApi.createTransaction({
@@ -1036,6 +1059,14 @@ export default function Accounting() {
                 onClick={() => bulkAiCategoriesMutation.mutate()}
               >
                 {bulkAiCategoriesMutation.isPending ? 'ИИ…' : 'ИИ: категории'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary min-h-9 px-4 text-xs font-bold"
+                disabled={selectedDraftCount === 0 || bulkPostMutation.isPending}
+                onClick={() => bulkPostMutation.mutate()}
+              >
+                {bulkPostMutation.isPending ? 'Проведение…' : `Провести (${selectedDraftCount})`}
               </button>
               <Link to="/bank" className="btn-secondary min-h-9 px-4 text-xs font-bold">
                 Сверка в банке

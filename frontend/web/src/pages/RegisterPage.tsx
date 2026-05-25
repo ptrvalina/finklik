@@ -142,7 +142,10 @@ export default function RegisterPage() {
         </form>
       </div>
 
-      <p className="mt-6 text-center text-sm text-on-surface-variant">
+      <p className="mt-4 text-center text-xs text-on-surface-variant">
+        После регистрации — профиль бизнеса (~2 мин), затем лента работы подскажет следующие шаги.
+      </p>
+      <p className="mt-4 text-center text-sm text-on-surface-variant">
         Уже есть аккаунт?{' '}
         <Link to="/login" className="font-bold text-primary hover:underline">
           Войти

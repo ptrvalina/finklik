@@ -127,6 +127,17 @@ export default function ScannerPage() {
     },
   })
 
+  const openNextInReviewQueue = useCallback(
+    (currentId?: string | null) => {
+      const items = reviewQueueData?.items ?? []
+      if (!items.length) return
+      const idx = currentId ? items.findIndex((i: { id: string }) => i.id === currentId) : -1
+      const next = idx >= 0 ? items[idx + 1] : items[0]
+      if (next && next.id !== currentId) loadDocMutation.mutate(next.id)
+    },
+    [reviewQueueData, loadDocMutation],
+  )
+
   const confirmMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: ReturnType<typeof draftToCorrectionPayload> }) =>
       scannerApi.confirmTransaction(id, payload).then((r) => r.data),
@@ -148,6 +159,8 @@ export default function ScannerPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
+      const docId = scanResult?.id
+      window.setTimeout(() => openNextInReviewQueue(docId), 400)
     },
   })
 
@@ -583,12 +596,24 @@ export default function ScannerPage() {
                     />
                   )}
                   {txSaved && createdTxId && (
-                    <Link
-                      to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
-                      className="btn-secondary mt-3 inline-flex min-h-10 w-full justify-center text-sm"
-                    >
-                      Открыть в журнале
-                    </Link>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Link
+                        to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
+                        className="btn-secondary inline-flex min-h-10 w-full justify-center text-sm"
+                      >
+                        Открыть в журнале
+                      </Link>
+                      {(reviewQueueData?.items?.length ?? 0) > 1 && (
+                        <button
+                          type="button"
+                          className="btn-ghost min-h-10 w-full text-sm"
+                          disabled={loadDocMutation.isPending}
+                          onClick={() => openNextInReviewQueue(scanResult?.id)}
+                        >
+                          Следующий в очереди
+                        </button>
+                      )}
+                    </div>
                   )}
                   {scanResult.parsed.items_count != null && (
                     <p className="text-xs text-on-surface-variant">Позиций в документе: {scanResult.parsed.items_count}</p>

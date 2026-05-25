@@ -40,11 +40,24 @@ from app.services.progressive_experience_service import (
     resolve_experience_mode,
 )
 from app.services.workflow_maintenance_service import build_workflow_maintenance_suggestions
-from app.services.work_pack_service import build_work_packs, infer_state_dimension
+from app.services.work_pack_service import build_work_packs, enrich_work_packs, infer_state_dimension
 
 PRIORITY_RANK: dict[str, int] = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 
 READINESS_THRESHOLD = 80
+
+
+async def _load_acknowledged_work_pack_ids(db: AsyncSession, organization_id: str) -> set[str]:
+    from app.events.constants import EV_WORK_PACK_ACKNOWLEDGED
+    from app.models.domain_event import DomainEvent
+
+    r = await db.execute(
+        select(DomainEvent.target_id).where(
+            DomainEvent.organization_id == organization_id,
+            DomainEvent.event_type == EV_WORK_PACK_ACKNOWLEDGED,
+        )
+    )
+    return {str(x) for x in r.scalars().all()}
 
 # Внутри одного уровня приоритета — вес по типу (бизнес-влияние).
 TYPE_WEIGHT: dict[OperationalItemType, int] = {
@@ -410,6 +423,8 @@ async def build_execution_feed(
     blocked = sum(1 for x in sorted_items if x.priority == "critical")
     top = sorted_items[0] if sorted_items else None
     work_packs = build_work_packs(sorted_items, fs)
+    acked_ids = await _load_acknowledged_work_pack_ids(db, organization_id)
+    work_packs = enrich_work_packs(work_packs, sorted_items, acked_ids)
 
     await persist_state_audit_if_changed(db, organization_id, fs)
     recent_audit = await load_recent_audit_entries(db, organization_id, limit=8)

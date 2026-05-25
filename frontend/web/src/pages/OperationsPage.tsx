@@ -13,6 +13,7 @@ import { orgQueryKey } from '../lib/queryKeys'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { executionRiskIfIgnored } from '../lib/executionPresentation'
+import { markOperationsSeen } from '../lib/pilotProgress'
 
 type OperationalItem = {
   id: string
@@ -90,6 +91,9 @@ type WorkPack = {
   expected_outcome: string
   risk_if_ignored: string
   primary_action_path: string | null
+  progress_pct?: number | null
+  blocked_reason?: string | null
+  acknowledged?: boolean
 }
 
 type ExperienceMode = 'solo' | 'operator' | 'accountant' | 'advanced'
@@ -244,6 +248,10 @@ export default function OperationsPage() {
   useEffect(() => {
     if (searchParams.get('trust') === '1') setDiagnosticsOpen(true)
   }, [searchParams])
+
+  useEffect(() => {
+    markOperationsSeen()
+  }, [])
 
   const executionFeedKey = orgQueryKey('execution-feed')
 

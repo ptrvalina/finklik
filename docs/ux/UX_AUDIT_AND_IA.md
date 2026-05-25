@@ -20,7 +20,6 @@
 | Reporting | Duplicate calm UI | `ReportingReadinessHero` + guided flow |
 
 ### Optional / backlog
-- Bulk actions in journal (массовое проведение).
 - Расширить i18n на редкие admin-экраны.
 
 ---
@@ -58,3 +57,8 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P4 | `/workspace/accountant/queues`; global queues UI; recent clients; pin on cards | Done |
 | P3 | OCR corrections API; autosave; keyboard flow; vendor memory on edit; review queue load | Done |
 | P3b | Batch upload (20); journal deep-link `tx_id`; preprocess doc_hint; calmer scanner stats | Done |
+| P5a | Pilot: onboarding «лента работы»; пустые inbox/approvals с CTA; copy регистрации | Done |
+| P5b | Inbox/approvals: PATCH actions (роль accountant/admin); journal deep-link из inbox | Done |
+| P5c | OCR: авто-переход по очереди проверки + «Следующий в очереди» | Done |
+| P5d | Work packs: `progress_pct`, `blocked_reason`, `acknowledged` из ленты + domain_events | Done |
+| P5e | Journal: `POST /transactions/bulk-post`; bulk bar «Провести» | Done |

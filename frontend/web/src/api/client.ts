@@ -356,8 +356,12 @@ export const workspaceApi = {
   accountantOverview: () => api.get('/workspace/accountant/overview'),
   accountantQueues: () => api.get('/workspace/accountant/queues'),
   inbox: (params?: { status?: string }) => api.get('/workspace/inbox', { params }),
+  patchInbox: (itemId: string, data: { status: string }) =>
+    api.patch(`/workspace/inbox/${itemId}`, data),
   approvals: (params?: { status_filter?: string }) =>
     api.get('/workspace/approvals', { params }),
+  resolveApproval: (approvalId: string, data: { status: string; note?: string }) =>
+    api.patch(`/workspace/approvals/${approvalId}`, data),
   comments: (params?: { target_kind?: string; target_id?: string }) =>
     api.get('/workspace/comments', { params }),
 }
@@ -375,6 +379,8 @@ export const dashboardApi = {
   getTransactions: (params?: any) => api.get('/transactions', { params }),
   createTransaction: (data: any) => api.post('/transactions', data),
   updateTransaction: (id: string, data: any) => api.put(`/transactions/${id}`, data),
+  bulkPostTransactions: (transaction_ids: string[]) =>
+    api.post('/transactions/bulk-post', { transaction_ids }),
   deleteTransaction: (id: string) => api.delete(`/transactions/${id}`),
 }
 

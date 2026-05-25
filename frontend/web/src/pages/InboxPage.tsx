@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceApi } from '../api/client'
 import { orgQueryKey } from '../lib/queryKeys'
+import { useAuthStore } from '../store/authStore'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
@@ -23,16 +24,34 @@ const STATUS_RU: Record<string, string> = {
   open: 'открыто',
   in_progress: 'в работе',
   done: 'готово',
+  snoozed: 'отложено',
   cancelled: 'отменено',
+}
+
+function canManageInbox(role: string | undefined) {
+  return role === 'admin' || role === 'accountant'
 }
 
 export default function InboxPage() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const role = useAuthStore((s) => s.user?.role)
+  const manage = canManageInbox(role)
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey(['workspace-inbox', 'open']),
     queryFn: () => workspaceApi.inbox({ status: 'open' }).then((r) => r.data),
     staleTime: 45_000,
     placeholderData: (prev) => prev,
+  })
+
+  const patchMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      workspaceApi.patchInbox(id, { status }).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['workspace-inbox']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('execution-feed') })
+    },
   })
 
   const items: InboxItem[] = data?.items ?? []
@@ -77,7 +96,17 @@ export default function InboxPage() {
         <PremiumEmptyState
           icon="inbox"
           title="Входящих нет"
-          description="Новые запросы появятся здесь — от бухгалтера или из процессов учёта."
+          description="Новые запросы появятся здесь — от бухгалтера или из процессов учёта. Пока можно загрузить документ или открыть журнал."
+          actions={
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link to="/scan" className="btn-primary min-h-11 px-4 text-sm">
+                Сканер
+              </Link>
+              <Link to="/accounting/journal" className="btn-secondary min-h-11 px-4 text-sm">
+                Журнал
+              </Link>
+            </div>
+          }
         />
       )}
       {!isLoading && !isError && items.length > 0 && (
@@ -104,14 +133,42 @@ export default function InboxPage() {
                   </Link>
                 )}
                 {item.linked_transaction_id && (
-                  <Link to="/accounting/journal" className="text-xs font-semibold text-primary hover:underline">
+                  <Link
+                    to={`/accounting/journal?tx_id=${encodeURIComponent(item.linked_transaction_id)}`}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
                     Журнал
                   </Link>
                 )}
               </div>
+              {manage && (
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-outline/25 pt-3">
+                  <button
+                    type="button"
+                    className="btn-primary min-h-10 px-3 text-xs"
+                    disabled={patchMutation.isPending}
+                    onClick={() => patchMutation.mutate({ id: item.id, status: 'done' })}
+                  >
+                    Готово
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary min-h-10 px-3 text-xs"
+                    disabled={patchMutation.isPending}
+                    onClick={() => patchMutation.mutate({ id: item.id, status: 'snoozed' })}
+                  >
+                    Отложить
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
+      )}
+      {!manage && !isLoading && !isError && items.length > 0 && (
+        <p className="mt-4 text-xs text-on-surface-variant">
+          Закрывать входящие может бухгалтер или администратор — вы видите актуальную очередь.
+        </p>
       )}
     </OperationalPage>
   )

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceApi } from '../api/client'
 import { orgQueryKey } from '../lib/queryKeys'
+import { useAuthStore } from '../store/authStore'
 import OperationalPage from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
@@ -20,14 +21,32 @@ const STATUS_RU: Record<string, string> = {
   pending: 'ожидает',
   approved: 'согласовано',
   rejected: 'отклонено',
+  clarification: 'уточнение',
+}
+
+function canResolveApprovals(role: string | undefined) {
+  return role === 'admin' || role === 'accountant'
 }
 
 export default function ApprovalsPage() {
+  const qc = useQueryClient()
+  const role = useAuthStore((s) => s.user?.role)
+  const manage = canResolveApprovals(role)
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey(['workspace-approvals', 'pending']),
     queryFn: () => workspaceApi.approvals({ status_filter: 'pending' }).then((r) => r.data),
     staleTime: 45_000,
     placeholderData: (prev) => prev,
+  })
+
+  const resolveMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'approved' | 'rejected' }) =>
+      workspaceApi.resolveApproval(id, { status }).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['workspace-approvals']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('execution-feed') })
+    },
   })
 
   const items: ApprovalItem[] = data?.items ?? []
@@ -55,7 +74,12 @@ export default function ApprovalsPage() {
         <PremiumEmptyState
           icon="approval"
           title="Нет ожидающих согласований"
-          description="Когда появится запрос — он будет здесь, без лишних уведомлений."
+          description="Когда появится запрос — он будет здесь. Пока проверьте ленту работы и готовность отчётности."
+          actions={
+            <Link to="/operations" className="btn-primary mt-4 min-h-11 px-4 text-sm">
+              Лента работы
+            </Link>
+          }
         />
       )}
       {!isLoading && !isError && items.length > 0 && (
@@ -71,9 +95,34 @@ export default function ApprovalsPage() {
               <p className="mt-2 text-xs text-on-surface-variant">
                 Статус: {STATUS_RU[item.status] ?? item.status}
               </p>
+              {manage && (
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-outline/25 pt-3">
+                  <button
+                    type="button"
+                    className="btn-primary min-h-10 px-3 text-xs"
+                    disabled={resolveMutation.isPending}
+                    onClick={() => resolveMutation.mutate({ id: item.id, status: 'approved' })}
+                  >
+                    Согласовать
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary min-h-10 px-3 text-xs"
+                    disabled={resolveMutation.isPending}
+                    onClick={() => resolveMutation.mutate({ id: item.id, status: 'rejected' })}
+                  >
+                    Отклонить
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
+      )}
+      {!manage && !isLoading && !isError && items.length > 0 && (
+        <p className="mt-4 text-xs text-on-surface-variant">
+          Решения по согласованиям принимает бухгалтер или администратор организации.
+        </p>
       )}
     </OperationalPage>
   )

@@ -97,6 +97,11 @@ class WorkPack(BaseModel):
     expected_outcome: str
     risk_if_ignored: str
     primary_action_path: str | None = None
+    #: Доля закрытых шагов пакета в текущей ленте (0–100); растёт по мере разбора очереди.
+    progress_pct: int | None = None
+    #: Краткая причина, почему пакет ещё «заблокирован» (критичные пункты в ленте).
+    blocked_reason: str | None = None
+    acknowledged: bool = False
 
 
 class FinancialStateBundle(BaseModel):
