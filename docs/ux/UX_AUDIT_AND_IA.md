@@ -75,3 +75,5 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | F1c | Поток учёта: лестница Скан→Журнал→Отчётность; `doc_id` на сканере; bulk→/reports | Done |
 | F5d | RU баннер уведомлений; мобильная панель действий в отправках | Done |
 | F5e | RU: автопилот, 1С endpoint, контрагенты «слой связей» | Done |
+| TD1 | `scannerUiSession` — авто-очередь OCR per org; `reportingFlowSession` per org | Done |
+| TD2 | Гид отчётности: sticky actions mobile; RU сканер/документы (вебхук, умный захват) | Done |

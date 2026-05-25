@@ -18,6 +18,8 @@ import {
 } from '../lib/ocrCorrectionFields'
 import type { FieldRegion } from '../components/scanner/OcrPreviewOverlay'
 import { useOperational } from '../context/OperationalContext'
+import { useAuthStore } from '../store/authStore'
+import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -81,7 +83,9 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 export default function ScannerPage() {
   const qc = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
+  const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const { recordOcrDoc, recordTransaction, setNextStep } = useOperational()
+  const [autoAdvanceQueue, setAutoAdvanceQueue] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -98,6 +102,12 @@ export default function ScannerPage() {
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
   const [activeOcrField, setActiveOcrField] = useState<OcrFieldKey | null>(null)
+
+  useEffect(() => {
+    if (!orgId) return
+    const snap = loadScannerUiSession(orgId)
+    setAutoAdvanceQueue(snap?.autoAdvanceQueue ?? true)
+  }, [orgId])
 
   const applyScanPayload = useCallback(
     (data: ScanResult) => {
@@ -197,7 +207,9 @@ export default function ScannerPage() {
       } else {
         setNextStep({ verb: 'continue', label: 'Следующий документ в очереди', path: '/scan' })
       }
-      window.setTimeout(() => openNextInReviewQueue(docId), 400)
+      if (autoAdvanceQueue) {
+        window.setTimeout(() => openNextInReviewQueue(docId), 400)
+      }
     },
   })
 
@@ -391,10 +403,28 @@ export default function ScannerPage() {
         ) : undefined
       }
     >
-      {scanResult && reviewCount > 0 && (
-        <p className="mb-4 rounded-xl border border-primary/25 bg-primary/8 px-4 py-2.5 text-sm text-on-surface">
-          <span className="font-semibold">Режим очереди:</span> после подтверждения откроется следующий документ — без возврата к списку.
-        </p>
+      {reviewCount > 0 && (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-on-surface">
+            <span className="font-semibold">Режим очереди:</span>{' '}
+            {autoAdvanceQueue
+              ? 'после подтверждения откроется следующий документ.'
+              : 'авто-переход выключен — переходите вручную.'}
+          </p>
+          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-on-surface">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-outline/60"
+              checked={autoAdvanceQueue}
+              onChange={(e) => {
+                const v = e.target.checked
+                setAutoAdvanceQueue(v)
+                if (orgId) saveScannerUiSession(orgId, { v: 1, autoAdvanceQueue: v })
+              }}
+            />
+            Авто-переход по очереди
+          </label>
+        </div>
       )}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         <div className="col-span-12 lg:col-span-8">
@@ -682,7 +712,7 @@ export default function ScannerPage() {
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="bg-surface-container-high rounded-xl p-6 border border-outline-variant/10">
             <h4 className="label flex items-center gap-2">
-              <Icon name="auto_awesome" className="text-secondary text-lg" /> Smart Capture
+              <Icon name="auto_awesome" className="text-secondary text-lg" /> Умный захват
             </h4>
             <ul className="space-y-4 mt-4">
               <li className="flex gap-4">

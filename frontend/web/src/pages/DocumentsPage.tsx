@@ -16,10 +16,10 @@ function paymentEventLabel(eventType: string): string {
   const labels: Record<string, string> = {
     payment_link_sent: 'Ссылка на оплату отправлена',
     manual_mark_paid: 'Ручное подтверждение оплаты',
-    webhook_paid: 'Webhook: оплата подтверждена',
-    webhook_pending: 'Webhook: оплата ожидается',
-    webhook_failed: 'Webhook: ошибка оплаты',
-    webhook_conflict: 'Webhook: конфликт параметров платежа',
+    webhook_paid: 'Вебхук: оплата подтверждена',
+    webhook_pending: 'Вебхук: оплата ожидается',
+    webhook_failed: 'Вебхук: ошибка оплаты',
+    webhook_conflict: 'Вебхук: конфликт параметров платежа',
   }
   return labels[eventType] || eventType
 }
@@ -44,8 +44,8 @@ function paymentPayloadEntries(payload: Record<string, any>): Array<{ label: str
     currency: 'Валюта',
     transaction_id: 'ID транзакции',
     payment_url: 'Ссылка оплаты',
-    email: 'Email',
-    email_sent: 'Email отправлен',
+    email: 'Эл. почта',
+    email_sent: 'Письмо отправлено',
     status: 'Статус',
     detail: 'Детали',
     description: 'Описание',
@@ -937,16 +937,16 @@ export default function DocumentsPage() {
               <div className="mb-3 max-h-40 overflow-auto rounded-xl border border-outline/75 bg-surface-container-low/80 p-2 text-xs text-on-surface">
                 {paymentSummary && (
                   <div className="mb-2 rounded border border-outline/65 bg-surface p-2 text-[11px] text-on-surface-variant dark:border-outline/40 dark:text-on-surface-variant">
-                    Всего: {paymentSummary.total ?? 0} • webhook ok: {paymentSummary.webhook_success ?? 0} •
+                    Всего: {paymentSummary.total ?? 0} • вебхук ok: {paymentSummary.webhook_success ?? 0} •
                     конфликты: {paymentSummary.webhook_conflict ?? 0}
                   </div>
                 )}
                 <div className="mb-2 flex flex-wrap gap-1">
                   {[
                     { id: 'all', label: 'Все' },
-                    { id: 'webhook', label: 'Webhook' },
-                    { id: 'ui', label: 'UI' },
-                    { id: 'email', label: 'Email' },
+                    { id: 'webhook', label: 'Вебхук' },
+                    { id: 'ui', label: 'Интерфейс' },
+                    { id: 'email', label: 'Почта' },
                   ].map((opt) => (
                     <button
                       key={opt.id}

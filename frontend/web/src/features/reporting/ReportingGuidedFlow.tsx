@@ -3,6 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { reportingCalmApi } from '../../api/client'
 import { useOperational } from '../../context/OperationalContext'
+import { useAuthStore } from '../../store/authStore'
+import {
+  loadReportingFlowStep,
+  loadReportingFlowValidated,
+  saveReportingFlowStep,
+  saveReportingFlowValidated,
+} from '../../lib/reportingFlowSession'
 import {
   type CalmOverviewLike,
   type FlowStepId,
@@ -14,44 +21,6 @@ import {
   readinessBlockedReason,
   type ReportingFlowStep,
 } from './reportingFlowModel'
-
-const STORAGE_STEP = 'fc-reporting-flow-step'
-const STORAGE_VALID = 'fc-reporting-flow-validated'
-
-function loadStoredStep(): number {
-  try {
-    const s = sessionStorage.getItem(STORAGE_STEP)
-    if (s === null) return 0
-    const n = parseInt(s, 10)
-    return Number.isFinite(n) ? Math.min(4, Math.max(0, n)) : 0
-  } catch {
-    return 0
-  }
-}
-
-function loadValidated(): boolean {
-  try {
-    return sessionStorage.getItem(STORAGE_VALID) === '1'
-  } catch {
-    return false
-  }
-}
-
-function persistStep(n: number) {
-  try {
-    sessionStorage.setItem(STORAGE_STEP, String(n))
-  } catch {
-    /* ignore */
-  }
-}
-
-function persistValidated(v: boolean) {
-  try {
-    sessionStorage.setItem(STORAGE_VALID, v ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
-}
 
 function StepRail({
   steps,
@@ -153,9 +122,20 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { recordReportingBlocker, setNextStep } = useOperational()
-  const [stepIndex, setStepIndex] = useState(loadStoredStep)
-  const [validationPassed, setValidationPassed] = useState(loadValidated)
+  const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
+  const [stepIndex, setStepIndex] = useState(0)
+  const [validationPassed, setValidationPassed] = useState(false)
   const touchStart = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!orgId) {
+      setStepIndex(0)
+      setValidationPassed(false)
+      return
+    }
+    setStepIndex(loadReportingFlowStep(orgId))
+    setValidationPassed(loadReportingFlowValidated(orgId))
+  }, [orgId])
 
   const q = useQuery({
     queryKey: ['reporting-calm-overview'],
@@ -170,7 +150,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
     onSuccess: (payload) => {
       qc.setQueryData(['reporting-calm-overview'], payload)
       setValidationPassed(true)
-      persistValidated(true)
+      if (orgId) saveReportingFlowValidated(orgId, true)
       const overview = payload as CalmOverviewLike
       const blockers = overview?.readiness?.blockers ?? []
       const label =
@@ -193,8 +173,12 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
   const steps = useMemo(() => buildFlowSteps(stepIndex, data), [stepIndex, data])
 
   useEffect(() => {
-    persistStep(stepIndex)
-  }, [stepIndex])
+    if (orgId) saveReportingFlowStep(orgId, stepIndex)
+  }, [orgId, stepIndex])
+
+  useEffect(() => {
+    if (orgId) saveReportingFlowValidated(orgId, validationPassed)
+  }, [orgId, validationPassed])
 
   const score = data?.readiness?.score ?? null
   const conf = data?.readiness?.confidence ?? 'medium'
@@ -313,7 +297,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
   }
 
   return (
-    <div className="mt-6 space-y-5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className="mt-6 space-y-5 pb-28 lg:pb-0" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Гид подготовки</p>
@@ -579,22 +563,26 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
           )}
         </div>
 
-        {/* Decision row */}
-        <div className="mt-8 flex flex-col gap-3 border-t border-outline-variant/15 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        {/* Decision row — sticky on mobile */}
+        <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] z-40 -mx-1 mt-8 flex flex-col gap-3 rounded-t-2xl border border-outline/35 bg-surface/95 p-3 shadow-float backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between lg:static lg:z-auto lg:mx-0 lg:rounded-none lg:border-0 lg:border-t lg:border-outline-variant/15 lg:bg-transparent lg:p-0 lg:pt-6 lg:shadow-none lg:backdrop-blur-none">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Действие</p>
             <p className="mt-1 text-sm font-bold text-on-surface">{primarySecondary.primary}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
-              className="btn-primary min-h-12 min-w-[200px] px-6 text-sm font-bold"
+              className="btn-primary min-h-12 w-full px-6 text-sm font-bold sm:min-w-[200px] sm:w-auto"
               disabled={primarySecondary.primaryDisabled}
               onClick={onPrimaryAction}
             >
               {activeId === 'validate' && !validationPassed ? 'Запустить проверку AI' : primarySecondary.primary}
             </button>
-            <button type="button" className="btn-secondary min-h-12 px-5 text-sm font-bold" onClick={onSecondaryAction}>
+            <button
+              type="button"
+              className="btn-secondary min-h-12 w-full px-5 text-sm font-bold sm:w-auto"
+              onClick={onSecondaryAction}
+            >
               {primarySecondary.secondary}
             </button>
           </div>
