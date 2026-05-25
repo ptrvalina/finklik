@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { executionCtaLabel } from '../../lib/executionPresentation'
+import { verbLabel } from '../../lib/operationalVerbs'
 
 export type WorkPackLike = {
   id: string
@@ -12,20 +13,25 @@ export type WorkPackLike = {
   primary_action_path: string | null
   summary_lines: Array<{ kind: string; count: number; detail?: string | null }>
   progress_pct?: number | null
+  tasks_done?: number | null
+  tasks_total?: number | null
+  eta_minutes?: number | null
   blocked_reason?: string | null
   acknowledged?: boolean
 }
 
-function packProgress(pack: WorkPackLike): { tasks: number; etaMin: number; progressPct: number } {
-  const tasks = pack.operational_item_ids?.length ?? pack.summary_lines.reduce((s, ln) => s + ln.count, 0)
-  const etaMin = Math.max(5, Math.min(45, tasks * 4))
+function packProgress(pack: WorkPackLike): { tasks: number; etaMin: number; progressPct: number; done: number; total: number } {
+  const fallbackTotal = pack.operational_item_ids?.length ?? pack.summary_lines.reduce((s, ln) => s + ln.count, 0)
+  const total = pack.tasks_total ?? fallbackTotal
+  const done = pack.tasks_done ?? 0
+  const etaMin = pack.eta_minutes ?? Math.max(5, Math.min(45, Math.max(1, total - done) * 4))
   const progressPct =
     typeof pack.progress_pct === 'number'
       ? Math.min(100, Math.max(0, pack.progress_pct))
-      : tasks > 0
-        ? Math.min(100, Math.round((1 / (tasks + 1)) * 100))
+      : total > 0
+        ? Math.min(100, Math.round((done / total) * 100))
         : 12
-  return { tasks, etaMin, progressPct }
+  return { tasks: total, etaMin, progressPct, done, total }
 }
 
 export const WorkPackCard = memo(function WorkPackCard({
@@ -40,14 +46,15 @@ export const WorkPackCard = memo(function WorkPackCard({
   ackPending?: boolean
 }) {
   const summary = pack.summary_lines.map((ln) => `${ln.count} × ${ln.detail || ln.kind}`).join(' · ')
-  const { tasks, etaMin, progressPct } = packProgress(pack)
+  const { tasks, etaMin, progressPct, done, total } = packProgress(pack)
 
   return (
     <article className="fc-execution-card rounded-2xl border border-outline/35 bg-surface/90 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Пакет работ</p>
         <p className="text-[10px] font-semibold text-on-surface-variant">
-          ~{etaMin} мин · {tasks} {tasks === 1 ? 'шаг' : tasks < 5 ? 'шага' : 'шагов'}
+          ~{etaMin} мин
+          {total > 0 ? ` · ${done} из ${total}` : tasks > 0 ? ` · ${tasks} шагов` : ''}
         </p>
       </div>
       <h3 className="mt-1 font-headline text-base font-semibold text-on-surface">{pack.title}</h3>
@@ -82,7 +89,7 @@ export const WorkPackCard = memo(function WorkPackCard({
           {executionCtaLabel('reporting')}
         </button>
         <button type="button" className="btn-secondary min-h-11 text-sm" disabled={ackPending} onClick={onAck}>
-          {ackPending ? '…' : 'Принять к работе'}
+          {ackPending ? '…' : verbLabel('continue')}
         </button>
       </div>
     </article>

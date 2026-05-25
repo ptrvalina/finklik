@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { reportingCalmApi } from '../../api/client'
+import { useOperational } from '../../context/OperationalContext'
 import {
   type CalmOverviewLike,
   type FlowStepId,
@@ -151,6 +152,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
   const base = basePath.replace(/\/$/, '') || '/reports'
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { recordReportingBlocker, setNextStep } = useOperational()
   const [stepIndex, setStepIndex] = useState(loadStoredStep)
   const [validationPassed, setValidationPassed] = useState(loadValidated)
   const touchStart = useRef<number | null>(null)
@@ -169,6 +171,18 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
       qc.setQueryData(['reporting-calm-overview'], payload)
       setValidationPassed(true)
       persistValidated(true)
+      const overview = payload as CalmOverviewLike
+      const blockers = overview?.readiness?.blockers ?? []
+      const label =
+        blockers.length > 0
+          ? `Отчётность: ${blockers[0].label}`
+          : `Готовность ${overview?.readiness?.score ?? '—'}%`
+      recordReportingBlocker(label, base)
+      setNextStep({
+        verb: 'send',
+        label: 'Продолжить черновик отчёта',
+        path: base,
+      })
     },
   })
 

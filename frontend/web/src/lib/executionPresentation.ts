@@ -1,4 +1,5 @@
 import { operationPriorityLabel, operationTypeLabel } from './executionLabels'
+import { executionVerbForType, verbLabel } from './operationalVerbs'
 
 export type ExecutionTaskLike = {
   id: string
@@ -13,19 +14,20 @@ export type ExecutionTaskLike = {
 }
 
 export function executionCtaLabel(type: string): string {
+  const verb = executionVerbForType(type)
   switch (type) {
     case 'document':
-      return 'Проверить документ'
+      return `${verbLabel(verb)} документ`
     case 'transaction':
-      return 'Открыть в журнале'
+      return `${verbLabel(verb)} в журнале`
     case 'reporting':
-      return 'К отчётности'
+      return `${verbLabel(verb)} отчёт`
     case 'reconciliation':
-      return 'Сверить'
+      return `${verbLabel(verb)} сверку`
     case 'approval':
-      return 'Согласовать'
+      return verbLabel(verb)
     default:
-      return 'Сделать'
+      return verbLabel(verb)
   }
 }
 

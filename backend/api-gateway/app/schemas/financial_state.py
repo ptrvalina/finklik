@@ -99,6 +99,9 @@ class WorkPack(BaseModel):
     primary_action_path: str | None = None
     #: Доля закрытых шагов пакета в текущей ленте (0–100); растёт по мере разбора очереди.
     progress_pct: int | None = None
+    tasks_done: int | None = None
+    tasks_total: int | None = None
+    eta_minutes: int | None = None
     #: Краткая причина, почему пакет ещё «заблокирован» (критичные пункты в ленте).
     blocked_reason: str | None = None
     acknowledged: bool = False

@@ -15,6 +15,7 @@ import {
   type OcrEditDraft,
   type OcrFieldKey,
 } from '../lib/ocrCorrectionFields'
+import { useOperational } from '../context/OperationalContext'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -76,6 +77,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 export default function ScannerPage() {
   const qc = useQueryClient()
+  const { recordOcrDoc, recordTransaction, setNextStep } = useOperational()
   const fileRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -92,14 +94,20 @@ export default function ScannerPage() {
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
 
-  const applyScanPayload = useCallback((data: ScanResult) => {
-    setScanResult(data)
-    setEditDraft(buildDraftFromScan(data))
-    setCorrectedFields(new Set())
-    setTxSaved(Boolean(data.linked_transaction_id))
-    setCreatedTxId(data.linked_transaction_id ?? null)
-    setAmountError(null)
-  }, [])
+  const applyScanPayload = useCallback(
+    (data: ScanResult) => {
+      setScanResult(data)
+      setEditDraft(buildDraftFromScan(data))
+      setCorrectedFields(new Set())
+      setTxSaved(Boolean(data.linked_transaction_id))
+      setCreatedTxId(data.linked_transaction_id ?? null)
+      setAmountError(null)
+      if (data.id) {
+        recordOcrDoc(data.id, data.filename || 'Документ')
+      }
+    },
+    [recordOcrDoc],
+  )
 
   const { data: history = [] } = useQuery<HistoryItem[]>({
     queryKey: orgQueryKey('scanner-history'),
@@ -160,6 +168,18 @@ export default function ScannerPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
       const docId = scanResult?.id
+      const title = editDraft?.counterparty || scanResult?.filename || 'Документ'
+      if (docId) recordOcrDoc(docId, title)
+      if (data.transaction_id) {
+        recordTransaction(data.transaction_id, title)
+        setNextStep({
+          verb: 'review',
+          label: 'Проверить проводку в журнале',
+          path: `/accounting/journal?tx_id=${encodeURIComponent(data.transaction_id)}`,
+        })
+      } else {
+        setNextStep({ verb: 'continue', label: 'Следующий документ в очереди', path: '/scan' })
+      }
       window.setTimeout(() => openNextInReviewQueue(docId), 400)
     },
   })

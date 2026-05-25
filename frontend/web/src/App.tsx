@@ -43,6 +43,7 @@ import ApprovalsPage from './pages/ApprovalsPage'
 import WorkspaceQueuesPage from './pages/WorkspaceQueuesPage'
 import Layout from './components/layout/Layout'
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
+import { OperationalProvider } from './context/OperationalContext'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -118,7 +119,7 @@ function AppRoutes() {
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/onboarding/business-profile" element={<PrivateRoute><BusinessProfilePage /></PrivateRoute>} />
-        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route path="/" element={<PrivateRoute><OperationalProvider><Layout /></OperationalProvider></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
           <Route
             path="operations"

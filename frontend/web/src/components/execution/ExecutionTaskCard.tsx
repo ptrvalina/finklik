@@ -121,7 +121,7 @@ export const ExecutionTaskCard = memo(function ExecutionTaskCard({
             </button>
             {onInspect && (
               <button type="button" className="btn-ghost min-h-11 text-xs" onClick={() => onInspect(item)}>
-                Подробнее
+                Проверить детали
               </button>
             )}
           </div>

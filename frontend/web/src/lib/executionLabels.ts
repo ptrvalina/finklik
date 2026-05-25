@@ -2,15 +2,28 @@
 
 export const OPERATION_TYPE_RU: Record<string, string> = {
   transaction: 'Журнал',
-  document: 'Документы',
-  approval: 'Согласование',
+  document: 'Сканер и OCR',
+  approval: 'Комплаенс',
   reporting: 'Отчётность',
-  reconciliation: 'Сверка',
+  reconciliation: 'Банк и сверка',
   tax: 'Налоги',
   payroll: 'Зарплата',
   inventory: 'Запасы',
   default: 'Задача',
 }
+
+/** Порядок групп в ленте исполнения (не Jira — один экран). */
+export const EXECUTION_GROUP_ORDER = [
+  'reporting',
+  'reconciliation',
+  'document',
+  'transaction',
+  'approval',
+  'tax',
+  'payroll',
+  'inventory',
+  'default',
+] as const
 
 export const OPERATION_PRIORITY_RU: Record<string, string> = {
   critical: 'Срочно',
@@ -42,4 +55,21 @@ export function groupOperationsByType<T extends { type: string }>(items: T[]): R
     groups[key].push(item)
   }
   return groups
+}
+
+/** Группы в фиксированном продуктовом порядке. */
+export function groupOperationsOrdered<T extends { type: string }>(
+  items: T[],
+): Array<{ type: string; items: T[] }> {
+  const map = groupOperationsByType(items)
+  const ordered: Array<{ type: string; items: T[] }> = []
+  for (const type of EXECUTION_GROUP_ORDER) {
+    if (map[type]?.length) ordered.push({ type, items: map[type] })
+  }
+  for (const [type, groupItems] of Object.entries(map)) {
+    if (!(EXECUTION_GROUP_ORDER as readonly string[]).includes(type)) {
+      ordered.push({ type, items: groupItems })
+    }
+  }
+  return ordered
 }

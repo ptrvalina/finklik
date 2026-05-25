@@ -14,6 +14,7 @@ import { CalmErrorState } from '../components/errors/CalmErrorState'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { executionRiskIfIgnored } from '../lib/executionPresentation'
 import { markOperationsSeen } from '../lib/pilotProgress'
+import { useOperational } from '../context/OperationalContext'
 
 type OperationalItem = {
   id: string
@@ -92,6 +93,9 @@ type WorkPack = {
   risk_if_ignored: string
   primary_action_path: string | null
   progress_pct?: number | null
+  tasks_done?: number | null
+  tasks_total?: number | null
+  eta_minutes?: number | null
   blocked_reason?: string | null
   acknowledged?: boolean
 }
@@ -242,6 +246,7 @@ export default function OperationsPage() {
   const [searchParams] = useSearchParams()
   const qc = useQueryClient()
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
+  const { recordWorkPack, setNextStep } = useOperational()
   const [panelItem, setPanelItem] = useState<OperationalItem | null>(null)
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
 
@@ -540,7 +545,15 @@ export default function OperationsPage() {
               key={pack.id}
               pack={pack}
               ackPending={ackPack.isPending}
-              onAck={() => ackPack.mutate(pack.id)}
+              onAck={() => {
+                recordWorkPack(pack.id, pack.title)
+                setNextStep({
+                  verb: 'continue',
+                  label: 'Продолжить пакет работ',
+                  path: pack.primary_action_path || '/operations',
+                })
+                ackPack.mutate(pack.id)
+              }}
               onOpen={openPath}
             />
           ))}

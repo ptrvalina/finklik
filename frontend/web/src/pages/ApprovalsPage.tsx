@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import OperationalPage from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
+import { useOperational } from '../context/OperationalContext'
 
 type ApprovalItem = {
   id: string
@@ -32,6 +33,7 @@ export default function ApprovalsPage() {
   const qc = useQueryClient()
   const role = useAuthStore((s) => s.user?.role)
   const manage = canResolveApprovals(role)
+  const { setNextStep } = useOperational()
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey(['workspace-approvals', 'pending']),
@@ -46,6 +48,7 @@ export default function ApprovalsPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['workspace-approvals']) })
       void qc.invalidateQueries({ queryKey: orgQueryKey('execution-feed') })
+      setNextStep({ verb: 'review', label: 'Проверить ленту работы', path: '/operations' })
     },
   })
 

@@ -17,6 +17,7 @@ import {
 import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSession'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
+import { useOperational } from '../context/OperationalContext'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
@@ -291,6 +292,7 @@ export default function Accounting() {
   const [amountPresets, setAmountPresets] = useState<string[]>(() => loadAmountPresets())
 
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
+  const { setNextStep } = useOperational()
   const journalSaveReady = useRef(false)
 
   useLayoutEffect(() => {
@@ -508,6 +510,16 @@ export default function Accounting() {
       if (!ids.length) return { posted: 0 }
       const { data } = await dashboardApi.bulkPostTransactions(ids)
       return data as { posted?: number }
+    },
+    onSuccess: (result) => {
+      const n = Number(result?.posted ?? 0)
+      if (n > 0) {
+        setNextStep({
+          verb: 'review',
+          label: `Проверить ${n} проведённых в ленте`,
+          path: '/operations',
+        })
+      }
     },
     onSettled: () => {
       refreshLedgerRelated()

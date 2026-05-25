@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
+import { useOperational } from '../context/OperationalContext'
 
 type InboxItem = {
   id: string
@@ -37,6 +38,7 @@ export default function InboxPage() {
   const qc = useQueryClient()
   const role = useAuthStore((s) => s.user?.role)
   const manage = canManageInbox(role)
+  const { setNextStep } = useOperational()
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey(['workspace-inbox', 'open']),
@@ -48,9 +50,14 @@ export default function InboxPage() {
   const patchMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       workspaceApi.patchInbox(id, { status }).then((r) => r.data),
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['workspace-inbox']) })
       void qc.invalidateQueries({ queryKey: orgQueryKey('execution-feed') })
+      if (vars.status === 'done') {
+        setNextStep({ verb: 'review', label: 'Проверить ленту работы', path: '/operations' })
+      } else {
+        setNextStep({ verb: 'continue', label: 'Продолжить входящие', path: '/inbox' })
+      }
     },
   })
 

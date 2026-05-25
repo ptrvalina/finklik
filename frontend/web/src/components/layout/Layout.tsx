@@ -18,6 +18,8 @@ import {
 import OrgSwitcher from '../workspace/OrgSwitcher'
 import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
 import NetworkStatusBanner from './NetworkStatusBanner'
+import { useOperational } from '../../context/OperationalContext'
+import OperationalContinuityPanel from '../operations/OperationalContinuityPanel'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -68,6 +70,7 @@ export default function Layout() {
     mutationFn: () => notificationsApi.markAllRead(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
+  const { hasAnchors, panelOpen, setPanelOpen } = useOperational()
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -307,6 +310,17 @@ export default function Layout() {
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
+            {hasAnchors && (
+              <button
+                type="button"
+                onClick={() => setPanelOpen(true)}
+                className="tap-highlight-none hidden min-h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 text-xs font-bold text-primary sm:inline-flex xl:hidden"
+                aria-label="Контекст работы"
+              >
+                <Icon name="playlist_play" className="text-lg" />
+                В работе
+              </button>
+            )}
             <div className="hidden items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.07] px-3 py-1.5 text-[11px] font-semibold text-primary shadow-xs dark:border-primary/30 dark:bg-primary/10 dark:text-emerald-300 sm:flex">
               <span className={`h-2 w-2 rounded-full shadow-[0_0_0_3px_rgb(0_168_107/0.28)] ${connected ? 'bg-primary' : 'bg-on-surface-variant/50 shadow-none'}`} />
               {connected ? 'Онлайн' : 'Офлайн'}
@@ -470,14 +484,31 @@ export default function Layout() {
           </div>
         )}
 
-        <main className="fc-main-atmosphere min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-          <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
-            <NetworkStatusBanner />
-            <BusinessProfileBanner />
-            <Outlet />
-          </div>
-        </main>
+        <div className="flex min-h-0 flex-1">
+          <main className="fc-main-atmosphere min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain">
+            <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
+              <NetworkStatusBanner />
+              <BusinessProfileBanner />
+              <Outlet />
+            </div>
+          </main>
+          <OperationalContinuityPanel variant="rail" />
+        </div>
       </div>
+
+      {panelOpen && hasAnchors && (
+        <>
+          <button
+            type="button"
+            className="fc-modal-backdrop fixed inset-0 z-[83] xl:hidden"
+            aria-label="Закрыть контекст"
+            onClick={() => setPanelOpen(false)}
+          />
+          <div className="xl:hidden">
+            <OperationalContinuityPanel variant="drawer" />
+          </div>
+        </>
+      )}
 
       {/* Mobile bottom bar + «Все сервисы» */}
       <nav

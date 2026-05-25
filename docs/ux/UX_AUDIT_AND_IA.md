@@ -62,3 +62,6 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P5c | OCR: авто-переход по очереди проверки + «Следующий в очереди» | Done |
 | P5d | Work packs: `progress_pct`, `blocked_reason`, `acknowledged` из ленты + domain_events | Done |
 | P5e | Journal: `POST /transactions/bulk-post`; bulk bar «Провести» | Done |
+| F1 | Operational session (sessionStorage) + continuity panel + smart next step | Done |
+| F1b | Unified action verbs; grouped execution feed order | Done |
+| F2 | Work packs: `tasks_done`/`tasks_total`, honest `progress_pct`, `eta_minutes` | Done |

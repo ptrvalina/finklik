@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { ExecutionTaskCard } from '../execution/ExecutionTaskCard'
-import { groupOperationsByType, operationTypeLabel } from '../../lib/executionLabels'
+import { groupOperationsOrdered, operationTypeLabel } from '../../lib/executionLabels'
 import type { OperationalItem } from './GroupedExecutionFeed.types'
 
 export type { OperationalItem } from './GroupedExecutionFeed.types'
@@ -18,7 +18,7 @@ function GroupedExecutionFeed({
   onOpen: (path: string | null | undefined) => void
   onInspect?: (item: OperationalItem) => void
 }) {
-  const groups = groupOperationsByType(rest)
+  const groups = groupOperationsOrdered(rest)
 
   return (
     <div className="fc-section-stack">
@@ -29,7 +29,7 @@ function GroupedExecutionFeed({
         </section>
       )}
 
-      {Object.entries(groups).map(([type, groupItems]) => (
+      {groups.map(({ type, items: groupItems }) => (
         <section key={type}>
           <p className="fc-section-label mb-3">{operationTypeLabel(type)}</p>
           <div className="space-y-3">

@@ -175,7 +175,13 @@ def enrich_work_packs(
         if not ids:
             enriched.append(
                 pack.model_copy(
-                    update={"progress_pct": 100 if pack.id in acknowledged_pack_ids else 8, "acknowledged": pack.id in acknowledged_pack_ids},
+                    update={
+                        "progress_pct": 100 if pack.id in acknowledged_pack_ids else 8,
+                        "tasks_done": 0,
+                        "tasks_total": 0,
+                        "eta_minutes": 5,
+                        "acknowledged": pack.id in acknowledged_pack_ids,
+                    },
                 )
             )
             continue
@@ -184,9 +190,8 @@ def enrich_work_packs(
         done = total - len(remaining)
         base_pct = round(100 * done / total) if total else 0
         acked = pack.id in acknowledged_pack_ids
-        progress_pct = min(100, base_pct + (18 if acked else 0))
-        if progress_pct < 6:
-            progress_pct = 6
+        progress_pct = min(100, max(0, base_pct))
+        eta_minutes = max(3, min(45, len(remaining) * 4))
         crit_left = sum(1 for oid in remaining if idx.get(oid) and idx[oid].priority == "critical")
         blocked_reason: str | None = None
         if crit_left:
@@ -197,6 +202,9 @@ def enrich_work_packs(
             pack.model_copy(
                 update={
                     "progress_pct": progress_pct,
+                    "tasks_done": done,
+                    "tasks_total": total,
+                    "eta_minutes": eta_minutes,
                     "blocked_reason": blocked_reason,
                     "acknowledged": acked,
                 },
