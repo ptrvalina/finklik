@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useOperational } from '../../context/OperationalContext'
 import { formatNextStepCta } from '../../context/OperationalContext'
 import { verbLabel } from '../../lib/operationalVerbs'
+import OperationalFlowLadder from './OperationalFlowLadder'
 
 function relTime(at: number) {
   const min = Math.round((Date.now() - at) / 60_000)
@@ -40,10 +41,11 @@ export default function OperationalContinuityPanel({ variant }: { variant: 'rail
   const { session, hasAnchors, setPanelOpen, continueNext, setNextStep } = useOperational()
   const step = session.nextStep
 
-  if (!hasAnchors && variant === 'rail') return null
-
   const body = (
     <>
+      <OperationalFlowLadder session={session} />
+      {hasAnchors && (
+        <>
       <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Сейчас в работе</p>
       <div className="mt-3 space-y-2">
         {session.lastOcrDoc && (
@@ -51,7 +53,7 @@ export default function OperationalContinuityPanel({ variant }: { variant: 'rail
             icon="document_scanner"
             label={session.lastOcrDoc.title}
             meta={`Скан · ${relTime(session.lastOcrDoc.at)}`}
-            to={`/scan`}
+            to={`/scan?doc_id=${encodeURIComponent(session.lastOcrDoc.id)}`}
           />
         )}
         {session.lastTransaction && (
@@ -79,6 +81,8 @@ export default function OperationalContinuityPanel({ variant }: { variant: 'rail
           />
         )}
       </div>
+        </>
+      )}
 
       {step && (
         <div className="mt-4 rounded-xl border border-primary/25 bg-primary/8 p-3">

@@ -280,7 +280,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
   const currentAuthorityTypes = reportTypes[createForm.authority] || {}
 
   return (
-    <div id="fc-report-submissions" className="space-y-4">
+    <div id="fc-report-submissions" className="space-y-4 pb-28 lg:pb-0">
       {message && (
         <div
           className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold ${
@@ -303,13 +303,13 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
             Готово к автоподаче: {confirmedCount}
           </p>
         </div>
-        <div className="page-actions">
-          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowCreate(true)}>
+        <div className="page-actions sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] z-40 -mx-1 flex flex-col gap-2 rounded-t-2xl border border-outline/35 bg-surface/95 p-3 shadow-float backdrop-blur-xl sm:flex-row sm:justify-end lg:static lg:z-auto lg:mx-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+          <button type="button" className="btn-primary min-h-11 w-full sm:w-auto" onClick={() => setShowCreate(true)}>
             <Icon name="add" className="text-lg" /> Сформировать отчёт
           </button>
           <button
             type="button"
-            className="btn-secondary w-full sm:w-auto"
+            className="btn-secondary min-h-11 w-full sm:w-auto"
             onClick={() => autoSubmitMutation.mutate()}
             disabled={autoSubmitMutation.isPending || confirmedCount === 0}
           >

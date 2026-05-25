@@ -515,9 +515,9 @@ export default function Accounting() {
       const n = Number(result?.posted ?? 0)
       if (n > 0) {
         setNextStep({
-          verb: 'review',
-          label: `Проверить ${n} проведённых в ленте`,
-          path: '/operations',
+          verb: 'send',
+          label: 'Перейти к отчётности',
+          path: '/reports',
         })
       }
     },

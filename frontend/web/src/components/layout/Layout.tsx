@@ -6,6 +6,7 @@ import { useThemeStore } from '../../store/themeStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
+import { notificationEventLabel } from '../../lib/notificationEventLabel'
 import ToastStack from '../ui/ToastStack'
 import { notificationsApi } from '../../api/client'
 import {
@@ -70,7 +71,8 @@ export default function Layout() {
     mutationFn: () => notificationsApi.markAllRead(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
-  const { hasAnchors, panelOpen, setPanelOpen } = useOperational()
+  const { hasAnchors, panelOpen, setPanelOpen, session } = useOperational()
+  const showContextPanel = hasAnchors || Boolean(session.nextStep)
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -310,7 +312,7 @@ export default function Layout() {
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
-            {hasAnchors && (
+            {showContextPanel && (
               <button
                 type="button"
                 onClick={() => setPanelOpen(true)}
@@ -318,7 +320,7 @@ export default function Layout() {
                 aria-label="Контекст работы"
               >
                 <Icon name="playlist_play" className="text-lg" />
-                В работе
+                Поток учёта
               </button>
             )}
             <div className="hidden items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.07] px-3 py-1.5 text-[11px] font-semibold text-primary shadow-xs dark:border-primary/30 dark:bg-primary/10 dark:text-emerald-300 sm:flex">
@@ -466,7 +468,7 @@ export default function Layout() {
                 className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm shadow-soft"
               >
                 <span className="min-w-0 text-on-surface">
-                  <span className="font-bold text-primary">{n.event}:</span>{' '}
+                  <span className="font-bold text-primary">{notificationEventLabel(n.event)}:</span>{' '}
                   <span className="text-on-surface-variant dark:text-on-surface-variant">
                     {typeof n.data === 'object' ? JSON.stringify(n.data) : String(n.data)}
                   </span>
@@ -496,7 +498,7 @@ export default function Layout() {
         </div>
       </div>
 
-      {panelOpen && hasAnchors && (
+      {panelOpen && (
         <>
           <button
             type="button"

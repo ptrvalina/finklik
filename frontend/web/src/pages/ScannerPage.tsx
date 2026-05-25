@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scannerApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
@@ -80,6 +80,7 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 export default function ScannerPage() {
   const qc = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { recordOcrDoc, recordTransaction, setNextStep } = useOperational()
   const fileRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -139,6 +140,15 @@ export default function ScannerPage() {
     },
   })
 
+  useEffect(() => {
+    const docId = searchParams.get('doc_id')?.trim()
+    if (!docId || loadDocMutation.isPending) return
+    if (scanResult?.id === docId) return
+    if (lastScanIdRef.current === docId) return
+    lastScanIdRef.current = docId
+    loadDocMutation.mutate(docId)
+  }, [searchParams, loadDocMutation, scanResult?.id])
+
   const openNextInReviewQueue = useCallback(
     (currentId?: string | null) => {
       const items = reviewQueueData?.items ?? []
@@ -181,6 +191,9 @@ export default function ScannerPage() {
           label: 'Проверить проводку в журнале',
           path: `/accounting/journal?tx_id=${encodeURIComponent(data.transaction_id)}`,
         })
+        const next = new URLSearchParams(searchParams)
+        next.delete('doc_id')
+        setSearchParams(next, { replace: true })
       } else {
         setNextStep({ verb: 'continue', label: 'Следующий документ в очереди', path: '/scan' })
       }
