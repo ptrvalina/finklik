@@ -69,3 +69,6 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | F5a | Pilot: queue mode copy, mobile journal bulk, RU labels (диагностика, премиум) | Done |
 | F3c | OCR: projection deskew; KUDiР суммы; подсказки Дт/Кт на сканере | Done |
 | F5b | План №50 meta в API/UI; RU настройки/логин/банк; терминология учёта | Done |
+| F4a | Операционные заметки: inbox / согласования / пакеты работ (`/workspace/comments`) | Done |
+| F4b | OrgSwitcher → recent clients; вкладка общих очередей в sessionStorage | Done |
+| F5c | Пилот: пустой дашборд → сканер + журнал | Done |

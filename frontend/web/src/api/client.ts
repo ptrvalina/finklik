@@ -364,6 +364,8 @@ export const workspaceApi = {
     api.patch(`/workspace/approvals/${approvalId}`, data),
   comments: (params?: { target_kind?: string; target_id?: string }) =>
     api.get('/workspace/comments', { params }),
+  createComment: (data: { target_kind: string; target_id: string; body: string }) =>
+    api.post('/workspace/comments', data),
 }
 
 /** Flow 4–6: лента исполнения + каноническое состояние + пакеты автономности. */

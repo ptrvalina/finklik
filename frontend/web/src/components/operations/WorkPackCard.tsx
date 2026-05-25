@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { executionCtaLabel } from '../../lib/executionPresentation'
 import { verbLabel } from '../../lib/operationalVerbs'
+import { OperationalCommentsPanel } from '../workspace/OperationalCommentsPanel'
 
 export type WorkPackLike = {
   id: string
@@ -92,6 +93,7 @@ export const WorkPackCard = memo(function WorkPackCard({
           {ackPending ? '…' : verbLabel('continue')}
         </button>
       </div>
+      <OperationalCommentsPanel targetKind="work_pack" targetId={pack.id} />
     </article>
   )
 })

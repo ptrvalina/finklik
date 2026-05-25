@@ -7,6 +7,7 @@ import OperationalPage from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { useOperational } from '../context/OperationalContext'
+import { OperationalCommentsPanel } from '../components/workspace/OperationalCommentsPanel'
 
 type ApprovalItem = {
   id: string
@@ -98,6 +99,7 @@ export default function ApprovalsPage() {
               <p className="mt-2 text-xs text-on-surface-variant">
                 Статус: {STATUS_RU[item.status] ?? item.status}
               </p>
+              <OperationalCommentsPanel targetKind="approval_request" targetId={item.id} />
               {manage && (
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-outline/25 pt-3">
                   <button

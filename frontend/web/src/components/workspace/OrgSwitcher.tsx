@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceApi } from '../../api/client'
 import { useMutation } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
+import { pushRecentClient } from '../../lib/recentClients'
 
 type Placement = 'sidebar' | 'header'
 
@@ -53,8 +54,10 @@ export default function OrgSwitcher({
         onChange={(e) => {
           const v = e.target.value
           if (!v || v === activeId) return
+          const picked = list.find((m: { organization_id: string }) => m.organization_id === v)
           void (async () => {
             try {
+              if (picked?.name) pushRecentClient(v, picked.name)
               await qc.cancelQueries()
               await switchOrganization(v)
               await qc.invalidateQueries()

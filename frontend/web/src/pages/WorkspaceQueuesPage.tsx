@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { loadWorkspaceQueuesTab, saveWorkspaceQueuesTab } from '../lib/workspaceQueuesUiSession'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
@@ -122,7 +123,10 @@ export default function WorkspaceQueuesPage() {
             className={`min-h-10 flex-1 rounded-xl px-3 text-sm font-semibold transition ${
               tab === t.id ? 'bg-primary text-primary-on shadow-sm' : 'text-on-surface-variant hover:bg-surface/80'
             }`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id)
+              saveWorkspaceQueuesTab(t.id)
+            }}
           >
             {t.label}
           </button>

@@ -7,6 +7,7 @@ import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { useOperational } from '../context/OperationalContext'
+import { OperationalCommentsPanel } from '../components/workspace/OperationalCommentsPanel'
 
 type InboxItem = {
   id: string
@@ -148,6 +149,7 @@ export default function InboxPage() {
                   </Link>
                 )}
               </div>
+              <OperationalCommentsPanel targetKind="operational_inbox" targetId={item.id} />
               {manage && (
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-outline/25 pt-3">
                   <button

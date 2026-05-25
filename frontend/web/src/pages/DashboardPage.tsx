@@ -283,9 +283,14 @@ export default function DashboardPage() {
                 title="Журнал пуст"
                 description="Добавьте первую операцию — здесь появится поток."
                 actions={
-                  <Link to="/accounting/journal" className="btn-primary min-h-11 px-6 text-sm font-bold">
-                    Открыть журнал
-                  </Link>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Link to="/scan" className="btn-primary min-h-11 px-6 text-sm font-bold">
+                      Сканер
+                    </Link>
+                    <Link to="/accounting/journal" className="btn-secondary min-h-11 px-6 text-sm font-bold">
+                      Журнал
+                    </Link>
+                  </div>
                 }
               />
             </div>
