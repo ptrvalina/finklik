@@ -18,6 +18,7 @@ import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSess
 import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
 import { useOperational } from '../context/OperationalContext'
+import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
@@ -771,6 +772,8 @@ export default function Accounting() {
       }
     >
       {hotkeysOpen && <JournalHotkeysHelp onClose={() => setHotkeysOpen(false)} />}
+
+      <FinancialStateHero compact className="mb-4" />
 
       <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
         <div className="flex flex-wrap gap-2 border-b border-outline/30 pb-4">

@@ -21,6 +21,13 @@ export const terminology = {
     chartOfAccounts: 'План счетов',
   },
 
+  globalStatus: {
+    ok: 'Норма',
+    attention: 'Нужны действия',
+    risk: 'Есть риск',
+    critical: 'Критично',
+  },
+
   execution: {
     financialState: 'Состояние бизнеса',
     workPack: 'Пакет задач',

@@ -539,7 +539,7 @@ export default function OperationsPage() {
 
       {!isLoading && !isError && (data?.work_packs?.length ?? 0) > 0 && (
         <section className="mb-8 fc-section-stack-sm">
-          <p className="fc-section-label">Пакеты подготовки</p>
+          <p className="fc-section-label">Пакеты задач</p>
           {(data?.work_packs ?? []).map((pack) => (
             <WorkPackCard
               key={pack.id}

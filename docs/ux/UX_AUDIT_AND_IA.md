@@ -78,3 +78,6 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | TD1 | `scannerUiSession` — авто-очередь OCR per org; `reportingFlowSession` per org | Done |
 | TD2 | Гид отчётности: sticky actions mobile; RU сканер/документы (вебхук, умный захват) | Done |
 | TD3 | RU: типы документов, аналитика KPI, 1С retry; `documentTypeLabels`; тест bulk-post | Done |
+| P4 | Hub учёта: FinancialState + приоритеты очередей; shortcuts; не плиточный ERP | Done |
+| P5a | Journal + Scanner: compact FinancialStateHero | Done |
+| OS | Полный audit + phased plan: `docs/ux/FINANCIAL_OS_UX_AUDIT_2026-05.md` | Done |

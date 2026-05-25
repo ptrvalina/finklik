@@ -18,6 +18,7 @@ import {
 } from '../lib/ocrCorrectionFields'
 import type { FieldRegion } from '../components/scanner/OcrPreviewOverlay'
 import { useOperational } from '../context/OperationalContext'
+import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { useAuthStore } from '../store/authStore'
 import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
 
@@ -191,6 +192,8 @@ export default function ScannerPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions']) })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('financial-state-bundle') })
+      void qc.invalidateQueries({ queryKey: ['reporting-calm-overview'] })
       const docId = scanResult?.id
       const title = editDraft?.counterparty || scanResult?.filename || 'Документ'
       if (docId) recordOcrDoc(docId, title)
@@ -403,6 +406,8 @@ export default function ScannerPage() {
         ) : undefined
       }
     >
+      <FinancialStateHero compact className="mb-4" />
+
       {reviewCount > 0 && (
         <div className="mb-4 flex flex-col gap-2 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-on-surface">
