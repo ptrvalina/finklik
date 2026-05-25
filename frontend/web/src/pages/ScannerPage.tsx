@@ -777,7 +777,7 @@ export default function ScannerPage() {
           <div className="relative rounded-xl p-6 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
             <div className="relative z-10">
-              <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wider">Pro Tip</p>
+              <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wider">Совет</p>
               <p className="text-sm text-on-surface font-medium leading-relaxed">
                 Перетащите до 20 файлов одновременно для пакетной обработки.
               </p>

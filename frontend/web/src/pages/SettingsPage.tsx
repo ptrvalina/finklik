@@ -747,7 +747,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               />
             </div>
             <div>
-              <label className="label">Base URL (необязательно)</label>
+              <label className="label">Базовый URL (необязательно)</label>
               <input
                 className="input min-h-11 w-full rounded-xl font-mono text-sm"
                 value={llmBase}

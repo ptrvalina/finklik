@@ -60,7 +60,7 @@ export default function RegisterPage() {
             <input className="input min-h-11 rounded-[1rem]" placeholder="Иванов Иван Иванович" value={form.full_name} onChange={set('full_name')} required />
           </div>
           <div className="space-y-1.5">
-            <label className="label">Email</label>
+            <label className="label">Эл. почта</label>
             <input type="email" className="input min-h-11 rounded-[1rem]" placeholder="ivan@company.by" value={form.email} onChange={set('email')} required />
           </div>
           <div className="space-y-1.5">

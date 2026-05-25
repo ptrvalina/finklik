@@ -100,3 +100,38 @@ async def test_filter_by_type(client: AsyncClient, auth_headers: dict):
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert all(tx["type"] == "income" for tx in items)
+
+
+@pytest.mark.asyncio
+async def test_bulk_post_drafts(client: AsyncClient, auth_headers: dict):
+    """Массовое проведение черновиков с валидным описанием."""
+    ids: list[str] = []
+    for desc in ("Доход A", "Доход B"):
+        r = await client.post(
+            "/api/v1/transactions",
+            json={
+                "type": "income",
+                "amount": 100,
+                "description": desc,
+                "transaction_date": "2026-04-15",
+            },
+            headers=auth_headers,
+        )
+        assert r.status_code == 201
+        assert r.json()["status"] == "draft"
+        ids.append(r.json()["id"])
+
+    bulk = await client.post(
+        "/api/v1/transactions/bulk-post",
+        json={"transaction_ids": ids},
+        headers=auth_headers,
+    )
+    assert bulk.status_code == 200
+    body = bulk.json()
+    assert body["posted"] == 2
+    assert body["skipped"] == 0
+
+    listed = await client.get("/api/v1/transactions", headers=auth_headers)
+    by_id = {t["id"]: t for t in listed.json()["items"]}
+    for tid in ids:
+        assert by_id[tid]["status"] == "posted"

@@ -668,7 +668,7 @@ export default function CounterpartiesPage() {
                 />
               </div>
               <div>
-                <label className="label">Email</label>
+                <label className="label">Эл. почта</label>
                 <input
                   type="email"
                   className="input min-h-11 rounded-xl"

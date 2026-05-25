@@ -10,6 +10,7 @@ import {
   saveReportingFlowStep,
   saveReportingFlowValidated,
 } from '../../lib/reportingFlowSession'
+import { snapshotLevelRu } from '../../lib/financialSnapshotLabels'
 import {
   type CalmOverviewLike,
   type FlowStepId,
@@ -316,15 +317,15 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
         <div className="rounded-3xl border border-primary/15 bg-primary/[0.04] px-4 py-3 text-xs leading-relaxed text-on-surface sm:text-sm">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Канонический снимок состояния</p>
           <p className="mt-2">
-            Риск: <strong>{data.financial_state.risk_level}</strong>
+            Риск: <strong>{snapshotLevelRu(data.financial_state.risk_level)}</strong>
             {' · '}
-            Отчётность: <strong>{data.financial_state.reporting_status?.status}</strong>
+            Отчётность: <strong>{snapshotLevelRu(data.financial_state.reporting_status?.status)}</strong>
             {' · '}
-            Комплаенс: <strong>{data.financial_state.compliance_state?.level}</strong>
+            Комплаенс: <strong>{snapshotLevelRu(data.financial_state.compliance_state?.level)}</strong>
             {' · '}
             Первичка: <strong>{data.financial_state.document_completeness?.score}%</strong>
             {' · '}
-            Касса: <strong>{data.financial_state.cashflow_state?.level}</strong>
+            Касса: <strong>{snapshotLevelRu(data.financial_state.cashflow_state?.level)}</strong>
           </p>
           {(data.state_predictions?.length ?? 0) > 0 && (
             <ul className="mt-2 list-inside list-disc text-on-surface-variant">

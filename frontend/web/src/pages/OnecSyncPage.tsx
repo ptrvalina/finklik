@@ -140,7 +140,7 @@ export default function OnecSyncPage() {
                           disabled={retryMutation.isPending}
                           onClick={() => retryMutation.mutate(job.id)}
                         >
-                          <Icon name="refresh" className="text-sm" /> Retry
+                          <Icon name="refresh" className="text-sm" /> Повторить
                         </button>
                       )}
                     </td>

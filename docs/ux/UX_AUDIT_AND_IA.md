@@ -77,3 +77,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | F5e | RU: автопилот, 1С endpoint, контрагенты «слой связей» | Done |
 | TD1 | `scannerUiSession` — авто-очередь OCR per org; `reportingFlowSession` per org | Done |
 | TD2 | Гид отчётности: sticky actions mobile; RU сканер/документы (вебхук, умный захват) | Done |
+| TD3 | RU: типы документов, аналитика KPI, 1С retry; `documentTypeLabels`; тест bulk-post | Done |

@@ -7,6 +7,7 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
+import { PRIMARY_DOC_TYPE_OPTIONS } from '../lib/documentTypeLabels'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -653,9 +654,11 @@ export default function DocumentsPage() {
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <select className="input" value={docForm.doc_type} onChange={(e) => setDocForm({ ...docForm, doc_type: e.target.value, related_document_id: '' })}>
-            <option value="invoice">Invoice (Счёт)</option>
-            <option value="act">Act (Акт)</option>
-            <option value="waybill">Waybill (Накладная)</option>
+            {PRIMARY_DOC_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
           <input
             className="input"
@@ -692,7 +695,7 @@ export default function DocumentsPage() {
               value={docForm.related_document_id}
               onChange={(e) => setDocForm({ ...docForm, related_document_id: e.target.value })}
             >
-              <option value="">Счёт-основание (invoice)</option>
+              <option value="">Счёт-основание</option>
               {invoiceOptions.map((inv: any) => (
                 <option key={inv.id} value={inv.id}>
                   {inv.doc_number} от {inv.issue_date} — {Number(inv.amount_total).toFixed(2)} {inv.currency}
@@ -724,9 +727,11 @@ export default function DocumentsPage() {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <select className="input" value={docTypeFilter} onChange={(e) => setDocTypeFilter(e.target.value)}>
               <option value="">Все типы</option>
-              <option value="invoice">Invoice</option>
-              <option value="act">Act</option>
-              <option value="waybill">Waybill</option>
+              {PRIMARY_DOC_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
             <select className="input" value={docStatusFilter} onChange={(e) => setDocStatusFilter(e.target.value)}>
               <option value="">Все статусы</option>
@@ -915,7 +920,7 @@ export default function DocumentsPage() {
               <input
                 type="email"
                 className="input w-full"
-                placeholder="Email для отправки ссылки"
+                placeholder="Эл. почта для отправки ссылки"
                 value={payLinkEmail}
                 onChange={(e) => setPayLinkEmail(e.target.value)}
               />

@@ -138,10 +138,10 @@ export default function AnalyticsPage() {
           <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { key: 'operations_auto_rate', label: 'Операции auto %' },
-              { key: 'ocr_auto_rate', label: 'OCR без ручного %' },
-              { key: 'reporting_ready_rate', label: 'Отчёты ready %' },
-              { key: 'payroll_auto_rate', label: 'Payroll auto %' },
+              { key: 'operations_auto_rate', label: 'Операции без ручного %' },
+              { key: 'ocr_auto_rate', label: 'Распознавание без ручного %' },
+              { key: 'reporting_ready_rate', label: 'Отчёты готовы %' },
+              { key: 'payroll_auto_rate', label: 'Зарплата без ручного %' },
             ].map((m: any) => {
               const value = Number(automationKpi?.[m.key] ?? 0)
               const target = Number(automationKpi?.targets?.[m.key] ?? 0)
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
                 >
                   <p className="text-xs text-on-surface-variant">{m.label}</p>
                   <p className={`mt-1 text-lg font-extrabold ${ok ? 'text-secondary' : 'text-amber-500'}`}>{value.toFixed(1)}%</p>
-                  <p className="text-[10px] text-on-surface-variant">target {target.toFixed(1)}%</p>
+                  <p className="text-[10px] text-on-surface-variant">цель {target.toFixed(1)}%</p>
                 </div>
               )
             })}
