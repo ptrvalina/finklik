@@ -309,7 +309,7 @@ export default function CounterpartiesPage() {
         </div>
         <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Relationship layer</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Слой связей</p>
             <p className="mt-1 font-headline text-lg font-bold text-on-surface">Сеть контрагентов</p>
             <p className="text-sm text-on-surface-variant">Визуальный слой доверия: активные связи и оборот за период.</p>
           </div>

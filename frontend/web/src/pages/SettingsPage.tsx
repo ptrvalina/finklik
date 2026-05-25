@@ -281,7 +281,7 @@ function ProfileSection() {
 
   const rows = [
     { icon: 'person', label: 'Владелец', value: user?.full_name },
-    { icon: 'mail', label: 'Email', value: user?.email },
+    { icon: 'mail', label: 'Эл. почта', value: user?.email },
     { icon: 'business', label: 'Организация', value: user?.org_name },
     { icon: 'badge', label: 'Форма', value: LEGAL_FORM_LABELS[user?.legal_form || ''] || user?.legal_form || '—' },
     { icon: 'receipt_long', label: 'Режим', value: TAX_REGIME_LABELS[user?.tax_regime || ''] || user?.tax_regime || '—' },
@@ -666,7 +666,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       <div className="page-section p-5">
         <h3 className="mb-1 text-sm font-bold text-on-surface">Внешний HTTP-сервис</h3>
         <p className="mb-4 text-[11px] text-on-surface-variant">
-          Endpoint и токен для обмена через внешний API (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
+          Адрес API и токен для обмена через внешний сервис (см. docs/integrations/onec-contract.md). В продакшене только HTTPS.
         </p>
         {isLoading && (
           <p className="mb-3 text-xs text-on-surface-variant">Загрузка параметров подключения 1С…</p>
@@ -678,7 +678,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         )}
         <div className="space-y-3">
           <div>
-            <label className="label">Endpoint (URL)</label>
+            <label className="label">Адрес API (URL)</label>
             <input
               className="input min-h-11 w-full rounded-xl font-mono text-sm"
               value={endpoint}
@@ -789,15 +789,15 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
         <div className="page-section p-5">
           <h3 className="mb-1 text-sm font-bold text-on-surface">Центр автопилота</h3>
           <p className="mb-4 text-[11px] text-on-surface-variant">
-            Режимы: Assist, Checkpoints, Autopilot. Включайте только те сценарии, которые готовы к полностью автоматическому циклу.
+            Режимы: ассистент, с контрольными точками, автопилот. Включайте только те сценарии, которые готовы к полностью автоматическому циклу.
           </p>
           <div className="space-y-3">
             <div>
               <label className="label">Режим</label>
               <select className="input min-h-11 w-full rounded-xl" value={automationMode} onChange={(e) => setAutomationMode(e.target.value as any)}>
-                <option value="assist">Assist</option>
-                <option value="checkpoints">Auto with checkpoints</option>
-                <option value="autopilot">Autopilot</option>
+                <option value="assist">Ассистент</option>
+                <option value="checkpoints">Авто с контрольными точками</option>
+                <option value="autopilot">Автопилот</option>
               </select>
             </div>
             <label className="flex items-center gap-2 text-sm text-on-surface-variant">
@@ -806,7 +806,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
             </label>
             <label className="flex items-center gap-2 text-sm text-on-surface-variant">
               <input type="checkbox" className="rounded" checked={autoWorkforce} onChange={(e) => setAutoWorkforce(e.target.checked)} />
-              Автосценарии workforce (кадровые follow-up задачи)
+              Автосценарии кадров (последующие задачи по персоналу)
             </label>
             <div>
               <label className="label">Лимит автоподач за запуск</label>
@@ -1136,7 +1136,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
         >
           <div className="space-y-4">
             <div>
-              <label className="label">Email</label>
+              <label className="label">Эл. почта</label>
               <input
                 type="email"
                 className="input min-h-11 rounded-xl"

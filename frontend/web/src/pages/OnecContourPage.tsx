@@ -149,7 +149,7 @@ export default function OnecContourPage() {
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-outline/70 pb-2">
-                <dt className="text-on-surface-variant">Endpoint</dt>
+                <dt className="text-on-surface-variant">Адрес API</dt>
                 <dd className="max-w-[min(100%,280px)] truncate text-right font-mono text-xs text-on-surface-variant">
                   {data.endpoint || '—'}
                 </dd>
