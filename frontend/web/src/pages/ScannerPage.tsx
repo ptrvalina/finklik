@@ -55,6 +55,8 @@ type HistoryItem = {
   parsed: ParsedData; transaction_id: string | null; created_at: string
 }
 
+const MAX_BATCH_FILES = 20
+
 const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> = {
   receipt: { label: 'Чек', icon: 'receipt', color: 'text-secondary' },
   ttn: { label: 'ТТН', icon: 'local_shipping', color: 'text-primary' },
@@ -87,6 +89,8 @@ export default function ScannerPage() {
   const [activeTab, setActiveTab] = useState<'upload' | 'text'>('upload')
   const [textInput, setTextInput] = useState('')
   const [textDocType, setTextDocType] = useState('')
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
+  const [batchError, setBatchError] = useState<string | null>(null)
 
   const applyScanPayload = useCallback((data: ScanResult) => {
     setScanResult(data)
@@ -199,6 +203,7 @@ export default function ScannerPage() {
   }, [scanResult])
 
   const handleFile = useCallback((file: File) => {
+    setBatchError(null)
     setPreview(null)
     setScanResult(null)
     setTxSaved(false)
@@ -211,11 +216,75 @@ export default function ScannerPage() {
     uploadMutation.mutate(file)
   }, [uploadMutation])
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); setDragOver(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) handleFile(file)
-  }, [handleFile])
+  const processBatch = useCallback(
+    async (fileList: FileList | File[]) => {
+      const files = Array.from(fileList).slice(0, MAX_BATCH_FILES)
+      if (files.length === 0) return
+      if (files.length === 1) {
+        handleFile(files[0])
+        return
+      }
+      setBatchError(null)
+      setBatchProgress({ done: 0, total: files.length, name: files[0].name })
+      let lastData: ScanResult | null = null
+      let lastPreview: string | null = null
+      let failures = 0
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i]
+        setBatchProgress({ done: i, total: files.length, name: f.name })
+        try {
+          const res = await scannerApi.upload(f)
+          lastData = res.data as ScanResult
+          if (f.type.startsWith('image/')) {
+            lastPreview = await new Promise<string | null>((resolve) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result as string)
+              reader.onerror = () => resolve(null)
+              reader.readAsDataURL(f)
+            })
+          }
+        } catch {
+          failures += 1
+        }
+        setBatchProgress({ done: i + 1, total: files.length, name: f.name })
+      }
+      setBatchProgress(null)
+      if (lastData) {
+        applyScanPayload(lastData)
+        setPreview(lastPreview)
+        document.getElementById('scanner-result')?.scrollIntoView({ behavior: 'smooth' })
+      }
+      if (failures > 0) {
+        setBatchError(`${failures} из ${files.length} не распознаны — проверьте формат или повторите.`)
+      }
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
+    },
+    [applyScanPayload, handleFile, qc],
+  )
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setDragOver(false)
+      const files = e.dataTransfer.files
+      if (!files?.length) return
+      if (files.length > 1) void processBatch(files)
+      else handleFile(files[0])
+    },
+    [handleFile, processBatch],
+  )
+
+  const onFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files
+      if (!files?.length) return
+      if (files.length > 1) void processBatch(files)
+      else handleFile(files[0])
+      e.target.value = ''
+    },
+    [handleFile, processBatch],
+  )
 
   function submitTxFromDraft() {
     if (!editDraft || !scanResult?.id) return
@@ -308,19 +377,34 @@ export default function ScannerPage() {
               animate={dragOver ? { scale: 1.008 } : { scale: 1 }}
               transition={{ type: 'spring', stiffness: 420, damping: 30 }}
             >
-              <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,application/pdf"
+                multiple
+                className="hidden"
+                onChange={onFileInput}
+              />
               <div className={`fc-premium-surface flex h-[min(420px,55vh)] w-full min-h-[240px] flex-col items-center justify-center border-2 border-dashed transition-colors duration-300 sm:h-[420px] ${
                 dragOver ? 'border-emerald-400/60 bg-emerald-500/[0.08]' : 'border-primary/35 bg-[rgb(var(--color-surface)/0.35)] hover:border-primary/50 hover:bg-emerald-500/[0.06]'
               }`}>
-                {uploadMutation.isPending ? (
+                {uploadMutation.isPending || batchProgress ? (
                   <div className="space-y-6 px-6 text-center">
                     <div className="relative mx-auto h-16 w-16">
                       <div className="absolute inset-0 rounded-full border-2 border-white/10" />
                       <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-emerald-400 border-r-emerald-400/40" />
                     </div>
                     <div>
-                      <p className="font-headline text-sm font-semibold text-on-surface">Распознаём документ</p>
-                      <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">OCR · классификация · извлечение суммы и реквизитов</p>
+                      <p className="font-headline text-sm font-semibold text-on-surface">
+                        {batchProgress
+                          ? `Пакет ${batchProgress.done} / ${batchProgress.total}`
+                          : 'Распознаём документ'}
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">
+                        {batchProgress
+                          ? batchProgress.name
+                          : 'OCR · классификация · извлечение суммы и реквизитов'}
+                      </p>
                     </div>
                     <div className="flex justify-center gap-1.5">
                       {['Скан', 'Текст', 'Поля'].map((step, i) => (
@@ -341,7 +425,7 @@ export default function ScannerPage() {
                       <Icon name="cloud_upload" className="text-primary text-4xl" />
                     </div>
                     <h3 className="text-xl font-bold font-headline text-on-surface mb-2">Перетащите файл или нажмите</h3>
-                    <p className="text-on-surface-variant text-sm mb-8">PDF, PNG, JPG (до 25 МБ)</p>
+                    <p className="text-on-surface-variant text-sm mb-8">PDF, PNG, JPG · до {MAX_BATCH_FILES} файлов · 25 МБ каждый</p>
                     <button type="button" className="btn-primary min-h-12 px-4" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>
                       <Icon name="add" className="text-xl" /> Выбрать документ
                     </button>
@@ -392,9 +476,9 @@ export default function ScannerPage() {
             </div>
           )}
 
-          {uploadMutation.isError && (
+          {(uploadMutation.isError || batchError) && (
             <div className="mt-4 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">
-              Ошибка: {clientErrorText(uploadMutation.error) || 'Попробуйте ещё раз'}
+              {batchError || `Ошибка: ${clientErrorText(uploadMutation.error) || 'Попробуйте ещё раз'}`}
             </div>
           )}
 
@@ -500,7 +584,7 @@ export default function ScannerPage() {
                   )}
                   {txSaved && createdTxId && (
                     <Link
-                      to="/accounting/journal"
+                      to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
                       className="btn-secondary mt-3 inline-flex min-h-10 w-full justify-center text-sm"
                     >
                       Открыть в журнале
@@ -623,25 +707,15 @@ export default function ScannerPage() {
         </section>
       )}
 
-      {/* Stats */}
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
-        {[
-          { icon: 'account_tree', color: 'primary', label: 'Сканировано', value: String(history.length) },
-          { icon: 'rule', color: 'tertiary', label: 'В очереди проверки', value: String(reviewQueueData?.items?.length ?? 0) },
-          { icon: 'bolt', color: 'secondary', label: 'Время обработки', value: '~1.2s' },
-          { icon: 'verified', color: 'tertiary', label: 'Точность OCR', value: '99.8%' },
-          { icon: 'security', color: 'error', label: 'Хранение', value: 'AES-256' },
-        ].map(s => (
-          <div key={s.label} className="flex items-center gap-4 rounded-xl bg-surface-container p-4 sm:p-5">
-            <div className={`w-12 h-12 rounded-full bg-${s.color}/5 flex items-center justify-center border border-${s.color}/20`}>
-              <Icon name={s.icon} className={`text-${s.color}`} />
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant font-medium">{s.label}</p>
-              <p className="text-xl font-bold font-headline text-on-surface">{s.value}</p>
-            </div>
-          </div>
-        ))}
+      <div className="mt-8 grid grid-cols-2 gap-3 sm:max-w-md">
+        <div className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-4 py-3">
+          <p className="font-headline text-xl font-bold tabular-nums text-on-surface">{history.length}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Сканов в истории</p>
+        </div>
+        <div className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-4 py-3">
+          <p className="font-headline text-xl font-bold tabular-nums text-on-surface">{reviewQueueData?.items?.length ?? 0}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Ждут проверки</p>
+        </div>
       </div>
     </OperationalPage>
   )

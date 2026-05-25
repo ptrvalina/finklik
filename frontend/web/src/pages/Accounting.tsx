@@ -390,6 +390,20 @@ export default function Accounting() {
     })
   }, [txQuery.data?.items, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter])
 
+  useEffect(() => {
+    const txId = searchParams.get('tx_id')
+    if (!txId || !txQuery.data?.items?.length) return
+    const items = txQuery.data.items as any[]
+    const tx = items.find((t) => String(t.id) === txId)
+    if (!tx) return
+    setPanelTx(tx)
+    const idx = filteredItems.findIndex((t: any) => String(t.id) === txId)
+    if (idx >= 0) setFocusedRowIndex(idx)
+    const next = new URLSearchParams(searchParams)
+    next.delete('tx_id')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams, txQuery.data?.items, filteredItems])
+
   const visibleIds = useMemo(() => filteredItems.map((t: any) => String(t.id)), [filteredItems])
   const selection = useDataTableSelection(visibleIds)
 

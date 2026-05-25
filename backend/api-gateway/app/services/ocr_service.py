@@ -41,7 +41,14 @@ def detect_doc_type(filename: str) -> str:
         return "act"
     if any(k in name for k in ("счёт", "счет", "invoice")):
         return "invoice"
+    if any(k in name for k in ("плат", "payment", "поручен")):
+        return "payment_order"
     return "receipt"
+
+
+def _doc_hint_from_filename(filename: str) -> str:
+    """Подсказка для preprocess_for_ocr (контраст/резкость по типу документа)."""
+    return detect_doc_type(filename)
 
 
 def mock_ocr_process(filename: str, file_bytes: bytes) -> dict:
@@ -83,7 +90,8 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         else:
             from app.services.ocr_preprocess import load_image_from_bytes, preprocess_for_ocr
 
-            img = preprocess_for_ocr(load_image_from_bytes(file_bytes))
+            doc_hint = _doc_hint_from_filename(filename)
+            img = preprocess_for_ocr(load_image_from_bytes(file_bytes), doc_hint=doc_hint)
             text = pytesseract.image_to_string(img, lang="rus+eng")
             # Второй проход с другим PSM для слабых сканов.
             try:

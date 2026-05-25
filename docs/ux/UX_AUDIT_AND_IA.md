@@ -57,3 +57,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P2 | Feed: why / if ignored / confidence; type-specific risk copy | Done |
 | P4 | `/workspace/accountant/queues`; global queues UI; recent clients; pin on cards | Done |
 | P3 | OCR corrections API; autosave; keyboard flow; vendor memory on edit; review queue load | Done |
+| P3b | Batch upload (20); journal deep-link `tx_id`; preprocess doc_hint; calmer scanner stats | Done |
