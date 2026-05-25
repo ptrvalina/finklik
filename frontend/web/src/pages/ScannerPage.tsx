@@ -615,6 +615,8 @@ export default function ScannerPage() {
                       fieldValidation={scanResult.field_validation}
                       docNumber={scanResult.parsed.doc_number}
                       vendorHints={scanResult.vendor_hints}
+                      suggestedDebit={scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined}
+                      suggestedCredit={scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined}
                       amountError={amountError}
                       autosaving={autosaving}
                       onChange={handleDraftChange}

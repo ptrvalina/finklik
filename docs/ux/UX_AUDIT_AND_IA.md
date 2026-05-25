@@ -67,3 +67,5 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | F2 | Work packs: `tasks_done`/`tasks_total`, honest `progress_pct`, `eta_minutes` | Done |
 | F3 | OCR: deskew/EXIF preprocess, field_regions overlay, KUDiР/платёжки, vendor memory loop | Done |
 | F5a | Pilot: queue mode copy, mobile journal bulk, RU labels (диагностика, премиум) | Done |
+| F3c | OCR: projection deskew; KUDiР суммы; подсказки Дт/Кт на сканере | Done |
+| F5b | План №50 meta в API/UI; RU настройки/логин/банк; терминология учёта | Done |

@@ -11,7 +11,7 @@ DOC_PATTERNS: list[tuple[str, list[str]]] = [
     ("invoice", ["счёт", "счет", "invoice", "счет-фактур"]),
     ("act", ["акт выполнен", "акт оказан", "акт приём"]),
     ("payment_order", ["платёжное поручение", "платежное поручение", "плательщик", "получатель"]),
-    ("kudir", ["кудир", "книга учета", "книга учёта", "доходов и расходов"]),
+    ("kudir", ["кудир", "книга учета", "книга учёта", "доходов и расходов", "доходы и расходы"]),
     ("ttn", ["ттн", "товарно-транспорт", "накладн"]),
     ("contract", ["договор", "контракт", "contract"]),
     ("payroll", ["расчётн", "расчетн", "ведомост", "зарплат", "фсзн"]),
@@ -30,6 +30,10 @@ BYN_RE = re.compile(
 DATE_RE = re.compile(r"\b(\d{1,2})[./](\d{1,2})[./](\d{2,4})\b")
 IP_RE = re.compile(r"\bИП\s+([А-ЯЁа-яё][^\n,]{3,60})", re.I)
 OOO_RE = re.compile(r"\b(ООО|ОДО|ЧУП|ОАО|ЗАО)\s+([«\"]?[А-ЯЁA-Za-z0-9][^,\n«»\"]{2,80})", re.I)
+KUDIR_INCOME_RE = re.compile(
+    r"(?:доходы|выручка|поступлени[яе])\s*[:=]?\s*([\d\s]+[.,]\d{2})",
+    re.I,
+)
 
 
 def detect_document_type(text: str, filename: str = "") -> tuple[str, int]:
@@ -71,10 +75,11 @@ def parse_belarus_fields(text: str) -> dict[str, Any]:
         conf["unp"] = 88
 
     pay_match = PAYMENT_AMOUNT_RE.search(text)
-    m_amt = BYN_RE.search(text) or pay_match
+    kudir_match = KUDIR_INCOME_RE.search(text)
+    m_amt = BYN_RE.search(text) or pay_match or kudir_match
     if m_amt:
         fields["amount"] = _parse_amount(m_amt.group(1))
-        conf["amount"] = 78 if pay_match else 75
+        conf["amount"] = 78 if pay_match else (76 if kudir_match else 75)
 
     for m in DATE_RE.finditer(text):
         d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))

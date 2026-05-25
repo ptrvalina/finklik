@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { accountingApi } from '../api/client'
+import { Link } from 'react-router-dom'
 import { terminology } from '../i18n'
 import OperationalPage from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
+
+type ChartTreeResponse = {
+  classes: TreeClass[]
+  meta?: { standard?: string; accounts_count?: number; official_subaccounts_count?: number }
+  stats?: { synthetic_accounts?: number; subaccounts_org?: number }
+}
 
 type TreeClass = {
   id: number
@@ -25,7 +32,7 @@ export default function ChartOfAccountsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: orgQueryKey('chart-tree'),
-    queryFn: () => accountingApi.chartTree().then((r) => r.data as { classes: TreeClass[] }),
+    queryFn: () => accountingApi.chartTree().then((r) => r.data as ChartTreeResponse),
     staleTime: 120_000,
   })
 
@@ -73,6 +80,11 @@ export default function ChartOfAccountsPage() {
       title={terminology.nav.chartOfAccounts}
       description="Полный типовой план по Постановлению Минфина №50: синтетические и забалансовые счета, официальные и организационные субсчета."
       primaryAction={
+        <Link to="/accounting/fixed-assets" className="btn-primary !min-h-10 text-xs">
+          {terminology.accounting.amortization}
+        </Link>
+      }
+      secondaryActions={
         <button
           type="button"
           className="btn-secondary !min-h-10 text-xs"
@@ -82,6 +94,13 @@ export default function ChartOfAccountsPage() {
         </button>
       }
     >
+      {data?.meta && (
+        <p className="mb-4 text-xs text-on-surface-variant">
+          {data.meta.standard} · счетов {data.meta.accounts_count ?? '—'} · типовых субсчетов{' '}
+          {data.meta.official_subaccounts_count ?? '—'}
+          {data.stats?.subaccounts_org != null ? ` · в организации ${data.stats.subaccounts_org}` : ''}
+        </p>
+      )}
       <div className="fc-onboarding-card">
         <label className="label">Поиск счёта или субсчёта</label>
         <input

@@ -52,6 +52,14 @@ def test_parse_total_na_summu_rub():
     assert parse_total_amount_from_text(text) == 44500.0
 
 
+def test_kudir_income_amount():
+    text = "КУДиР\nДоходы: 12 450,00\n"
+    from app.services.belarus_ocr_parse import parse_belarus_fields
+
+    out = parse_belarus_fields(text)
+    assert out["fields"].get("amount") == 12450.0
+
+
 def test_detect_kudir_document():
     text = "Книга учета доходов и расходов\nИП Иванов\n"
     doc_type, conf = detect_document_type(text)

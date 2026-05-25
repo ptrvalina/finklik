@@ -15,6 +15,7 @@ from app.models.user import Organization, User
 from app.services.amortization_service import run_monthly_amortization
 from app.services.chart_account_service import (
     create_subaccount,
+    chart_catalog_meta,
     list_chart_accounts,
     list_subaccounts,
     post_ledger_entry,
@@ -126,7 +127,15 @@ async def get_chart_tree(
                 "subaccounts": by_parent.get(a.code, []),
             }
         )
-    return {"classes": [{"id": k, "accounts": v} for k, v in sorted(classes.items())]}
+    sub_total = sum(len(v) for v in by_parent.values())
+    return {
+        "meta": chart_catalog_meta(),
+        "stats": {
+            "synthetic_accounts": len(accounts),
+            "subaccounts_org": sub_total,
+        },
+        "classes": [{"id": k, "accounts": v} for k, v in sorted(classes.items())],
+    }
 
 
 @router.post("/subaccounts", response_model=SubaccountOut, status_code=201)

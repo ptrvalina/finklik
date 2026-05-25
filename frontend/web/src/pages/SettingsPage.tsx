@@ -683,7 +683,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               className="input min-h-11 w-full rounded-xl font-mono text-sm"
               value={endpoint}
               onChange={(e) => setEndpoint(e.target.value)}
-              placeholder="https://api.example.com/finklik/"
+              placeholder="https://ваш-сервер.example/finklik/"
             />
           </div>
           <div>
@@ -693,7 +693,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
               className="input min-h-11 w-full rounded-xl"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder={cfg?.configured ? 'Оставьте пустым, чтобы не менять' : 'Bearer-токен'}
+              placeholder={cfg?.configured ? 'Оставьте пустым, чтобы не менять' : 'Токен доступа (Bearer)'}
               autoComplete="off"
             />
           </div>
@@ -761,7 +761,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
                 className="input min-h-11 w-full rounded-xl font-mono text-sm"
                 value={llmModel}
                 onChange={(e) => setLlmModel(e.target.value)}
-                placeholder="Например gpt-4o-mini"
+                placeholder="Например: gpt-4o-mini"
               />
             </div>
             <div className="flex flex-wrap gap-2">

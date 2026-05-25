@@ -82,7 +82,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label">Email</label>
+            <label className="label">Эл. почта</label>
             <div className="relative">
               <Icon name="mail" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
               <input

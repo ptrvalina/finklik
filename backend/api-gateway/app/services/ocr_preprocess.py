@@ -36,6 +36,28 @@ def _adaptive_threshold(img: "Image.Image") -> "Image.Image":
     return ImageOps.autocontrast(img.convert("L"), cutoff=2)
 
 
+def _deskew_projection(img: "Image.Image", max_angle: float = 4.0, step: float = 1.0) -> "Image.Image":
+    """Лёгкий подбор угла по дисперсии горизонтальной проекции (без OpenCV)."""
+    if Image is None:
+        return img
+    gray = img.convert("L")
+    best_angle = 0.0
+    best_score = -1.0
+    angle = -max_angle
+    while angle <= max_angle:
+        rotated = gray.rotate(angle, expand=True, fillcolor=255)
+        hist = rotated.histogram()
+        dark = sum(hist[:200])
+        score = dark / max(1, sum(hist))
+        if score > best_score:
+            best_score = score
+            best_angle = angle
+        angle += step
+    if abs(best_angle) >= 0.5:
+        return img.rotate(best_angle, expand=True, fillcolor=(255, 255, 255))
+    return img
+
+
 def _deskew_osd(img: "Image.Image") -> "Image.Image":
     """Поворот по OSD Tesseract (если доступен)."""
     if Image is None:
@@ -69,6 +91,7 @@ def preprocess_for_ocr(img: "Image.Image", *, doc_hint: str = "") -> "Image.Imag
     except Exception:
         pass
     work = _deskew_osd(work)
+    work = _deskew_projection(work)
     work = _smart_crop(work)
     work = _adaptive_threshold(work)
     work = work.filter(ImageFilter.MedianFilter(size=3))

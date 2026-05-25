@@ -33,6 +33,23 @@ def _load_chart_payload() -> dict:
     return json.loads(_DATA.read_text(encoding="utf-8"))
 
 
+def chart_catalog_meta() -> dict:
+    payload = _load_chart_payload()
+    meta = payload.get("meta") or {}
+    official_subs = 0
+    if _SUBACCOUNTS_OFFICIAL.is_file():
+        try:
+            official_subs = len(json.loads(_SUBACCOUNTS_OFFICIAL.read_text(encoding="utf-8")).get("subaccounts", []))
+        except Exception:
+            official_subs = int(meta.get("subaccounts_count", 0))
+    return {
+        "standard": meta.get("standard", "Приказ Минфина РБ №50"),
+        "version": meta.get("version", _CATALOG_VERSION),
+        "accounts_count": int(meta.get("accounts_count", len(payload.get("accounts", [])))),
+        "official_subaccounts_count": official_subs,
+    }
+
+
 def _chart_row_to_model(row: dict) -> ChartAccount:
     bt = str(row.get("type", "active"))
     code = str(row["code"])

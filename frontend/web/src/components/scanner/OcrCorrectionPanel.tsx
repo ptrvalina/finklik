@@ -7,6 +7,7 @@ import {
   type OcrFieldKey,
   OCR_FIELD_ORDER,
 } from '../../lib/ocrCorrectionFields'
+import { verbLabel } from '../../lib/operationalVerbs'
 
 const DOC_LABELS: Record<string, string> = {
   receipt: 'Чек',
@@ -30,6 +31,8 @@ export default function OcrCorrectionPanel({
   fieldValidation,
   docNumber,
   vendorHints,
+  suggestedDebit,
+  suggestedCredit,
   amountError,
   autosaving,
   onChange,
@@ -44,6 +47,8 @@ export default function OcrCorrectionPanel({
   fieldValidation?: Record<string, string>
   docNumber?: string | null
   vendorHints?: Record<string, unknown> | null
+  suggestedDebit?: string | null
+  suggestedCredit?: string | null
   amountError?: string | null
   autosaving?: boolean
   onChange: (patch: Partial<OcrEditDraft>, fieldKey: OcrFieldKey) => void
@@ -99,6 +104,13 @@ export default function OcrCorrectionPanel({
         <p className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-on-surface-variant">
           Контрагент знаком системе ({String(vendorHints.scan_count)} сканов)
           {vendorHints.default_category ? ` · категория: ${String(vendorHints.default_category)}` : ''}
+        </p>
+      )}
+      {(suggestedDebit || suggestedCredit) && (
+        <p className="rounded-xl border border-outline/30 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
+          Проводка: Дт <span className="font-mono font-semibold text-on-surface">{suggestedDebit || '—'}</span>
+          {' · '}
+          Кт <span className="font-mono font-semibold text-on-surface">{suggestedCredit || '—'}</span>
         </p>
       )}
 
@@ -250,7 +262,7 @@ export default function OcrCorrectionPanel({
           className="btn-primary min-h-12 w-full rounded-xl"
           disabled={confirmPending}
         >
-          {confirmPending ? 'Сохраняем…' : 'Готово — в журнал'}
+          {confirmPending ? 'Сохраняем…' : `${verbLabel('confirm')} в журнал`}
         </button>
       ) : (
         <p className="rounded-xl border border-secondary/25 bg-secondary/10 px-3 py-3 text-sm font-semibold text-secondary">

@@ -416,8 +416,8 @@ export default function BankPage() {
                   <option key={a.id} value={a.id}>{a.bank_name} · {a.account_number}</option>
                 ))}
               </select>
-              <input className="input" placeholder="code из callback" value={oauthCode} onChange={(e) => setOauthCode(e.target.value)} />
-              <input className="input" placeholder="state из callback" value={oauthState} onChange={(e) => setOauthState(e.target.value)} />
+              <input className="input" placeholder="Код из ответа банка" value={oauthCode} onChange={(e) => setOauthCode(e.target.value)} />
+              <input className="input" placeholder="Параметр state" value={oauthState} onChange={(e) => setOauthState(e.target.value)} />
               <button
                 type="button"
                 className="btn-primary"

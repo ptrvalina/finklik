@@ -40,6 +40,10 @@ export const terminology = {
     fixedAsset: 'Основное средство',
     intangibleAsset: 'НМА',
     amortization: 'Амортизация',
+    chartStandard: 'Приказ Минфина РБ №50',
+    balanceActive: 'активный',
+    balancePassive: 'пассивный',
+    balanceActivePassive: 'активно-пассивный',
   },
 
   onboarding: {
