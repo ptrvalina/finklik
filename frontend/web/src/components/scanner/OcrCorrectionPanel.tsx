@@ -14,6 +14,7 @@ const DOC_LABELS: Record<string, string> = {
   act: 'Акт',
   invoice: 'Счёт',
   payment_order: 'Платёжное поручение',
+  kudir: 'КУДиР',
   unknown: 'Другое',
 }
 
@@ -36,6 +37,7 @@ export default function OcrCorrectionPanel({
   onConfirm,
   confirmPending,
   confirmed,
+  onFieldFocus,
 }: {
   draft: OcrEditDraft
   fieldConfidence?: Record<string, number>
@@ -49,6 +51,7 @@ export default function OcrCorrectionPanel({
   onConfirm: () => void
   confirmPending?: boolean
   confirmed?: boolean
+  onFieldFocus?: (key: OcrFieldKey) => void
 }) {
   const refs = useRef<Partial<Record<OcrFieldKey, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>>>({})
 
@@ -129,6 +132,7 @@ export default function OcrCorrectionPanel({
           validation={fieldValidation?.counterparty_name}
         />
         <input
+          id="ocr-field-counterparty"
           ref={register('counterparty')}
           className={reviewInputClass(fieldNeedsReview(fc, 'counterparty'))}
           value={draft.counterparty}
@@ -136,6 +140,7 @@ export default function OcrCorrectionPanel({
             onChange({ counterparty: e.target.value }, 'counterparty')
             onMarkCorrected('counterparty_name')
           }}
+          onFocus={() => onFieldFocus?.('counterparty')}
           onKeyDown={(e) => handleKeyDown(e, 'counterparty')}
           placeholder="Название организации или ИП"
         />
@@ -151,6 +156,7 @@ export default function OcrCorrectionPanel({
           )}
         </label>
         <input
+          id="ocr-field-transactionDate"
           ref={register('transactionDate')}
           type="date"
           className={reviewInputClass(fieldNeedsReview(fc, 'transactionDate'))}
@@ -159,6 +165,7 @@ export default function OcrCorrectionPanel({
             onChange({ transactionDate: e.target.value }, 'transactionDate')
             onMarkCorrected('transaction_date')
           }}
+          onFocus={() => onFieldFocus?.('transactionDate')}
           onKeyDown={(e) => handleKeyDown(e, 'transactionDate')}
         />
       </div>
@@ -167,11 +174,13 @@ export default function OcrCorrectionPanel({
         <div>
           <OcrFieldLabel label="Сумма, BYN" confidence={fc?.amount} validation={fieldValidation?.amount} />
           <input
+            id="ocr-field-amount"
             ref={register('amount')}
             type="text"
             inputMode="decimal"
             className={reviewInputClass(fieldNeedsReview(fc, 'amount'))}
             value={draft.amount}
+            onFocus={() => onFieldFocus?.('amount')}
             onChange={(e) => {
               onChange({ amount: e.target.value }, 'amount')
               onMarkCorrected('amount')

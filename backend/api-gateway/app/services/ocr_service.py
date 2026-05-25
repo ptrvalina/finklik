@@ -43,6 +43,8 @@ def detect_doc_type(filename: str) -> str:
         return "invoice"
     if any(k in name for k in ("плат", "payment", "поручен")):
         return "payment_order"
+    if any(k in name for k in ("кудир", "kudir")):
+        return "kudir"
     return "receipt"
 
 
@@ -83,6 +85,7 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
         out["warnings"] = list(out.get("warnings", [])) + ["Tesseract OCR недоступен в окружении, использован mock fallback"]
         return out
 
+    img_for_regions = None
     try:
         is_pdf = (content_type or "").lower() == "application/pdf" or filename.lower().endswith(".pdf")
         if is_pdf:
@@ -91,11 +94,10 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
             from app.services.ocr_preprocess import load_image_from_bytes, preprocess_for_ocr
 
             doc_hint = _doc_hint_from_filename(filename)
-            img = preprocess_for_ocr(load_image_from_bytes(file_bytes), doc_hint=doc_hint)
-            text = pytesseract.image_to_string(img, lang="rus+eng")
-            # Второй проход с другим PSM для слабых сканов.
+            img_for_regions = preprocess_for_ocr(load_image_from_bytes(file_bytes), doc_hint=doc_hint)
+            text = pytesseract.image_to_string(img_for_regions, lang="rus+eng")
             try:
-                text2 = pytesseract.image_to_string(img, lang="rus+eng", config="--psm 6")
+                text2 = pytesseract.image_to_string(img_for_regions, lang="rus+eng", config="--psm 6")
                 if len(text2) > len(text):
                     text = text2
             except Exception:
@@ -133,6 +135,19 @@ def tesseract_ocr_process(filename: str, file_bytes: bytes, content_type: str | 
     parsed["confidence"] = min(95, max(parsed.get("confidence", 0), conf))
     parsed["doc_type"] = doc_type
     parsed["doc_type_confidence"] = doc_type_confidence
+    if img_for_regions is not None:
+        try:
+            from app.services.ocr_field_regions import extract_field_regions
+
+            inner = parsed.get("parsed") if isinstance(parsed.get("parsed"), dict) else {}
+            regions = extract_field_regions(img_for_regions, inner, text)
+            if regions:
+                parsed["field_regions"] = regions
+                inner = dict(inner)
+                inner["_field_regions"] = regions
+                parsed["parsed"] = inner
+        except Exception:
+            pass
     return _attach_field_confidence(parsed)
 
 

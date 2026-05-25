@@ -6,6 +6,7 @@ import { formatApiDetail } from '../utils/apiError'
 import { Link } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
+import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useOcrAutosave } from '../hooks/useOcrAutosave'
@@ -15,6 +16,7 @@ import {
   type OcrEditDraft,
   type OcrFieldKey,
 } from '../lib/ocrCorrectionFields'
+import type { FieldRegion } from '../components/scanner/OcrPreviewOverlay'
 import { useOperational } from '../context/OperationalContext'
 
 function clientErrorText(err: unknown): string {
@@ -47,6 +49,7 @@ type ScanResult = {
   field_validation?: Record<string, string>
   doc_type_confidence?: number
   vendor_hints?: Record<string, unknown>
+  field_regions?: Record<string, FieldRegion>
   execution_suggestions?: ExecutionSuggestions
   linked_transaction_id?: string | null
 }
@@ -93,6 +96,7 @@ export default function ScannerPage() {
   const [textDocType, setTextDocType] = useState('')
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
+  const [activeOcrField, setActiveOcrField] = useState<OcrFieldKey | null>(null)
 
   const applyScanPayload = useCallback(
     (data: ScanResult) => {
@@ -374,6 +378,11 @@ export default function ScannerPage() {
         ) : undefined
       }
     >
+      {scanResult && reviewCount > 0 && (
+        <p className="mb-4 rounded-xl border border-primary/25 bg-primary/8 px-4 py-2.5 text-sm text-on-surface">
+          <span className="font-semibold">Режим очереди:</span> после подтверждения откроется следующий документ — без возврата к списку.
+        </p>
+      )}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         <div className="col-span-12 lg:col-span-8">
           <div className="-mx-1 mb-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
@@ -567,7 +576,7 @@ export default function ScannerPage() {
                   )}
                   {scanResult.ocr_text && (
                     <details className="mt-4">
-                      <summary className="text-xs text-on-surface-variant cursor-pointer hover:text-on-surface">OCR текст</summary>
+                      <summary className="text-xs text-on-surface-variant cursor-pointer hover:text-on-surface">Текст распознавания</summary>
                       <pre className="mt-2 text-xs bg-surface p-3 rounded-lg whitespace-pre-wrap text-on-surface-variant max-h-40 overflow-auto">{scanResult.ocr_text}</pre>
                     </details>
                   )}
@@ -613,6 +622,7 @@ export default function ScannerPage() {
                       onConfirm={submitTxFromDraft}
                       confirmPending={confirmMutation.isPending}
                       confirmed={txSaved}
+                      onFieldFocus={setActiveOcrField}
                     />
                   )}
                   {txSaved && createdTxId && (

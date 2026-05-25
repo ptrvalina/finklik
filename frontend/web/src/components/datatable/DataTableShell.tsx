@@ -46,9 +46,9 @@ function DataTableShellInner({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 280, damping: 36, mass: 0.85 }}
-            className="overflow-hidden border-b border-outline/30 bg-surface-container-low/50 dark:border-white/[0.06] dark:bg-white/[0.04]"
+            className="overflow-hidden border-b border-outline/30 bg-surface-container-low/50 dark:border-white/[0.06] dark:bg-white/[0.04] max-lg:fixed max-lg:bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] max-lg:left-3 max-lg:right-3 max-lg:z-40 max-lg:rounded-2xl max-lg:border max-lg:border-outline/50 max-lg:shadow-float max-lg:backdrop-blur-xl lg:static lg:rounded-none lg:shadow-none"
           >
-            <div className="flex flex-wrap items-center gap-2 px-3 py-[var(--fc-toolbar-y)] sm:px-4 sm:py-[var(--fc-toolbar-y-sm)]">
+            <div className="flex flex-wrap items-center gap-2 px-3 py-[var(--fc-toolbar-y)] sm:px-4 sm:py-[var(--fc-toolbar-y-sm)] max-lg:max-h-[40vh] max-lg:overflow-y-auto">
               {bulkBar}
             </div>
           </motion.div>

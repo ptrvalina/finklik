@@ -1,4 +1,5 @@
 """Разбор сумм из OCR-текста чеков (без интеграции с API)."""
+from app.services.belarus_ocr_parse import detect_document_type
 from app.services.ocr_service import (
     parse_counterparty_from_text,
     parse_total_amount_from_text,
@@ -49,6 +50,13 @@ def test_parse_total_multiline_after_ito():
 def test_parse_total_na_summu_rub():
     text = "Всего на сумму 44 500 руб. 00 коп.\n"
     assert parse_total_amount_from_text(text) == 44500.0
+
+
+def test_detect_kudir_document():
+    text = "Книга учета доходов и расходов\nИП Иванов\n"
+    doc_type, conf = detect_document_type(text)
+    assert doc_type == "kudir"
+    assert conf >= 55
 
 
 def test_parse_counterparty_org_name():

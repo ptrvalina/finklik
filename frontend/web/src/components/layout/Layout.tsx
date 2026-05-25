@@ -212,7 +212,7 @@ export default function Layout() {
               <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-white" style={{ letterSpacing: '-0.03em' }}>
                 ФинКлик
               </h1>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/95">Premium</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/95">Премиум</p>
               <p className="truncate text-[11px] text-white/50">{user?.org_name || 'Организация'}</p>
               <div className="mt-2">
                 <OrgSwitcher placement="sidebar" />

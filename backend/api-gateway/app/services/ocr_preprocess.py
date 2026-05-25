@@ -36,14 +36,39 @@ def _adaptive_threshold(img: "Image.Image") -> "Image.Image":
     return ImageOps.autocontrast(img.convert("L"), cutoff=2)
 
 
+def _deskew_osd(img: "Image.Image") -> "Image.Image":
+    """Поворот по OSD Tesseract (если доступен)."""
+    if Image is None:
+        return img
+    try:
+        import pytesseract
+
+        osd = pytesseract.image_to_osd(img, output_type=pytesseract.Output.STRING)
+        angle = 0.0
+        for line in osd.splitlines():
+            if "Rotate:" in line:
+                angle = float(line.split(":", 1)[1].strip())
+                break
+        if abs(angle) >= 0.5:
+            return img.rotate(-angle, expand=True, fillcolor=(255, 255, 255))
+    except Exception:
+        pass
+    return img
+
+
 def preprocess_for_ocr(img: "Image.Image", *, doc_hint: str = "") -> "Image.Image":
     """
-    grayscale → crop → adaptive contrast → denoise → sharpen.
+    EXIF → deskew → crop → adaptive contrast → denoise → sharpen.
     Для чеков — чуть сильнее резкость.
     """
     if Image is None:
         return img
     work = img.convert("RGB")
+    try:
+        work = ImageOps.exif_transpose(work)
+    except Exception:
+        pass
+    work = _deskew_osd(work)
     work = _smart_crop(work)
     work = _adaptive_threshold(work)
     work = work.filter(ImageFilter.MedianFilter(size=3))

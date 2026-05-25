@@ -65,3 +65,5 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | F1 | Operational session (sessionStorage) + continuity panel + smart next step | Done |
 | F1b | Unified action verbs; grouped execution feed order | Done |
 | F2 | Work packs: `tasks_done`/`tasks_total`, honest `progress_pct`, `eta_minutes` | Done |
+| F3 | OCR: deskew/EXIF preprocess, field_regions overlay, KUDiР/платёжки, vendor memory loop | Done |
+| F5a | Pilot: queue mode copy, mobile journal bulk, RU labels (диагностика, премиум) | Done |

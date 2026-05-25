@@ -143,6 +143,8 @@ def _scan_result_payload(
     field_confidence: dict | None = None,
 ) -> dict:
     fc = field_confidence if field_confidence is not None else _load_field_confidence(doc.field_confidence_json)
+    regions = parsed.get("_field_regions") if isinstance(parsed.get("_field_regions"), dict) else {}
+    public_parsed = {k: v for k, v in parsed.items() if not str(k).startswith("_")}
     return {
         "id": doc.id,
         "filename": doc.filename,
@@ -151,8 +153,9 @@ def _scan_result_payload(
         "confidence": doc.confidence,
         "requires_review": bool(doc.requires_review),
         "field_confidence": fc,
+        "field_regions": regions,
         "ocr_text": doc.ocr_text,
-        "parsed": parsed,
+        "parsed": public_parsed,
         "warnings": warnings or [],
         "is_duplicate": is_duplicate,
         "linked_transaction_id": linked_transaction_id,
@@ -256,7 +259,9 @@ async def upload_and_scan(
             503,
             "Распознавание временно не завершилось. Попробуйте загрузить файл ещё раз — данные учёта не изменены.",
         ) from None
-    parsed = ocr_result.get("parsed", {}) or {}
+    parsed = dict(ocr_result.get("parsed", {}) or {})
+    if ocr_result.get("field_regions"):
+        parsed["_field_regions"] = ocr_result["field_regions"]
     linked_tx_id, is_duplicate = await _find_duplicate_or_linked_transaction(
         db=db,
         organization_id=workspace_organization_id(current_user),

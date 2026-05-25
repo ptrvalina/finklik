@@ -10,11 +10,17 @@ DOC_PATTERNS: list[tuple[str, list[str]]] = [
     ("receipt", ["кассов", "чек", "фискальн", "итого", "сумма"]),
     ("invoice", ["счёт", "счет", "invoice", "счет-фактур"]),
     ("act", ["акт выполнен", "акт оказан", "акт приём"]),
-    ("payment_order", ["платёжное поручение", "платежное поручение"]),
+    ("payment_order", ["платёжное поручение", "платежное поручение", "плательщик", "получатель"]),
+    ("kudir", ["кудир", "книга учета", "книга учёта", "доходов и расходов"]),
     ("ttn", ["ттн", "товарно-транспорт", "накладн"]),
     ("contract", ["договор", "контракт", "contract"]),
     ("payroll", ["расчётн", "расчетн", "ведомост", "зарплат", "фсзн"]),
 ]
+
+PAYMENT_AMOUNT_RE = re.compile(
+    r"(?:сумма|amount)\s*[:=]?\s*([\d\s]+[.,]\d{2})",
+    re.I,
+)
 
 UNP_RE = re.compile(r"\bУНП\s*[:№]?\s*(\d{9})\b", re.I)
 BYN_RE = re.compile(
@@ -64,10 +70,11 @@ def parse_belarus_fields(text: str) -> dict[str, Any]:
         fields["unp"] = m_unp.group(1)
         conf["unp"] = 88
 
-    m_amt = BYN_RE.search(text)
+    pay_match = PAYMENT_AMOUNT_RE.search(text)
+    m_amt = BYN_RE.search(text) or pay_match
     if m_amt:
         fields["amount"] = _parse_amount(m_amt.group(1))
-        conf["amount"] = 75
+        conf["amount"] = 78 if pay_match else 75
 
     for m in DATE_RE.finditer(text):
         d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))

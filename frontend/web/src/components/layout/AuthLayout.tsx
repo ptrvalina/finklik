@@ -9,7 +9,7 @@ export function AuthBrandMark({ children }: { children?: ReactNode }) {
       <h1 className="font-headline text-3xl font-bold tracking-tight text-[#0f172a] dark:text-on-surface" style={{ letterSpacing: '-0.035em' }}>
         ФинКлик
       </h1>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">Premium</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">Премиум</p>
       {children}
     </div>
   )

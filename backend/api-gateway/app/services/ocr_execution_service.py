@@ -15,6 +15,8 @@ _DOC_ACCOUNT_HINTS: dict[str, dict[str, str]] = {
     "act": {"debit": "26.1", "credit": "60.1"},
     "payment_order": {"debit": "60.1", "credit": "51.1"},
     "ttn": {"debit": "10.1", "credit": "60.1"},
+    "kudir": {"debit": "26.1", "credit": "51.1"},
+    "payroll": {"debit": "70.1", "credit": "51.1"},
 }
 
 

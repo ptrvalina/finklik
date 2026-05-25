@@ -42,7 +42,7 @@ export default function OpsDiagnosticsPage() {
         <section className="page-section p-4">
           <h2 className="mb-2 text-sm font-bold">Целостность</h2>
           <p className={`mb-2 text-xs font-bold ${data?.integrity?.ok ? 'text-emerald-600' : 'text-amber-500'}`}>
-            {data?.integrity?.ok ? 'OK' : 'Есть замечания'}
+            {data?.integrity?.ok ? 'Готово' : 'Есть замечания'}
           </p>
           <ul className="space-y-1 text-xs text-on-surface-variant">
             {(data?.integrity?.checks ?? []).map((c: { name: string; ok: boolean; detail?: string }) => (
@@ -53,7 +53,7 @@ export default function OpsDiagnosticsPage() {
           </ul>
         </section>
         <section className="page-section p-4">
-          <h2 className="mb-2 text-sm font-bold">OCR</h2>
+          <h2 className="mb-2 text-sm font-bold">Распознавание</h2>
           <p className="text-sm">В очереди проверки: {data?.ocr?.needs_review_queue ?? 0}</p>
         </section>
         <section className="page-section p-4">

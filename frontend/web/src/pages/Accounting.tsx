@@ -915,7 +915,7 @@ export default function Accounting() {
               </select>
               <input
                 className="input min-h-11 rounded-xl"
-                placeholder="URL чека"
+                placeholder="Ссылка на чек (необязательно)"
                 value={receiptUrl}
                 onChange={(e) => setReceiptUrl(e.target.value)}
               />
