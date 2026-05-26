@@ -7,29 +7,8 @@ import { orgQueryKey } from '../lib/queryKeys'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton } from '../components/premium'
 import { listRecentClients, pushRecentClient } from '../lib/recentClients'
-
-type OrgRow = {
-  organization_id: string
-  organization_name: string
-  unp: string
-  is_pinned?: boolean
-  readiness_score?: number | null
-  open_inbox?: number
-  pending_approvals?: number
-  attention_issues?: number
-  ai_summary?: string | null
-}
-
-function workloadScore(row: OrgRow): number {
-  return (row.open_inbox ?? 0) + (row.pending_approvals ?? 0) * 2 + (row.attention_issues ?? 0) * 3
-}
-
-function readinessLabel(score: number | null | undefined): { text: string; tone: 'ok' | 'warn' | 'risk' } {
-  if (score == null) return { text: 'нет данных', tone: 'warn' }
-  if (score >= 80) return { text: 'готов к сдаче', tone: 'ok' }
-  if (score >= 55) return { text: 'нужна доработка', tone: 'warn' }
-  return { text: 'блокеры', tone: 'risk' }
-}
+import WorkspaceMissionPanel from '../components/workspace/WorkspaceMissionPanel'
+import { type OrgRow, readinessLabel, workloadScore } from './workspaceTypes'
 
 export default function WorkspaceCommandPage() {
   const navigate = useNavigate()
@@ -49,21 +28,49 @@ export default function WorkspaceCommandPage() {
     return [...rows].sort((a, b) => {
       if (a.is_pinned && !b.is_pinned) return -1
       if (!a.is_pinned && b.is_pinned) return 1
+      const da = a.next_deadline?.date ?? '9999-12-31'
+      const db = b.next_deadline?.date ?? '9999-12-31'
+      if (da !== db) return da.localeCompare(db)
       return workloadScore(b) - workloadScore(a)
     })
   }, [data?.organizations])
 
   const totals = useMemo(() => {
+    const apiTotals = data?.totals as Record<string, number> | undefined
+    if (apiTotals) {
+      return {
+        inbox: apiTotals.open_inbox ?? 0,
+        approvals: apiTotals.pending_approvals ?? 0,
+        issues: apiTotals.attention_issues ?? 0,
+        needs_review: apiTotals.needs_review ?? 0,
+        pending_ocr: apiTotals.pending_ocr ?? 0,
+        clients: organizations.length,
+      }
+    }
     let inbox = 0
     let approvals = 0
     let issues = 0
+    let needs_review = 0
+    let pending_ocr = 0
     for (const o of organizations) {
       inbox += o.open_inbox ?? 0
       approvals += o.pending_approvals ?? 0
       issues += o.attention_issues ?? 0
+      needs_review += o.needs_review ?? 0
+      pending_ocr += o.pending_ocr ?? 0
     }
-    return { inbox, approvals, issues, clients: organizations.length }
-  }, [organizations])
+    return { inbox, approvals, issues, needs_review, pending_ocr, clients: organizations.length }
+  }, [data?.totals, organizations])
+
+  const deadlines = (data?.deadlines ?? []) as Array<{
+    organization_id: string
+    organization_name: string
+    date: string
+    title: string
+    kind?: string
+    state?: string
+    days_until?: number
+  }>
 
   const needsAttention = organizations.filter((o) => workloadScore(o) > 0)
   const stable = organizations.filter((o) => workloadScore(o) === 0)
@@ -90,28 +97,49 @@ export default function WorkspaceCommandPage() {
   }
 
   const topClient = needsAttention[0]
+  const urgentDeadline = deadlines.find(
+    (d) => d.state === 'overdue' || (d.days_until != null && d.days_until <= 3),
+  )
+
+  const focusSupporting = urgentDeadline
+    ? `Срок: ${urgentDeadline.organization_name} — ${urgentDeadline.title} (${urgentDeadline.date})`
+    : topClient?.next_deadline
+      ? `Срок: ${topClient.organization_name} — ${topClient.next_deadline.title}`
+      : topClient
+        ? `Сначала: ${topClient.organization_name} — готовность ${topClient.readiness_score ?? '—'}%`
+        : undefined
 
   return (
     <OperationalPage
       eyebrow="Рабочее пространство"
       title="Командный центр бухгалтера"
-      description="Очереди по клиентам: кто ждёт согласования, что блокирует отчётность, куда перейти одним кликом."
+      description="Сроки, OCR и очереди по клиентам — без CRM-перегруза, с переходом в контекст организации."
       focusStrip={
-        !isLoading && topClient ? (
+        !isLoading && (topClient || urgentDeadline) ? (
           <FocusStrip
-            tone={totals.issues > 0 ? 'amber' : 'primary'}
+            tone={urgentDeadline || totals.issues > 0 ? 'amber' : 'primary'}
             headline={
-              totals.issues > 0
-                ? `${totals.issues} замечаний по ${needsAttention.length} клиентам`
-                : `${totals.inbox} входящих по ${totals.clients} клиентам`
+              urgentDeadline
+                ? `Срочный срок: ${urgentDeadline.organization_name}`
+                : totals.needs_review > 0
+                  ? `${totals.needs_review} документов на проверке OCR`
+                  : totals.issues > 0
+                    ? `${totals.issues} замечаний по ${needsAttention.length} клиентам`
+                    : `${totals.inbox} входящих по ${totals.clients} клиентам`
             }
-            supporting={
-              topClient
-                ? `Сначала: ${topClient.organization_name} — готовность ${topClient.readiness_score ?? '—'}%`
-                : undefined
-            }
-            ctaLabel={topClient ? 'Открыть приоритетного клиента' : 'Обновить'}
-            onCta={() => topClient && void activate(topClient.organization_id, topClient.organization_name)}
+            supporting={focusSupporting}
+            ctaLabel={urgentDeadline ? 'Открыть клиента со сроком' : 'Открыть приоритетного клиента'}
+            onCta={() => {
+              if (urgentDeadline) {
+                void activate(
+                  urgentDeadline.organization_id,
+                  urgentDeadline.organization_name,
+                  urgentDeadline.kind === 'inbox' ? '/inbox' : '/calendar',
+                )
+              } else if (topClient) {
+                void activate(topClient.organization_id, topClient.organization_name)
+              }
+            }}
           />
         ) : undefined
       }
@@ -124,6 +152,7 @@ export default function WorkspaceCommandPage() {
         totals.inbox + totals.approvals > 0 ? (
           <span className="text-xs font-medium text-on-surface-variant">
             {totals.inbox} входящих · {totals.approvals} согласований
+            {totals.needs_review > 0 ? ` · ${totals.needs_review} OCR` : ''}
           </span>
         ) : undefined
       }
@@ -147,11 +176,13 @@ export default function WorkspaceCommandPage() {
       )}
 
       {!isLoading && !isError && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
             { label: 'Клиентов', value: totals.clients },
             { label: 'Входящие', value: totals.inbox },
             { label: 'Согласования', value: totals.approvals },
+            { label: 'OCR проверка', value: totals.needs_review },
+            { label: 'OCR обработка', value: totals.pending_ocr },
             { label: 'Замечания', value: totals.issues },
           ].map((m) => (
             <div key={m.label} className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-3 py-3 text-center">
@@ -162,15 +193,33 @@ export default function WorkspaceCommandPage() {
         </div>
       )}
 
+      {!isLoading && !isError && (
+        <div className="mt-6">
+          <WorkspaceMissionPanel
+            deadlines={deadlines}
+            totals={{
+              open_inbox: totals.inbox,
+              pending_approvals: totals.approvals,
+              attention_issues: totals.issues,
+              needs_review: totals.needs_review,
+              pending_ocr: totals.pending_ocr,
+            }}
+            organizations={organizations}
+            activatingId={activatingId}
+            onOpenClient={(orgId, orgName, path) => void activate(orgId, orgName, path)}
+          />
+        </div>
+      )}
+
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <CardSkeleton />
           <CardSkeleton />
         </div>
       )}
 
       {isError && (
-        <div className="rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] px-4 py-3 text-sm">
+        <div className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] px-4 py-3 text-sm">
           Не удалось загрузить обзор. Проверьте роль бухгалтера и обновите страницу.
           <button type="button" className="btn-secondary ml-3 !min-h-8 text-xs" onClick={() => void refetch()}>
             Повторить
@@ -179,7 +228,7 @@ export default function WorkspaceCommandPage() {
       )}
 
       {needsAttention.length > 0 && (
-        <section>
+        <section className="mt-8">
           <h2 className="fc-section-label mb-3">Требуют внимания ({needsAttention.length})</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {needsAttention.map((row) => (
@@ -188,6 +237,7 @@ export default function WorkspaceCommandPage() {
                 row={row}
                 busy={activatingId === row.organization_id}
                 onActivate={() => void activate(row.organization_id, row.organization_name)}
+                onOpenScan={() => void activate(row.organization_id, row.organization_name, '/scan')}
                 onTogglePin={() =>
                   pinMutation.mutate({ orgId: row.organization_id, pinned: !row.is_pinned })
                 }
@@ -199,7 +249,7 @@ export default function WorkspaceCommandPage() {
       )}
 
       {stable.length > 0 && (
-        <section>
+        <section className="mt-8">
           <h2 className="fc-section-label mb-3">Стабильные ({stable.length})</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {stable.map((row) => (
@@ -208,6 +258,7 @@ export default function WorkspaceCommandPage() {
                 row={row}
                 busy={activatingId === row.organization_id}
                 onActivate={() => void activate(row.organization_id, row.organization_name)}
+                onOpenScan={() => void activate(row.organization_id, row.organization_name, '/scan')}
                 onTogglePin={() =>
                   pinMutation.mutate({ orgId: row.organization_id, pinned: !row.is_pinned })
                 }
@@ -220,7 +271,7 @@ export default function WorkspaceCommandPage() {
       )}
 
       {data?.generated_at && (
-        <p className="text-center text-[11px] text-on-surface-variant">Обновлено: {String(data.generated_at)}</p>
+        <p className="mt-6 text-center text-[11px] text-on-surface-variant">Обновлено: {String(data.generated_at)}</p>
       )}
     </OperationalPage>
   )
@@ -229,6 +280,7 @@ export default function WorkspaceCommandPage() {
 function OrgQueueCard({
   row,
   onActivate,
+  onOpenScan,
   onTogglePin,
   pinPending,
   busy,
@@ -236,6 +288,7 @@ function OrgQueueCard({
 }: {
   row: OrgRow
   onActivate: () => void
+  onOpenScan?: () => void
   onTogglePin?: () => void
   pinPending?: boolean
   busy: boolean
@@ -243,6 +296,8 @@ function OrgQueueCard({
 }) {
   const readiness = readinessLabel(row.readiness_score)
   const wl = workloadScore(row)
+  const nd = row.next_deadline
+  const hasOcr = (row.needs_review ?? 0) + (row.pending_ocr ?? 0) > 0
 
   return (
     <article
@@ -291,9 +346,20 @@ function OrgQueueCard({
             нагрузка {wl}
           </span>
         )}
+        {nd && (
+          <span
+            className={`rounded-full px-2 py-0.5 font-semibold ${
+              nd.state === 'overdue' || (nd.days_until != null && nd.days_until < 0)
+                ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                : 'bg-surface-container-high text-on-surface-variant'
+            }`}
+          >
+            {nd.date} · {nd.title.length > 28 ? `${nd.title.slice(0, 28)}…` : nd.title}
+          </span>
+        )}
       </div>
 
-      <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
+      <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] sm:grid-cols-5">
         <li className="rounded-xl bg-surface-container-low/80 py-2">
           <strong className="block text-sm text-on-surface">{row.open_inbox ?? 0}</strong>
           входящие
@@ -306,13 +372,28 @@ function OrgQueueCard({
           <strong className="block text-sm text-on-surface">{row.attention_issues ?? 0}</strong>
           замечания
         </li>
+        <li className="rounded-xl bg-surface-container-low/80 py-2">
+          <strong className="block text-sm text-on-surface">{row.needs_review ?? 0}</strong>
+          OCR
+        </li>
+        <li className="rounded-xl bg-surface-container-low/80 py-2 col-span-3 sm:col-span-1">
+          <strong className="block text-sm text-on-surface">{row.pending_ocr ?? 0}</strong>
+          в обработке
+        </li>
       </ul>
 
       {row.ai_summary && <p className="mt-2 line-clamp-2 text-xs text-on-surface-variant">{row.ai_summary}</p>}
 
-      <button type="button" className="btn-primary mt-4 min-h-10 w-full text-sm" disabled={busy} onClick={onActivate}>
-        {busy ? 'Переключаем…' : 'Работать с клиентом'}
-      </button>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <button type="button" className="btn-primary min-h-10 flex-1 text-sm" disabled={busy} onClick={onActivate}>
+          {busy ? 'Переключаем…' : 'Работать с клиентом'}
+        </button>
+        {hasOcr && onOpenScan && (
+          <button type="button" className="btn-secondary min-h-10 text-sm sm:w-auto" disabled={busy} onClick={onOpenScan}>
+            Сканер
+          </button>
+        )}
+      </div>
     </article>
   )
 }

@@ -172,7 +172,7 @@ flowchart LR
 |-------|--------|---------|----------|------|
 | **P4** | Accounting hub → command center | Reuse financial-state, scanner queue | Hub priorities component | Low |
 | **P5** | Journal calm + keyboard-first | Done | Split, inline post, P hotkey, panel restore, calm capture |
-| **P6** | Workspace mission control | Extend overview optional fields | Grouped deadlines UI | Medium |
+| **P6** | Workspace mission control | Extend overview optional fields | Grouped deadlines UI | Done |
 | **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Low |
 | **P8** | Design tokens cohesion | — | CSS + component audit | Medium |
 | **P9** | Mobile OCR/journal | — | Layout only | Low |
@@ -228,4 +228,4 @@ flowchart LR
 1. ✅ P4 Hub + terminology «пакет задач» + hero on journal/scan  
 2. ✅ P5 Journal: split panel, timeline, issues filter, inline post, pipeline badges  
 3. P8 Token doc + grep `card-elevated` on accounting  
-4. P6 Workspace deadline strip (if API field exists or computed from calendar)
+4. ✅ P6 Workspace: `deadlines`, `totals`, OCR per client, `WorkspaceMissionPanel`

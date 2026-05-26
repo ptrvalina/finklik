@@ -3,14 +3,49 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.datetime_utils import utc_now_naive
 from app.models.collaboration import ApprovalRequest, OperationalInboxItem
 from app.models.user import Organization, UserOrganizationMembership
+from app.schemas.reporting_calm import ReportingCalmOverview
 from app.services.reporting_calm_service import build_reporting_calm_overview
+
+
+def _next_deadline_from_overview(
+    overview: ReportingCalmOverview,
+    *,
+    inbox_due_at: datetime | None,
+    inbox_title: str | None,
+    today: date,
+) -> dict | None:
+    """Ближайший срок: календарь/обязательства из calm timeline или due_at входящего."""
+    candidates: list[tuple[date, str, str, str]] = []
+
+    for item in overview.timeline:
+        if item.state == "submitted":
+            continue
+        candidates.append((item.date, item.title, item.kind, item.state))
+
+    if inbox_due_at is not None:
+        d = inbox_due_at.date() if hasattr(inbox_due_at, "date") else inbox_due_at
+        candidates.append((d, inbox_title or "Входящее с дедлайном", "inbox", "needs_attention"))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda x: x[0])
+    d, title, kind, state = candidates[0]
+    return {
+        "date": d.isoformat(),
+        "title": title,
+        "kind": kind,
+        "state": state,
+        "days_until": (d - today).days,
+    }
 
 
 async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> dict:
@@ -24,6 +59,8 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
     pairs = list(r.all())
     if not pairs:
         return {"organizations": [], "generated_at": datetime.now(timezone.utc).isoformat()}
+
+    today = utc_now_naive().date()
 
     async def card(mem: UserOrganizationMembership, org: Organization) -> dict:
         overview = await build_reporting_calm_overview(db, org.id)
@@ -39,8 +76,33 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
                 ApprovalRequest.status == "pending",
             )
         )
+        inbox_due_r = await db.execute(
+            select(OperationalInboxItem.due_at, OperationalInboxItem.title)
+            .where(
+                and_(
+                    OperationalInboxItem.organization_id == org.id,
+                    OperationalInboxItem.status == "open",
+                    OperationalInboxItem.due_at.isnot(None),
+                )
+            )
+            .order_by(OperationalInboxItem.due_at.asc())
+            .limit(1)
+        )
+        inbox_due_row = inbox_due_r.first()
+        inbox_due_at = inbox_due_row[0] if inbox_due_row else None
+        inbox_due_title = inbox_due_row[1] if inbox_due_row else None
+
         attention = sum(
             1 for x in overview.consistency_issues if (x.severity or "") in ("attention", "risk")
+        )
+        doc = overview.financial_state.document_completeness if overview.financial_state else None
+        pending_ocr = int(doc.pending_ocr) if doc else 0
+        needs_review = int(doc.needs_review) if doc else 0
+        next_deadline = _next_deadline_from_overview(
+            overview,
+            inbox_due_at=inbox_due_at,
+            inbox_title=inbox_due_title,
+            today=today,
         )
         return {
             "organization_id": org.id,
@@ -52,6 +114,9 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
             "open_inbox": int(inbox_n.scalar() or 0),
             "pending_approvals": int(appr_n.scalar() or 0),
             "attention_issues": attention,
+            "pending_ocr": pending_ocr,
+            "needs_review": needs_review,
+            "next_deadline": next_deadline,
             "ai_summary": overview.ai_summary,
         }
 
@@ -65,12 +130,51 @@ async def build_accountant_workspace_summary(db: AsyncSession, user_id: str) -> 
             score_key = float(rs) if rs is not None else 999.0
         except (TypeError, ValueError):
             score_key = 999.0
-        workload = int(card.get("open_inbox") or 0) + int(card.get("pending_approvals") or 0) + int(card.get("attention_issues") or 0)
+        workload = (
+            int(card.get("open_inbox") or 0)
+            + int(card.get("pending_approvals") or 0)
+            + int(card.get("attention_issues") or 0)
+            + int(card.get("needs_review") or 0)
+            + int(card.get("pending_ocr") or 0)
+        )
+        nd = card.get("next_deadline") or {}
+        try:
+            deadline_key = nd.get("date") or "9999-12-31"
+        except (TypeError, AttributeError):
+            deadline_key = "9999-12-31"
         name = str(card.get("organization_name") or "")
-        return (pinned, score_key, -workload, name)
+        return (pinned, score_key, -workload, deadline_key, name)
 
     ordered = sorted(rows, key=_sort_key)
-    return {"organizations": ordered, "generated_at": datetime.now(timezone.utc).isoformat()}
+
+    deadlines: list[dict] = []
+    for card in ordered:
+        nd = card.get("next_deadline")
+        if not nd:
+            continue
+        deadlines.append(
+            {
+                "organization_id": card["organization_id"],
+                "organization_name": card["organization_name"],
+                **nd,
+            }
+        )
+    deadlines.sort(key=lambda x: (x.get("date") or "9999-12-31", x.get("organization_name") or ""))
+
+    totals = {
+        "open_inbox": sum(int(c.get("open_inbox") or 0) for c in ordered),
+        "pending_approvals": sum(int(c.get("pending_approvals") or 0) for c in ordered),
+        "attention_issues": sum(int(c.get("attention_issues") or 0) for c in ordered),
+        "needs_review": sum(int(c.get("needs_review") or 0) for c in ordered),
+        "pending_ocr": sum(int(c.get("pending_ocr") or 0) for c in ordered),
+    }
+
+    return {
+        "organizations": ordered,
+        "deadlines": deadlines[:20],
+        "totals": totals,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 _PRIORITY_RANK = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
