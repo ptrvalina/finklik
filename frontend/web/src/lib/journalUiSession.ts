@@ -8,8 +8,10 @@ export type JournalUiSnapshotV1 = {
   filterDateTo: string
   filterType: 'all' | 'income' | 'expense'
   filterSearch: string
-  attentionFilter: 'all' | 'drafts'
+  attentionFilter: 'all' | 'drafts' | 'issues'
   workspaceFocus: 'ledger' | 'capture'
+  /** Открытая строка в split-панели (восстанавливается при возврате в журнал). */
+  panelTxId?: string | null
 }
 
 function key(orgId: string) {
@@ -28,11 +30,12 @@ export function loadJournalUiSession(orgId: string): JournalUiSnapshotV1 | null 
       typeof j.filterDateTo !== 'string' ||
       !['all', 'income', 'expense'].includes(String(j.filterType)) ||
       typeof j.filterSearch !== 'string' ||
-      !['all', 'drafts'].includes(String(j.attentionFilter)) ||
+      !['all', 'drafts', 'issues'].includes(String(j.attentionFilter)) ||
       !['ledger', 'capture'].includes(String(j.workspaceFocus))
     ) {
       return null
     }
+    const panelTxId = j.panelTxId === null || typeof j.panelTxId === 'string' ? j.panelTxId : undefined
     return {
       v: 1,
       filterDateFrom: j.filterDateFrom,
@@ -41,6 +44,7 @@ export function loadJournalUiSession(orgId: string): JournalUiSnapshotV1 | null 
       filterSearch: j.filterSearch,
       attentionFilter: j.attentionFilter as JournalUiSnapshotV1['attentionFilter'],
       workspaceFocus: j.workspaceFocus as JournalUiSnapshotV1['workspaceFocus'],
+      panelTxId,
     }
   } catch {
     return null

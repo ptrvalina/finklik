@@ -14,7 +14,7 @@ export function JournalQuickStrip({ onIncome, onExpense, onFocusCapture }: Props
     >
       <button
         type="button"
-        className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-on-primary shadow-glow transition hover:bg-emerald-500"
+        className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-on-primary shadow-soft transition hover:bg-emerald-500"
         title="Доход"
         onClick={onIncome}
       >

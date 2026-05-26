@@ -80,4 +80,7 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | TD3 | RU: типы документов, аналитика KPI, 1С retry; `documentTypeLabels`; тест bulk-post | Done |
 | P4 | Hub учёта: FinancialState + приоритеты очередей; shortcuts; не плиточный ERP | Done |
 | P5a | Journal + Scanner: compact FinancialStateHero | Done |
+| P5 | Journal: split panel, hotkeys, bulk, inline post, mobile virtual list, issues highlight | Done |
+| P5b | JournalWorkspaceChrome; panelTxId session; P=провести; calm capture; −дубли FocusStrip | Done |
 | OS | Полный audit + phased plan: `docs/ux/FINANCIAL_OS_UX_AUDIT_2026-05.md` | Done |
+| P5 | Journal: split-view desktop, замечания API, провести inline, хронология, visual diet | Done |

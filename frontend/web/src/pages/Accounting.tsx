@@ -9,6 +9,12 @@ import { JournalMobileVirtualList } from '../components/journal/JournalMobileVir
 import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
+import { JournalSplitLayout } from '../components/journal/JournalSplitLayout'
+import { JournalTransactionPanel } from '../components/journal/JournalTransactionPanel'
+import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
+import { txAiConfidenceLabel, txAttentionKind, txCanPost, txValidationIssues } from '../lib/journalRowAttention'
+import { JournalWorkspaceChrome } from '../components/journal/JournalWorkspaceChrome'
+import { useMinWidthLg } from '../lib/useMinWidthLg'
 import {
   JOURNAL_CATEGORY_KEYS,
   JOURNAL_CATEGORY_LABELS,
@@ -19,7 +25,7 @@ import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
 import { useOperational } from '../context/OperationalContext'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import OperationalPage from '../components/shell/OperationalPage'
 import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
@@ -107,158 +113,6 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
   )
 }
 
-function findDuplicateTx(target: any, items: any[]) {
-  return items.filter(
-    (o) =>
-      o.id !== target.id &&
-      Math.abs(Number(o.amount || 0) - Number(target.amount || 0)) < 0.01 &&
-      String(o.transaction_date || '') === String(target.transaction_date || ''),
-  )
-}
-
-function TransactionSideContent({
-  tx,
-  allItems,
-  onClose,
-  ledgerQueryKey,
-}: {
-  tx: any
-  allItems: any[]
-  onClose: () => void
-  /** Ключ кэша журнала (с org) — узкая инвалидация без «глушения» всего префикса transactions */
-  ledgerQueryKey: readonly unknown[]
-}) {
-  const qc = useQueryClient()
-  const suggestion = useMemo(() => suggestJournalCategory(String(tx.description || '')), [tx.description])
-  const [category, setCategory] = useState(tx.category || 'other')
-  const [description, setDescription] = useState(tx.description || '')
-  const [amount, setAmount] = useState(String(tx.amount ?? ''))
-  const duplicates = useMemo(() => findDuplicateTx(tx, allItems), [tx, allItems])
-
-  const aiStored = useMemo(() => {
-    if (!tx.ai_analysis_json) return null
-    try {
-      return JSON.parse(tx.ai_analysis_json) as { reasoning?: string; suggested_category?: string; confidence?: number }
-    } catch {
-      return null
-    }
-  }, [tx.ai_analysis_json])
-
-  useEffect(() => {
-    setCategory(tx.category || 'other')
-    setDescription(tx.description || '')
-    setAmount(String(tx.amount ?? ''))
-  }, [tx.id, tx.category, tx.description, tx.amount])
-
-  const updateMutation = useMutation({
-    mutationFn: () =>
-      dashboardApi.updateTransaction(
-        tx.id,
-        buildTxUpdateBody(tx, {
-          amount: parseFloat(amount || '0'),
-          category,
-          description,
-        }),
-      ),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ledgerQueryKey, exact: true })
-      void qc.invalidateQueries({ queryKey: ['transactions', 'recent'], exact: true })
-      void qc.invalidateQueries({ queryKey: ['dashboard'], exact: true })
-      onClose()
-    },
-  })
-
-  const aiDiffers = suggestion.category !== (tx.category || 'other')
-
-  return (
-    <div className="space-y-5">
-      {duplicates.length > 0 && (
-        <div className="rounded-2xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          <p className="font-bold uppercase tracking-wider text-amber-200/90">Возможный дубликат</p>
-          <p className="mt-1 text-on-surface-variant">
-            Ещё {duplicates.length} операций с той же суммой и датой — проверьте, что это не повтор проводки.
-          </p>
-        </div>
-      )}
-
-      <div>
-        <label className="label">Статус</label>
-        <span className="mt-1 inline-flex rounded-lg border border-outline/50 px-2 py-1 text-xs font-bold uppercase text-on-surface-variant">
-          {tx.status === 'draft' ? 'Черновик' : 'Проведён'} · {tx.source || 'manual'}
-        </span>
-      </div>
-
-      {aiStored?.reasoning && (
-        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-3 py-2 text-xs text-on-surface">
-          <p className="font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-300/90">Разбор ИИ</p>
-          <p className="mt-1 leading-relaxed text-on-surface-variant">{aiStored.reasoning}</p>
-        </div>
-      )}
-
-      <div>
-        <label className="label">ИИ · категория</label>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
-            {JOURNAL_CATEGORY_LABELS[suggestion.category] || suggestion.category}{' '}
-            <span className="text-on-surface-variant">({Math.round(suggestion.confidence * 100)}%)</span>
-          </span>
-          {aiDiffers && (
-            <button
-              type="button"
-              className="btn-secondary min-h-9 px-3 py-1 text-xs font-bold"
-              onClick={() => setCategory(suggestion.category)}
-            >
-              Применить
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label className="label">Категория</label>
-        <select className="input mt-1 min-h-11 w-full rounded-xl" value={category} onChange={(e) => setCategory(e.target.value)}>
-          {JOURNAL_CATEGORY_KEYS.map((k) => (
-            <option key={k} value={k}>
-              {JOURNAL_CATEGORY_LABELS[k] || k}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="label">Сумма (BYN)</label>
-        <input className="input mt-1 min-h-11 w-full rounded-xl" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
-      </div>
-
-      <div>
-        <label className="label">Описание</label>
-        <textarea className="input mt-1 min-h-[88px] w-full rounded-xl text-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-
-      <div className="flex flex-wrap gap-2 border-t border-outline/40 pt-4">
-        <Link to="/scan" className="btn-secondary min-h-10 flex-1 px-3 text-center text-xs font-bold sm:flex-none">
-          <Icon name="document_scanner" className="text-lg" /> OCR
-        </Link>
-        <Link to="/bank" className="btn-secondary min-h-10 flex-1 px-3 text-center text-xs font-bold sm:flex-none">
-          <Icon name="account_balance" className="text-lg" /> Банк
-        </Link>
-        <Link to="/counterparties" className="btn-ghost min-h-10 px-2 text-xs">
-          Контрагенты
-        </Link>
-      </div>
-
-      <button
-        type="button"
-        className="btn-primary min-h-12 w-full"
-        disabled={updateMutation.isPending}
-        onClick={() => updateMutation.mutate()}
-      >
-        {updateMutation.isPending ? 'Сохраняем…' : 'Сохранить изменения'}
-      </button>
-    </div>
-  )
-}
-
 export default function Accounting() {
   const qc = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -279,7 +133,7 @@ export default function Accounting() {
   const [filterDateTo, setFilterDateTo] = useState(todayStr)
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all')
   const [filterSearch, setFilterSearch] = useState('')
-  const [attentionFilter, setAttentionFilter] = useState<'all' | 'drafts'>('all')
+  const [attentionFilter, setAttentionFilter] = useState<'all' | 'drafts' | 'issues'>('all')
   const [linkedCounterpartyId, setLinkedCounterpartyId] = useState<string | null>(null)
   const [panelTx, setPanelTx] = useState<any | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
@@ -294,7 +148,9 @@ export default function Accounting() {
 
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const { setNextStep } = useOperational()
+  const isLg = useMinWidthLg()
   const journalSaveReady = useRef(false)
+  const panelRestoreIdRef = useRef<string | null>(null)
 
   useLayoutEffect(() => {
     if (!orgId) return
@@ -307,6 +163,7 @@ export default function Accounting() {
       setFilterSearch(snap.filterSearch)
       setAttentionFilter(snap.attentionFilter)
       setWorkspaceFocus(snap.workspaceFocus)
+      panelRestoreIdRef.current = snap.panelTxId ?? null
     } else {
       setFilterDateFrom(monthStartStr)
       setFilterDateTo(todayStr)
@@ -330,10 +187,11 @@ export default function Accounting() {
         filterSearch,
         attentionFilter,
         workspaceFocus,
+        panelTxId: panelTx?.id ? String(panelTx.id) : null,
       })
     }, 450)
     return () => window.clearTimeout(t)
-  }, [orgId, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter, workspaceFocus])
+  }, [orgId, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter, workspaceFocus, panelTx?.id])
 
   const ledgerQueryKey = useMemo(() => orgQueryKey(['transactions', 'accounting']), [orgId])
 
@@ -376,6 +234,16 @@ export default function Accounting() {
     enabled: !!orgId,
   })
 
+  useEffect(() => {
+    const restoreId = panelRestoreIdRef.current
+    if (!restoreId || !txQuery.data?.items?.length) return
+    const tx = (txQuery.data.items as any[]).find((t) => String(t.id) === restoreId)
+    if (tx) {
+      setPanelTx(tx)
+      panelRestoreIdRef.current = null
+    }
+  }, [txQuery.data?.items])
+
   const filteredItems = useMemo(() => {
     const items = txQuery.data?.items || []
     return items.filter((tx: any) => {
@@ -389,6 +257,7 @@ export default function Accounting() {
         if (!hay.includes(term)) return false
       }
       if (attentionFilter === 'drafts' && tx.status !== 'draft') return false
+      if (attentionFilter === 'issues' && txValidationIssues(tx).length === 0) return false
       return true
     })
   }, [txQuery.data?.items, filterDateFrom, filterDateTo, filterType, filterSearch, attentionFilter])
@@ -414,13 +283,15 @@ export default function Accounting() {
     let income = 0
     let expense = 0
     let drafts = 0
+    let issues = 0
     for (const tx of filteredItems as any[]) {
       const a = Number(tx.amount || 0)
       if (tx.type === 'income') income += a
       else expense += a
       if (tx.status === 'draft') drafts += 1
+      if (txValidationIssues(tx).length > 0) issues += 1
     }
-    return { income, expense, net: income - expense, drafts, count: filteredItems.length }
+    return { income, expense, net: income - expense, drafts, issues, count: filteredItems.length }
   }, [filteredItems])
 
   const uploadScanMutation = useMutation({
@@ -525,6 +396,21 @@ export default function Accounting() {
     onSettled: () => {
       refreshLedgerRelated()
       selection.clear()
+    },
+  })
+
+  const postOneMutation = useMutation({
+    mutationFn: (id: string) => dashboardApi.bulkPostTransactions([id]).then((r) => r.data),
+    onSuccess: (result, id) => {
+      const posted = Number((result as { posted?: number })?.posted ?? 0)
+      if (posted > 0) {
+        setNextStep({ verb: 'send', label: 'Перейти к отчётности', path: '/reports' })
+      }
+    },
+    onSettled: () => {
+      refreshLedgerRelated()
+      void qc.invalidateQueries({ queryKey: orgQueryKey('financial-state-bundle') })
+      void qc.invalidateQueries({ queryKey: ['reporting-calm-overview'] })
     },
   })
 
@@ -702,6 +588,14 @@ export default function Accounting() {
         setWorkspaceFocus('ledger')
         return
       }
+      if (e.key === 'p' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inField) return
+        e.preventDefault()
+        const target =
+          panelTx ?? (focusedRowIndex !== null ? (filteredItems[focusedRowIndex] as any) : null)
+        if (target && txCanPost(target)) postOneMutation.mutate(String(target.id))
+        return
+      }
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault()
         setHotkeysOpen((v) => !v)
@@ -735,7 +629,17 @@ export default function Accounting() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [filteredItems, commandOpen, panelTx, focusCaptureForm, focusedRowIndex, quickIncome, quickExpense, hotkeysOpen])
+  }, [
+    filteredItems,
+    commandOpen,
+    panelTx,
+    focusCaptureForm,
+    focusedRowIndex,
+    quickIncome,
+    quickExpense,
+    hotkeysOpen,
+    postOneMutation,
+  ])
 
   const isLoading = txQuery.isLoading
 
@@ -775,71 +679,13 @@ export default function Accounting() {
 
       <FinancialStateHero compact className="mb-4" />
 
-      <div className="card-elevated relative overflow-hidden rounded-3xl p-4 shadow-lift ring-1 ring-primary/[0.06] sm:p-6">
-        <div className="flex flex-wrap gap-2 border-b border-outline/30 pb-4">
-          <Link to="/bank" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-            <Icon name="sync_alt" className="text-lg" /> Банк
-          </Link>
-          <Link to="/documents" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-            <Icon name="folder_open" className="text-lg" /> Документы
-          </Link>
-          <Link to="/accounting/fixed-assets" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-            <Icon name="inventory_2" className="text-lg" /> ОС
-          </Link>
-          <Link to="/operations" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-            <Icon name="bolt" className="text-lg" /> Лента
-          </Link>
-        </div>
-
-        <div className="mt-4 flex gap-1 rounded-full border border-outline/60 bg-surface-container-low/80 p-1">
-          {(
-            [
-              { id: 'ledger' as const, label: 'Журнал', icon: 'receipt_long' },
-              { id: 'capture' as const, label: 'Ввод и OCR', icon: 'edit_note' },
-            ]
-          ).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setWorkspaceFocus(t.id)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition sm:flex-none sm:px-5 ${
-                workspaceFocus === t.id
-                  ? 'bg-gradient-to-r from-emerald-600 to-primary text-on-primary shadow-glow'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <Icon name={t.icon} className="text-lg" />
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: 'Записей в фильтре', value: String(stats.count), accent: 'text-on-surface' },
-            { label: 'Доходы', value: `${fmt(stats.income)} BYN`, accent: 'text-emerald-600 dark:text-emerald-400' },
-            { label: 'Расходы', value: `${fmt(stats.expense)} BYN`, accent: 'text-on-surface' },
-            { label: 'Черновики', value: String(stats.drafts), accent: stats.drafts ? 'text-amber-400' : 'text-on-surface-variant' },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-3 dark:bg-black/20">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">{s.label}</p>
-              <p className={`mt-1 font-headline text-sm font-bold tabular-nums sm:text-base ${s.accent}`}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {stats.drafts > 0 && (
-        <div className="mt-4">
-          <FocusStrip
-            tone="amber"
-            headline={`${stats.drafts} ${stats.drafts === 1 ? 'черновик' : 'черновика'} в журнале`}
-            supporting="Проведите операции — иначе отчётность и налоги будут неполными."
-            ctaLabel="Показать черновики"
-            onCta={() => setAttentionFilter('drafts')}
-          />
-        </div>
-      )}
+      <JournalWorkspaceChrome
+        workspaceFocus={workspaceFocus}
+        onWorkspaceFocus={setWorkspaceFocus}
+        stats={stats}
+        onFilterDrafts={() => setAttentionFilter('drafts')}
+        onFilterIssues={() => setAttentionFilter('issues')}
+      />
 
       <div className="mt-4">
         <AnimatePresence mode="wait">
@@ -857,7 +703,7 @@ export default function Accounting() {
           id="accounting-capture"
         >
           <form
-            className="card-elevated grid gap-4 rounded-3xl p-6 shadow-card ring-1 ring-primary/[0.05] md:grid-cols-2"
+            className="grid gap-4 rounded-2xl border border-outline/35 bg-surface/90 p-5 md:grid-cols-2"
             onSubmit={submit}
           >
             <select
@@ -937,10 +783,10 @@ export default function Accounting() {
               </div>
             </div>
             <div
-              className={`md:col-span-2 rounded-3xl border-2 border-dashed p-5 shadow-inner backdrop-blur-sm transition-colors ${
+              className={`md:col-span-2 rounded-2xl border border-dashed p-4 transition-colors ${
                 scanDropActive
-                  ? 'border-primary/60 bg-primary/[0.08]'
-                  : 'border-emerald-400/35 bg-gradient-to-br from-emerald-500/[0.07] via-transparent to-cyan-500/[0.05] dark:border-emerald-400/25'
+                  ? 'border-primary/50 bg-primary/[0.06]'
+                  : 'border-outline/40 bg-surface-container-low/50'
               }`}
               onDragEnter={(e) => {
                 e.preventDefault()
@@ -963,7 +809,7 @@ export default function Accounting() {
                   <Icon name="document_scanner" className="text-xl" />
                 </span>
                 <div>
-                  <p className="font-headline text-sm font-bold text-on-surface">OCR · загрузка скана</p>
+                  <p className="font-headline text-sm font-bold text-on-surface">Распознавание · загрузка</p>
                   <p className="text-xs text-on-surface-variant">Перетащите файл сюда или выберите с диска — поля подставятся в форму.</p>
                 </div>
               </div>
@@ -975,7 +821,7 @@ export default function Accounting() {
                   onClick={() => uploadScanMutation.mutate()}
                   disabled={!scanFile || uploadScanMutation.isPending}
                 >
-                  OCR из скана
+                  Распознать
                 </button>
                 <button
                   type="button"
@@ -997,6 +843,20 @@ export default function Accounting() {
       )}
 
       <div className={workspaceFocus === 'capture' ? 'mt-8' : 'mt-6'}>
+        <JournalSplitLayout
+          panelOpen={!!panelTx && isLg}
+          panel={
+            panelTx ? (
+              <JournalTransactionPanel
+                tx={panelTx as Record<string, unknown>}
+                allItems={(txQuery.data?.items as Record<string, unknown>[]) || []}
+                onClose={() => setPanelTx(null)}
+                ledgerQueryKey={ledgerQueryKey}
+                embedded
+              />
+            ) : null
+          }
+          main={
         <DataTableShell
           toolbar={
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between xl:gap-4">
@@ -1036,6 +896,15 @@ export default function Accounting() {
                   >
                     Черновики
                   </button>
+                  <button
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      attentionFilter === 'issues' ? 'bg-amber-600/90 text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                    onClick={() => setAttentionFilter('issues')}
+                  >
+                    Замечания
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -1056,6 +925,7 @@ export default function Accounting() {
                   <kbd className="rounded bg-surface-container-high px-1">⌘K</kbd> палитра ·{' '}
                   <kbd className="rounded bg-surface-container-high px-1">N</kbd> ввод ·{' '}
                   <kbd className="rounded bg-surface-container-high px-1">↑↓</kbd> строки ·{' '}
+                  <kbd className="rounded bg-surface-container-high px-1">P</kbd> провести ·{' '}
                   <kbd className="rounded bg-surface-container-high px-1">Enter</kbd> панель
                 </p>
               </div>
@@ -1112,6 +982,10 @@ export default function Accounting() {
                 focusedRowIndex={focusedRowIndex}
                 selection={selection}
                 onOpenRow={(tx) => setPanelTx(tx)}
+                onPostDraft={(id) => postOneMutation.mutate(id)}
+                postPendingId={
+                  postOneMutation.isPending ? String(postOneMutation.variables ?? '') : null
+                }
               />
 
               <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky hidden md:block">
@@ -1131,21 +1005,28 @@ export default function Accounting() {
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Дата</th>
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Описание</th>
                       <th className="px-2.5 py-2 text-[10px] font-semibold">Категория</th>
-                      <th className="w-24 px-2.5 py-2 text-right text-[10px] font-semibold">Действия</th>
+                      <th className="hidden px-2.5 py-2 text-[10px] font-semibold xl:table-cell">Этап</th>
+                      <th className="w-28 px-2.5 py-2 text-right text-[10px] font-semibold">Действия</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
                     {(filteredItems as any[]).map((tx: any, idx: number) => {
                       const sug = suggestJournalCategory(String(tx.description || ''))
                       const aiMismatch = tx.type === 'expense' && sug.category !== (tx.category || 'other')
+                      const issues = txValidationIssues(tx)
+                      const accentKind = txAttentionKind(tx)
                       const accent =
-                        tx.status === 'draft'
-                          ? 'border-l-[2px] border-amber-400/70'
-                          : aiMismatch
-                            ? 'border-l-[2px] border-emerald-500/30'
-                            : ''
+                        accentKind === 'issue'
+                          ? 'border-l-[2px] border-amber-500/80'
+                          : accentKind === 'draft'
+                            ? 'border-l-[2px] border-amber-400/70'
+                            : aiMismatch
+                              ? 'border-l-[2px] border-emerald-500/30'
+                              : ''
                       const focusRing =
-                        focusedRowIndex === idx ? 'ring-1 ring-inset ring-primary/18 bg-primary/[0.03]' : ''
+                        focusedRowIndex === idx || panelTx?.id === tx.id
+                          ? 'ring-1 ring-inset ring-primary/18 bg-primary/[0.03]'
+                          : ''
                       const rowPending =
                         patchCategoryMutation.isPending && patchCategoryMutation.variables?.id === tx.id
                       return (
@@ -1178,9 +1059,19 @@ export default function Accounting() {
                             <p className="truncate text-[13px] font-normal leading-snug text-on-surface-variant">
                               {tx.description || '—'}
                             </p>
-                            {aiMismatch && (
+                            {issues[0] && (
+                              <span className="mt-0.5 line-clamp-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                                {issues[0]}
+                              </span>
+                            )}
+                            {!issues[0] && aiMismatch && (
                               <span className="mt-0.5 inline-block text-[10px] font-medium text-emerald-600/75 dark:text-emerald-400/75">
                                 ИИ → {JOURNAL_CATEGORY_LABELS[sug.category]}
+                              </span>
+                            )}
+                            {!issues[0] && txAiConfidenceLabel(tx) && (
+                              <span className="mt-0.5 block text-[10px] text-on-surface-variant/70">
+                                Уверенность категории: {txAiConfidenceLabel(tx)}
                               </span>
                             )}
                           </td>
@@ -1201,14 +1092,33 @@ export default function Accounting() {
                               ))}
                             </select>
                           </td>
-                          <td className="px-2.5 py-2 text-right align-middle" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="btn-ghost min-h-8 px-2 text-[11px] font-medium text-primary"
-                              onClick={() => setPanelTx(tx)}
+                          <td className="hidden px-2.5 py-2 align-middle xl:table-cell">
+                            <span
+                              className={`inline-block rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase ${journalPipelineBadgeClass(tx.pipeline_status)}`}
                             >
-                              Обзор
-                            </button>
+                              {journalPipelineLabel(tx.pipeline_status)}
+                            </span>
+                          </td>
+                          <td className="px-2.5 py-2 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-end gap-1">
+                              {txCanPost(tx) && (
+                                <button
+                                  type="button"
+                                  className="btn-primary min-h-8 px-2 text-[10px] font-bold"
+                                  disabled={postOneMutation.isPending}
+                                  onClick={() => postOneMutation.mutate(String(tx.id))}
+                                >
+                                  Провести
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="btn-ghost min-h-8 px-2 text-[11px] font-medium text-primary"
+                                onClick={() => setPanelTx(tx)}
+                              >
+                                {isLg ? 'Детали' : 'Обзор'}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -1219,6 +1129,8 @@ export default function Accounting() {
             </>
           )}
         </DataTableShell>
+          }
+        />
       </div>
 
       <JournalQuickStrip onIncome={quickIncome} onExpense={quickExpense} onFocusCapture={focusCaptureForm} />
@@ -1245,21 +1157,23 @@ export default function Accounting() {
         }}
       />
 
-      <WorkflowSidePanel
-        open={!!panelTx}
-        onClose={() => setPanelTx(null)}
-        title="Операция в журнале"
-        subtitle={panelTx ? String(panelTx.transaction_date) : undefined}
-      >
-        {panelTx && (
-          <TransactionSideContent
-            tx={panelTx}
-            allItems={(txQuery.data?.items as any[]) || []}
-            onClose={() => setPanelTx(null)}
-            ledgerQueryKey={ledgerQueryKey}
-          />
-        )}
-      </WorkflowSidePanel>
+      {!isLg && (
+        <WorkflowSidePanel
+          open={!!panelTx}
+          onClose={() => setPanelTx(null)}
+          title="Операция в журнале"
+          subtitle={panelTx ? String(panelTx.transaction_date) : undefined}
+        >
+          {panelTx && (
+            <JournalTransactionPanel
+              tx={panelTx as Record<string, unknown>}
+              allItems={(txQuery.data?.items as Record<string, unknown>[]) || []}
+              onClose={() => setPanelTx(null)}
+              ledgerQueryKey={ledgerQueryKey}
+            />
+          )}
+        </WorkflowSidePanel>
+      )}
 
       <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-2 border-t border-outline/40 bg-[rgb(var(--color-surface)/0.94)] px-3 pt-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.88)] pb-[max(0.65rem,env(safe-area-inset-bottom))] dark:border-white/[0.07] lg:hidden">
         <button type="button" className="btn-secondary min-h-11 flex-1 text-sm font-semibold" onClick={() => setWorkspaceFocus('ledger')}>

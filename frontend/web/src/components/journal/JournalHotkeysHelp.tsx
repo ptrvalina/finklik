@@ -6,6 +6,7 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: '/', action: 'Поиск в журнале' },
   { keys: 'G', action: 'Вкладка «Журнал»' },
   { keys: 'D', action: 'Только черновики' },
+  { keys: 'P', action: 'Провести выбранный черновик' },
   { keys: '↑ ↓ Enter', action: 'Строка журнала' },
   { keys: 'Esc', action: 'Закрыть панель / палитру' },
   { keys: '?', action: 'Эта подсказка' },
