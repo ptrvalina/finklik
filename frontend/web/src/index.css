@@ -341,6 +341,9 @@
   .fc-focus-strip--neutral {
     @apply border-outline/40 bg-surface-container-low/50;
   }
+  .fc-scanner-mobile {
+    -webkit-overflow-scrolling: touch;
+  }
   .fc-calm-error {
     box-shadow: var(--fc-shadow-calm);
   }

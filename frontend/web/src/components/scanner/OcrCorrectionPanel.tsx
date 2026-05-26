@@ -41,6 +41,7 @@ export default function OcrCorrectionPanel({
   confirmPending,
   confirmed,
   onFieldFocus,
+  hidePrimaryButton,
 }: {
   draft: OcrEditDraft
   fieldConfidence?: Record<string, number>
@@ -57,6 +58,7 @@ export default function OcrCorrectionPanel({
   confirmPending?: boolean
   confirmed?: boolean
   onFieldFocus?: (key: OcrFieldKey) => void
+  hidePrimaryButton?: boolean
 }) {
   const refs = useRef<Partial<Record<OcrFieldKey, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>>>({})
 
@@ -255,20 +257,21 @@ export default function OcrCorrectionPanel({
 
       {amountError && <p className="text-sm text-error">{amountError}</p>}
 
-      {!confirmed ? (
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="btn-primary min-h-12 w-full rounded-xl"
-          disabled={confirmPending}
-        >
-          {confirmPending ? 'Сохраняем…' : `${verbLabel('confirm')} в журнал`}
-        </button>
-      ) : (
-        <p className="rounded-xl border border-secondary/25 bg-secondary/10 px-3 py-3 text-sm font-semibold text-secondary">
-          Операция в журнале — документ связан
-        </p>
-      )}
+      {!hidePrimaryButton &&
+        (!confirmed ? (
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="btn-primary min-h-12 w-full rounded-xl"
+            disabled={confirmPending}
+          >
+            {confirmPending ? 'Сохраняем…' : `${verbLabel('confirm')} в журнал`}
+          </button>
+        ) : (
+          <p className="rounded-xl border border-secondary/25 bg-secondary/10 px-3 py-3 text-sm font-semibold text-secondary">
+            Операция в журнале — документ связан
+          </p>
+        ))}
     </div>
   )
 }

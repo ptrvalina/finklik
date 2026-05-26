@@ -87,3 +87,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P6 | Workspace mission control: сроки, OCR по клиентам, сводные приоритеты (`/workspace`) | Done |
 | P7 | Отчётность: нарратив периода, подписи шагов гида, focus strip из calm | Done |
 | P8 | Design tokens: L1/L2/L3 поверхности, `DESIGN_TOKENS.md`, учёт/отчётность/execution | Done |
+| P9 | Mobile OCR full-screen + readiness notice; journal split modules in repo | Done |

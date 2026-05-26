@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { scannerApi } from '../api/client'
+import { reportingCalmApi, scannerApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
 import { Link, useSearchParams } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
@@ -21,6 +21,8 @@ import { useOperational } from '../context/OperationalContext'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { useAuthStore } from '../store/authStore'
 import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
+import { useMinWidthLg } from '../lib/useMinWidthLg'
+import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -103,6 +105,8 @@ export default function ScannerPage() {
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
   const [activeOcrField, setActiveOcrField] = useState<OcrFieldKey | null>(null)
+  const [readinessNotice, setReadinessNotice] = useState<string | null>(null)
+  const isLg = useMinWidthLg()
 
   useEffect(() => {
     if (!orgId) return
@@ -174,10 +178,11 @@ export default function ScannerPage() {
   const confirmMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: ReturnType<typeof draftToCorrectionPayload> }) =>
       scannerApi.confirmTransaction(id, payload).then((r) => r.data),
-    onSuccess: (data: { transaction_id?: string }) => {
+    onSuccess: async (data: { transaction_id?: string }) => {
       setTxSaved(true)
       setAmountError(null)
       setCreatedTxId(data.transaction_id ?? null)
+      setReadinessNotice(null)
       if (scanResult?.id) {
         setScanResult((prev) =>
           prev
@@ -193,7 +198,17 @@ export default function ScannerPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-history') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('scanner-review-queue') })
       void qc.invalidateQueries({ queryKey: orgQueryKey('financial-state-bundle') })
-      void qc.invalidateQueries({ queryKey: ['reporting-calm-overview'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('reporting-calm-overview') })
+      try {
+        const ov = await qc.fetchQuery({
+          queryKey: orgQueryKey('reporting-calm-overview'),
+          queryFn: () => reportingCalmApi.overview().then((r) => r.data),
+        })
+        const score = (ov as { readiness?: { score?: number } })?.readiness?.score
+        if (score != null) setReadinessNotice(`Готовность отчётности обновлена: ${score}%`)
+      } catch {
+        setReadinessNotice('Данные учёта обновлены — проверьте готовность в отчётности')
+      }
       const docId = scanResult?.id
       const title = editDraft?.counterparty || scanResult?.filename || 'Документ'
       if (docId) recordOcrDoc(docId, title)
@@ -378,9 +393,45 @@ export default function ScannerPage() {
   }
 
   const reviewCount = reviewQueueData?.items?.length ?? 0
+  const mobileReview = !isLg && !!scanResult && !!editDraft
+
+  function dismissScan() {
+    setScanResult(null)
+    setEditDraft(null)
+    setPreview(null)
+    setTxSaved(false)
+    setCreatedTxId(null)
+    setActiveOcrField(null)
+    lastScanIdRef.current = null
+  }
 
   return (
+    <>
+      {mobileReview && scanResult && editDraft && (
+        <ScannerMobileWorkspace
+          scan={scanResult}
+          docLabel={(DOC_ICONS[editDraft.docType || scanResult.doc_type] || DOC_ICONS.unknown).label}
+          preview={preview}
+          editDraft={editDraft}
+          activeOcrField={activeOcrField}
+          amountError={amountError}
+          autosaving={autosaving}
+          txSaved={txSaved}
+          createdTxId={createdTxId}
+          confirmPending={confirmMutation.isPending}
+          reviewQueueCount={reviewQueueData?.items?.length ?? 0}
+          onClose={dismissScan}
+          onDraftChange={handleDraftChange}
+          onMarkCorrected={markCorrected}
+          onConfirm={submitTxFromDraft}
+          onFieldFocus={setActiveOcrField}
+          onNextInQueue={() => openNextInReviewQueue(scanResult.id)}
+          nextPending={loadDocMutation.isPending}
+        />
+      )}
+
     <OperationalPage
+      className="scanner-page pb-20 lg:pb-8"
       eyebrow="Первичка"
       title="Сканер документов"
       description="Загрузка → распознавание → проверка полей → операция в журнале."
@@ -406,7 +457,16 @@ export default function ScannerPage() {
         ) : undefined
       }
     >
-      <FinancialStateHero compact className="mb-4" />
+      <FinancialStateHero compact className="mb-4 max-lg:hidden" />
+
+      {readinessNotice && (
+        <div className="fc-surface-calm fc-surface-calm--ok mb-4 flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-on-surface">{readinessNotice}</p>
+          <Link to="/reports" className="btn-secondary min-h-9 text-xs">
+            Отчётность
+          </Link>
+        </div>
+      )}
 
       {reviewCount > 0 && (
         <div className="mb-4 flex flex-col gap-2 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -475,7 +535,7 @@ export default function ScannerPage() {
                 className="hidden"
                 onChange={onFileInput}
               />
-              <div className={`fc-premium-surface flex h-[min(420px,55vh)] w-full min-h-[240px] flex-col items-center justify-center border-2 border-dashed transition-colors duration-300 sm:h-[420px] ${
+              <div className={`fc-premium-surface flex h-[min(420px,55vh)] w-full min-h-[min(280px,52dvh)] flex-col items-center justify-center border-2 border-dashed transition-colors duration-300 max-lg:min-h-[min(360px,58dvh)] sm:h-[420px] ${
                 dragOver ? 'border-emerald-400/60 bg-emerald-500/[0.08]' : 'border-primary/35 bg-[rgb(var(--color-surface)/0.35)] hover:border-primary/50 hover:bg-emerald-500/[0.06]'
               }`}>
                 {uploadMutation.isPending || batchProgress ? (
@@ -582,7 +642,7 @@ export default function ScannerPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-              className="fc-premium-surface mt-6 overflow-hidden shadow-soft"
+              className={`fc-premium-surface mt-6 overflow-hidden shadow-soft ${mobileReview ? 'hidden lg:block' : ''}`}
             >
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
@@ -714,7 +774,7 @@ export default function ScannerPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
+        <div className="col-span-12 hidden space-y-6 lg:col-span-4 lg:block">
           <div className="bg-surface-container-high rounded-xl p-6 border border-outline-variant/10">
             <h4 className="label flex items-center gap-2">
               <Icon name="auto_awesome" className="text-secondary text-lg" /> Умный захват
@@ -823,5 +883,6 @@ export default function ScannerPage() {
         </div>
       </div>
     </OperationalPage>
+    </>
   )
 }

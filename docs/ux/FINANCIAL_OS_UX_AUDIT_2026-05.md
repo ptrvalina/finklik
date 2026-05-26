@@ -175,7 +175,7 @@ flowchart LR
 | **P6** | Workspace mission control | Extend overview optional fields | Grouped deadlines UI | Done |
 | **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Done |
 | **P8** | Design tokens cohesion | — | CSS + component audit | Done |
-| **P9** | Mobile OCR/journal | — | Layout only | Low |
+| **P9** | Mobile OCR/journal | — | Layout only | Done |
 | **P10** | Trust copy | — | terminology.ru enforcement | Low |
 
 **Не делаем:** новые сущности БД, rewrite App, смена framework.
