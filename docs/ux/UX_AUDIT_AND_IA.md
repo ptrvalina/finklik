@@ -85,3 +85,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | OS | Полный audit + phased plan: `docs/ux/FINANCIAL_OS_UX_AUDIT_2026-05.md` | Done |
 | P5 | Journal: split-view desktop, замечания API, провести inline, хронология, visual diet | Done |
 | P6 | Workspace mission control: сроки, OCR по клиентам, сводные приоритеты (`/workspace`) | Done |
+| P7 | Отчётность: нарратив периода, подписи шагов гида, focus strip из calm | Done |

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { reportingCalmApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { readinessBlockedReason } from './reportingFlowModel'
+import { buildReportingPeriodNarrative, readinessBlockedReason } from './reportingFlowModel'
 
 export default function ReportingReadinessHero() {
   const { data, isLoading } = useQuery({
@@ -19,6 +19,7 @@ export default function ReportingReadinessHero() {
   const blockers = data?.readiness?.blockers ?? []
   const reason = readinessBlockedReason(data)
   const firstBlocker = blockers[0]?.label
+  const period = buildReportingPeriodNarrative(data)
 
   const ready = score != null && score >= 80 && blockers.length === 0
   const stepsLeft = blockers.length
@@ -32,15 +33,14 @@ export default function ReportingReadinessHero() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Готовность к сдаче</p>
-          <p className="mt-2 font-headline text-lg font-semibold text-on-surface">
-            {ready
-              ? 'Можно переходить к проверке и отправке'
-              : stepsLeft > 0
-                ? `Осталось ${stepsLeft} ${stepsLeft === 1 ? 'шаг' : stepsLeft < 5 ? 'шага' : 'шагов'} до спокойной сдачи`
-                : firstBlocker
-                  ? firstBlocker
-                  : reason || 'Дозаполните журнал и документы'}
-          </p>
+          <p className="mt-2 font-headline text-lg font-semibold text-on-surface">{period.headline}</p>
+          {!ready && (
+            <p className="mt-1 text-xs text-on-surface-variant">
+              {stepsLeft > 0
+                ? `Блокеров готовности: ${stepsLeft}${firstBlocker ? ` · ${firstBlocker}` : ''}`
+                : reason || period.supporting}
+            </p>
+          )}
           {score != null && (
             <p className="mt-2 text-sm text-on-surface-variant">
               Оценка готовности: <strong className="text-on-surface">{score}%</strong>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { reportingCalmApi } from '../../api/client'
 import { useOperational } from '../../context/OperationalContext'
 import { useAuthStore } from '../../store/authStore'
+import { orgQueryKey } from '../../lib/queryKeys'
 import {
   loadReportingFlowStep,
   loadReportingFlowValidated,
@@ -16,12 +17,15 @@ import {
   type FlowStepId,
   READINESS_THRESHOLD,
   buildFlowSteps,
+  buildReportingPeriodNarrative,
   canLeaveFixStep,
   deriveIssuesForStep,
+  flowStepPanelTitle,
   operationalAiHint,
   readinessBlockedReason,
   type ReportingFlowStep,
 } from './reportingFlowModel'
+import ReportingPeriodNarrative from './ReportingPeriodNarrative'
 
 function StepRail({
   steps,
@@ -68,11 +72,12 @@ function StepRail({
                 {done ? '✓' : i + 1}
               </span>
               <span
-                className={`hidden max-w-[4.5rem] truncate text-center text-[9px] font-bold uppercase leading-tight sm:block ${
+                className={`max-w-[4.5rem] truncate text-center text-[9px] font-bold uppercase leading-tight ${
                   active ? 'text-primary' : done ? 'text-on-surface' : 'text-on-surface-variant'
                 }`}
               >
-                {s.title}
+                <span className="sm:hidden">{s.shortLabel}</span>
+                <span className="hidden sm:inline">{s.title}</span>
               </span>
             </button>
           )
@@ -138,18 +143,21 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
     setValidationPassed(loadReportingFlowValidated(orgId))
   }, [orgId])
 
+  const calmKey = orgQueryKey('reporting-calm-overview')
+
   const q = useQuery({
-    queryKey: ['reporting-calm-overview'],
+    queryKey: calmKey,
     queryFn: () => reportingCalmApi.overview().then((r) => r.data),
     staleTime: 45_000,
   })
 
   const data = q.data as CalmOverviewLike | undefined
+  const periodNarrative = useMemo(() => buildReportingPeriodNarrative(data), [data])
 
   const validateMut = useMutation({
     mutationFn: () => reportingCalmApi.validate().then((r) => r.data),
     onSuccess: (payload) => {
-      qc.setQueryData(['reporting-calm-overview'], payload)
+      qc.setQueryData(calmKey, payload)
       setValidationPassed(true)
       if (orgId) saveReportingFlowValidated(orgId, true)
       const overview = payload as CalmOverviewLike
@@ -286,26 +294,21 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
     }
   }
 
-  const panelTitle = (id: FlowStepId) => {
-    const m: Record<FlowStepId, string> = {
-      review: 'Шаг 1 — Обзор готовности',
-      fix: 'Шаг 2 — Исправьте данные',
-      validate: 'Шаг 3 — Проверка AI',
-      generate: 'Шаг 4 — Черновик отчёта',
-      submit: 'Шаг 5 — Выгрузка и отправка',
-    }
-    return m[id]
-  }
+  const activeMeta = steps[stepIndex]
 
   return (
     <div className="mt-6 space-y-5 pb-28 lg:pb-0" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <ReportingPeriodNarrative data={data} onGoToStep={goToStep} />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Гид подготовки</p>
-          <h2 className="font-headline text-lg font-bold text-on-surface">Что делать дальше — один шаг за раз</h2>
+          <h2 className="font-headline text-lg font-bold text-on-surface">
+            {periodNarrative.periodLabel} — по шагам к сдаче
+          </h2>
         </div>
         <p className="max-w-md text-xs text-on-surface-variant sm:text-right">
-          Свайп влево / «Дальше» — следующий шаг. Нельзя перескочить проверку, пока готовность ниже порога.
+          Свайп влево / «Дальше» — следующий шаг. Порог готовности {READINESS_THRESHOLD}% перед контролем AI.
         </p>
       </div>
 
@@ -344,9 +347,11 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
         <div className="flex flex-col gap-2 border-b border-outline-variant/15 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-              Шаг {stepIndex + 1} из 5 · {activeId ? panelTitle(activeId) : ''}
+              {activeId ? flowStepPanelTitle(activeId, periodNarrative.periodLabel) : ''}
             </p>
-            <p className="mt-1 text-sm font-semibold text-primary">Что делать дальше</p>
+            <p className="mt-1 text-sm font-semibold text-primary">
+              {activeMeta?.subtitle ?? 'Что делать дальше'}
+            </p>
           </div>
           <div className="flex gap-2">
             <button

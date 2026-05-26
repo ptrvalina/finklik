@@ -1,9 +1,13 @@
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { reportingCalmApi } from '../../api/client'
 import OperationalPage, { FocusStrip } from '../../components/shell/OperationalPage'
+import { orgQueryKey } from '../../lib/queryKeys'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
 import ReportingReadinessHero from './ReportingReadinessHero'
+import { buildReportingPeriodNarrative } from './reportingFlowModel'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -32,10 +36,20 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   )
 
   const { authority } = useParams<{ authority?: string }>()
+  const filter = authority && isReportingAuthority(authority) ? authority : null
+
+  const { data: calmOverview } = useQuery({
+    queryKey: orgQueryKey('reporting-calm-overview'),
+    queryFn: () => reportingCalmApi.overview().then((r) => r.data),
+    staleTime: 45_000,
+    enabled: !filter,
+  })
+
+  const periodNarrative = useMemo(() => buildReportingPeriodNarrative(calmOverview), [calmOverview])
+
   if (authority !== undefined && !isReportingAuthority(authority)) {
     return <Navigate to={base} replace />
   }
-  const filter = authority && isReportingAuthority(authority) ? authority : null
 
   if (filter) {
     return (
@@ -54,17 +68,24 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
     )
   }
 
+  const focusCta =
+    periodNarrative.phase === 'deadline_pressure'
+      ? { label: 'Календарь сроков', to: '/calendar' }
+      : periodNarrative.phase === 'ready_for_draft'
+        ? { label: 'Черновик ИМНС', to: `${base}/imns` }
+        : { label: 'ИМНС', to: `${base}/imns` }
+
   return (
     <OperationalPage
       eyebrow="Комплаенс"
       title="Отчётность"
-      description="Выберите орган, пройдите guided-поток подготовки и отслеживайте статусы подачи."
+      description="Отчётный период, готовность данных и пошаговая подготовка к сдаче."
       focusStrip={
         <FocusStrip
-          headline="Начните с ИМНС или ФСЗН"
-          supporting="Система подскажет недостающие данные до отправки."
-          ctaLabel="ИМНС"
-          ctaTo={`${base}/imns`}
+          headline={periodNarrative.headline}
+          supporting={periodNarrative.supporting}
+          ctaLabel={focusCta.label}
+          ctaTo={focusCta.to}
         />
       }
     >

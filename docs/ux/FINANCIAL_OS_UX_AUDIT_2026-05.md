@@ -95,7 +95,7 @@
 | Сильно | Слабо |
 |--------|-------|
 | Guided flow, readiness hero, sticky mobile actions | EN codes в snapshot — частично RU (✅ labels) |
-| | Period close narrative — backlog P7 |
+| | Period close narrative — ✅ P7 (`ReportingPeriodNarrative`, шаги гида) |
 
 ### Workspace `/workspace`
 | Сильно | Слабо |
@@ -173,7 +173,7 @@ flowchart LR
 | **P4** | Accounting hub → command center | Reuse financial-state, scanner queue | Hub priorities component | Low |
 | **P5** | Journal calm + keyboard-first | Done | Split, inline post, P hotkey, panel restore, calm capture |
 | **P6** | Workspace mission control | Extend overview optional fields | Grouped deadlines UI | Done |
-| **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Low |
+| **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Done |
 | **P8** | Design tokens cohesion | — | CSS + component audit | Medium |
 | **P9** | Mobile OCR/journal | — | Layout only | Low |
 | **P10** | Trust copy | — | terminology.ru enforcement | Low |

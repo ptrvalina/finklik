@@ -410,7 +410,7 @@ export default function Accounting() {
     onSettled: () => {
       refreshLedgerRelated()
       void qc.invalidateQueries({ queryKey: orgQueryKey('financial-state-bundle') })
-      void qc.invalidateQueries({ queryKey: ['reporting-calm-overview'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('reporting-calm-overview') })
     },
   })
 
