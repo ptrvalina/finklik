@@ -7,6 +7,7 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import OperationalPage from '../components/shell/OperationalPage'
 import { formatApiDetail } from '../utils/apiError'
+import { calmActionError } from '../i18n/messages.ru'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -111,7 +112,7 @@ export default function CounterpartiesPage() {
       setMessage({ type: 'success', text: editing ? 'Обновлён' : 'Добавлен' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: formatApiDetail(e?.response?.data?.detail) || 'Ошибка' }),
+      setMessage({ type: 'error', text: calmActionError('genericAction', formatApiDetail(e?.response?.data?.detail)) }),
   })
 
   const quickUnpMutation = useMutation({
@@ -128,7 +129,7 @@ export default function CounterpartiesPage() {
       setMessage({ type: 'success', text: 'Контрагент добавлен по УНП' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: formatApiDetail(e?.response?.data?.detail) || 'Ошибка' }),
+      setMessage({ type: 'error', text: calmActionError('genericAction', formatApiDetail(e?.response?.data?.detail)) }),
   })
 
   const pinMutation = useMutation({

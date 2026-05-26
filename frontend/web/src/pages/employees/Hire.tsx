@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { employeesApi, scannerApi, workforceApi } from '../../api/client'
 import { saveBlob } from '../../utils/fileDownload'
+import { calmActionError } from '../../i18n/messages.ru'
+import { formatApiDetail } from '../../utils/apiError'
 
 type Row = {
   id: string
@@ -247,7 +249,7 @@ export default function EmployeesHire() {
       setEditId(null)
       await load()
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Ошибка сохранения')
+      alert(calmActionError('employeeSave', formatApiDetail(e?.response?.data?.detail)))
     }
   }
 

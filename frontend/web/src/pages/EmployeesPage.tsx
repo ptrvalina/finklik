@@ -4,6 +4,7 @@ import { employeesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
+import { calmError } from '../i18n/messages.ru'
 
 function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 
@@ -92,11 +93,11 @@ export default function EmployeesPage() {
       closeModal()
       flash('success', 'Сотрудник добавлен')
     },
-    onError: () => flash('error', 'Ошибка'),
+    onError: () => flash('error', calmError('employeeSave')),
   })
-  const updateMutation = useMutation({ mutationFn: (d: { id: string; body: any }) => employeesApi.update(d.id, d.body), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); closeModal(); flash('success', 'Обновлено') }, onError: () => flash('error', 'Ошибка') })
-  const fireMutation = useMutation({ mutationFn: (d: { id: string; fire_date: string }) => employeesApi.fire(d.id, d.fire_date), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setShowFireConfirm(null); flash('success', 'Уволен') }, onError: () => flash('error', 'Ошибка') })
-  const salaryMutation = useMutation({ mutationFn: () => employeesApi.calculateSalary({ employee_id: selectedEmployee!.id, ...salaryForm }), onSuccess: (res) => { setSalaryResult(res.data); qc.invalidateQueries({ queryKey: ['payroll'] }); flash('success', 'Рассчитано') }, onError: () => flash('error', 'Ошибка расчёта') })
+  const updateMutation = useMutation({ mutationFn: (d: { id: string; body: any }) => employeesApi.update(d.id, d.body), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); closeModal(); flash('success', 'Обновлено') }, onError: () => flash('error', calmError('employeeSave')) })
+  const fireMutation = useMutation({ mutationFn: (d: { id: string; fire_date: string }) => employeesApi.fire(d.id, d.fire_date), onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setShowFireConfirm(null); flash('success', 'Уволен') }, onError: () => flash('error', calmError('employeeFire')) })
+  const salaryMutation = useMutation({ mutationFn: () => employeesApi.calculateSalary({ employee_id: selectedEmployee!.id, ...salaryForm }), onSuccess: (res) => { setSalaryResult(res.data); qc.invalidateQueries({ queryKey: ['payroll'] }); flash('success', 'Рассчитано') }, onError: () => flash('error', calmError('employeeSave')) })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }
   function resetForm() {

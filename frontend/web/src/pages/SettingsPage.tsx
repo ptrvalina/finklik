@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamApi, regulatoryApi, billingApi, onecApi, assistantApi, automationApi, integrationsApi, authApi, accountingApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { formatApiDetail } from '../utils/apiError'
+import { calmActionError } from '../i18n/messages.ru'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
@@ -369,7 +370,7 @@ function AccountingModeCard() {
       setMsg({ type: 'success', text: 'Режим учёта обновлён' })
     },
     onError: (e: unknown) =>
-      setMsg({ type: 'error', text: formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail) || 'Ошибка' }),
+      setMsg({ type: 'error', text: calmActionError('settingsSave', formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail)) }),
   })
 
   if (!allowed) return null
@@ -452,7 +453,7 @@ function OrgRequisitesCard() {
       setOrgMsg({ type: 'success', text: 'Реквизиты сохранены' })
     },
     onError: (e: any) =>
-      setOrgMsg({ type: 'error', text: formatApiDetail(e?.response?.data?.detail) || 'Ошибка' }),
+      setOrgMsg({ type: 'error', text: calmActionError('settingsSave', formatApiDetail(e?.response?.data?.detail)) }),
   })
 
   async function downloadExport() {
@@ -587,7 +588,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       setMessage({ type: 'success', text: res.data.message || 'Ключ ИИ сохранён' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения ключа ИИ' }),
+      setMessage({ type: 'error', text: calmActionError('settingsSave', String(e?.response?.data?.detail ?? '')) }),
   })
   const saveAutomationMutation = useMutation({
     mutationFn: () =>
@@ -603,7 +604,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       setMessage({ type: 'success', text: 'Политика автоматизации сохранена' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения политики автоматизации' }),
+      setMessage({ type: 'error', text: calmActionError('settingsSave', String(e?.response?.data?.detail ?? '')) }),
   })
 
   const clearLlmMutation = useMutation({
@@ -613,7 +614,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       setMessage({ type: 'success', text: 'Ключ ИИ организации удалён' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка' }),
+      setMessage({ type: 'error', text: calmActionError('settingsSave', String(e?.response?.data?.detail ?? '')) }),
   })
 
   const saveMutation = useMutation({
@@ -629,7 +630,7 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       setMessage({ type: 'success', text: 'Подключение сохранено' })
     },
     onError: (e: any) =>
-      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка сохранения' }),
+      setMessage({ type: 'error', text: calmActionError('settingsSave', String(e?.response?.data?.detail ?? '')) }),
   })
 
   useEffect(() => {
@@ -861,7 +862,7 @@ function BillingSection() {
       qc.invalidateQueries({ queryKey: ['billing-subscription'] })
       setMessage({ type: 'success', text: res.data.message })
     },
-    onError: (e: any) => setMessage({ type: 'error', text: formatApiDetail(e.response?.data?.detail) || 'Ошибка' }),
+    onError: (e: any) => setMessage({ type: 'error', text: calmActionError('settingsSave', formatApiDetail(e.response?.data?.detail)) }),
   })
 
   const plans = plansData?.plans ?? []
@@ -996,7 +997,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
       setInviteForm({ email: '', role: 'accountant' })
       setMessage({ type: 'success', text: `Приглашение создано. Код: ${res.data.invite_code}` })
     },
-    onError: (e: any) => setMessage({ type: 'error', text: formatApiDetail(e.response?.data?.detail) || 'Ошибка' }),
+    onError: (e: any) => setMessage({ type: 'error', text: calmActionError('settingsSave', formatApiDetail(e.response?.data?.detail)) }),
   })
 
   const deactivateMutation = useMutation({

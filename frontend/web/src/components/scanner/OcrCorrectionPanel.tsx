@@ -86,10 +86,35 @@ export default function OcrCorrectionPanel({
     }
   }
 
+  function focusPrev(current: OcrFieldKey) {
+    const idx = OCR_FIELD_ORDER.indexOf(current)
+    for (let i = idx - 1; i >= 0; i--) {
+      const el = refs.current[OCR_FIELD_ORDER[i]]
+      if (el) {
+        el.focus()
+        return
+      }
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent, key: OcrFieldKey) {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       onConfirm()
+      return
+    }
+    if (e.key === 'Tab' && !e.shiftKey && key !== 'description') {
+      const idx = OCR_FIELD_ORDER.indexOf(key)
+      const nextKey = OCR_FIELD_ORDER[idx + 1]
+      if (nextKey) {
+        e.preventDefault()
+        focusNext(key)
+      }
+      return
+    }
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault()
+      focusPrev(key)
       return
     }
     if (e.key === 'Enter' && key !== 'description') {

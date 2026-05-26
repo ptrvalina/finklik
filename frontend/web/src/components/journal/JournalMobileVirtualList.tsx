@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import clsx from 'clsx'
 import { JOURNAL_CATEGORY_LABELS, suggestJournalCategory } from '../../lib/journalCategories'
@@ -32,6 +32,28 @@ export function JournalMobileVirtualList({
   postPendingId?: string | null
 }) {
   const parentRef = useRef<HTMLDivElement>(null)
+  const touchRef = useRef<{ x: number; y: number; id: string | null } | null>(null)
+
+  const onTouchStart = useCallback((id: string, e: React.TouchEvent) => {
+    const t = e.touches[0]
+    if (!t) return
+    touchRef.current = { x: t.clientX, y: t.clientY, id }
+  }, [])
+
+  const onTouchEnd = useCallback(
+    (id: string, canPost: boolean, e: React.TouchEvent) => {
+      const start = touchRef.current
+      touchRef.current = null
+      if (!start || start.id !== id || !canPost || !onPostDraft) return
+      const t = e.changedTouches[0]
+      if (!t) return
+      const dx = t.clientX - start.x
+      const dy = t.clientY - start.y
+      if (dx > 72 && Math.abs(dy) < 48) onPostDraft(id)
+    },
+    [onPostDraft],
+  )
+
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
@@ -89,7 +111,11 @@ export function JournalMobileVirtualList({
                 height: `${vi.size}px`,
               }}
             >
-              <div className="flex gap-3 px-3 py-2.5">
+              <div
+                className="flex gap-3 px-3 py-2.5"
+                onTouchStart={(e) => onTouchStart(id, e)}
+                onTouchEnd={(e) => onTouchEnd(id, canPost, e)}
+              >
                 <input
                   type="checkbox"
                   className="mt-1.5 h-4 w-4 shrink-0 rounded border-outline-variant"

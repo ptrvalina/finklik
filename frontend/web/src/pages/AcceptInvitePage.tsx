@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { ACTIVE_ORG_STORAGE_KEY, authApi, teamApi } from '../api/client'
 import { resolveAppPath } from '../appBase'
 import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
+import { calmActionError } from '../i18n/messages.ru'
+import { formatApiDetail } from '../utils/apiError'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -37,7 +39,7 @@ export default function AcceptInvitePage() {
         window.location.href = resolveAppPath('/')
       }, 1500)
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Ошибка принятия приглашения')
+      setError(calmActionError('inviteAccept', formatApiDetail(err.response?.data?.detail)))
     } finally {
       setLoading(false)
     }

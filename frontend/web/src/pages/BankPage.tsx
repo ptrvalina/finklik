@@ -7,6 +7,7 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
+import { calmError } from '../i18n/messages.ru'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -80,7 +81,7 @@ export default function BankPage() {
       setAccountForm({ bank_name: '', bank_bic: '', account_number: '', is_primary: false })
       flash('success', 'Счёт добавлен')
     },
-    onError: () => flash('error', 'Ошибка добавления'),
+    onError: () => flash('error', calmError('bankAdd')),
   })
   const setPrimaryMutation = useMutation({
     mutationFn: (id: string) => bankApi.updateAccount(id, { is_primary: true }),
@@ -102,7 +103,7 @@ export default function BankPage() {
       setPaymentForm({ amount: '', recipient_name: '', description: '' })
       flash('success', `Платёж: ${res.data.payment_id?.slice(0, 8)}…`)
     },
-    onError: () => flash('error', 'Ошибка платежа'),
+    onError: () => flash('error', calmError('bankPay')),
   })
   const importStatementMutation = useMutation({
     mutationFn: (lines: any[]) => bankApi.importStatement(lines),
@@ -114,7 +115,7 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
       flash('success', `Импорт: создано ${res.data.created}, пропущено дублей ${res.data.skipped_duplicates}`)
     },
-    onError: () => flash('error', 'Ошибка импорта (проверьте JSON)'),
+    onError: () => flash('error', calmError('bankImport')),
   })
   const oauthUrlMutation = useMutation({
     mutationFn: (accountId: string) => bankApi.oauthUrl(accountId),
@@ -127,7 +128,7 @@ export default function BankPage() {
       if (url) window.open(url, '_blank', 'noopener,noreferrer')
       flash('success', 'Окно OAuth2 открыто. Callback обработается автоматически.')
     },
-    onError: () => flash('error', 'Не удалось получить OAuth URL'),
+    onError: () => flash('error', calmError('bankOAuth')),
   })
   const oauthCallbackMutation = useMutation({
     mutationFn: (data: { account_id: string; code: string; state: string }) => bankApi.oauthCallback(data),
@@ -135,7 +136,7 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') })
       flash('success', 'Банк подключен через OAuth2')
     },
-    onError: () => flash('error', 'Ошибка OAuth callback'),
+    onError: () => flash('error', calmError('bankOAuth')),
   })
   const oauthImportMutation = useMutation({
     mutationFn: (data: { account_id: string; date_from: string; date_to: string }) => bankApi.oauthImport(data),
@@ -147,7 +148,7 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
       flash('success', `OAuth импорт завершён: ${res.data?.import_result?.created ?? 0} новых`)
     },
-    onError: () => flash('error', 'Ошибка OAuth импорта'),
+    onError: () => flash('error', calmError('bankOAuth')),
   })
 
   function flash(type: 'success' | 'error', text: string) { setMessage({ type, text }); setTimeout(() => setMessage(null), 4000) }

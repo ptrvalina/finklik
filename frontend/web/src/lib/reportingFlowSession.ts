@@ -30,6 +30,7 @@ export function saveReportingFlowStep(orgId: string, step: number) {
   if (!orgId || typeof window === 'undefined') return
   try {
     sessionStorage.setItem(stepKey(orgId), String(Math.min(4, Math.max(0, step))))
+    sessionStorage.removeItem('fc-reporting-flow-step')
   } catch {
     /* ignore */
   }
@@ -50,6 +51,7 @@ export function saveReportingFlowValidated(orgId: string, validated: boolean) {
   if (!orgId || typeof window === 'undefined') return
   try {
     sessionStorage.setItem(validKey(orgId), validated ? '1' : '0')
+    sessionStorage.removeItem('fc-reporting-flow-validated')
   } catch {
     /* ignore */
   }

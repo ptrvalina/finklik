@@ -99,12 +99,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: 'event_note',
         description: 'Задачи и поручения',
       },
-      {
-        to: '/employees',
-        label: 'Сотрудники',
-        icon: 'groups',
-        description: 'Кадры, зарплата, штат',
-      },
     ],
   },
   {

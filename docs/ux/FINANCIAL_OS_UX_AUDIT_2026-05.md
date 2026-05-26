@@ -88,8 +88,8 @@
 ### Scanner `/scan`
 | Сильно | Слабо |
 |--------|-------|
-| Queue, overlay, autosave, batch | Post-confirm «магия» — частично (next step ✅) |
-| | Нет явного «готовность отчётности изменилась» после confirm — нужен copy + invalidation calm overview |
+| Queue, overlay, autosave, batch | Post-confirm: invalidation calm overview + % готовности ✅ |
+| | Пакетная загрузка: сводка + CTA в очередь проверки ✅ |
 
 ### Reporting `/reports`
 | Сильно | Слабо |
@@ -113,7 +113,7 @@
 ### Mobile
 | Done | Backlog |
 |------|---------|
-| Sticky reporting actions, journal bulk bar, continuity drawer | Swipe journal rows; OCR full-screen review mode |
+| Sticky reporting actions, journal bulk bar, continuity drawer, swipe→провести (mobile), OCR full-screen (P9) | — |
 
 ### Copy / trust
 | Убрать | Использовать |
@@ -229,4 +229,5 @@ flowchart LR
 2. ✅ P5 Journal: split panel, timeline, issues filter, inline post, pipeline badges  
 3. ✅ P8 `DESIGN_TOKENS.md` + fc-surface-* на учёте/отчётности/execution  
 4. ✅ P6 Workspace: `deadlines`, `totals`, OCR per client, `WorkspaceMissionPanel`
-5. ✅ P10 `apiLabels.ru` + `calmActionError`; RU trust/execution/reporting copy
+5. ✅ P10 `apiLabels.ru` + `calmActionError`; RU trust/execution/reporting copy  
+6. ✅ TD4 continuous flow + полный calm i18n + nav/session cleanup

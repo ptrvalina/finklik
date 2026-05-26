@@ -8,6 +8,8 @@ import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { PRIMARY_DOC_TYPE_OPTIONS } from '../lib/documentTypeLabels'
+import { calmActionError, calmError } from '../i18n/messages.ru'
+import { formatApiDetail } from '../utils/apiError'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -270,7 +272,7 @@ export default function DocumentsPage() {
       setMessage({ type: 'success', text: 'Документ создан' })
     },
     onError: (e: any) => {
-      setMessage({ type: 'error', text: e?.response?.data?.detail || 'Ошибка создания документа' })
+      setMessage({ type: 'error', text: calmActionError('documentCreate', formatApiDetail(e?.response?.data?.detail)) })
     },
   })
 
@@ -280,7 +282,7 @@ export default function DocumentsPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['primary-documents']) })
       setMessage({ type: 'success', text: 'Документ удален' })
     },
-    onError: () => setMessage({ type: 'error', text: 'Ошибка удаления документа' }),
+    onError: () => setMessage({ type: 'error', text: calmError('documentDelete') }),
   })
 
   const [payQrModal, setPayQrModal] = useState<{
@@ -435,7 +437,7 @@ export default function DocumentsPage() {
       saveBlob(blob, `${safe.slice(0, 120)}.pdf`)
       setMessage({ type: 'success', text: `PDF скачан: ${doc_number}` })
     },
-    onError: () => setMessage({ type: 'error', text: 'Ошибка формирования PDF' }),
+    onError: () => setMessage({ type: 'error', text: calmError('documentPdf') }),
   })
 
   async function handleCsvPreview(file: File) {
@@ -462,7 +464,7 @@ export default function DocumentsPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey(['monthly-summary']) })
       setMessage({ type: 'success', text: `Импортировано ${r.data.imported} операций` })
     } catch {
-      setMessage({ type: 'error', text: 'Ошибка при импорте' })
+      setMessage({ type: 'error', text: calmError('genericAction') })
     } finally {
       setCsvImporting(false)
     }

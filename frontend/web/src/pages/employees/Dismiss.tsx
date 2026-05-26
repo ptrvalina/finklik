@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { employeesApi, workforceApi } from '../../api/client'
 import { BELARUS_DISMISSAL_REASONS } from '../../data/belarusDismissalReasons'
+import { calmActionError } from '../../i18n/messages.ru'
+import { formatApiDetail } from '../../utils/apiError'
 
 type Emp = { id: string; full_name: string; position: string; is_active: boolean; hr_meta?: Record<string, unknown> }
 
@@ -78,7 +80,7 @@ export default function EmployeesDismiss() {
       await load()
       alert('Готово')
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Ошибка')
+      alert(calmActionError('employeeFire', formatApiDetail(e?.response?.data?.detail)))
     } finally {
       setBusy(false)
     }

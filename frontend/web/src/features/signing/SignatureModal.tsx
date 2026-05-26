@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import AppModal from '../../components/ui/AppModal'
 import { signingApi, type SigningDocumentKind, type SigningRequestResponse } from '../../api/client'
 import { formatApiDetail } from '../../utils/apiError'
+import { calmActionError } from '../../i18n/messages.ru'
 
 function localClientSignBase64(documentHashHex: string, serverMockB64: string | null | undefined): string {
   if (serverMockB64 && serverMockB64.trim()) return serverMockB64.trim()
@@ -48,7 +49,7 @@ export default function SignatureModal({
     },
     onError: (e: unknown) => {
       setSession(null)
-      setError(formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail) || 'Ошибка запроса подписи')
+      setError(calmActionError('signingRequest', formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail)))
     },
   })
 
@@ -92,7 +93,7 @@ export default function SignatureModal({
       onCompleted?.()
       onClose()
     } catch (e: unknown) {
-      setError(formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail) || 'Ошибка завершения подписи')
+      setError(calmActionError('signingComplete', formatApiDetail((e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail)))
     } finally {
       setBusySign(false)
     }

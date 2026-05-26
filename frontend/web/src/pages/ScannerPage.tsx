@@ -105,6 +105,7 @@ export default function ScannerPage() {
   const [textDocType, setTextDocType] = useState('')
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; name: string } | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
+  const [batchSummary, setBatchSummary] = useState<{ total: number; ok: number; failures: number } | null>(null)
   const [activeOcrField, setActiveOcrField] = useState<OcrFieldKey | null>(null)
   const [readinessNotice, setReadinessNotice] = useState<string | null>(null)
   const isLg = useMinWidthLg()
@@ -285,6 +286,7 @@ export default function ScannerPage() {
 
   const handleFile = useCallback((file: File) => {
     setBatchError(null)
+    setBatchSummary(null)
     setPreview(null)
     setScanResult(null)
     setTxSaved(false)
@@ -306,6 +308,7 @@ export default function ScannerPage() {
         return
       }
       setBatchError(null)
+      setBatchSummary(null)
       setBatchProgress({ done: 0, total: files.length, name: files[0].name })
       let lastData: ScanResult | null = null
       let lastPreview: string | null = null
@@ -330,6 +333,8 @@ export default function ScannerPage() {
         setBatchProgress({ done: i + 1, total: files.length, name: f.name })
       }
       setBatchProgress(null)
+      const ok = files.length - failures
+      setBatchSummary({ total: files.length, ok, failures })
       if (lastData) {
         applyScanPayload(lastData)
         setPreview(lastPreview)
@@ -459,6 +464,25 @@ export default function ScannerPage() {
       }
     >
       <FinancialStateHero compact className="mb-4 max-lg:hidden" />
+
+      {batchSummary && batchSummary.total > 1 && (
+        <div className="fc-surface-calm mb-4 flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-on-surface">
+            <span className="font-semibold">Пакет загружен:</span> {batchSummary.ok} из {batchSummary.total} распознаны
+            {batchSummary.failures > 0 ? ` · ${batchSummary.failures} с ошибкой` : ''}.
+            {reviewCount > 0 ? ` В очереди проверки: ${reviewCount}.` : ' Проверьте поля последнего документа.'}
+          </p>
+          {reviewCount > 0 && (
+            <button
+              type="button"
+              className="btn-secondary min-h-9 text-xs"
+              onClick={() => document.getElementById('scanner-review-queue')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              К очереди проверки
+            </button>
+          )}
+        </div>
+      )}
 
       {readinessNotice && (
         <div className="fc-surface-calm fc-surface-calm--ok mb-4 flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

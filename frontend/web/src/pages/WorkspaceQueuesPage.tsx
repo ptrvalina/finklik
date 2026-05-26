@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { loadWorkspaceQueuesTab, saveWorkspaceQueuesTab } from '../lib/workspaceQueuesUiSession'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
@@ -34,7 +34,14 @@ export default function WorkspaceQueuesPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const switchOrganization = useAuthStore((s) => s.switchOrganization)
+  const userId = useAuthStore((s) => s.user?.id ?? '')
   const [tab, setTab] = useState<'inbox' | 'approvals'>('inbox')
+
+  useEffect(() => {
+    if (!userId) return
+    const saved = loadWorkspaceQueuesTab(userId)
+    if (saved) setTab(saved)
+  }, [userId])
   const [activatingId, setActivatingId] = useState<string | null>(null)
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -125,7 +132,7 @@ export default function WorkspaceQueuesPage() {
             }`}
             onClick={() => {
               setTab(t.id)
-              saveWorkspaceQueuesTab(t.id)
+              if (userId) saveWorkspaceQueuesTab(userId, t.id)
             }}
           >
             {t.label}

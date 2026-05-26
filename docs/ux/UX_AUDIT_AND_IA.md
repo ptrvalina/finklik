@@ -20,7 +20,7 @@
 | Reporting | Duplicate calm UI | `ReportingReadinessHero` + guided flow |
 
 ### Optional / backlog
-- Расширить i18n на редкие admin-экраны.
+- _(закрыто TD4: calmActionError на settings/bank/documents/employees/signing)_
 
 ---
 
@@ -89,3 +89,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P8 | Design tokens: L1/L2/L3 поверхности, `DESIGN_TOKENS.md`, учёт/отчётность/execution | Done |
 | P9 | Mobile OCR full-screen + readiness notice; journal split modules in repo | Done |
 | P10 | Trust copy: `terminology.ru`, `apiLabels.ru`, `calmActionError` на ленте/отчётности/OCR | Done |
+| TD4 | Техдолг: continuous flow (OCR/batch/Tab/swipe), i18n admin, nav dedupe, session keys | Done |
