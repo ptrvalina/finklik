@@ -15,6 +15,8 @@ import FinancialStateHero from '../components/financial-state/FinancialStateHero
 import { executionRiskIfIgnored } from '../lib/executionPresentation'
 import { markOperationsSeen } from '../lib/pilotProgress'
 import { useOperational } from '../context/OperationalContext'
+import { autonomyModeLabel, trustLevelLabel } from '../i18n/apiLabels.ru'
+import { terminology } from '../i18n/terminology.ru'
 
 type OperationalItem = {
   id: string
@@ -201,20 +203,6 @@ type ExecutionFeedResponse = {
   workflow_maintenance?: WorkflowMaintenanceSuggestion[]
   operational_memory_hints?: string[]
   calm_ui_budget?: CalmUiBudget
-}
-
-const AUTONOMY_RU: Record<string, string> = {
-  observe: 'наблюдение',
-  suggest: 'подсказки',
-  prepare: 'подготовка',
-  execute_with_approval: 'исполнение с подтверждением',
-}
-
-const TRUST_LEVEL_RU: Record<string, string> = {
-  observe_only: 'только наблюдение',
-  suggest_only: 'подсказки',
-  prepare_only: 'подготовка действий',
-  auto_execute_safe: 'безопасные авто-действия',
 }
 
 const HealthMeter = memo(function HealthMeter({ label, value }: { label: string; value: number }) {
@@ -433,7 +421,7 @@ export default function OperationsPage() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                Операционное здоровье
+                {terminology.execution.processSummary}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-on-surface">{data.operational_health.summary_plain}</p>
             </div>
@@ -462,11 +450,11 @@ export default function OperationsPage() {
           </p>
           <p className="mt-3 text-sm text-on-surface">
             Уровень:{' '}
-            <strong>{TRUST_LEVEL_RU[data.trusted_automation.trust_level] || data.trusted_automation.trust_level}</strong>
+            <strong>{trustLevelLabel(data.trusted_automation.trust_level)}</strong>
             <span className="text-on-surface-variant">
               {' '}
-              · базовый режим ИИ: {AUTONOMY_RU[data.trusted_automation.legacy_ai_action_mode] ||
-                data.trusted_automation.legacy_ai_action_mode}
+              · {terminology.trust.aiBaseMode}:{' '}
+              {autonomyModeLabel(data.trusted_automation.legacy_ai_action_mode)}
             </span>
           </p>
           <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">{data.trusted_automation.rationale_plain}</p>
@@ -478,7 +466,7 @@ export default function OperationsPage() {
             </ul>
           )}
           <details className="mt-4 rounded-2xl border border-outline/35 bg-surface-container-low/40 px-3 py-2 text-xs text-on-surface-variant dark:bg-white/[0.03]">
-            <summary className="cursor-pointer font-medium text-on-surface/90">Всегда только с вашим подтверждением</summary>
+            <summary className="cursor-pointer font-medium text-on-surface/90">{terminology.trust.alwaysConfirm}</summary>
             <ul className="mt-2 list-inside list-disc space-y-1">
               {(data.trusted_automation.always_require_confirmation ?? []).map((x) => (
                 <li key={x}>{x}</li>

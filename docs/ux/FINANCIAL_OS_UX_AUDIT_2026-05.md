@@ -176,7 +176,7 @@ flowchart LR
 | **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Done |
 | **P8** | Design tokens cohesion | — | CSS + component audit | Done |
 | **P9** | Mobile OCR/journal | — | Layout only | Done |
-| **P10** | Trust copy | — | terminology.ru enforcement | Low |
+| **P10** | Trust copy | — | terminology.ru enforcement | Done |
 
 **Не делаем:** новые сущности БД, rewrite App, смена framework.
 
@@ -229,3 +229,4 @@ flowchart LR
 2. ✅ P5 Journal: split panel, timeline, issues filter, inline post, pipeline badges  
 3. ✅ P8 `DESIGN_TOKENS.md` + fc-surface-* на учёте/отчётности/execution  
 4. ✅ P6 Workspace: `deadlines`, `totals`, OCR per client, `WorkspaceMissionPanel`
+5. ✅ P10 `apiLabels.ru` + `calmActionError`; RU trust/execution/reporting copy

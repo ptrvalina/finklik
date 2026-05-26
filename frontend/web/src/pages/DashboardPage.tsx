@@ -73,7 +73,7 @@ export default function DashboardPage() {
     staleTime: 60_000,
   })
 
-  /** Business OS snapshot (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
+  /** Снимок состояния бизнеса (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
   const { data: businessState } = useQuery({
     queryKey: orgQueryKey('business-state'),
     queryFn: () => businessOsApi.getState().then((r) => r.data),

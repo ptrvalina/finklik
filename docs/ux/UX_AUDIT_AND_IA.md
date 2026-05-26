@@ -88,3 +88,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P7 | Отчётность: нарратив периода, подписи шагов гида, focus strip из calm | Done |
 | P8 | Design tokens: L1/L2/L3 поверхности, `DESIGN_TOKENS.md`, учёт/отчётность/execution | Done |
 | P9 | Mobile OCR full-screen + readiness notice; journal split modules in repo | Done |
+| P10 | Trust copy: `terminology.ru`, `apiLabels.ru`, `calmActionError` на ленте/отчётности/OCR | Done |

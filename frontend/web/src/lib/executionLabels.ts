@@ -1,5 +1,7 @@
 /** Человекочитаемые подписи для operational feed (без технического жаргона). */
 
+import { riskLevelRu } from '../i18n/apiLabels.ru'
+
 export const OPERATION_TYPE_RU: Record<string, string> = {
   transaction: 'Журнал',
   document: 'Сканер и OCR',
@@ -32,12 +34,8 @@ export const OPERATION_PRIORITY_RU: Record<string, string> = {
   low: 'Позже',
 }
 
-export const RISK_LEVEL_RU: Record<string, string> = {
-  low: 'низкий',
-  medium: 'средний',
-  high: 'повышенный',
-  critical: 'критический',
-}
+/** @deprecated Используйте riskLevelRu из i18n/apiLabels.ru */
+export const RISK_LEVEL_RU = riskLevelRu
 
 export function operationTypeLabel(type: string): string {
   return OPERATION_TYPE_RU[type] || OPERATION_TYPE_RU.default

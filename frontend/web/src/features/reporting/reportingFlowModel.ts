@@ -156,7 +156,7 @@ export function buildReportingPeriodNarrative(
       headline = `${periodLabel}: просроченные сроки — закройте календарь и обязательства`
       supporting =
         overdue > 0
-          ? `В шкале ${overdue} просроченных событий. Сначала календарь и Business OS, затем журнал и сканы.`
+          ? `В шкале ${overdue} просроченных событий. Сначала календарь и обязательства, затем журнал и сканы.`
           : 'Есть риски по срокам — проверьте обязательства в сводке.'
       break
     case 'ready_for_draft':

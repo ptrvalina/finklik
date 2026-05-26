@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { executionCtaLabel } from '../../lib/executionPresentation'
 import { verbLabel } from '../../lib/operationalVerbs'
 import { OperationalCommentsPanel } from '../workspace/OperationalCommentsPanel'
+import { terminology } from '../../i18n/terminology.ru'
 
 export type WorkPackLike = {
   id: string
@@ -52,7 +53,7 @@ export const WorkPackCard = memo(function WorkPackCard({
   return (
     <article className="fc-execution-card p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Пакет задач</p>
+        <p className="text-[10px] font-bold uppercase tracking-wide text-primary">{terminology.execution.workPack}</p>
         <p className="text-[10px] font-semibold text-on-surface-variant">
           ~{etaMin} мин
           {total > 0 ? ` · ${done} из ${total}` : tasks > 0 ? ` · ${tasks} шагов` : ''}

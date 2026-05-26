@@ -386,7 +386,7 @@ export const dashboardApi = {
   deleteTransaction: (id: string) => api.delete(`/transactions/${id}`),
 }
 
-/** Business OS: единый снимок состояния, доменные сущности, обязательства, сверка. */
+/** Финансовое состояние: снимок, доменные сущности, обязательства, сверка. */
 export const businessOsApi = {
   getState: () => api.get('/business/state'),
   listEntities: () => api.get('/business/entities'),

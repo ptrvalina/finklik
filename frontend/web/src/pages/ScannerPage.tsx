@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reportingCalmApi, scannerApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
+import { calmActionError } from '../i18n/messages.ru'
 import { Link, useSearchParams } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
@@ -620,7 +621,7 @@ export default function ScannerPage() {
               </div>
               {parseTextMutation.isError && (
                 <div className="mt-3 bg-error/10 border border-error/20 text-error px-4 py-2 rounded-lg text-sm">
-                  {formatApiDetail((parseTextMutation.error as any)?.response?.data?.detail) || 'Ошибка при распознавании'}
+                  {calmActionError('ocr', formatApiDetail((parseTextMutation.error as any)?.response?.data?.detail))}
                 </div>
               )}
             </div>
@@ -628,7 +629,8 @@ export default function ScannerPage() {
 
           {(uploadMutation.isError || batchError) && (
             <div className="mt-4 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">
-              {batchError || `Ошибка: ${clientErrorText(uploadMutation.error) || 'Попробуйте ещё раз'}`}
+              {batchError ||
+                calmActionError('ocr', clientErrorText(uploadMutation.error) || formatApiDetail((uploadMutation.error as any)?.response?.data?.detail))}
             </div>
           )}
 

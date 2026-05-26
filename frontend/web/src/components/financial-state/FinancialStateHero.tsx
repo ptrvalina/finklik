@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
+import { terminology } from '../../i18n/terminology.ru'
+import { snapshotReportingStatusRu } from '../../lib/financialSnapshotLabels'
 
 type StateBlock = {
   cashflow_state: { level: string; summary: string; health_signal: string }
@@ -24,13 +26,6 @@ const RISK_RU: Record<string, { headline: string; tone: 'ok' | 'warn' | 'risk' }
   medium: { headline: 'Есть темы для внимания', tone: 'warn' },
   high: { headline: 'Нужны действия до дедлайнов', tone: 'warn' },
   critical: { headline: 'Блокеры мешают отчётности', tone: 'risk' },
-}
-
-const REPORTING_RU: Record<string, string> = {
-  ready: 'готова к подаче',
-  preparing: 'в подготовке',
-  at_risk: 'под риском',
-  blocked: 'заблокирована',
 }
 
 function toneClasses(tone: 'ok' | 'warn' | 'risk') {
@@ -66,7 +61,7 @@ export default function FinancialStateHero({
           ? { to: '/scan', label: 'Разобрать сканы' }
           : state.compliance_state.pending_approvals > 0
             ? { to: '/approvals', label: 'Согласования' }
-            : { to: '/operations', label: 'Лента работы' }
+            : { to: '/operations', label: terminology.execution.executionFeed }
     return { risk, primaryCta }
   }, [state])
 
@@ -83,22 +78,28 @@ export default function FinancialStateHero({
   const dims = [
     { label: 'Готовность', value: `${state.operational_readiness.score}%`, hint: state.operational_readiness.label },
     { label: 'Первичка', value: `${state.document_completeness.score}%`, hint: state.document_completeness.summary },
-    { label: 'Отчётность', value: REPORTING_RU[state.reporting_status.status] ?? state.reporting_status.status, hint: state.reporting_status.summary },
+    {
+      label: terminology.nav.reports,
+      value: snapshotReportingStatusRu(state.reporting_status.status),
+      hint: state.reporting_status.summary,
+    },
   ]
 
   return (
     <section
       className={`fc-execution-card p-5 sm:p-6 ${toneClasses(meta.risk.tone)} ${className}`}
-      aria-label="Финансовое состояние"
+      aria-label={terminology.execution.financialStateShort}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">Финансовое состояние</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
+            {terminology.execution.financialStateShort}
+          </p>
           <h2 className="mt-2 font-headline text-xl font-bold leading-snug text-on-surface sm:text-2xl">{meta.risk.headline}</h2>
           <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{state.cashflow_state.summary}</p>
           {!compact && (
             <p className="mt-2 text-xs text-on-surface-variant">
-              Комплаенс: {state.compliance_state.summary}
+              {terminology.execution.compliance}: {state.compliance_state.summary}
             </p>
           )}
         </div>

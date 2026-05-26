@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { submissionsApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { formatApiDetail } from '../../utils/apiError'
+import { calmActionError } from '../../i18n/messages.ru'
 import { buildSubmissionExportActions, parseReportPeriod } from '../../utils/submissionExport'
 import AppModal from '../../components/ui/AppModal'
 import SignatureModal from '../signing/SignatureModal'
@@ -220,7 +221,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
       setPreviewData(res.data)
       flash('success', 'Отчёт сформирован — проверьте и подтвердите')
     },
-    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка'),
+    onError: (e: any) => flash('error', calmActionError('genericAction', formatApiDetail(e.response?.data?.detail))),
   })
 
   const confirmMutation = useMutation({
@@ -243,7 +244,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         (pending ? 'Отправка запущена в фоне' : rejected ? 'Портал отклонил отчёт' : 'Отчёт отправлен')
       flash(rejected ? 'error' : 'success', msg)
     },
-    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка отправки'),
+    onError: (e: any) => flash('error', calmActionError('reportingSubmit', formatApiDetail(e.response?.data?.detail))),
   })
   const autoSubmitMutation = useMutation({
     mutationFn: () => submissionsApi.autoSubmit(30),
@@ -255,7 +256,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         `Автоподача: отправлено ${payload.submitted ?? 0}, пропущено ${payload.skipped ?? 0}`,
       )
     },
-    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка автоподачи'),
+    onError: (e: any) => flash('error', calmActionError('reportingAutopilot', formatApiDetail(e.response?.data?.detail))),
   })
 
   const rejectMutation = useMutation({
@@ -265,7 +266,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
       void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
       flash('success', vars.returnToDraftFromRejected ? 'Отчёт снова в черновике' : 'Отчёт отклонён')
     },
-    onError: (e: any) => flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка'),
+    onError: (e: any) => flash('error', calmActionError('genericAction', formatApiDetail(e.response?.data?.detail))),
   })
 
   function flash(type: 'success' | 'error', text: string) {
@@ -722,7 +723,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                               await ex.run()
                               flash('success', 'Файл сохранён')
                             } catch (e: any) {
-                              flash('error', formatApiDetail(e.response?.data?.detail) || 'Ошибка скачивания')
+                              flash('error', calmActionError('reportingDownload', formatApiDetail(e.response?.data?.detail)))
                             } finally {
                               setExportLoading(null)
                             }
