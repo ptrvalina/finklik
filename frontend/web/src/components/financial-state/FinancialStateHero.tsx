@@ -34,9 +34,9 @@ const REPORTING_RU: Record<string, string> = {
 }
 
 function toneClasses(tone: 'ok' | 'warn' | 'risk') {
-  if (tone === 'ok') return 'border-emerald-500/30 bg-emerald-500/5'
-  if (tone === 'risk') return 'border-amber-600/35 bg-amber-500/8'
-  return 'border-primary/25 bg-primary/5'
+  if (tone === 'ok') return 'fc-execution-card--tone-ok'
+  if (tone === 'risk') return 'fc-execution-card--tone-risk'
+  return 'fc-execution-card--tone-warn'
 }
 
 export default function FinancialStateHero({
@@ -88,7 +88,7 @@ export default function FinancialStateHero({
 
   return (
     <section
-      className={`fc-execution-card rounded-[1.75rem] border p-5 sm:p-6 ${toneClasses(meta.risk.tone)} ${className}`}
+      className={`fc-execution-card p-5 sm:p-6 ${toneClasses(meta.risk.tone)} ${className}`}
       aria-label="Финансовое состояние"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

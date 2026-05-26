@@ -86,3 +86,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P5 | Journal: split-view desktop, замечания API, провести inline, хронология, visual diet | Done |
 | P6 | Workspace mission control: сроки, OCR по клиентам, сводные приоритеты (`/workspace`) | Done |
 | P7 | Отчётность: нарратив периода, подписи шагов гида, focus strip из calm | Done |
+| P8 | Design tokens: L1/L2/L3 поверхности, `DESIGN_TOKENS.md`, учёт/отчётность/execution | Done |

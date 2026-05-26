@@ -12,7 +12,7 @@ export default function ReportingReadinessHero() {
   })
 
   if (isLoading) {
-    return <div className="fc-execution-card h-24 animate-pulse rounded-2xl border border-outline/30" />
+    return <div className="fc-execution-card fc-skeleton-pulse h-24" />
   }
 
   const score = data?.readiness?.score ?? null
@@ -26,8 +26,8 @@ export default function ReportingReadinessHero() {
 
   return (
     <div
-      className={`fc-execution-card rounded-2xl border p-5 sm:p-6 ${
-        ready ? 'border-emerald-400/30 bg-emerald-500/[0.05]' : 'border-primary/25 bg-primary/[0.04]'
+      className={`fc-execution-card p-5 sm:p-6 ${
+        ready ? 'fc-execution-card--tone-ready' : 'fc-execution-card--tone-pending'
       }`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

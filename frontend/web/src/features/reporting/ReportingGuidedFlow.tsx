@@ -312,7 +312,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
         </p>
       </div>
 
-      <div className="card-elevated rounded-3xl p-4 shadow-card ring-1 ring-white/[0.06] sm:p-5">
+      <div className="fc-surface-elevated p-4 sm:p-5">
         <StepRail steps={steps} activeIndex={stepIndex} onSelect={goToStep} />
       </div>
 
@@ -343,7 +343,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
       )}
 
       {/* Только активный шаг — полный контент; остальное в rail */}
-      <div className="card-elevated rounded-3xl p-5 shadow-float ring-1 ring-outline-variant/20 sm:p-7">
+      <div className="fc-surface-elevated p-5 sm:p-7">
         <div className="flex flex-col gap-2 border-b border-outline-variant/15 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">

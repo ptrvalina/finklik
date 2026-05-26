@@ -83,7 +83,7 @@ export default function AccountingHubPage() {
             <Link
               key={s.to}
               to={s.to}
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-outline/40 bg-surface/80 px-3 text-xs font-semibold text-on-surface transition hover:border-primary/30 hover:bg-primary/5"
+              className="fc-nav-chip"
             >
               <Icon name={s.icon} className="text-base text-primary" />
               {s.label}

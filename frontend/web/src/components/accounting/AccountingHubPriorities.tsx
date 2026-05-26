@@ -99,10 +99,10 @@ function buildPriorities(state: StateSlice | undefined): PriorityRow[] {
   return rows
 }
 
-function toneBorder(tone: PriorityRow['tone']) {
-  if (tone === 'primary') return 'border-primary/30 bg-primary/[0.05]'
-  if (tone === 'amber') return 'border-amber-400/30 bg-amber-500/[0.06]'
-  return 'border-outline/35 bg-surface/90'
+function toneRowClass(tone: PriorityRow['tone']) {
+  if (tone === 'primary') return 'fc-priority-row--primary'
+  if (tone === 'amber') return 'fc-priority-row--amber'
+  return 'fc-priority-row--neutral'
 }
 
 export default function AccountingHubPriorities() {
@@ -126,7 +126,7 @@ export default function AccountingHubPriorities() {
 
   if (priorities.length === 0) {
     return (
-      <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-4">
+      <div className="fc-surface-calm fc-surface-calm--ok px-5 py-4">
         <p className="text-sm font-semibold text-on-surface">Очередь учёта пуста</p>
         <p className="mt-1 text-xs text-on-surface-variant">
           Можно вести журнал или загрузить первичку — система подскажет, когда появится работа.
@@ -151,7 +151,7 @@ export default function AccountingHubPriorities() {
           <li key={p.id}>
             <Link
               to={p.to}
-              className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition hover:shadow-sm ${toneBorder(p.tone)}`}
+              className={`fc-priority-row ${toneRowClass(p.tone)}`}
             >
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-on-surface">{p.label}</p>

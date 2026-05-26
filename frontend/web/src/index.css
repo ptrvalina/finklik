@@ -52,6 +52,17 @@
     --fc-glow-emerald: 0 0 36px -10px rgba(16, 185, 129, 0.28);
     --fc-shadow-calm: 0 8px 28px -14px rgba(15, 23, 42, 0.12);
     --fc-shadow-card: 0 10px 32px -18px rgba(0, 77, 64, 0.1);
+    --fc-shadow-section: 0 8px 32px -16px rgba(0, 77, 64, 0.12);
+    --fc-shadow-section-hover: 0 16px 48px -20px rgba(16, 185, 129, 0.12), 0 4px 24px -8px rgba(0, 77, 64, 0.08);
+    --fc-shadow-elevated: 0 14px 44px -18px rgba(0, 77, 64, 0.11), 0 3px 14px -4px rgba(0, 0, 0, 0.05);
+    --fc-shadow-elevated-hover: 0 20px 58px -26px rgba(16, 185, 129, 0.15), 0 10px 28px -14px rgba(0, 77, 64, 0.12);
+    --fc-surface-border: rgb(var(--color-outline) / 0.55);
+    --fc-surface-border-calm: rgb(var(--color-outline) / 0.6);
+    --fc-surface-border-elevated: rgb(var(--color-outline) / 0.6);
+    --fc-surface-ring: rgb(16 185 129 / 0.05);
+    --fc-surface-bg-section: rgb(var(--color-surface) / 0.9);
+    --fc-surface-bg-calm: rgb(var(--color-surface) / 0.95);
+    --fc-surface-bg-elevated: rgb(var(--color-surface));
     --fc-touch-min: 2.75rem;
   }
 
@@ -73,6 +84,15 @@
     --color-on-background: 241 245 249;
     --color-outline: 40 58 72;
     --color-outline-variant: 51 65 85;
+    --fc-shadow-section-hover: 0 24px 64px -32px rgba(0, 0, 0, 0.55), 0 0 40px -16px rgba(16, 185, 129, 0.06);
+    --fc-shadow-elevated-hover: 0 32px 88px -34px rgba(0, 0, 0, 0.68), 0 0 48px -20px rgba(16, 185, 129, 0.07);
+    --fc-surface-border: rgba(255, 255, 255, 0.07);
+    --fc-surface-border-calm: rgba(255, 255, 255, 0.07);
+    --fc-surface-border-elevated: rgba(255, 255, 255, 0.07);
+    --fc-surface-ring: rgb(16 185 129 / 0.06);
+    --fc-surface-bg-section: rgb(var(--color-surface) / 0.45);
+    --fc-surface-bg-calm: rgb(var(--color-surface) / 0.72);
+    --fc-surface-bg-elevated: rgb(var(--color-surface) / 0.55);
   }
 
   * { box-sizing: border-box; }
@@ -172,17 +192,32 @@
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 26px 68px -28px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(16, 185, 129, 0.1);
   }
-  .card-elevated {
-    @apply rounded-3xl border border-outline/60 bg-surface shadow-[0_14px_44px_-18px_rgba(0,77,64,0.11),0_3px_14px_-4px_rgba(0,0,0,0.05)] backdrop-blur-xl transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
-           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.55)] dark:shadow-[0_26px_76px_-30px_rgba(0,0,0,0.6)];
+  /**
+   * Surface hierarchy (P8) — docs/ux/DESIGN_TOKENS.md
+   * L1 page-section / fc-surface-section — блоки страницы
+   * L2 fc-calm-surface / fc-execution-card — execution-first (лента, готовность)
+   * L3 card-elevated / fc-surface-elevated — акцентные панели (гид, auth)
+   */
+  .card-elevated,
+  .fc-surface-elevated {
+    border-radius: var(--fc-radius-xl);
+    border: 1px solid var(--fc-surface-border-elevated);
+    background: var(--fc-surface-bg-elevated);
+    box-shadow: var(--fc-shadow-elevated);
+    backdrop-filter: blur(var(--fc-blur-glass));
+    transition:
+      box-shadow var(--fc-duration-medium) var(--fc-motion-smooth),
+      border-color var(--fc-duration-medium) var(--fc-motion-smooth),
+      transform var(--fc-duration-medium) var(--fc-motion-smooth);
   }
-  .card-elevated:hover {
+  .card-elevated:hover,
+  .fc-surface-elevated:hover {
     transform: translateY(-1px);
-    box-shadow: 0 20px 58px -26px rgba(16, 185, 129, 0.15), 0 10px 28px -14px rgba(0, 77, 64, 0.12);
+    box-shadow: var(--fc-shadow-elevated-hover);
   }
-  .dark .card-elevated:hover {
+  .dark .card-elevated:hover,
+  .dark .fc-surface-elevated:hover {
     border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 32px 88px -34px rgba(0, 0, 0, 0.68), 0 0 48px -20px rgba(16, 185, 129, 0.07);
   }
   .input {
     @apply w-full min-h-11 rounded-2xl border border-outline/90 bg-surface/95 px-4 py-2.5 text-sm text-on-surface
@@ -217,10 +252,25 @@
     gap: var(--fc-space-section-md);
   }
   .fc-execution-card {
-    @apply cursor-pointer;
+    @apply fc-calm-surface cursor-pointer rounded-2xl;
   }
   .fc-execution-card--hero {
-    box-shadow: 0 12px 40px -16px rgba(var(--color-primary-rgb, 0, 77, 64), 0.22);
+    box-shadow: var(--fc-glow-emerald), var(--fc-shadow-calm);
+  }
+  .fc-execution-card--tone-ok {
+    @apply border-emerald-500/30 bg-emerald-500/[0.06];
+  }
+  .fc-execution-card--tone-warn {
+    @apply border-primary/25 bg-primary/[0.05];
+  }
+  .fc-execution-card--tone-risk {
+    @apply border-amber-600/35 bg-amber-500/[0.08];
+  }
+  .fc-execution-card--tone-ready {
+    @apply border-emerald-400/30 bg-emerald-500/[0.05];
+  }
+  .fc-execution-card--tone-pending {
+    @apply border-primary/25 bg-primary/[0.04];
   }
   .fc-accounting-tile {
     min-height: 7.5rem;
@@ -250,9 +300,46 @@
     flex-direction: column;
     gap: var(--fc-space-section-sm);
   }
-  .fc-calm-surface {
-    @apply rounded-2xl border border-outline/60 bg-surface/95 shadow-[var(--fc-shadow-calm)] backdrop-blur-sm
-           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.72)];
+  .fc-calm-surface,
+  .fc-surface-calm {
+    border-radius: var(--fc-radius-lg);
+    border: 1px solid var(--fc-surface-border-calm);
+    background: var(--fc-surface-bg-calm);
+    box-shadow: var(--fc-shadow-calm);
+    backdrop-filter: blur(8px);
+  }
+  .fc-surface-calm--ok {
+    @apply border-emerald-500/25 bg-emerald-500/[0.06];
+  }
+  .fc-priority-row {
+    @apply flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition-[box-shadow,border-color] duration-[var(--fc-duration-fast)] ease-premium hover:shadow-sm;
+  }
+  .fc-priority-row--primary {
+    @apply border-primary/30 bg-primary/[0.05];
+  }
+  .fc-priority-row--amber {
+    @apply border-amber-400/30 bg-amber-500/[0.06];
+  }
+  .fc-priority-row--neutral {
+    @apply border-outline/35 bg-surface/90;
+  }
+  .fc-priority-row--risk {
+    @apply border-red-400/35 bg-red-500/[0.06];
+  }
+  .fc-nav-chip {
+    @apply inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-outline/40 bg-surface/80 px-3 text-xs font-semibold text-on-surface transition hover:border-primary/30 hover:bg-primary/5;
+  }
+  .fc-focus-strip {
+    @apply rounded-2xl border px-4 py-4 sm:flex sm:items-center sm:justify-between sm:gap-4;
+  }
+  .fc-focus-strip--primary {
+    @apply border-primary/30 bg-primary/[0.06];
+  }
+  .fc-focus-strip--amber {
+    @apply border-amber-400/30 bg-amber-500/[0.06];
+  }
+  .fc-focus-strip--neutral {
+    @apply border-outline/40 bg-surface-container-low/50;
   }
   .fc-calm-error {
     box-shadow: var(--fc-shadow-calm);
@@ -365,16 +452,26 @@
     letter-spacing: -0.038em;
     line-height: 1.12;
   }
-  .page-section {
-    @apply rounded-3xl border border-outline/55 bg-surface/90 p-4 shadow-[0_8px_32px_-16px_rgba(0,77,64,0.12)] backdrop-blur-xl ring-1 ring-emerald-500/[0.05] transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium sm:p-6
-           dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)] dark:ring-emerald-400/[0.06];
+  .page-section,
+  .fc-surface-section {
+    border-radius: var(--fc-radius-xl);
+    border: 1px solid var(--fc-surface-border);
+    background: var(--fc-surface-bg-section);
+    box-shadow: var(--fc-shadow-section);
+    backdrop-filter: blur(var(--fc-blur-glass));
+    transition:
+      box-shadow var(--fc-duration-medium) var(--fc-motion-smooth),
+      border-color var(--fc-duration-medium) var(--fc-motion-smooth),
+      transform var(--fc-duration-medium) var(--fc-motion-smooth);
+    @apply p-4 sm:p-6 ring-1 ring-emerald-500/[0.05] dark:ring-emerald-400/[0.06];
   }
-  .page-section:hover {
-    box-shadow: 0 16px 48px -20px rgba(16, 185, 129, 0.12), 0 4px 24px -8px rgba(0, 77, 64, 0.08);
+  .page-section:hover,
+  .fc-surface-section:hover {
+    box-shadow: var(--fc-shadow-section-hover);
   }
-  .dark .page-section:hover {
+  .dark .page-section:hover,
+  .dark .fc-surface-section:hover {
     border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 24px 64px -32px rgba(0, 0, 0, 0.55), 0 0 40px -16px rgba(16, 185, 129, 0.06);
   }
   .page-actions {
     @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center;
@@ -582,13 +679,16 @@ html:not(.dark) .fc-datatable-shell--bulk {
 @media (max-width: 640px) {
   .app-compact-mobile .card,
   .app-compact-mobile .card-elevated,
+  .app-compact-mobile .fc-surface-elevated,
   .app-compact-mobile .metric-blade {
     border-radius: 1.25rem;
   }
 
   .app-compact-mobile .card:hover,
   .app-compact-mobile .card-elevated:hover,
-  .app-compact-mobile .page-section:hover {
+  .app-compact-mobile .fc-surface-elevated:hover,
+  .app-compact-mobile .page-section:hover,
+  .app-compact-mobile .fc-surface-section:hover {
     transform: none;
     box-shadow: var(--fc-shadow-calm);
   }

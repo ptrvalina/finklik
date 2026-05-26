@@ -9,11 +9,11 @@ import {
 } from './reportingFlowModel'
 
 const PHASE_TONE: Record<string, string> = {
-  accumulating: 'border-outline/35 bg-surface/90',
-  closing: 'border-primary/25 bg-primary/[0.04]',
-  deadline_pressure: 'border-amber-400/30 bg-amber-500/[0.06]',
-  ready_for_draft: 'border-emerald-400/30 bg-emerald-500/[0.06]',
-  monitoring: 'border-cyan-400/25 bg-cyan-500/[0.05]',
+  accumulating: 'fc-surface-calm',
+  closing: 'fc-surface-calm fc-execution-card--tone-pending',
+  deadline_pressure: 'fc-surface-calm fc-priority-row--amber',
+  ready_for_draft: 'fc-surface-calm fc-surface-calm--ok',
+  monitoring: 'fc-surface-calm fc-execution-card--tone-ok',
 }
 
 const STATE_RU: Record<string, string> = {
@@ -37,7 +37,7 @@ export default function ReportingPeriodNarrative({ data, onGoToStep, compact }: 
   return (
     <section
       aria-label="Отчётный период"
-      className={`rounded-2xl border p-4 sm:p-5 ${PHASE_TONE[narrative.phase] ?? PHASE_TONE.accumulating}`}
+      className={`p-4 sm:p-5 ${PHASE_TONE[narrative.phase] ?? PHASE_TONE.accumulating}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">

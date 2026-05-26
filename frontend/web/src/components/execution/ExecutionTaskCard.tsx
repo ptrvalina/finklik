@@ -60,7 +60,7 @@ export const ExecutionTaskCard = memo(function ExecutionTaskCard({
 
   return (
     <article
-      className={`fc-execution-card rounded-2xl border p-4 transition-shadow hover:shadow-md sm:p-5 ${priorityRing(item.priority)} ${
+      className={`fc-execution-card p-4 transition-shadow hover:shadow-md sm:p-5 ${priorityRing(item.priority)} ${
         prominent ? 'fc-execution-card--hero ring-2 ring-primary/35' : ''
       }`}
       onClick={() => go()}

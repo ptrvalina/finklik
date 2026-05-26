@@ -83,10 +83,10 @@ function buildMissionPriorities(totals: Totals | undefined): MissionPriority[] {
   return rows
 }
 
-function toneBorder(tone: MissionPriority['tone']) {
-  if (tone === 'primary') return 'border-primary/30 bg-primary/[0.05]'
-  if (tone === 'amber') return 'border-amber-400/30 bg-amber-500/[0.06]'
-  return 'border-outline/35 bg-surface/90'
+function toneRowClass(tone: MissionPriority['tone']) {
+  if (tone === 'primary') return 'fc-priority-row--primary'
+  if (tone === 'amber') return 'fc-priority-row--amber'
+  return 'fc-priority-row--neutral'
 }
 
 function formatDeadlineDays(days: number | undefined): string {
@@ -97,14 +97,10 @@ function formatDeadlineDays(days: number | undefined): string {
   return `через ${days} дн.`
 }
 
-function deadlineTone(state?: string, days?: number): string {
-  if (state === 'overdue' || (days != null && days < 0)) {
-    return 'border-red-400/35 bg-red-500/[0.06]'
-  }
-  if (state === 'needs_attention' || (days != null && days <= 7)) {
-    return 'border-amber-400/30 bg-amber-500/[0.06]'
-  }
-  return 'border-outline/35 bg-surface/90'
+function deadlineRowClass(state?: string, days?: number): string {
+  if (state === 'overdue' || (days != null && days < 0)) return 'fc-priority-row--risk'
+  if (state === 'needs_attention' || (days != null && days <= 7)) return 'fc-priority-row--amber'
+  return 'fc-priority-row--neutral'
 }
 
 export default function WorkspaceMissionPanel({
@@ -138,7 +134,7 @@ export default function WorkspaceMissionPanel({
 
   if (priorities.length === 0 && upcoming.length === 0 && ocrHot.length === 0) {
     return (
-      <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-4">
+      <div className="fc-surface-calm fc-surface-calm--ok px-5 py-4">
         <p className="text-sm font-semibold text-on-surface">Операционная нагрузка в норме</p>
         <p className="mt-1 text-xs text-on-surface-variant">
           Нет срочных сроков и очередей OCR — можно работать по плану или открыть клиента из списка ниже.
@@ -156,7 +152,7 @@ export default function WorkspaceMissionPanel({
             {priorities.map((p) => (
               <li
                 key={p.id}
-                className={`rounded-2xl border px-4 py-3 ${toneBorder(p.tone)}`}
+                className={`fc-priority-row ${toneRowClass(p.tone)}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-on-surface">{p.label}</p>
@@ -179,7 +175,7 @@ export default function WorkspaceMissionPanel({
               <li key={`${d.organization_id}-${d.date}-${d.title}`}>
                 <button
                   type="button"
-                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition hover:shadow-sm ${deadlineTone(d.state, d.days_until)}`}
+                  className={`fc-priority-row w-full text-left ${deadlineRowClass(d.state, d.days_until)}`}
                   disabled={activatingId === d.organization_id}
                   onClick={() =>
                     onOpenClient(
@@ -214,7 +210,7 @@ export default function WorkspaceMissionPanel({
               <li key={o.organization_id}>
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-surface/95 px-4 py-3 text-left hover:border-primary/40"
+                  className="fc-priority-row fc-priority-row--primary w-full text-left"
                   disabled={activatingId === o.organization_id}
                   onClick={() => onOpenClient(o.organization_id, o.organization_name, '/scan')}
                 >

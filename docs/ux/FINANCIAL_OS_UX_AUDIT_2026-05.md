@@ -174,7 +174,7 @@ flowchart LR
 | **P5** | Journal calm + keyboard-first | Done | Split, inline post, P hotkey, panel restore, calm capture |
 | **P6** | Workspace mission control | Extend overview optional fields | Grouped deadlines UI | Done |
 | **P7** | Reporting period narrative | Existing calm API | Copy + step labels | Done |
-| **P8** | Design tokens cohesion | — | CSS + component audit | Medium |
+| **P8** | Design tokens cohesion | — | CSS + component audit | Done |
 | **P9** | Mobile OCR/journal | — | Layout only | Low |
 | **P10** | Trust copy | — | terminology.ru enforcement | Low |
 
@@ -227,5 +227,5 @@ flowchart LR
 
 1. ✅ P4 Hub + terminology «пакет задач» + hero on journal/scan  
 2. ✅ P5 Journal: split panel, timeline, issues filter, inline post, pipeline badges  
-3. P8 Token doc + grep `card-elevated` on accounting  
+3. ✅ P8 `DESIGN_TOKENS.md` + fc-surface-* на учёте/отчётности/execution  
 4. ✅ P6 Workspace: `deadlines`, `totals`, OCR per client, `WorkspaceMissionPanel`

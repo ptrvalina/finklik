@@ -68,15 +68,15 @@ export function FocusStrip({
   onCta?: () => void
   tone?: 'primary' | 'amber' | 'neutral'
 }) {
-  const border =
+  const toneClass =
     tone === 'amber'
-      ? 'border-amber-400/30 bg-amber-500/[0.06]'
+      ? 'fc-focus-strip--amber'
       : tone === 'neutral'
-        ? 'border-outline/40 bg-surface-container-low/50'
-        : 'border-primary/30 bg-primary/[0.06]'
+        ? 'fc-focus-strip--neutral'
+        : 'fc-focus-strip--primary'
 
   const inner = (
-    <div className={`rounded-2xl border px-4 py-4 sm:flex sm:items-center sm:justify-between sm:gap-4 ${border}`}>
+    <div className={`fc-focus-strip ${toneClass}`}>
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Следующий шаг</p>
         <p className="mt-1 font-headline text-base font-semibold leading-snug text-on-surface">{headline}</p>

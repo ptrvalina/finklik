@@ -703,7 +703,7 @@ export default function Accounting() {
           id="accounting-capture"
         >
           <form
-            className="grid gap-4 rounded-2xl border border-outline/35 bg-surface/90 p-5 md:grid-cols-2"
+            className="fc-surface-section grid gap-4 !p-5 md:grid-cols-2"
             onSubmit={submit}
           >
             <select

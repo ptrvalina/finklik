@@ -17,13 +17,13 @@ export default function WorkNowCard() {
 
   if (isLoading) {
     return (
-      <div className="fc-execution-card animate-pulse rounded-2xl border border-outline/30 bg-surface-container-low/50 p-6 h-28" />
+      <div className="fc-execution-card fc-skeleton-pulse h-28 p-6" />
     )
   }
 
   if (isError || !top) {
     return (
-      <div className="fc-execution-card rounded-2xl border border-outline/35 bg-surface/90 p-5">
+      <div className="fc-execution-card p-5">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Сейчас</p>
         <p className="mt-2 text-sm text-on-surface-variant">
           Открытых критичных задач нет — проверьте ленту или добавьте операции.
