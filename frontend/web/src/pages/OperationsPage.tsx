@@ -8,7 +8,6 @@ import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
 import OperationsProgressStrip from '../components/operations/OperationsProgressStrip'
 import { WorkPackCard } from '../components/operations/WorkPackCard'
-import OperationalPage from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
@@ -289,20 +288,12 @@ export default function OperationsPage() {
   const simplified = pe?.simplified_state
   const showTechnicalStateByDefault = mode === 'advanced'
   const showDiagnostics = showTechnicalStateByDefault || diagnosticsOpen
+  const workPackCount = data?.work_packs?.length ?? 0
 
   return (
-    <OperationalPage
-      narrow
-      className="pb-28 sm:pb-10"
-      eyebrow="Исполнение"
-      title="Лента работы"
-      description={
-        mode === 'solo'
-          ? 'Один фокус за раз — что сделать и почему это важно для отчётности.'
-          : 'Задачи в порядке срочности: одна кнопка — одно действие.'
-      }
-      secondaryActions={
-        mode !== 'advanced' ? (
+    <div className="fc-page-shell fc-page-shell-asymmetric mx-auto max-w-3xl pb-28 sm:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        {mode !== 'advanced' && (
           <button
             type="button"
             className="btn-ghost min-h-10 text-xs font-semibold text-primary"
@@ -310,9 +301,48 @@ export default function OperationsPage() {
           >
             {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
           </button>
-        ) : undefined
-      }
-    >
+        )}
+        <Link to="/inbox" className="btn-secondary text-sm">
+          Входящие
+        </Link>
+        <Link to="/approvals" className="btn-secondary text-sm">
+          Согласования
+        </Link>
+      </div>
+
+      {!isLoading && !isError && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Готовность</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+              {data?.readiness_score ?? '—'}%
+            </p>
+            <p className="text-[11px] text-primary">{MODE_LABEL[mode]}</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В очереди</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+              {data?.pending_count ?? items.length}
+            </p>
+            <p className="text-[11px] text-on-surface-variant">Задач</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Блокеры</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">
+              {data?.blocked_count ?? 0}
+            </p>
+            <p className="text-[11px] text-on-surface-variant">Требуют внимания</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Пакеты</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
+              {workPackCount}
+            </p>
+            <p className="text-[11px] text-on-surface-variant">Work packs</p>
+          </div>
+        </div>
+      )}
+
       {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') && (
         <div className="fixed inset-x-0 top-0 z-20 border-b border-outline/30 bg-[rgb(var(--color-surface)/0.92)] px-3 py-2 shadow-sm backdrop-blur-md sm:hidden">
           <p className="mx-auto max-w-3xl line-clamp-2 text-[11px] font-medium leading-snug text-on-surface">
@@ -683,6 +713,6 @@ export default function OperationsPage() {
         </button>
       )}
       </div>
-    </OperationalPage>
+    </div>
   )
 }

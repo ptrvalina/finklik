@@ -5,7 +5,6 @@ import AppModal from '../components/ui/AppModal'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
-import OperationalPage from '../components/shell/OperationalPage'
 import { formatApiDetail } from '../utils/apiError'
 import { calmActionError } from '../i18n/messages.ru'
 
@@ -189,6 +188,9 @@ export default function CounterpartiesPage() {
     return hot.slice(0, 5)
   }, [items])
 
+  const pinnedCount = items.filter((c) => c.is_pinned).length
+  const activeWeekCount = items.filter((c) => (c.week_tx_count || 0) > 0).length
+
   function openRecon(cp: CpRow) {
     const t = new Date()
     const start = new Date(t.getFullYear(), t.getMonth(), 1)
@@ -269,61 +271,39 @@ export default function CounterpartiesPage() {
   }
 
   return (
-    <OperationalPage
-      eyebrow="Справочники"
-      title="Контрагенты"
-      description="Добавление по УНП, поиск /, быстрые операции в журнал из строки."
-      secondaryActions={
-        <>
-          <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
-            <Icon name="description" className="text-lg" /> Журнал
-          </Link>
-          <button type="button" className="btn-secondary fc-btn-thumb w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
-            <Icon name="bolt" className="text-lg" /> По УНП
-          </button>
-          <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
-            <Icon name="add" className="text-lg" /> Вручную
-          </button>
-        </>
-      }
-    >
-      <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-r from-[#131b2e]/12 via-primary/10 to-[#4edea3]/12 p-6 shadow-float backdrop-blur-xl">
-        <div className="pointer-events-none absolute inset-0 opacity-50">
-          <svg className="h-full w-full" viewBox="0 0 520 140" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <linearGradient id="cp-flow" x1="0" x2="1">
-                <stop stopColor="#2170e4" stopOpacity="0.9" />
-                <stop offset="1" stopColor="#4edea3" stopOpacity="0.7" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M24 88 C120 24 200 120 280 64 S420 24 496 72"
-              fill="none"
-              stroke="url(#cp-flow)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle cx="96" cy="56" r="5" fill="#10b981" opacity="0.9" />
-            <circle cx="280" cy="64" r="5" fill="#2dd4bf" opacity="0.85" />
-            <circle cx="420" cy="48" r="5" fill="#22d3ee" opacity="0.85" />
-          </svg>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
+          <Icon name="description" className="text-lg" /> Журнал
+        </Link>
+        <button type="button" className="btn-secondary fc-btn-thumb w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
+          <Icon name="bolt" className="text-lg" /> По УНП
+        </button>
+        <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
+          <Icon name="add" className="text-lg" /> Вручную
+        </button>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Всего</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{items.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Контрагентов</p>
         </div>
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Слой связей</p>
-            <p className="mt-1 font-headline text-lg font-bold text-on-surface">Сеть контрагентов</p>
-            <p className="text-sm text-on-surface-variant">Визуальный слой доверия: активные связи и оборот за период.</p>
-          </div>
-          <div className="flex gap-2">
-            {['high', 'mid', 'new'].map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface backdrop-blur-md dark:bg-black/20"
-              >
-                {t === 'high' ? 'Топ' : t === 'mid' ? 'Стабильно' : 'Новые'}
-              </span>
-            ))}
-          </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Закреплено</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{pinnedCount}</p>
+          <p className="text-[11px] text-on-surface-variant">Быстрый доступ</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Активные</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{activeWeekCount}</p>
+          <p className="text-[11px] text-on-surface-variant">За неделю</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Топ недели</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{frequent.length}</p>
+          <p className="text-[11px] text-primary">Частые операции</p>
         </div>
       </div>
 
@@ -707,6 +687,6 @@ export default function CounterpartiesPage() {
           </div>
         </AppModal>
       )}
-    </OperationalPage>
+    </div>
   )
 }

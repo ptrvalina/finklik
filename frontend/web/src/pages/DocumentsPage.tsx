@@ -4,7 +4,6 @@ import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { PRIMARY_DOC_TYPE_OPTIONS } from '../lib/documentTypeLabels'
@@ -213,6 +212,17 @@ export default function DocumentsPage() {
       if (ids.length > 1) ids.forEach((id) => dup.add(id))
     }
     return dup
+  }, [primaryDocsData])
+
+  const docStats = useMemo(() => {
+    const rows = Array.isArray(primaryDocsData) ? primaryDocsData : []
+    return {
+      total: rows.length,
+      drafts: rows.filter((d: any) => d.status === 'draft').length,
+      unpaid: rows.filter(
+        (d: any) => d.doc_type === 'invoice' && d.status !== 'paid' && d.status !== 'cancelled',
+      ).length,
+    }
   }, [primaryDocsData])
 
   const { data: counterpartiesData } = useQuery({
@@ -472,30 +482,41 @@ export default function DocumentsPage() {
 
   return (
     <>
-    <OperationalPage
-      eyebrow="Первичка"
-      title="Документы"
-      description="Счёт → оплата → акт или накладная → архив и экспорт. Импорт CSV и первичные документы."
-      primaryAction={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <Link to="/scan" className="btn-primary w-full sm:w-auto">
           <Icon name="document_scanner" className="text-lg" /> В сканер
         </Link>
-      }
-      secondaryActions={
         <Link to="/reports" className="btn-secondary w-full sm:w-auto">
           <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
         </Link>
-      }
-      focusStrip={
-        <FocusStrip
-          tone="neutral"
-          headline="Проверяйте только спорные распознавания"
-          supporting="Уверенные поля из сканера можно принять одним кликом — остальное попадёт в журнал автоматически."
-          ctaLabel="Сканер"
-          ctaTo="/scan"
-        />
-      }
-    >
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Документы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{docStats.total}</p>
+          <p className="text-[11px] text-on-surface-variant">В реестре</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{docStats.drafts}</p>
+          <p className="text-[11px] text-on-surface-variant">Нужно выпустить</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Не оплачено</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">{docStats.unpaid}</p>
+          <p className="text-[11px] text-on-surface-variant">Счета</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Дубликаты</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-amber-600 sm:text-2xl">
+            {duplicatePrimaryDocIds.size}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">На проверку</p>
+        </div>
+      </div>
+
       <ExecutionTopActionBanner className="mb-4" />
 
       {message && (
@@ -890,7 +911,7 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
-    </OperationalPage>
+    </div>
 
       {payQrModal && (
         <div

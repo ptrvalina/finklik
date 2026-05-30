@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { reportingCalmApi } from '../../api/client'
-import OperationalPage, { FocusStrip } from '../../components/shell/OperationalPage'
 import { orgQueryKey } from '../../lib/queryKeys'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
@@ -46,6 +45,8 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   })
 
   const periodNarrative = useMemo(() => buildReportingPeriodNarrative(calmOverview), [calmOverview])
+  const readinessScore = calmOverview?.readiness?.score ?? null
+  const blockerCount = calmOverview?.readiness?.blockers?.length ?? 0
 
   if (authority !== undefined && !isReportingAuthority(authority)) {
     return <Navigate to={base} replace />
@@ -53,18 +54,17 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
 
   if (filter) {
     return (
-      <OperationalPage
-        eyebrow="Комплаенс"
-        title={`Сдача отчётности — ${authorityTitle(filter)}`}
-        description={`Подготовка, проверка и отправка отчётов в ${authorityTitle(filter)}.`}
-        primaryAction={
+      <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
           <Link to={base} className="btn-secondary !min-h-10 text-xs">
             Все органы
           </Link>
-        }
-      >
+          <Link to="/calendar" className="btn-secondary text-sm">
+            Календарь сроков
+          </Link>
+        </div>
         <ReportSubmissionsView authorityFilter={filter} />
-      </OperationalPage>
+      </div>
     )
   }
 
@@ -76,25 +76,49 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
         : { label: 'ИМНС', to: `${base}/imns` }
 
   return (
-    <OperationalPage
-      eyebrow="Комплаенс"
-      title="Отчётность"
-      description="Отчётный период, готовность данных и пошаговая подготовка к сдаче."
-      focusStrip={
-        <FocusStrip
-          headline={periodNarrative.headline}
-          supporting={periodNarrative.supporting}
-          ctaLabel={focusCta.label}
-          ctaTo={focusCta.to}
-        />
-      }
-    >
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to={focusCta.to} className="btn-primary text-sm">
+          {focusCta.label}
+        </Link>
+        <Link to="/calendar" className="btn-secondary text-sm">
+          Календарь
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Готовность</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {readinessScore != null ? `${readinessScore}%` : '—'}
+          </p>
+          <p className="text-[11px] text-primary">{periodNarrative.headline}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Блокеры</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">{blockerCount}</p>
+          <p className="text-[11px] text-on-surface-variant">До сдачи</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Органы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">4</p>
+          <p className="text-[11px] text-on-surface-variant">ИМНС · ФСЗН · БГС · Белстат</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Период</p>
+          <p className="mt-1 font-headline text-base font-extrabold text-on-surface sm:text-lg">
+            {periodNarrative.phase === 'deadline_pressure' ? 'Срочно' : periodNarrative.phase === 'ready_for_draft' ? 'Черновик' : 'Активный'}
+          </p>
+          <p className="line-clamp-2 text-[11px] text-on-surface-variant">{periodNarrative.supporting}</p>
+        </div>
+      </div>
+
       <ReportingReadinessHero />
       <ReportingGuidedFlow basePath={base} />
 
       <div
         id="fc-report-authorities"
-        className="flex flex-wrap gap-2 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/[0.05] via-surface-container-low/60 to-transparent p-3 sm:gap-3 sm:p-4"
+        className="glass-card flex flex-wrap gap-2 rounded-2xl p-3 sm:gap-3 sm:p-4"
       >
         <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80">Органы</span>
         {hubLinks.map((l) => (
@@ -109,6 +133,6 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
       </div>
 
       <ReportSubmissionsView authorityFilter={null} />
-    </OperationalPage>
+    </div>
   )
 }

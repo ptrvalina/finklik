@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, taxApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
-import OperationalPage from '../components/shell/OperationalPage'
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -62,7 +61,17 @@ export default function CalendarPage() {
     color: event.color || EVENT_COLORS[event.event_type] || EVENT_COLORS.deadline,
     is_auto: true,
   }))
-  const allEvents = [...autoEvents, ...userEvents]
+  const allEvents = useMemo(() => [...autoEvents, ...userEvents], [autoEvents, userEvents])
+
+  const upcoming = useMemo(() => {
+    const todayStr = today.toISOString().slice(0, 10)
+    return allEvents
+      .filter((e) => e.event_date >= todayStr)
+      .sort((a, b) => a.event_date.localeCompare(b.event_date) || a.title.localeCompare(b.title))
+      .slice(0, 10)
+  }, [allEvents, today])
+
+  const taxDeadlines = upcoming.filter((e) => e.event_type === 'tax' || e.event_type === 'report' || e.event_type === 'deadline').length
 
   const addMutation = useMutation({
     mutationFn: () => api.post('/calendar/events', {
@@ -103,32 +112,53 @@ export default function CalendarPage() {
   )
 
   return (
-    <OperationalPage
-      eyebrow="Календарь"
-      title={`${MONTHS[month]} ${year}`}
-      description="Налоговые сроки и ваши события в одном месячном виде."
-      className="flex min-h-0 flex-col"
-      secondaryActions={
-        <>
-          {monthNav}
-          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-            <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
-          </Link>
-          <button
-            type="button"
-            className="btn-primary fc-btn-thumb w-full sm:w-auto"
-            onClick={() => {
-              setSelectedDate(today.toISOString().slice(0, 10))
-              setShowAddModal(true)
-            }}
-          >
-            <Icon name="add" className="text-lg" /> Событие
-          </button>
-        </>
-      }
-    >
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        {monthNav}
+        <Link to="/reports" className="btn-secondary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
+        </Link>
+        <button
+          type="button"
+          className="btn-primary fc-btn-thumb w-full sm:w-auto"
+          onClick={() => {
+            setSelectedDate(today.toISOString().slice(0, 10))
+            setShowAddModal(true)
+          }}
+        >
+          <Icon name="add" className="text-lg" /> Событие
+        </button>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Месяц</p>
+          <p className="mt-1 font-headline text-base font-extrabold text-on-surface sm:text-lg">
+            {MONTHS[month]} {year}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Текущий период</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">События</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{allEvents.length}</p>
+          <p className="text-[11px] text-on-surface-variant">В месяце</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ближайшие</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{upcoming.length}</p>
+          <p className="text-[11px] text-on-surface-variant">С сегодня</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Налоги / отчёты</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">{taxDeadlines}</p>
+          <p className="text-[11px] text-on-surface-variant">Дедлайны</p>
+        </div>
+      </div>
+
+      <div className="grid min-h-0 gap-4 lg:grid-cols-[1fr_280px] lg:gap-6">
+        <div className="flex min-h-0 flex-col gap-4">
       {/* Calendar grid */}
-      <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl p-0">
+      <div className="glass-card flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-2xl p-0 lg:min-h-[520px]">
         {/* Days header */}
         <div className="grid grid-cols-7 bg-surface-container-high">
           {DAYS.map(d => (
@@ -182,6 +212,38 @@ export default function CalendarPage() {
             <span className="text-xs text-on-surface-variant font-medium">{label}</span>
           </div>
         ))}
+      </div>
+        </div>
+
+        <aside className="glass-card flex flex-col rounded-2xl p-4 lg:max-h-[620px]">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Ближайшие сроки</p>
+          <ul className="mt-3 flex-1 space-y-2 overflow-y-auto">
+            {upcoming.length === 0 ? (
+              <li className="text-sm text-on-surface-variant">Нет предстоящих событий в этом месяце.</li>
+            ) : (
+              upcoming.map((ev) => (
+                <li
+                  key={ev.id}
+                  className="rounded-xl border border-outline/40 bg-surface-container-low/60 p-3"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full" style={{ background: ev.color }} />
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold tabular-nums text-on-surface-variant">
+                        {new Date(ev.event_date).toLocaleDateString('ru-BY', { day: '2-digit', month: 'short' })}
+                      </p>
+                      <p className="text-sm font-medium text-on-surface">{ev.title}</p>
+                      <p className="text-[10px] text-on-surface-variant">{EVENT_LABELS[ev.event_type] || ev.event_type}</p>
+                    </div>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+          <Link to="/reports" className="btn-secondary mt-4 w-full text-center text-sm">
+            К отчётности
+          </Link>
+        </aside>
       </div>
 
       {showAddModal && (
@@ -242,6 +304,6 @@ export default function CalendarPage() {
           </div>
         </AppModal>
       )}
-    </OperationalPage>
+    </div>
   )
 }
