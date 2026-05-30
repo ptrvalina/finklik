@@ -237,7 +237,7 @@ export default function BankPage() {
       {/* Overview */}
       {tab === 'overview' && (
         <div className="space-y-5 sm:space-y-6">
-          <div className="relative overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.12] via-[rgb(var(--color-surface)/0.5)] to-cyan-500/[0.08] p-5 shadow-soft backdrop-blur-xl">
+          <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/[0.12] via-[rgb(var(--color-surface)/0.5)] to-[#4edea3]/[0.1] p-5 shadow-soft backdrop-blur-xl">
             <div className="pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden />
             <div className="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
