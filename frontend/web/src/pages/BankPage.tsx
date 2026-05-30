@@ -237,26 +237,26 @@ export default function BankPage() {
       {/* Overview */}
       {tab === 'overview' && (
         <div className="space-y-5 sm:space-y-6">
-          <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/[0.12] via-[rgb(var(--color-surface)/0.5)] to-[#4edea3]/[0.1] p-5 shadow-soft backdrop-blur-xl">
-            <div className="pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden />
-            <div className="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Ликвидность · операции</p>
-                <p className="mt-1 font-headline text-lg font-bold text-on-surface">
-                  Остаток {fmt(balanceData?.balance)} BYN · счетов {accounts.length}
-                </p>
-                <p className="mt-1 max-w-xl text-xs text-on-surface-variant">
-                  Сверка выписки с журналом снижает расхождения. Импортируйте движения и разрешайте расхождения в одном потоке.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/accounting/journal" className="btn-secondary min-h-11 px-4 text-sm font-bold">
-                  Журнал
-                </Link>
-                <button type="button" className="btn-primary min-h-11 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
-                  Сверка
-                </button>
-              </div>
+          <div className="relative overflow-hidden rounded-2xl border border-outline/60 bg-surface p-6 shadow-sm sm:p-8">
+            <h2 className="font-headline text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
+              У вас{' '}
+              <span className="text-primary">{fmt(balanceData?.balance)} BYN</span>{' '}
+              на {accounts.length}{' '}
+              {accounts.length === 1 ? 'подключённом счёте' : 'подключённых счетах'}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+              Сверка выписки с журналом снижает расхождения перед отчётностью.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link to="/accounting/journal" className="btn-secondary min-h-10 px-4 text-sm font-bold">
+                Журнал
+              </Link>
+              <button type="button" className="btn-primary min-h-10 px-4 text-sm font-bold" onClick={() => setShowPayment(true)}>
+                Перевод
+              </button>
+              <button type="button" className="btn-secondary min-h-10 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
+                Импорт выписки
+              </button>
             </div>
           </div>
 

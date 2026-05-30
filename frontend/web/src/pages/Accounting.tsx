@@ -10,6 +10,7 @@ import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
 import { JournalSplitLayout } from '../components/journal/JournalSplitLayout'
+import { JournalEvidencePanel } from '../components/journal/JournalEvidencePanel'
 import { JournalTransactionPanel } from '../components/journal/JournalTransactionPanel'
 import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
 import { txAiConfidenceLabel, txAttentionKind, txCanPost, txValidationIssues } from '../lib/journalRowAttention'
@@ -25,7 +26,6 @@ import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
 import { useOperational } from '../context/OperationalContext'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
-import OperationalPage from '../components/shell/OperationalPage'
 import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
@@ -644,40 +644,49 @@ export default function Accounting() {
   const isLoading = txQuery.isLoading
 
   return (
-    <OperationalPage
-      className="accounting-journal pb-24 lg:pb-8"
-      eyebrow="Учёт"
-      title="Журнал операций"
-      description={
-        linkedCounterpartyId
-          ? 'Следующая проводка привязана к контрагенту из справочника. Строка — Enter, навигация — стрелки.'
-          : 'Ctrl+K — команды, N/I/E — ввод, / — поиск, ? — подсказки по клавишам.'
-      }
-      primaryAction={
-        <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-[1rem]" onClick={() => setCommandOpen(true)}>
+    <div className="fc-page-shell fc-page-shell-asymmetric accounting-journal pb-24 lg:pb-8">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-xl text-sm" onClick={() => setCommandOpen(true)}>
           <Icon name="keyboard_command_key" className="text-lg" /> Команды
         </button>
-      }
-      secondaryActions={
-        <>
-          <button type="button" className="btn-ghost shrink-0 rounded-[1rem] text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
-            ?
-          </button>
-          <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-[1rem] text-xs">
-            <Icon name="apps" className="text-lg" /> Хаб учёта
-          </Link>
-          <button type="button" className="btn-secondary shrink-0 rounded-[1rem]" onClick={downloadKudir}>
-            КУДиР
-          </button>
-          <Link to="/scan" className="btn-secondary shrink-0 rounded-[1rem]">
-            <Icon name="document_scanner" className="text-lg" /> Сканер
-          </Link>
-        </>
-      }
-    >
+        <button type="button" className="btn-ghost shrink-0 rounded-xl text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
+          ?
+        </button>
+        <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-xl text-xs">
+          <Icon name="apps" className="text-lg" /> Хаб
+        </Link>
+        <button type="button" className="btn-secondary shrink-0 rounded-xl text-sm" onClick={downloadKudir}>
+          КУДиР
+        </button>
+        <Link to="/scan" className="btn-secondary shrink-0 rounded-xl text-sm">
+          <Icon name="document_scanner" className="text-lg" /> Сканер
+        </Link>
+      </div>
+
       {hotkeysOpen && <JournalHotkeysHelp onClose={() => setHotkeysOpen(false)} />}
 
-      <FinancialStateHero compact className="mb-4" />
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операций</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.count}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Чистый поток</p>
+          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums ${stats.net >= 0 ? 'text-primary' : 'text-error'}`}>
+            {stats.net >= 0 ? '+' : '−'}{fmt(Math.abs(stats.net))}
+          </p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.drafts}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Замечания</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.issues}</p>
+        </div>
+      </div>
+
+      <FinancialStateHero compact className="mb-4 max-lg:hidden" />
 
       <JournalWorkspaceChrome
         workspaceFocus={workspaceFocus}
@@ -854,6 +863,11 @@ export default function Accounting() {
                 ledgerQueryKey={ledgerQueryKey}
                 embedded
               />
+            ) : null
+          }
+          context={
+            panelTx ? (
+              <JournalEvidencePanel tx={panelTx as Record<string, unknown>} onClose={() => setPanelTx(null)} />
             ) : null
           }
           main={
@@ -1190,6 +1204,6 @@ export default function Accounting() {
           <Icon name="document_scanner" className="text-[1.35rem]" />
         </Link>
       </div>
-    </OperationalPage>
+    </div>
   )
 }

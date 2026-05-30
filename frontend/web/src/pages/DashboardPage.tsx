@@ -18,7 +18,6 @@ const CashflowPulse = lazy(async () => {
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { AIRecommendationPanel } from '../components/premium-os'
-import OperationalPage from '../components/shell/OperationalPage'
 import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
@@ -189,40 +188,51 @@ export default function DashboardPage() {
   }
 
   return (
-    <OperationalPage
-      eyebrow="Сегодня"
-      title="Главная"
-      description={`УСН · Беларусь · ${new Date().toLocaleDateString('ru-BY', { month: 'long', year: 'numeric' })}`}
-      primaryAction={
-        <Link to="/operations" className="btn-primary fc-btn-thumb text-sm">
-          Лента работы
-        </Link>
-      }
-      secondaryActions={
-        <Link to="/accounting/journal" className="btn-secondary fc-btn-thumb text-sm">
-          <Icon name="receipt_long" className="text-lg" /> Журнал
-        </Link>
-      }
-    >
-      {/* Financial OS Home: ровно 5 блоков над сгибом — состояние, действие, блокеры, готовность, события. */}
-      <FinancialStateHero className="mb-6" cashOnHand={cashOnHand} />
-
-      <WorkNowCard />
-
-      <DashboardFocusStrip
-        draftCount={draftCount}
-        pendingOcr={pendingOcr}
-        overdueCount={Number(businessState?.overdue_obligations_count ?? 0)}
-        daysLeft={daysLeft}
-        profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
-      />
-
-      <div className="mt-6">
-        <ReportingReadinessHero />
+    <div className="fc-page-shell fc-page-shell-asymmetric fc-scroll-region pb-24 lg:pb-10">
+      {/* KPI strip — Stitch metric cards */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Деньги</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {cashOnHand != null ? fmt(cashOnHand) : '—'} <span className="text-sm font-bold text-on-surface-variant">BYN</span>
+          </p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">OCR</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{pendingOcr}</p>
+          <p className="text-[11px] text-on-surface-variant">{pendingOcr > 0 ? 'ждут проверки' : 'всё проверено'}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{draftCount}</p>
+          <p className="text-[11px] text-on-surface-variant">в журнале</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Дедлайн</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {daysLeft != null ? daysLeft : '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">{daysLeft != null ? 'дней до налога' : 'нет срочных'}</p>
+        </div>
       </div>
 
-      <div className="mt-6">
-        <DashboardTimeline transactions={transactions} />
+      {/* Stitch dashboard grid: состояние слева, действия справа */}
+      <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
+        <div className="space-y-6 lg:col-span-8">
+          <FinancialStateHero cashOnHand={cashOnHand} />
+          <ReportingReadinessHero />
+          <DashboardTimeline transactions={transactions} />
+        </div>
+        <div className="space-y-6 lg:col-span-4">
+          <WorkNowCard />
+          <DashboardFocusStrip
+            draftCount={draftCount}
+            pendingOcr={pendingOcr}
+            overdueCount={Number(businessState?.overdue_obligations_count ?? 0)}
+            daysLeft={daysLeft}
+            profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
+          />
+        </div>
       </div>
 
       <OnboardingChecklist />
@@ -287,6 +297,6 @@ export default function DashboardPage() {
         )}
       </div>
       </DashboardDetailsPanel>
-    </OperationalPage>
+    </div>
   )
 }

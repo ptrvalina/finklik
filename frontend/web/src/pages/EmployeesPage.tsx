@@ -206,39 +206,18 @@ export default function EmployeesPage() {
   })
   const payroll: SalaryRecord[] = payrollData ?? []
   const isSaving = createMutation.isPending || updateMutation.isPending
+  const totalPayroll = employees.filter((e) => e.is_active).reduce((s, e) => s + Number(e.salary || 0), 0)
+  const verifiedCount = employees.filter((e) => e.is_active).length
 
   return (
-    <div className="fc-page-shell">
-      {/* Header */}
-      <div className="fc-hero flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div>
-            <h1 className="page-heading">Сотрудники</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">Команда, зарплаты и кадровый учёт</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Кадры</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Начисления</span>
-              <span className="rounded-full border border-outline/80 bg-surface-container-low px-2.5 py-1 text-on-surface-variant">Выплаты</span>
-            </div>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Link to="/calendar" className="btn-secondary w-full sm:w-auto">
-              <Icon name="calendar_today" className="text-lg" /> График
-            </Link>
-            <button
-              type="button"
-              className="btn-primary w-full sm:w-auto"
-              onClick={() => {
-                setEditingEmployee(null)
-                resetForm()
-                setShowModal(true)
-              }}
-            >
-              <Icon name="person_add" className="text-lg" /> Добавить
-            </button>
-          </div>
-        </div>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/calendar" className="btn-secondary text-sm">
+          <Icon name="calendar_today" className="text-lg" /> График
+        </Link>
+        <Link to="/employees/hire" className="btn-primary text-sm">
+          <Icon name="person_add" className="text-lg" /> Нанять
+        </Link>
       </div>
 
       {message && (
@@ -273,6 +252,24 @@ export default function EmployeesPage() {
           ))}
         </div>
       </div>
+
+      {tab === 'active' && employees.length > 0 && (
+        <div className="glass-card mb-6 rounded-2xl p-6 sm:p-8">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Next scheduled payout</p>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            {MONTHS[payrollMonth]} {payrollYear}
+          </p>
+          <p className="mt-3 font-headline text-3xl font-extrabold tabular-nums text-on-surface sm:text-4xl">
+            {fmt(totalPayroll)} <span className="text-lg font-bold text-on-surface-variant">BYN</span>
+          </p>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-high">
+              <div className="h-full w-full rounded-full bg-primary" />
+            </div>
+            <span className="text-xs font-bold text-primary">{verifiedCount}/{verifiedCount} Verified</span>
+          </div>
+        </div>
+      )}
 
       {isError && <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">Не удалось загрузить</div>}
 
@@ -404,7 +401,8 @@ export default function EmployeesPage() {
 
       {/* Employee list */}
       {tab !== 'payroll' && (
-        <>
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-8">
           <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low p-4 border border-outline/75 shadow-soft sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5">
             <div className="min-w-0 flex-1 sm:min-w-[200px]">
               <label className="label">Поиск</label>
@@ -578,7 +576,41 @@ export default function EmployeesPage() {
               </>
             )}
           </div>
-        </>
+          </div>
+
+          <aside className="hidden space-y-4 lg:col-span-4 lg:block">
+            <div className="glass-card rounded-2xl p-5">
+              <h3 className="text-sm font-bold text-on-surface">HR Planner</h3>
+              <div className="mt-4 rounded-xl border border-error/20 bg-error/5 p-3">
+                <p className="text-[10px] font-bold uppercase text-error">Critical resource gap</p>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  Проверьте табель и отсутствия перед ближайшей выплатой.
+                </p>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li className="flex justify-between border-b border-outline/25 pb-2">
+                  <span className="text-on-surface-variant">Активных</span>
+                  <span className="font-bold">{verifiedCount}</span>
+                </li>
+                <li className="flex justify-between border-b border-outline/25 pb-2">
+                  <span className="text-on-surface-variant">ФОТ / мес</span>
+                  <span className="font-bold tabular-nums">{fmt(totalPayroll)} BYN</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-on-surface-variant">С детьми</span>
+                  <span className="font-bold">{employees.filter((e) => e.has_children > 0).length}</span>
+                </li>
+              </ul>
+            </div>
+            <div className="glass-card rounded-2xl p-5">
+              <h3 className="text-sm font-bold text-on-surface">Quick actions</h3>
+              <div className="mt-3 grid gap-2">
+                <Link to="/employees/hire" className="btn-primary min-h-10 w-full text-sm">Hire employee</Link>
+                <Link to="/planner" className="btn-secondary min-h-10 w-full text-sm">Team planner</Link>
+              </div>
+            </div>
+          </aside>
+        </div>
       )}
 
       {showFireConfirm && (

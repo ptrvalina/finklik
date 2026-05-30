@@ -8,7 +8,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useOcrAutosave } from '../hooks/useOcrAutosave'
 import {
@@ -436,33 +436,32 @@ export default function ScannerPage() {
         />
       )}
 
-    <OperationalPage
-      className="scanner-page pb-20 lg:pb-8"
-      eyebrow="Первичка"
-      title="Сканер документов"
-      description="Загрузка → распознавание → проверка полей → операция в журнале."
-      primaryAction={
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => fileRef.current?.click()}>
-          <Icon name="cloud_upload" className="text-lg" /> Загрузить файл
+    <div className="fc-page-shell fc-page-shell-asymmetric scanner-page pb-20 lg:pb-8">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В очереди</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{reviewCount}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">История</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{history.length}</p>
+        </div>
+        <div className="glass-card col-span-2 rounded-2xl p-4 sm:col-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Режим</p>
+          <p className="mt-1 text-sm font-semibold text-on-surface">
+            {reviewCount > 0 ? 'Пакетная проверка OCR' : 'Загрузка и распознавание'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
+          <Icon name="cloud_upload" className="text-lg" /> Загрузить
         </button>
-      }
-      secondaryActions={
-        <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
+        <Link to="/accounting/journal" className="btn-secondary text-sm">
           <Icon name="receipt_long" className="text-lg" /> Журнал
         </Link>
-      }
-      focusStrip={
-        reviewCount > 0 ? (
-          <FocusStrip
-            tone="amber"
-            headline={`${reviewCount} док. ждут проверки`}
-            supporting="Поля с низкой уверенностью подсвечены — исправьте перед проведением."
-            ctaLabel="К очереди ниже"
-            onCta={() => document.getElementById('scanner-review-queue')?.scrollIntoView({ behavior: 'smooth' })}
-          />
-        ) : undefined
-      }
-    >
+      </div>
       <FinancialStateHero compact className="mb-4 max-lg:hidden" />
 
       {batchSummary && batchSummary.total > 1 && (
@@ -517,7 +516,53 @@ export default function ScannerPage() {
         </div>
       )}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
-        <div className="col-span-12 lg:col-span-8">
+        {/* Left: batch + history */}
+        <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
+          {(reviewQueueData?.items?.length ?? 0) > 0 && (
+            <div className="glass-card rounded-2xl p-4">
+              <h4 className="text-sm font-bold text-on-surface">Очередь проверки</h4>
+              <ul className="mt-3 space-y-2">
+                {reviewQueueData!.items.slice(0, 5).map((item: { id: string; filename: string; confidence: number }) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-xl border border-outline/35 px-3 py-2 text-left text-xs hover:border-primary/35"
+                      disabled={loadDocMutation.isPending}
+                      onClick={() => loadDocMutation.mutate(item.id)}
+                    >
+                      <span className="truncate font-medium">{item.filename}</span>
+                      <span className="ml-2 shrink-0 text-amber-700">{item.confidence}%</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {history.length > 0 && (
+            <div className="glass-card rounded-2xl p-4">
+              <h4 className="font-bold font-headline text-on-surface">Недавние сканы</h4>
+              <div className="mt-3 space-y-2">
+                {history.slice(0, 5).map((item) => {
+                  const t = DOC_ICONS[item.doc_type] || DOC_ICONS.unknown
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-surface-container-high"
+                      onClick={() => loadDocMutation.mutate(item.id)}
+                    >
+                      <Icon name={t.icon} className={`text-lg ${t.color}`} />
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium">{item.filename}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Center: upload / preview */}
+        <div className="col-span-12 lg:col-span-6">
           <div className="-mx-1 mb-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
             <div className="flex min-w-max gap-1 rounded-xl border border-outline/75 bg-surface-container-high p-1 shadow-soft sm:inline-flex sm:min-w-0">
               <button
@@ -694,191 +739,68 @@ export default function ScannerPage() {
                 </div>
               </div>
 
-              <div className="grid gap-0 md:grid-cols-2">
-                <motion.div
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.05 }}
-                  className="border-outline-variant/10 p-4 md:border-r sm:p-6"
-                >
+              <div className="p-4 sm:p-6 lg:max-w-none">
                   {preview ? (
-                    <img src={preview} alt="Preview" className="w-full rounded-lg object-contain max-h-80 bg-surface" />
+                    <img src={preview} alt="Preview" className="w-full rounded-lg object-contain max-h-[min(520px,60vh)] bg-surface" />
                   ) : (
-                    <div className="h-60 flex items-center justify-center bg-surface rounded-lg">
+                    <div className="flex h-60 items-center justify-center rounded-lg bg-surface lg:h-80">
                       <Icon name="description" className="text-5xl text-on-surface-variant/20" />
                     </div>
                   )}
                   {scanResult.ocr_text && (
                     <details className="mt-4">
-                      <summary className="text-xs text-on-surface-variant cursor-pointer hover:text-on-surface">Текст распознавания</summary>
-                      <pre className="mt-2 text-xs bg-surface p-3 rounded-lg whitespace-pre-wrap text-on-surface-variant max-h-40 overflow-auto">{scanResult.ocr_text}</pre>
+                      <summary className="cursor-pointer text-xs text-on-surface-variant hover:text-on-surface">Текст распознавания</summary>
+                      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs text-on-surface-variant">{scanResult.ocr_text}</pre>
                     </details>
                   )}
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.12 }}
-                  className="space-y-4 p-4 sm:p-6"
-                >
-                  <OcrReviewBanner
-                    confidence={scanResult.confidence}
-                    fieldConfidence={scanResult.field_confidence}
-                    requiresReview={scanResult.requires_review}
-                  />
-                  {scanResult.execution_suggestions?.message && (
-                    <div className="rounded-xl border border-primary/25 bg-primary/8 px-3 py-2 text-xs text-on-surface">
-                      {scanResult.execution_suggestions.message}
-                      {scanResult.execution_suggestions.suggested_category && (
-                        <span className="mt-1 block text-on-surface-variant">
-                          Категория: {scanResult.execution_suggestions.suggested_category}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="label">Данные для операции</h4>
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      Правки сохраняются автоматически. Enter — следующее поле, Ctrl+Enter — в журнал.
-                    </p>
-                  </div>
-                  {editDraft && (
-                    <OcrCorrectionPanel
-                      draft={editDraft}
-                      fieldConfidence={scanResult.field_confidence}
-                      fieldValidation={scanResult.field_validation}
-                      docNumber={scanResult.parsed.doc_number}
-                      vendorHints={scanResult.vendor_hints}
-                      suggestedDebit={scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined}
-                      suggestedCredit={scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined}
-                      amountError={amountError}
-                      autosaving={autosaving}
-                      onChange={handleDraftChange}
-                      onMarkCorrected={markCorrected}
-                      onConfirm={submitTxFromDraft}
-                      confirmPending={confirmMutation.isPending}
-                      confirmed={txSaved}
-                      onFieldFocus={setActiveOcrField}
-                    />
-                  )}
-                  {txSaved && createdTxId && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      <Link
-                        to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
-                        className="btn-secondary inline-flex min-h-10 w-full justify-center text-sm"
-                      >
-                        Открыть в журнале
-                      </Link>
-                      {(reviewQueueData?.items?.length ?? 0) > 1 && (
-                        <button
-                          type="button"
-                          className="btn-ghost min-h-10 w-full text-sm"
-                          disabled={loadDocMutation.isPending}
-                          onClick={() => openNextInReviewQueue(scanResult?.id)}
-                        >
-                          Следующий в очереди
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {scanResult.parsed.items_count != null && (
-                    <p className="text-xs text-on-surface-variant">Позиций в документе: {scanResult.parsed.items_count}</p>
-                  )}
-                  {scanResult.warnings && scanResult.warnings.length > 0 && (
-                    <div className="bg-tertiary/5 border border-tertiary/20 rounded-lg p-3 space-y-1">
-                      <p className="text-[10px] text-tertiary font-bold uppercase tracking-wider">Предупреждения</p>
-                      {scanResult.warnings.map((w: string, i: number) => (
-                        <p key={i} className="text-xs text-on-surface-variant">• {w}</p>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
               </div>
             </motion.div>
             )
           })()}
         </div>
 
-        {/* Sidebar */}
-        <div className="col-span-12 hidden space-y-6 lg:col-span-4 lg:block">
-          <div className="glass-card rounded-2xl p-6">
-            <h4 className="label flex items-center gap-2">
-              <Icon name="auto_awesome" className="text-secondary text-lg" /> Умный захват
-            </h4>
-            <ul className="space-y-4 mt-4">
-              <li className="flex gap-4">
-                <div className="w-8 h-8 shrink-0 rounded-lg bg-surface-bright flex items-center justify-center">
-                  <Icon name="crop_free" className="text-primary text-sm" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-on-surface">Авто-обрезка</p>
-                  <p className="text-xs text-on-surface-variant">Определяем края и выравниваем изображение.</p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <div className="w-8 h-8 shrink-0 rounded-lg bg-surface-bright flex items-center justify-center">
-                  <Icon name="history_edu" className="text-primary text-sm" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-on-surface">OCR извлечение</p>
-                  <p className="text-xs text-on-surface-variant">Конвертация печатного и рукописного текста.</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Recent scans */}
-          {history.length > 0 && (
-            <div className="glass-card rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold font-headline text-on-surface">Недавние сканы</h4>
-              </div>
-              <div className="space-y-3">
-                {history.slice(0, 4).map((item) => {
-                  const t = DOC_ICONS[item.doc_type] || DOC_ICONS.unknown
-                  return (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-high transition-colors group">
-                      <div className="w-10 h-10 rounded bg-slate-900 flex items-center justify-center border border-outline-variant/20">
-                        <Icon name={t.icon} className={`${t.color} group-hover:text-primary transition-colors`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate text-on-surface">
-                          {item.parsed?.counterparty_name || item.parsed?.description || item.filename}
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant">
-                          {new Date(item.created_at).toLocaleDateString('ru-RU')}
-                          {item.parsed?.amount != null && ` · ${item.parsed.amount.toFixed(2)} BYN`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {item.transaction_id && <Icon name="check_circle" className="text-secondary text-sm" />}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(item.id) }}
-                          className="text-on-surface-variant opacity-100 transition-colors hover:text-error sm:opacity-0 sm:group-hover:opacity-100">
-                          <Icon name="close" className="text-sm" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+        {/* Right: OCR results + readiness */}
+        <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
+          <ReportingReadinessHero />
+          {scanResult && editDraft && (
+            <div className="glass-card space-y-4 rounded-2xl p-4">
+              <OcrReviewBanner
+                confidence={scanResult.confidence}
+                fieldConfidence={scanResult.field_confidence}
+                requiresReview={scanResult.requires_review}
+              />
+              <OcrCorrectionPanel
+                draft={editDraft}
+                fieldConfidence={scanResult.field_confidence}
+                fieldValidation={scanResult.field_validation}
+                docNumber={scanResult.parsed.doc_number}
+                vendorHints={scanResult.vendor_hints}
+                suggestedDebit={scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined}
+                suggestedCredit={scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined}
+                amountError={amountError}
+                autosaving={autosaving}
+                onChange={handleDraftChange}
+                onMarkCorrected={markCorrected}
+                onConfirm={submitTxFromDraft}
+                confirmPending={confirmMutation.isPending}
+                confirmed={txSaved}
+                onFieldFocus={setActiveOcrField}
+              />
+              {txSaved && createdTxId && (
+                <Link
+                  to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
+                  className="btn-primary flex min-h-10 w-full justify-center text-sm"
+                >
+                  Подтвердить в журнале
+                </Link>
+              )}
             </div>
           )}
-
-          {/* Pro tip */}
-          <div className="relative rounded-xl p-6 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-            <div className="relative z-10">
-              <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wider">Совет</p>
-              <p className="text-sm text-on-surface font-medium leading-relaxed">
-                Перетащите до 20 файлов одновременно для пакетной обработки.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
       {(reviewQueueData?.items?.length ?? 0) > 0 && (
-        <section id="scanner-review-queue" className="mt-8">
+        <section id="scanner-review-queue" className="mt-8 lg:hidden">
           <h2 className="fc-section-label mb-3">Очередь проверки</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {reviewQueueData!.items.map((item: { id: string; filename: string; confidence: number; doc_type: string }) => (
@@ -908,7 +830,7 @@ export default function ScannerPage() {
           <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Ждут проверки</p>
         </div>
       </div>
-    </OperationalPage>
+    </div>
     </>
   )
 }

@@ -1,4 +1,24 @@
 /** Execution-first IA — NOW / MONEY / REPORTING / TEAM / CONTROL. */
+
+export type ZoneId = 'now' | 'money' | 'reporting' | 'team' | 'control'
+
+export type ZoneMeta = {
+  id: ZoneId
+  label: string
+  icon: string
+  /** Первый маршрут зоны — при клике на зону в sidebar. */
+  defaultTo: string
+}
+
+/** Stitch sidebar: только 5 зон, подразделы — в header tabs. */
+export const ZONES: ZoneMeta[] = [
+  { id: 'now', label: 'Сейчас', icon: 'hub', defaultTo: '/' },
+  { id: 'money', label: 'Деньги', icon: 'payments', defaultTo: '/accounting/hub' },
+  { id: 'reporting', label: 'Отчётность', icon: 'assignment_turned_in', defaultTo: '/reports' },
+  { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/planner' },
+  { id: 'control', label: 'Контроль', icon: 'monitoring', defaultTo: '/control/state' },
+]
+
 export type NavFlyoutItem = { to: string; label: string }
 
 export type NavItem = {
@@ -240,3 +260,79 @@ export function getMobileBarItemsForRole(role?: string | null) {
 }
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
+
+function pathInZone(pathname: string, zoneId: ZoneId): boolean {
+  if (zoneId === 'now') {
+    return (
+      pathname === '/' ||
+      pathname.startsWith('/operations') ||
+      pathname.startsWith('/inbox') ||
+      pathname.startsWith('/approvals')
+    )
+  }
+  if (zoneId === 'money') {
+    return (
+      pathname.startsWith('/accounting') ||
+      pathname.startsWith('/bank') ||
+      pathname.startsWith('/documents') ||
+      pathname.startsWith('/counterparties') ||
+      pathname.startsWith('/scan')
+    )
+  }
+  if (zoneId === 'reporting') {
+    return pathname.startsWith('/reports') || pathname.startsWith('/calendar') || pathname.startsWith('/employees')
+  }
+  if (zoneId === 'team') {
+    return pathname.startsWith('/planner') || pathname.startsWith('/workspace')
+  }
+  return (
+    pathname.startsWith('/control') ||
+    pathname.startsWith('/analytics') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/assistant')
+  )
+}
+
+export function getActiveZone(pathname: string): ZoneId {
+  for (const z of ZONES) {
+    if (pathInZone(pathname, z.id)) return z.id
+  }
+  return 'now'
+}
+
+export type ZoneTab = { to: string; label: string; end?: boolean }
+
+/** Табы в header для активной зоны (Stitch top bar). */
+export function getZoneTabs(pathname: string, role?: string | null): ZoneTab[] {
+  const zone = getActiveZone(pathname)
+  const groups = getNavGroupsForRole(role)
+  const group = groups.find((g) => g.id === zone)
+  if (!group) return []
+
+  const tabs: ZoneTab[] = []
+  for (const item of group.items) {
+    if (item.flyout?.length) {
+      tabs.push({ to: item.to, label: item.label, end: true })
+      for (const c of item.flyout) {
+        tabs.push({ to: c.to, label: c.label, end: true })
+      }
+    } else {
+      tabs.push({ to: item.to, label: item.label, end: item.end })
+    }
+  }
+  if (zone === 'control' && (role || '').toLowerCase() !== 'manager') {
+    tabs.push({ to: '/assistant', label: 'Консультант', end: true })
+  }
+  const seen = new Set<string>()
+  return tabs.filter((t) => {
+    if (seen.has(t.to)) return false
+    seen.add(t.to)
+    return true
+  })
+}
+
+export function getZonesForRole(role?: string | null): ZoneMeta[] {
+  const groups = getNavGroupsForRole(role)
+  const allowed = new Set(groups.map((g) => g.id))
+  return ZONES.filter((z) => allowed.has(z.id))
+}

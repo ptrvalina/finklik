@@ -12,9 +12,11 @@ import { notificationsApi } from '../../api/client'
 import {
   ASSISTANT_SHEET_ITEM,
   flattenNavForSheet,
+  getActiveZone,
   getMobileBarItemsForRole,
   getNavGroupsForRole,
-  type NavItem,
+  getZoneTabs,
+  getZonesForRole,
 } from './navConfig'
 import OrgSwitcher from '../workspace/OrgSwitcher'
 import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
@@ -58,6 +60,9 @@ export default function Layout() {
   const isManager = role === 'manager'
   const navGroups = getNavGroupsForRole(role)
   const mobileBarItems = getMobileBarItemsForRole(role)
+  const activeZone = getActiveZone(location.pathname)
+  const zoneTabs = getZoneTabs(location.pathname, role)
+  const zonesForRole = getZonesForRole(role)
   const { data: plannerNotifications = [] } = useQuery({
     queryKey: ['notifications', 'list'],
     queryFn: () => notificationsApi.list(20).then((r) => r.data ?? []),
@@ -135,133 +140,73 @@ export default function Layout() {
   const roleLabel =
     user?.role === 'owner' ? 'Владелец' : user?.role === 'accountant' ? 'Бухгалтер' : user?.role === 'viewer' ? 'Наблюдатель' : user?.role
 
-  function renderSidebarItems(items: NavItem[]) {
-    return items.map((item) => {
-      const { to, label, icon, end, flyout } = item
-      const active =
-        pathActive(location.pathname, to, end) || (flyout?.some((c) => pathActive(location.pathname, c.to, true)) ?? false)
-      if (flyout?.length) {
-        return (
-          <div key={to} className="group relative">
-            <NavLink
-              to={to}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                active
-                  ? 'bg-secondary/[0.08] text-secondary ring-1 ring-secondary/20'
-                  : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-              }`}
-            >
-              <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
-              <span>{label}</span>
-              <Icon
-                name="expand_more"
-                className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-secondary rotate-180' : 'text-on-surface-variant/50 group-hover:rotate-180'}`}
-              />
-            </NavLink>
-            <div
-              className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-outline/60 bg-surface py-1.5 opacity-0 shadow-lift backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-[#061f1c]/95"
-              role="menu"
-              aria-label={`${label}: подразделы`}
-            >
-              {flyout.map((c) => {
-                const subActive = pathActive(location.pathname, c.to, true)
-                return (
-                  <NavLink
-                    key={c.to}
-                    to={c.to}
-                    role="menuitem"
-                    className={`block px-3 py-2 text-sm font-medium transition-colors ${
-                      subActive ? 'bg-secondary/10 text-secondary' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                    }`}
-                  >
-                    {c.label}
-                  </NavLink>
-                )
-              })}
-            </div>
-          </div>
-        )
-      }
-      return (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-            active
-              ? 'bg-secondary/[0.08] text-secondary ring-1 ring-secondary/20'
-              : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-          }`}
-        >
-          <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
-          <span>{label}</span>
-          {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(33,112,228,0.7)]" aria-hidden />}
-        </NavLink>
-      )
-    })
-  }
-
   return (
     <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      {/* Desktop sidebar — floating glass rail */}
-      <aside className="fc-sidebar-glass relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden lg:flex">
-        <div className="relative z-[1] px-6 pb-6 pt-9">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0058be] via-[#2170e4] to-[#131b2e] shadow-lg ring-1 ring-white/15">
-              <Icon name="account_balance" className="text-[24px] text-white" filled />
+      {/* Stitch zone sidebar */}
+      <aside className="fc-sidebar-glass relative hidden h-full w-[240px] flex-shrink-0 flex-col overflow-hidden lg:flex">
+        <div className="relative z-[1] border-b border-outline/40 px-5 pb-5 pt-7">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0058be] via-[#2170e4] to-[#131b2e] shadow-md ring-1 ring-white/10">
+              <Icon name="account_balance" className="text-[20px] text-white" filled />
             </div>
             <div className="min-w-0">
-              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-on-surface" style={{ letterSpacing: '-0.03em' }}>
-                ФинКлик
-              </h1>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Премиум</p>
-              <p className="truncate text-[11px] text-on-surface-variant">{user?.org_name || 'Организация'}</p>
-              <div className="mt-2">
-                <OrgSwitcher placement="sidebar" />
-              </div>
+              <h1 className="font-headline text-[15px] font-bold tracking-tight text-on-surface">ФинКлик</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant/70">Operating System</p>
             </div>
           </div>
-        </div>
-
-        <div className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-          <div className="space-y-5">
-            {navGroups.map((group) => (
-              <div key={group.id}>
-                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/60">{group.label}</p>
-                <nav className="space-y-1">{renderSidebarItems(group.items)}</nav>
-              </div>
-            ))}
+          <div className="mt-4">
+            <OrgSwitcher placement="sidebar" />
           </div>
         </div>
 
-        <div className="relative z-[1] mt-auto border-t border-outline/50 bg-surface-container-low/50 px-4 py-4">
+        <nav className="relative z-[1] min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Зоны">
+          {zonesForRole.map((zone) => {
+            const zoneActive = activeZone === zone.id
+            return (
+              <NavLink
+                key={zone.id}
+                to={zone.defaultTo}
+                className={`fc-zone-nav-item ${zoneActive ? 'fc-zone-nav-item--active' : ''}`}
+              >
+                <Icon name={zone.icon} filled={zoneActive} className="text-[22px]" />
+                <span>{zone.label}</span>
+              </NavLink>
+            )
+          })}
+        </nav>
+
+        <div className="relative z-[1] mt-auto space-y-2 border-t border-outline/40 px-3 py-4">
+          <NavLink
+            to="/scan"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#131b2e] px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#0f1524] dark:bg-on-surface dark:text-canvas dark:hover:bg-on-surface/90"
+          >
+            <Icon name="add" className="text-lg" />
+            Быстрое действие
+          </NavLink>
           {!isManager && (
             <NavLink
               to="/assistant"
-              title="Консультант"
-              aria-label="Консультант"
-              className={({ isActive }) =>
-                `tap-highlight-none mb-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-secondary/10 text-secondary ring-1 ring-secondary/20'
-                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                }`
-              }
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
             >
-              {({ isActive }) => (
-                <>
-                  <Icon name="smart_toy" filled={isActive} className="text-[22px]" />
-                  <span>Консультант</span>
-                </>
-              )}
+              <Icon name="smart_toy" className="text-[20px]" />
+              Консультант
             </NavLink>
           )}
-          <div className="flex items-center gap-3 rounded-2xl px-1 py-1">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-white shadow-glow ring-2 ring-white/10">
+          {!isManager && (
+            <Link
+              to="/settings"
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+            >
+              <Icon name="help" className="text-[20px]" />
+              Поддержка
+            </Link>
+          )}
+          <div className="flex items-center gap-3 rounded-xl px-2 py-2">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-white">
               {(user?.full_name || '?').slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-headline text-sm font-semibold text-on-surface">{user?.full_name || 'Профиль'}</p>
+              <p className="truncate text-sm font-semibold text-on-surface">{user?.full_name || 'Профиль'}</p>
               <p className="truncate text-[11px] text-on-surface-variant">{roleLabel}</p>
             </div>
           </div>
@@ -269,49 +214,51 @@ export default function Layout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/45 bg-surface/88 px-3 shadow-soft backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/72 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.88)] dark:shadow-none dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.78)] sm:h-16 sm:gap-3 sm:px-6 lg:top-4 lg:mx-5 lg:mb-1 lg:rounded-[1.5rem] lg:border lg:border-white/10 lg:bg-surface/75 lg:px-7 lg:shadow-float lg:backdrop-blur-2xl lg:dark:border-white/[0.08] lg:dark:bg-[rgb(var(--color-surface)/0.55)]">
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        {/* Stitch flat header + zone tabs */}
+        <header className="fc-shell-header">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0058be] to-[#131b2e] ring-1 ring-primary/25 shadow-soft">
                 <Icon name="account_balance" className="text-lg text-white" />
               </div>
-              <div className="min-w-0">
-                <p className="truncate font-headline text-sm font-bold text-on-surface">ФинКлик</p>
-                <p className="truncate text-[10px] text-on-surface-variant">{user?.org_name}</p>
-              </div>
               <OrgSwitcher placement="header" className="min-w-0 flex-shrink" />
             </div>
-
-            <NavLink
-              to="/scan"
-              end
-              title="Сканировать"
-              aria-label="Сканировать"
-              className={({ isActive }) =>
-                `tap-highlight-none flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-outline/75 transition-colors sm:h-10 sm:w-10 ${
-                  isActive
-                    ? 'bg-primary/10 text-primary ring-primary/25'
-                    : 'bg-surface-container-low text-on-surface-variant shadow-soft hover:bg-surface hover:text-on-surface dark:text-on-surface-variant dark:hover:text-on-surface'
-                }`
-              }
-            >
-              {({ isActive }) => <Icon name="document_scanner" filled={isActive} className="text-[20px] sm:text-[22px]" />}
-            </NavLink>
 
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="group hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-outline/60 bg-surface-container-low/80 px-4 py-2.5 text-left text-sm text-on-surface-variant shadow-xs transition hover:border-primary/25 hover:bg-surface lg:flex"
-              aria-label="Глобальный поиск по разделам"
+              className="group hidden min-w-0 max-w-md flex-1 items-center gap-2 rounded-xl border border-outline/50 bg-surface-container-low px-4 py-2 text-left text-sm text-on-surface-variant transition hover:border-primary/30 lg:flex"
+              aria-label="Глобальный поиск"
             >
               <Icon name="search" className="text-lg text-primary/60 group-hover:text-primary" />
-              <span className="truncate">Поиск операций, действий и подсказок…</span>
-              <span className="ml-auto rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-semibold text-on-surface-variant/80 ring-1 ring-outline/70">Ctrl + K</span>
+              <span className="truncate">Поиск операций, документов, действий…</span>
+              <span className="ml-auto rounded-md bg-surface px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant/70 ring-1 ring-outline/60">⌘K</span>
             </button>
+
+            {zoneTabs.length > 1 && (
+              <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:flex" aria-label="Подразделы">
+                {zoneTabs.map((tab) => {
+                  const tabActive = pathActive(location.pathname, tab.to, tab.end)
+                  return (
+                    <NavLink key={tab.to} to={tab.to} end={tab.end} className={`fc-zone-tab ${tabActive ? 'fc-zone-tab--active' : ''}`}>
+                      {tab.label}
+                    </NavLink>
+                  )
+                })}
+              </nav>
+            )}
           </div>
 
-          <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
+          <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+            {!isManager && (
+              <NavLink
+                to="/accounting/journal"
+                className="hidden items-center gap-1.5 rounded-xl bg-[#131b2e] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#0f1524] sm:inline-flex dark:bg-on-surface dark:text-canvas"
+              >
+                <Icon name="add" className="text-lg" />
+                Новая операция
+              </NavLink>
+            )}
             {showContextPanel && (
               <button
                 type="button"
@@ -439,6 +386,30 @@ export default function Layout() {
           </div>
         </header>
 
+        {/* Mobile zone tabs */}
+        {zoneTabs.length > 1 && (
+          <nav
+            className="flex gap-1 overflow-x-auto border-b border-outline/40 bg-surface px-3 py-1 lg:hidden"
+            aria-label="Подразделы"
+          >
+            {zoneTabs.map((tab) => {
+              const tabActive = pathActive(location.pathname, tab.to, tab.end)
+              return (
+                <NavLink
+                  key={tab.to}
+                  to={tab.to}
+                  end={tab.end}
+                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                    tabActive ? 'bg-primary/10 text-primary' : 'text-on-surface-variant'
+                  }`}
+                >
+                  {tab.label}
+                </NavLink>
+              )
+            })}
+          </nav>
+        )}
+
         {/* Mobile expanded search */}
         {searchOpen && (
           <div className="border-b border-outline/75 bg-surface-container-low/95 px-4 py-3 dark:border-outline/35/80">
@@ -487,8 +458,8 @@ export default function Layout() {
         )}
 
         <div className="flex min-h-0 flex-1">
-          <main className="fc-main-atmosphere min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain">
-            <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-9 lg:pb-10">
+          <main className="fc-workspace">
+            <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-8 lg:pb-10">
               <NetworkStatusBanner />
               <BusinessProfileBanner />
               <Outlet />

@@ -564,6 +564,62 @@
   box-shadow: 4px 0 48px -12px rgb(0 0 0 / 0.55);
 }
 
+/* Stitch zone sidebar — синяя pill для активной зоны. */
+.fc-zone-nav-item {
+  @apply flex items-center gap-3 rounded-xl px-3 py-2.5 font-headline text-[13px] font-semibold transition-all duration-200;
+  color: rgb(var(--color-on-surface-variant));
+}
+.fc-zone-nav-item:hover {
+  @apply bg-surface-container-high text-on-surface;
+}
+.fc-zone-nav-item--active {
+  background: rgb(var(--color-primary));
+  color: white;
+  box-shadow: 0 8px 24px -8px rgb(var(--color-primary) / 0.55);
+}
+.fc-zone-nav-item--active:hover {
+  background: rgb(var(--color-primary));
+  color: white;
+}
+
+/* Stitch flat shell header — без floating glass на desktop. */
+.fc-shell-header {
+  @apply sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-3 border-b border-outline/50 bg-surface px-4 sm:h-[3.75rem] sm:px-6;
+}
+.dark .fc-shell-header {
+  @apply border-white/[0.06] bg-surface/95;
+}
+
+/* Header zone tabs */
+.fc-zone-tab {
+  @apply relative shrink-0 px-3 py-2 text-sm font-semibold transition-colors;
+  color: rgb(var(--color-on-surface-variant));
+}
+.fc-zone-tab:hover {
+  color: rgb(var(--color-on-surface));
+}
+.fc-zone-tab--active {
+  color: rgb(var(--color-primary));
+}
+.fc-zone-tab--active::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0.75rem;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: rgb(var(--color-primary));
+}
+
+/* Stitch workspace — плоский светлый фон вместо atmospheric gradient. */
+.fc-workspace {
+  @apply min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain;
+  background: rgb(248 250 252);
+}
+.dark .fc-workspace {
+  background: rgb(var(--color-canvas));
+}
+
 /* Стеклянная поверхность данных (списки, карточки-блоки без table) */
 .fc-premium-surface,
 .fc-premium-table {

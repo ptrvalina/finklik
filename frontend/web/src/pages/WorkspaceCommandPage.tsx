@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { orgQueryKey } from '../lib/queryKeys'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton } from '../components/premium'
 import { listRecentClients, pushRecentClient } from '../lib/recentClients'
 import WorkspaceMissionPanel from '../components/workspace/WorkspaceMissionPanel'
@@ -110,53 +110,53 @@ export default function WorkspaceCommandPage() {
         : undefined
 
   return (
-    <OperationalPage
-      eyebrow="Рабочее пространство"
-      title="Командный центр бухгалтера"
-      description="Сроки, OCR и очереди по клиентам — без CRM-перегруза, с переходом в контекст организации."
-      focusStrip={
-        !isLoading && (topClient || urgentDeadline) ? (
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      {!isLoading && !isError && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+          {[
+            { label: 'Due today', value: deadlines.filter((d) => d.days_until === 0).length, tag: totals.issues > 0 ? 'CRITICAL' : undefined },
+            { label: 'OCR batches', value: totals.needs_review, tag: totals.needs_review > 10 ? 'CRITICAL' : undefined },
+            { label: 'Unassigned', value: totals.inbox },
+            { label: 'Missing docs', value: totals.pending_ocr },
+          ].map((m) => (
+            <div key={m.label} className="glass-card rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{m.label}</p>
+                {m.tag && <span className="fc-status fc-status-action text-[9px]">{m.tag}</span>}
+              </div>
+              <p className="mt-1 font-headline text-2xl font-extrabold tabular-nums text-on-surface">{m.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {topClient && (
+        <div className="mb-6">
           <FocusStrip
             tone={urgentDeadline || totals.issues > 0 ? 'amber' : 'primary'}
             headline={
               urgentDeadline
                 ? `Срочный срок: ${urgentDeadline.organization_name}`
-                : totals.needs_review > 0
-                  ? `${totals.needs_review} документов на проверке OCR`
-                  : totals.issues > 0
-                    ? `${totals.issues} замечаний по ${needsAttention.length} клиентам`
-                    : `${totals.inbox} входящих по ${totals.clients} клиентам`
+                : `${totals.needs_review} документов на проверке OCR`
             }
             supporting={focusSupporting}
-            ctaLabel={urgentDeadline ? 'Открыть клиента со сроком' : 'Открыть приоритетного клиента'}
+            ctaLabel="Открыть клиента"
             onCta={() => {
               if (urgentDeadline) {
-                void activate(
-                  urgentDeadline.organization_id,
-                  urgentDeadline.organization_name,
-                  urgentDeadline.kind === 'inbox' ? '/inbox' : '/calendar',
-                )
+                void activate(urgentDeadline.organization_id, urgentDeadline.organization_name, urgentDeadline.kind === 'inbox' ? '/inbox' : '/calendar')
               } else if (topClient) {
                 void activate(topClient.organization_id, topClient.organization_name)
               }
             }}
           />
-        ) : undefined
-      }
-      primaryAction={
-        <Link to="/workspace/queues" className="btn-primary fc-btn-thumb text-sm">
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Link to="/workspace/queues" className="btn-primary text-sm">
           Общие очереди
         </Link>
-      }
-      secondaryActions={
-        totals.inbox + totals.approvals > 0 ? (
-          <span className="text-xs font-medium text-on-surface-variant">
-            {totals.inbox} входящих · {totals.approvals} согласований
-            {totals.needs_review > 0 ? ` · ${totals.needs_review} OCR` : ''}
-          </span>
-        ) : undefined
-      }
-    >
+      </div>
       {recentClients.length > 0 && (
         <section className="mb-6">
           <h2 className="fc-section-label mb-2">Недавние клиенты</h2>
@@ -270,10 +270,48 @@ export default function WorkspaceCommandPage() {
         </section>
       )}
 
+      {!isLoading && !isError && organizations.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Processing feed</h2>
+          <div className="glass-card overflow-hidden rounded-2xl">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-outline/40 bg-surface-container-low/60 text-left text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">
+                  <th className="px-4 py-3">Client</th>
+                  <th className="px-4 py-3">Task</th>
+                  <th className="px-4 py-3">Volume</th>
+                  <th className="px-4 py-3">Urgency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {organizations.slice(0, 8).map((row) => {
+                  const wl = workloadScore(row)
+                  const urgency = wl > 5 ? 'Critical' : wl > 0 ? 'Pending' : 'Ready'
+                  return (
+                    <tr key={row.organization_id} className="border-b border-outline/25 last:border-0">
+                      <td className="px-4 py-3 font-medium text-on-surface">{row.organization_name}</td>
+                      <td className="px-4 py-3 text-on-surface-variant">
+                        {(row.needs_review ?? 0) > 0 ? 'OCR review' : (row.open_inbox ?? 0) > 0 ? 'Inbox' : 'Reporting'}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">{wl || row.open_inbox || 0}</td>
+                      <td className="px-4 py-3">
+                        <span className={`fc-status ${urgency === 'Critical' ? 'fc-status-action' : urgency === 'Pending' ? 'fc-status-pending' : 'fc-status-ready'}`}>
+                          {urgency}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {data?.generated_at && (
         <p className="mt-6 text-center text-[11px] text-on-surface-variant">Обновлено: {String(data.generated_at)}</p>
       )}
-    </OperationalPage>
+    </div>
   )
 }
 
