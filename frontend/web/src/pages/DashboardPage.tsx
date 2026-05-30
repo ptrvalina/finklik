@@ -207,9 +207,7 @@ export default function DashboardPage() {
       {/* Financial OS Home: ровно 5 блоков над сгибом — состояние, действие, блокеры, готовность, события. */}
       <FinancialStateHero className="mb-6" cashOnHand={cashOnHand} />
 
-      <div className="mb-6">
-        <WorkNowCard />
-      </div>
+      <WorkNowCard />
 
       <DashboardFocusStrip
         draftCount={draftCount}
