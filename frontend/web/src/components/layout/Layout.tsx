@@ -147,19 +147,19 @@ export default function Layout() {
               to={to}
               className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 active
-                  ? 'bg-white/[0.14] text-white shadow-[inset_0_0_0_1px_rgba(110,231,183,0.28),0_10px_36px_-16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/35'
-                  : 'text-white/55 hover:bg-white/[0.07] hover:text-white hover:shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)]'
+                  ? 'bg-secondary/[0.08] text-secondary ring-1 ring-secondary/20'
+                  : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
               }`}
             >
               <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
               <span>{label}</span>
               <Icon
                 name="expand_more"
-                className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-emerald-200 rotate-180' : 'text-white/35 group-hover:rotate-180'}`}
+                className={`ml-auto text-lg transition-transform duration-150 ${active ? 'text-secondary rotate-180' : 'text-on-surface-variant/50 group-hover:rotate-180'}`}
               />
             </NavLink>
             <div
-              className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-white/10 bg-[#061f1c]/95 py-1.5 opacity-0 shadow-xl backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100"
+              className="pointer-events-none invisible absolute inset-x-0 top-full z-50 mt-1.5 rounded-2xl border border-outline/60 bg-surface py-1.5 opacity-0 shadow-lift backdrop-blur-xl transition-all duration-200 ease-smooth group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 dark:border-white/10 dark:bg-[#061f1c]/95"
               role="menu"
               aria-label={`${label}: подразделы`}
             >
@@ -171,7 +171,7 @@ export default function Layout() {
                     to={c.to}
                     role="menuitem"
                     className={`block px-3 py-2 text-sm font-medium transition-colors ${
-                      subActive ? 'bg-emerald-500/15 text-emerald-200' : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+                      subActive ? 'bg-secondary/10 text-secondary' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                     }`}
                   >
                     {c.label}
@@ -189,13 +189,13 @@ export default function Layout() {
           end={end}
           className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             active
-              ? 'bg-white/[0.14] text-white shadow-[inset_0_0_0_1px_rgba(110,231,183,0.28),0_10px_36px_-16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/35'
-              : 'text-white/55 hover:bg-white/[0.07] hover:text-white hover:shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)]'
+              ? 'bg-secondary/[0.08] text-secondary ring-1 ring-secondary/20'
+              : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
           }`}
         >
           <Icon name={icon} filled={active} className="text-[22px] opacity-95" />
           <span>{label}</span>
-          {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.8)]" aria-hidden />}
+          {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(33,112,228,0.7)]" aria-hidden />}
         </NavLink>
       )
     })
@@ -204,18 +204,18 @@ export default function Layout() {
   return (
     <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Desktop sidebar — floating glass rail */}
-      <aside className="fc-sidebar-glass relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_100%_70%_at_0%_-5%,rgba(16,185,129,0.22),transparent_52%)] after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gradient-to-b after:from-emerald-400/35 after:via-white/8 after:to-transparent lg:flex">
+      <aside className="fc-sidebar-glass relative hidden h-full w-[280px] flex-shrink-0 flex-col overflow-hidden lg:flex">
         <div className="relative z-[1] px-6 pb-6 pt-9">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/30 via-primary/20 to-white/5 shadow-lg ring-1 ring-white/15">
-              <Icon name="account_balance" className="text-[24px] text-emerald-200" filled />
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0058be] via-[#2170e4] to-[#131b2e] shadow-lg ring-1 ring-white/15">
+              <Icon name="account_balance" className="text-[24px] text-white" filled />
             </div>
             <div className="min-w-0">
-              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-white" style={{ letterSpacing: '-0.03em' }}>
+              <h1 className="font-headline text-[1.0625rem] font-bold tracking-tight text-on-surface" style={{ letterSpacing: '-0.03em' }}>
                 ФинКлик
               </h1>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/95">Премиум</p>
-              <p className="truncate text-[11px] text-white/50">{user?.org_name || 'Организация'}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Премиум</p>
+              <p className="truncate text-[11px] text-on-surface-variant">{user?.org_name || 'Организация'}</p>
               <div className="mt-2">
                 <OrgSwitcher placement="sidebar" />
               </div>
@@ -227,14 +227,14 @@ export default function Layout() {
           <div className="space-y-5">
             {navGroups.map((group) => (
               <div key={group.id}>
-                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">{group.label}</p>
+                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/60">{group.label}</p>
                 <nav className="space-y-1">{renderSidebarItems(group.items)}</nav>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-[1] mt-auto border-t border-white/10 bg-black/15 px-4 py-4 backdrop-blur-md">
+        <div className="relative z-[1] mt-auto border-t border-outline/50 bg-surface-container-low/50 px-4 py-4">
           {!isManager && (
             <NavLink
               to="/assistant"
@@ -243,8 +243,8 @@ export default function Layout() {
               className={({ isActive }) =>
                 `tap-highlight-none mb-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 font-headline text-[13px] font-semibold transition-colors ${
                   isActive
-                    ? 'bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/35'
-                    : 'text-white/70 hover:bg-white/[0.07] hover:text-white'
+                    ? 'bg-secondary/10 text-secondary ring-1 ring-secondary/20'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                 }`
               }
             >
@@ -261,8 +261,8 @@ export default function Layout() {
               {(user?.full_name || '?').slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-headline text-sm font-semibold text-white">{user?.full_name || 'Профиль'}</p>
-              <p className="truncate text-[11px] text-white/45">{roleLabel}</p>
+              <p className="truncate font-headline text-sm font-semibold text-on-surface">{user?.full_name || 'Профиль'}</p>
+              <p className="truncate text-[11px] text-on-surface-variant">{roleLabel}</p>
             </div>
           </div>
         </div>
@@ -273,8 +273,8 @@ export default function Layout() {
         <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center gap-2 border-b border-outline/45 bg-surface/88 px-3 shadow-soft backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/72 dark:border-white/[0.06] dark:bg-[rgb(var(--color-surface)/0.88)] dark:shadow-none dark:supports-[backdrop-filter]:bg-[rgb(var(--color-surface)/0.78)] sm:h-16 sm:gap-3 sm:px-6 lg:top-4 lg:mx-5 lg:mb-1 lg:rounded-[1.5rem] lg:border lg:border-white/10 lg:bg-surface/75 lg:px-7 lg:shadow-float lg:backdrop-blur-2xl lg:dark:border-white/[0.08] lg:dark:bg-[rgb(var(--color-surface)/0.55)]">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#053028] to-[#062f29] ring-1 ring-emerald-500/25 shadow-soft">
-                <Icon name="account_balance" className="text-lg text-emerald-300" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0058be] to-[#131b2e] ring-1 ring-primary/25 shadow-soft">
+                <Icon name="account_balance" className="text-lg text-white" />
               </div>
               <div className="min-w-0">
                 <p className="truncate font-headline text-sm font-bold text-on-surface">ФинКлик</p>
@@ -526,7 +526,7 @@ export default function Layout() {
                 to={to}
                 end={end}
                 className={`tap-highlight-none flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 pb-1.5 pt-2 transition ${
-                  active ? 'text-primary drop-shadow-[0_0_14px_rgba(16,185,129,0.45)]' : 'text-on-surface-variant'
+                  active ? 'text-primary drop-shadow-[0_0_14px_rgba(33,112,228,0.4)]' : 'text-on-surface-variant'
                 }`}
               >
                 <Icon name={icon} filled={active} className="text-[22px]" />

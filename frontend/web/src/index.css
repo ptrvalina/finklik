@@ -550,9 +550,15 @@
   /* Sidebar shell — avoid @apply on arbitrary gradient stops (Tailwind limitation) */
 }
 
+/* Stitch light sidebar — белая поверхность, синие акценты. */
 .fc-sidebar-glass {
+  border-right: 1px solid rgb(var(--color-outline) / 0.6);
+  background: rgb(var(--color-surface-container-lowest));
+  box-shadow: 1px 0 28px -20px rgba(0, 26, 66, 0.14);
+}
+.dark .fc-sidebar-glass {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(4, 42, 40, 0.96) 0%, rgba(6, 47, 44, 0.98) 42%, rgba(4, 31, 29, 1) 100%);
+  background: linear-gradient(180deg, #0c1824 0%, #0a1622 50%, #07111a 100%);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   box-shadow: 4px 0 48px -12px rgb(0 0 0 / 0.55);
