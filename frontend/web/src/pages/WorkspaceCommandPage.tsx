@@ -301,10 +301,8 @@ function OrgQueueCard({
 
   return (
     <article
-      className={`flex flex-col rounded-2xl border p-4 text-left transition ${
-        muted
-          ? 'border-outline/35 bg-surface/60'
-          : 'border-primary/25 bg-surface/95 shadow-soft hover:border-primary/40'
+      className={`glass-card flex flex-col rounded-2xl p-4 text-left transition hover:-translate-y-1 ${
+        muted ? 'opacity-60' : 'border-l-4 border-l-primary/60'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
