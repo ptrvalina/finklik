@@ -375,7 +375,7 @@ export default function BankPage() {
               {accounts.map(acc => (
                 <div
                   key={acc.id}
-                  className={`rounded-2xl border-l-2 bg-surface-container-low p-5 border border-outline/70 shadow-soft sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
+                  className={`glass-card rounded-3xl border-l-4 p-5 transition-transform hover:-translate-y-1 sm:p-6 ${acc.is_active ? '' : 'opacity-60'}`}
                   style={{ borderLeftColor: acc.color }}
                 >
                   <div className="flex items-start justify-between">
