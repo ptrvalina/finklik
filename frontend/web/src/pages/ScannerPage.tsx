@@ -801,7 +801,7 @@ export default function ScannerPage() {
 
         {/* Sidebar */}
         <div className="col-span-12 hidden space-y-6 lg:col-span-4 lg:block">
-          <div className="bg-surface-container-high rounded-xl p-6 border border-outline-variant/10">
+          <div className="glass-card rounded-2xl p-6">
             <h4 className="label flex items-center gap-2">
               <Icon name="auto_awesome" className="text-secondary text-lg" /> Умный захват
             </h4>
@@ -829,7 +829,7 @@ export default function ScannerPage() {
 
           {/* Recent scans */}
           {history.length > 0 && (
-            <div className="bg-surface-container-low rounded-xl p-6">
+            <div className="glass-card rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold font-headline text-on-surface">Недавние сканы</h4>
               </div>
