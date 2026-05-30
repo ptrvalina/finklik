@@ -287,13 +287,13 @@ export default function CounterpartiesPage() {
         </>
       }
     >
-      <div className="relative overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-r from-[#004d40]/15 via-emerald-500/10 to-cyan-500/10 p-6 shadow-float backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-r from-[#131b2e]/12 via-primary/10 to-[#4edea3]/12 p-6 shadow-float backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 opacity-50">
           <svg className="h-full w-full" viewBox="0 0 520 140" preserveAspectRatio="none" aria-hidden>
             <defs>
               <linearGradient id="cp-flow" x1="0" x2="1">
-                <stop stopColor="#34d399" stopOpacity="0.9" />
-                <stop offset="1" stopColor="#22d3ee" stopOpacity="0.7" />
+                <stop stopColor="#2170e4" stopOpacity="0.9" />
+                <stop offset="1" stopColor="#4edea3" stopOpacity="0.7" />
               </linearGradient>
             </defs>
             <path

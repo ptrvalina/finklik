@@ -157,14 +157,14 @@
   .btn-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-7 py-2.5
            font-headline text-sm font-semibold tracking-wide text-on-primary
-           bg-gradient-to-br from-emerald-500 via-primary to-[#007a5a]
-           shadow-[0_1px_10px_rgba(16,185,129,0.28),0_10px_28px_-10px_rgba(0,77,64,0.28)]
+           bg-gradient-to-br from-[#2170e4] via-[#0058be] to-[#131b2e]
+           shadow-[0_1px_10px_rgba(33,112,228,0.28),0_10px_28px_-10px_rgba(0,26,66,0.28)]
            ring-1 ring-white/[0.18]
            transition-[transform,box-shadow,filter,background-color] duration-[var(--fc-duration-fast)] ease-premium
-           hover:brightness-[1.06] hover:shadow-[0_3px_16px_rgba(16,185,129,0.34),0_14px_36px_-12px_rgba(0,77,64,0.32)]
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
+           hover:brightness-[1.06] hover:shadow-[0_3px_16px_rgba(33,112,228,0.34),0_14px_36px_-12px_rgba(0,26,66,0.32)]
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
            active:scale-[0.985] active:brightness-[0.99]
-           disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:brightness-100 disabled:hover:shadow-[0_1px_10px_rgba(16,185,129,0.28),0_10px_28px_-10px_rgba(0,77,64,0.28)];
+           disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:brightness-100 disabled:hover:shadow-[0_1px_10px_rgba(33,112,228,0.28),0_10px_28px_-10px_rgba(0,26,66,0.28)];
   }
   .btn-secondary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-outline/90 bg-surface/90 px-5 py-2
@@ -535,11 +535,11 @@
     }
   }
   .fc-hero {
-    @apply relative overflow-hidden rounded-3xl border border-outline/50 bg-gradient-to-br from-surface/95 via-surface/90 to-surface-container-low/80 p-5 shadow-[0_20px_60px_-28px_rgba(0,77,64,0.2)] backdrop-blur-2xl ring-1 ring-emerald-500/[0.07] sm:p-7
+    @apply relative overflow-hidden rounded-3xl border border-outline/50 bg-gradient-to-br from-surface/95 via-surface/90 to-surface-container-low/80 p-5 shadow-[0_20px_60px_-28px_rgba(0,26,66,0.2)] backdrop-blur-2xl ring-1 ring-primary/[0.07] sm:p-7
            dark:border-white/[0.08] dark:from-[rgb(var(--color-surface)/0.65)] dark:via-[rgb(var(--color-surface)/0.45)] dark:to-[rgb(var(--color-surface)/0.25)] dark:shadow-[0_32px_88px_-40px_rgba(0,0,0,0.75)];
   }
   .fc-hero-strip {
-    @apply pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#004d40] via-emerald-500 to-cyan-400/90 opacity-95;
+    @apply pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#0058be] via-[#2170e4] to-[#4edea3] opacity-95;
   }
   .fc-page-shell-tight {
     @apply mx-auto w-full max-w-4xl space-y-6 sm:space-y-8;
@@ -647,8 +647,8 @@ html:not(.dark) .fc-datatable-shell--bulk {
 /* Экраны входа / регистрации — тот же атмосферный язык, что и основное приложение */
 .fc-auth-shell {
   background:
-    radial-gradient(ellipse 90% 55% at 50% -12%, rgba(16, 185, 129, 0.18), transparent 48%),
-    radial-gradient(ellipse 70% 45% at 100% 10%, rgba(0, 77, 64, 0.2), transparent 45%),
+    radial-gradient(ellipse 90% 55% at 50% -12%, rgba(33, 112, 228, 0.16), transparent 48%),
+    radial-gradient(ellipse 70% 45% at 100% 10%, rgba(78, 222, 163, 0.16), transparent 45%),
     linear-gradient(165deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
 }
 .dark .fc-auth-shell {
