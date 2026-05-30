@@ -47,3 +47,14 @@
 - Учёт: hub priorities, capture form, shortcuts → токены
 - Отчётность: guided flow → `fc-surface-elevated`
 - Execution: `FinancialStateHero`, `ExecutionTaskCard`, `WorkPackCard`, readiness hero
+
+## Stitch-редизайн (P12)
+
+Палитра проекта уже совпадает со Stitch (`secondary #0058be`, `secondary-container #2170e4`, `tertiary #009668`, surfaces `#f7f9fb`/white, Inter + JetBrains Mono) — рецвет не требуется. Добавлены общие примитивы Stitch:
+
+| Класс | Назначение |
+|--------|-----------|
+| `glass-card` | Базовый контейнер карточек: белая полупрозрачная поверхность + `blur(16px)` + мягкая тень. Есть dark-вариант и hover. |
+| `fc-status` + `fc-status-ready` / `fc-status-pending` / `fc-status-action` | Статус-чипы: готово (emerald) · в работе (amber) · требует действия (red). |
+
+Правила: новый премиум-UI собирать на `glass-card` (вместо ad-hoc `bg-white/90 backdrop-blur border shadow`); статусы — только через `fc-status-*`, без произвольных цветовых пилюль.
