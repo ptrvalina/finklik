@@ -91,7 +91,7 @@ export default function ApprovalsPage() {
           {items.map((item) => (
             <li
               key={item.id}
-              className="rounded-2xl border border-outline/35 bg-surface/90 px-4 py-4 sm:px-5"
+              className="glass-card rounded-2xl px-4 py-4 sm:px-5"
             >
               <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">{item.subject_kind}</p>
               <p className="mt-1 font-medium text-on-surface">{item.title}</p>

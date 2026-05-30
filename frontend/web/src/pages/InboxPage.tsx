@@ -122,7 +122,7 @@ export default function InboxPage() {
           {items.map((item) => (
             <li
               key={item.id}
-              className="rounded-2xl border border-outline/35 bg-surface/90 px-4 py-4 sm:px-5"
+              className="glass-card rounded-2xl px-4 py-4 sm:px-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">

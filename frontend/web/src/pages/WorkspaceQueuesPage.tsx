@@ -161,7 +161,7 @@ export default function WorkspaceQueuesPage() {
         <ul className="space-y-3">
           {tab === 'inbox' &&
             inbox.map((item) => (
-              <li key={item.id} className="rounded-2xl border border-outline/35 bg-surface/90 p-4">
+              <li key={item.id} className="glass-card rounded-2xl p-4">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-primary">{item.organization_name}</p>
                 <p className="mt-1 font-medium text-on-surface">{item.title}</p>
                 {item.body && <p className="mt-1 text-sm text-on-surface-variant">{item.body}</p>}
@@ -177,7 +177,7 @@ export default function WorkspaceQueuesPage() {
             ))}
           {tab === 'approvals' &&
             approvals.map((item) => (
-              <li key={item.id} className="rounded-2xl border border-outline/35 bg-surface/90 p-4">
+              <li key={item.id} className="glass-card rounded-2xl p-4">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-primary">{item.organization_name}</p>
                 <p className="mt-1 font-medium text-on-surface">{item.title}</p>
                 {item.note && <p className="mt-1 text-sm text-on-surface-variant">{item.note}</p>}
