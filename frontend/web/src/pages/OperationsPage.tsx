@@ -417,7 +417,7 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && showDiagnostics && data?.operational_health && (
-        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+        <div className="glass-card mb-6 rounded-2xl p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
@@ -440,11 +440,11 @@ export default function OperationsPage() {
             <HealthMeter label="Управляемость нагрузки" value={data.operational_health.operational_load} />
             <HealthMeter label="Надёжность автоматизации" value={data.operational_health.automation_stability} />
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {!isLoading && !isError && showDiagnostics && data?.trusted_automation && (
-        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+        <div className="glass-card mb-6 rounded-2xl p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Доверие к автоматизации
           </p>
@@ -473,7 +473,7 @@ export default function OperationsPage() {
               ))}
             </ul>
           </details>
-        </GlassCard>
+        </div>
       )}
 
       {!isLoading && !isError && showDiagnostics && (data?.workflow_maintenance?.length ?? 0) > 0 && (
