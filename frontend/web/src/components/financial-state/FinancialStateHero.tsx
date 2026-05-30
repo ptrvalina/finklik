@@ -7,7 +7,7 @@ import { terminology } from '../../i18n/terminology.ru'
 import { snapshotReportingStatusRu } from '../../lib/financialSnapshotLabels'
 
 type StateBlock = {
-  cashflow_state: { level: string; summary: string; health_signal: string }
+  cashflow_state: { level: string; summary: string; health_signal: string; monthly_net: number | string }
   operational_readiness: { score: number; label: string; confidence: string }
   compliance_state: {
     level: string
@@ -19,6 +19,30 @@ type StateBlock = {
   document_completeness: { score: number; summary: string; pending_ocr: number }
   reporting_status: { status: string; readiness_score: number; summary: string; blocker_codes: string[] }
   risk_level: string
+}
+
+type StatePrediction = {
+  id: string
+  horizon_days: number
+  message: string
+  affected_dimension: string
+  severity: 'info' | 'warning' | 'risk'
+}
+
+const SEVERITY_RANK: Record<string, number> = { risk: 3, warning: 2, info: 1 }
+
+/** Топ-прогноз: сначала по тяжести, затем по ближайшему горизонту. */
+function pickTopPrediction(predictions: StatePrediction[] | undefined): StatePrediction | null {
+  if (!predictions || predictions.length === 0) return null
+  return [...predictions].sort((a, b) => {
+    const sev = (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0)
+    if (sev !== 0) return sev
+    return a.horizon_days - b.horizon_days
+  })[0]
+}
+
+function fmtMoney(value: number): string {
+  return value.toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 const RISK_RU: Record<string, { headline: string; tone: 'ok' | 'warn' | 'risk' }> = {
@@ -37,9 +61,12 @@ function toneClasses(tone: 'ok' | 'warn' | 'risk') {
 export default function FinancialStateHero({
   compact,
   className = '',
+  cashOnHand,
 }: {
   compact?: boolean
   className?: string
+  /** Остаток по счетам — главная цифра «сколько реально есть». Если не передан, показываем только поток. */
+  cashOnHand?: number | null
 }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: orgQueryKey('financial-state-bundle'),
@@ -50,6 +77,7 @@ export default function FinancialStateHero({
   })
 
   const state = data?.state as StateBlock | undefined
+  const topPrediction = pickTopPrediction(data?.predictions as StatePrediction[] | undefined)
 
   const meta = useMemo(() => {
     if (!state) return null
@@ -75,6 +103,9 @@ export default function FinancialStateHero({
 
   if (isError || !state || !meta) return null
 
+  const monthlyNet = Number(state.cashflow_state.monthly_net ?? 0)
+  const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
+
   const dims = [
     { label: 'Готовность', value: `${state.operational_readiness.score}%`, hint: state.operational_readiness.label },
     { label: 'Первичка', value: `${state.document_completeness.score}%`, hint: state.document_completeness.summary },
@@ -96,7 +127,38 @@ export default function FinancialStateHero({
             {terminology.execution.financialStateShort}
           </p>
           <h2 className="mt-2 font-headline text-xl font-bold leading-snug text-on-surface sm:text-2xl">{meta.risk.headline}</h2>
+
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {hasCash ? (
+              <>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Деньги</span>
+                <span className="font-headline text-2xl font-extrabold tabular-nums text-on-surface sm:text-3xl">
+                  {fmtMoney(cashOnHand as number)} <span className="text-base font-bold text-on-surface-variant">BYN</span>
+                </span>
+                <span className={`text-xs font-semibold tabular-nums ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  поток за месяц {monthlyNet >= 0 ? '+' : '−'}{fmtMoney(Math.abs(monthlyNet))}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Поток за месяц</span>
+                <span className={`font-headline text-2xl font-extrabold tabular-nums sm:text-3xl ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {monthlyNet >= 0 ? '+' : '−'}{fmtMoney(Math.abs(monthlyNet))} <span className="text-base font-bold text-on-surface-variant">BYN</span>
+                </span>
+              </>
+            )}
+          </div>
+
           <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{state.cashflow_state.summary}</p>
+          {topPrediction && (
+            <p className="mt-2 flex items-start gap-1.5 text-xs text-on-surface-variant">
+              <span className="material-symbols-outlined text-sm leading-tight text-primary/80" aria-hidden>trending_up</span>
+              <span>
+                <span className="font-semibold text-on-surface">Прогноз (~{topPrediction.horizon_days} дн.):</span>{' '}
+                {topPrediction.message}
+              </span>
+            </p>
+          )}
           {!compact && (
             <p className="mt-2 text-xs text-on-surface-variant">
               {terminology.execution.compliance}: {state.compliance_state.summary}

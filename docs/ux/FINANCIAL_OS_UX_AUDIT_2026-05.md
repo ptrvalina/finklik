@@ -177,6 +177,7 @@ flowchart LR
 | **P8** | Design tokens cohesion | — | CSS + component audit | Done |
 | **P9** | Mobile OCR/journal | — | Layout only | Done |
 | **P10** | Trust copy | — | terminology.ru enforcement | Done |
+| **P11** | Главная = Financial OS Home | Reuse financial-state predictions + bank balance | Hero деньги/прогноз, 5 блоков, Timeline | Done |
 
 **Не делаем:** новые сущности БД, rewrite App, смена framework.
 
@@ -230,4 +231,5 @@ flowchart LR
 3. ✅ P8 `DESIGN_TOKENS.md` + fc-surface-* на учёте/отчётности/execution  
 4. ✅ P6 Workspace: `deadlines`, `totals`, OCR per client, `WorkspaceMissionPanel`
 5. ✅ P10 `apiLabels.ru` + `calmActionError`; RU trust/execution/reporting copy  
-6. ✅ TD4 continuous flow + полный calm i18n + nav/session cleanup
+6. ✅ TD4 continuous flow + полный calm i18n + nav/session cleanup  
+7. ✅ P11 Главная: hero деньги+прогноз; 5 блоков; `DashboardTimeline`; ExecutiveBriefing/налоги в «Подробнее»

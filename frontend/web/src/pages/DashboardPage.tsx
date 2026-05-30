@@ -15,14 +15,14 @@ const CashflowPulse = lazy(async () => {
   const m = await import('../components/dashboard/CashflowPulse')
   return { default: m.CashflowPulse }
 })
-import { GlassCard } from '../components/premium/GlassCard'
-import { CardSkeleton, PremiumEmptyState } from '../components/premium'
+import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { AIRecommendationPanel } from '../components/premium-os'
 import OperationalPage from '../components/shell/OperationalPage'
 import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
-import OcrQueueCard from '../components/dashboard/OcrQueueCard'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
+import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
+import DashboardTimeline from '../components/dashboard/DashboardTimeline'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -73,6 +73,15 @@ export default function DashboardPage() {
     staleTime: 60_000,
   })
 
+  /** Остаток по счетам — главная цифра «сколько денег реально есть». Тихо падает на старом бэкенде. */
+  const { data: bankBalance } = useQuery({
+    queryKey: orgQueryKey('bank-balance-dashboard'),
+    queryFn: () => bankApi.getBalance().then((r) => r.data),
+    enabled: !isManager,
+    retry: false,
+    staleTime: 60_000,
+  })
+
   /** Снимок состояния бизнеса (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
   const { data: businessState } = useQuery({
     queryKey: orgQueryKey('business-state'),
@@ -99,6 +108,8 @@ export default function DashboardPage() {
   }, [summaryData])
 
   const bankConnected = (((bankData as { accounts?: unknown[] } | undefined)?.accounts ?? []) as unknown[]).length > 0
+  const rawBalance = (bankBalance as { balance?: number | string } | undefined)?.balance
+  const cashOnHand = bankConnected && rawBalance != null && Number.isFinite(Number(rawBalance)) ? Number(rawBalance) : null
 
   const chartData = (summaryData?.months ?? [])
     .filter((m: any) => m.income > 0 || m.expense > 0)
@@ -193,9 +204,12 @@ export default function DashboardPage() {
         </Link>
       }
     >
-      <FinancialStateHero className="mb-6" />
+      {/* Financial OS Home: ровно 5 блоков над сгибом — состояние, действие, блокеры, готовность, события. */}
+      <FinancialStateHero className="mb-6" cashOnHand={cashOnHand} />
 
-      <WorkNowCard />
+      <div className="mb-6">
+        <WorkNowCard />
+      </div>
 
       <DashboardFocusStrip
         draftCount={draftCount}
@@ -205,14 +219,22 @@ export default function DashboardPage() {
         profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
       />
 
-      <OcrQueueCard count={pendingOcr} />
+      <div className="mt-6">
+        <ReportingReadinessHero />
+      </div>
 
-      <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
+      <div className="mt-6">
+        <DashboardTimeline transactions={transactions} />
+      </div>
 
       <OnboardingChecklist />
 
       <DashboardDetailsPanel title="Аналитика, налоги и операции">
-      <ClientJourneyPanel metrics={metrics} transactions={transactions} />
+      <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
+
+      <div className="mt-8">
+        <ClientJourneyPanel metrics={metrics} transactions={transactions} />
+      </div>
 
       <div className="mt-8">
         <AIRecommendationPanel metrics={metrics} transactions={transactions} />
@@ -225,115 +247,46 @@ export default function DashboardPage() {
         </Suspense>
       </div>
 
-      <div className="mt-10 grid grid-cols-12 gap-6">
-        <div className="col-span-12 flex flex-col gap-6 lg:col-span-4">
-          <div className="page-section flex-1">
-            <h3 className="label mb-6 flex items-center gap-2">
-              <Icon name="calculate" className="text-lg text-emerald-500" />
-              Налоги к уплате
-            </h3>
-            <div className="space-y-5">
-              {[
-                { name: 'УСН 6%', amount: metrics?.tax_usn_quarter ?? 0, due: true },
-                { name: 'НДС (0/10/20%)', amount: metrics?.tax_vat_month ?? 0, due: true },
-                { name: 'ФСЗН 34%', amount: metrics?.tax_fsszn_quarter ?? 0, due: false },
-              ].map((tax) => (
-                <div key={tax.name}>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span className="font-medium text-on-surface">{tax.name}</span>
-                    <span className="font-bold text-on-surface">{fmt(tax.amount)}</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
-                    <div className={`h-full rounded-full ${tax.due ? 'bg-red-400' : 'bg-emerald-500'}`} style={{ width: tax.due ? '70%' : '100%' }} />
-                  </div>
-                  <p className="mt-1 text-[10px] text-on-surface-variant">{tax.due ? 'К уплате' : 'Уплачен'}</p>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="page-section">
+          <h3 className="label mb-6 flex items-center gap-2">
+            <Icon name="calculate" className="text-lg text-emerald-500" />
+            Налоги к уплате
+          </h3>
+          <div className="space-y-5">
+            {[
+              { name: 'УСН 6%', amount: metrics?.tax_usn_quarter ?? 0, due: true },
+              { name: 'НДС (0/10/20%)', amount: metrics?.tax_vat_month ?? 0, due: true },
+              { name: 'ФСЗН 34%', amount: metrics?.tax_fsszn_quarter ?? 0, due: false },
+            ].map((tax) => (
+              <div key={tax.name}>
+                <div className="mb-2 flex justify-between text-sm">
+                  <span className="font-medium text-on-surface">{tax.name}</span>
+                  <span className="font-bold text-on-surface">{fmt(tax.amount)}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {deadline && (
-            <div className="rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/12 to-transparent p-6 backdrop-blur-md">
-              <div className="mb-3 flex items-center gap-3">
-                <Icon name="event" filled className="text-emerald-500" />
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Ближайший дедлайн</span>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
+                  <div className={`h-full rounded-full ${tax.due ? 'bg-red-400' : 'bg-emerald-500'}`} style={{ width: tax.due ? '70%' : '100%' }} />
+                </div>
+                <p className="mt-1 text-[10px] text-on-surface-variant">{tax.due ? 'К уплате' : 'Уплачен'}</p>
               </div>
-              <p className="font-headline text-2xl font-extrabold text-on-surface">{deadline}</p>
-              {daysLeft !== null && (
-                <p className="mt-1 text-xs text-on-surface-variant">
-                  {daysLeft} {daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'} осталось
-                </p>
-              )}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        <div className="page-section col-span-12 overflow-hidden bg-surface/80 p-0 dark:bg-transparent lg:col-span-8">
-          <div className="flex flex-col gap-2 border-b border-outline/40 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
-            <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
-            <Link to="/accounting/journal" className="text-sm font-bold text-emerald-600 hover:underline dark:text-emerald-400">
-              Все операции
-            </Link>
+        {deadline && (
+          <div className="rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/12 to-transparent p-6 backdrop-blur-md">
+            <div className="mb-3 flex items-center gap-3">
+              <Icon name="event" filled className="text-emerald-500" />
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Ближайший дедлайн</span>
+            </div>
+            <p className="font-headline text-2xl font-extrabold text-on-surface">{deadline}</p>
+            {daysLeft !== null && (
+              <p className="mt-1 text-xs text-on-surface-variant">
+                {daysLeft} {daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'} осталось
+              </p>
+            )}
           </div>
-          {transactions.length === 0 ? (
-            <div className="px-4 py-10 sm:px-8">
-              <PremiumEmptyState
-                variant="compact"
-                icon="receipt_long"
-                title="Журнал пуст"
-                description="Добавьте первую операцию — здесь появится поток."
-                actions={
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Link to="/scan" className="btn-primary min-h-11 px-6 text-sm font-bold">
-                      Сканер
-                    </Link>
-                    <Link to="/accounting/journal" className="btn-secondary min-h-11 px-6 text-sm font-bold">
-                      Журнал
-                    </Link>
-                  </div>
-                }
-              />
-            </div>
-          ) : (
-            <div className="divide-y divide-outline-variant/10">
-              {transactions.map((tx: any) => (
-                <div
-                  key={tx.id}
-                  className="flex cursor-pointer items-center justify-between px-5 py-3 transition-colors hover:bg-emerald-500/[0.06] sm:px-8 sm:py-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${
-                        tx.type === 'income' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      <Icon name={tx.type === 'income' ? 'arrow_downward' : 'arrow_upward'} filled />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-on-surface">{tx.description || (tx.type === 'income' ? 'Доход' : 'Расход')}</p>
-                      <p className="text-[10px] uppercase tracking-tight text-on-surface-variant">{tx.transaction_date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-headline text-sm font-extrabold ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-on-surface'}`}>
-                      {tx.type === 'income' ? '+' : '−'}
-                      {fmt(tx.amount)} BYN
-                    </p>
-                    <span
-                      className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-[9px] ${
-                        tx.type === 'income'
-                          ? 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                          : 'border border-outline-variant/30 bg-surface-variant text-on-surface-variant'
-                      }`}
-                    >
-                      {tx.status === 'draft' ? 'Черновик' : 'Проведён'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
       </DashboardDetailsPanel>
     </OperationalPage>
