@@ -91,3 +91,4 @@ Mobile bar: `Главная` · `Лента` · `Входящие` · `Учёт`
 | P10 | Trust copy: `terminology.ru`, `apiLabels.ru`, `calmActionError` на ленте/отчётности/OCR | Done |
 | TD4 | Техдолг: continuous flow (OCR/batch/Tab/swipe), i18n admin, nav dedupe, session keys | Done |
 | P11 | Главная как Financial OS Home: hero деньги+прогноз, 5 блоков над сгибом, Timeline событий | Done |
+| P12 | Stitch-редизайн: `glass-card`/`fc-status` примитивы; раскатка на главную, ленту, журнал/сканер, отчётность, аналитику; brand auth → blue/navy | Done |

@@ -50,7 +50,7 @@ export default function LoginPage() {
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Бизнес в кармане</p>
       </AuthBrandMark>
 
-      <div className="card-elevated rounded-3xl border border-outline/60 p-8 shadow-float ring-1 ring-emerald-500/[0.08] backdrop-blur-xl dark:border-white/[0.08]">
+      <div className="card-elevated rounded-3xl border border-outline/60 p-8 shadow-float ring-1 ring-primary/[0.08] backdrop-blur-xl dark:border-white/[0.08]">
         <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
           Войти в аккаунт
         </h2>
