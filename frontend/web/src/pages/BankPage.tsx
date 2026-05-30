@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { bankApi } from '../api/client'
+import { bankApi, reportsApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
+import { FocusStrip } from '../components/shell/OperationalPage'
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { calmError } from '../i18n/messages.ru'
+import { useThemeStore } from '../store/themeStore'
+
+const CashflowPulse = lazy(async () => {
+  const m = await import('../components/dashboard/CashflowPulse')
+  return { default: m.CashflowPulse }
+})
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -27,6 +33,8 @@ type Tab = 'overview' | 'accounts' | 'payments' | 'reconciliation'
 
 export default function BankPage() {
   const qc = useQueryClient()
+  const theme = useThemeStore((s) => s.theme)
+  const bankYear = new Date().getFullYear()
   const [tab, setTab] = useState<Tab>('overview')
   const [showAddAccount, setShowAddAccount] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
@@ -72,6 +80,34 @@ export default function BankPage() {
     queryFn: () => bankApi.reconciliation(recDateFrom, recDateTo).then((r) => r.data),
     enabled: tab === 'reconciliation',
   })
+  const { data: summaryData } = useQuery({
+    queryKey: orgQueryKey(['monthly-summary-bank', bankYear]),
+    queryFn: () => reportsApi.monthlySummary(bankYear).then((r) => r.data),
+    staleTime: 120_000,
+  })
+
+  const chartData = useMemo(
+    () =>
+      (summaryData?.months ?? [])
+        .filter((m: { income?: number; expense?: number }) => (m.income ?? 0) > 0 || (m.expense ?? 0) > 0)
+        .map((m: { label: string; income: number; expense: number }) => ({
+          month: m.label,
+          income: m.income,
+          expense: m.expense,
+        })),
+    [summaryData],
+  )
+  const tipStyle = useMemo(
+    () => ({
+      background: theme === 'dark' ? 'rgba(12,24,36,0.94)' : 'rgba(255,255,255,0.96)',
+      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(226,232,240,0.9)',
+      borderRadius: 16,
+      fontSize: 13,
+      color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+    }),
+    [theme],
+  )
+  const axisMuted = '#64748b'
 
   const addAccountMutation = useMutation({
     mutationFn: () => bankApi.createAccount(accountForm),
@@ -177,31 +213,27 @@ export default function BankPage() {
 
   return (
     <>
-    <OperationalPage
-      eyebrow="Деньги"
-      title="Банк"
-      description="Счета, платежи и сверка с журналом."
-      primaryAction={
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap justify-end gap-2">
+        <button type="button" className="btn-primary text-sm" onClick={() => setShowAddAccount(true)}>
           <Icon name="add" className="text-lg" /> Добавить счёт
         </button>
-      }
-      secondaryActions={
-        <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowPayment(true)}>
+        <button type="button" className="btn-secondary text-sm" onClick={() => setShowPayment(true)}>
           <Icon name="send" className="text-lg" /> Новый платёж
         </button>
-      }
-      focusStrip={
-        accounts.length === 0 ? (
+      </div>
+
+      {accounts.length === 0 && (
+        <div className="mb-4">
           <FocusStrip
             headline="Подключите расчётный счёт"
             supporting="Добавьте счёт вручную или через OAuth — тогда заработают выписка и сверка с журналом."
             ctaLabel="Добавить счёт"
             onCta={() => setShowAddAccount(true)}
           />
-        ) : undefined
-      }
-    >
+        </div>
+      )}
+
       <ExecutionTopActionBanner pathPrefix="/bank" className="mb-4" />
 
       <p className="rounded-xl border border-outline/40 bg-surface-container-low/60 px-4 py-3 text-xs text-on-surface-variant">
@@ -258,6 +290,45 @@ export default function BankPage() {
                 Импорт выписки
               </button>
             </div>
+          </div>
+
+          {accounts.length > 0 && (
+            <div className="-mx-1 flex gap-3 overflow-x-auto pb-2">
+              {accounts.map((acc) => (
+                <div
+                  key={acc.id}
+                  className="glass-card min-w-[220px] shrink-0 rounded-2xl border-l-4 p-4"
+                  style={{ borderLeftColor: acc.color || '#2170e4' }}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{acc.bank_name}</p>
+                  <p className="mt-2 font-headline text-lg font-bold tabular-nums text-on-surface">
+                    {acc.is_primary ? fmt(balanceData?.balance) : '—'} <span className="text-xs font-semibold text-on-surface-variant">BYN</span>
+                  </p>
+                  <p className="mt-1 truncate font-mono text-[10px] text-on-surface-variant">{acc.account_number}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {chartData.length > 0 && (
+            <Suspense fallback={<div className="h-52 rounded-2xl bg-surface-container-low animate-pulse" aria-hidden />}>
+              <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
+            </Suspense>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setShowPayment(true)}>
+              <Icon name="swap_horiz" className="text-primary text-2xl" />
+              <p className="mt-2 font-semibold text-on-surface">Transfer</p>
+            </button>
+            <Link to="/reports" className="glass-card rounded-2xl p-4 transition hover:-translate-y-0.5">
+              <Icon name="receipt_long" className="text-primary text-2xl" />
+              <p className="mt-2 font-semibold text-on-surface">Pay tax</p>
+            </Link>
+            <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setTab('reconciliation')}>
+              <Icon name="upload_file" className="text-primary text-2xl" />
+              <p className="mt-2 font-semibold text-on-surface">Import statement</p>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
@@ -565,7 +636,7 @@ export default function BankPage() {
           </div>
         </div>
       )}
-    </OperationalPage>
+    </div>
 
       {showAddAccount && (
         <AppModal

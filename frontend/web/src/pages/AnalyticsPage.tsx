@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
 import {
   BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import { automationApi, reportsApi } from '../api/client'
 import { Link } from 'react-router-dom'
-import OperationalPage from '../components/shell/OperationalPage'
 import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useThemeStore } from '../store/themeStore'
@@ -79,17 +77,18 @@ export default function AnalyticsPage() {
   const margin = totalIncome > 0 ? (totalProfit / totalIncome * 100).toFixed(1) : '0'
   const categories = catData?.items ?? []
 
+  const healthScore = useMemo(() => {
+    const m = Number(margin)
+    const auto = Number(automationKpi?.operations_auto_rate ?? 0)
+    return Math.min(100, Math.max(0, Math.round(m * 0.6 + auto * 0.4)))
+  }, [margin, automationKpi])
+
   return (
-    <OperationalPage
-      eyebrow="Контроль"
-      title="Аналитика"
-      description={`Динамика, структура расходов и рекомендации за ${year} год.`}
-      primaryAction={
-        <Link to="/reports" className="btn-primary w-full sm:w-auto">
-          <Icon name="assignment_turned_in" className="text-lg" /> В отчётность
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/reports" className="btn-primary text-sm">
+          <Icon name="assignment_turned_in" className="text-lg" /> Отчётность
         </Link>
-      }
-      secondaryActions={
         <div className="flex rounded-full border border-outline/75 bg-surface-container-high p-1 shadow-soft">
           <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
             <Icon name="chevron_left" className="text-sm" />
@@ -99,40 +98,35 @@ export default function AnalyticsPage() {
             <Icon name="chevron_right" className="text-sm" />
           </button>
         </div>
-      }
-    >
+      </div>
+
       <ExecutionTopActionBanner className="mb-2" />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 lg:gap-8">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="metric-blade">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-          <div className="flex justify-between items-start mb-4">
-            <span className="label !mb-0">Выручка (год)</span>
-          </div>
-          <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalIncome)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="metric-blade">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-error" />
-          <div className="flex justify-between items-start mb-4">
-            <span className="label !mb-0">Расходы (год)</span>
-          </div>
-          <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalExpense)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="metric-blade">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary" />
-          <div className="flex justify-between items-start mb-4">
-            <span className="label !mb-0">Чистая прибыль</span>
-            <div className="flex items-center gap-1 text-secondary text-sm font-bold">
-              {Number(margin) >= 0 ? <Icon name="trending_up" className="text-sm" /> : <Icon name="trending_down" className="text-sm" />}
-              {margin}%
-            </div>
-          </div>
-          <p className="text-3xl font-extrabold font-headline text-on-surface">{fmt(totalProfit)} <span className="text-sm font-normal text-on-surface-variant">BYN</span></p>
-          <p className="mt-2 text-xs text-on-surface-variant">Рентабельность {margin}%</p>
-        </motion.div>
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Total revenue</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalIncome)}</p>
+          <p className="text-[11px] text-primary">BYN · {year}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Total expenses</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalExpense)}</p>
+          <p className="text-[11px] text-on-surface-variant">BYN</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Net profit</p>
+          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${totalProfit >= 0 ? 'text-primary' : 'text-error'}`}>
+            {fmt(totalProfit)}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Margin {margin}%</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Health score</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{healthScore}/100</p>
+          <p className="text-[11px] text-primary">{healthScore >= 80 ? 'Optimal' : healthScore >= 60 ? 'Stable' : 'Watch'}</p>
+        </div>
       </div>
+
       {automationKpi && (
         <div className="page-section p-4 sm:p-6">
           <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
@@ -361,7 +355,7 @@ export default function AnalyticsPage() {
           )}
         </div>
       </div>
-    </OperationalPage>
+    </div>
   )
 }
 
