@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
       )}
 
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
-        <div className="page-section col-span-12 p-4 sm:p-6 lg:col-span-8 lg:p-8">
+        <div className="glass-card col-span-12 rounded-2xl p-4 sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-6 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы по месяцам</h3>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="page-section flex-1 border-emerald-500/[0.06] p-4 sm:p-6">
+          <div className="glass-card flex-1 rounded-2xl border-emerald-500/[0.12] p-4 sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <PremiumEmptyState
