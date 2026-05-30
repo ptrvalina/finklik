@@ -248,7 +248,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="page-section">
+        <div className="glass-card rounded-2xl p-6">
           <h3 className="label mb-6 flex items-center gap-2">
             <Icon name="calculate" className="text-lg text-emerald-500" />
             Налоги к уплате
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         </div>
 
         {deadline && (
-          <div className="rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/12 to-transparent p-6 backdrop-blur-md">
+          <div className="glass-card rounded-2xl border-l-4 border-l-emerald-400/60 p-6">
             <div className="mb-3 flex items-center gap-3">
               <Icon name="event" filled className="text-emerald-500" />
               <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Ближайший дедлайн</span>

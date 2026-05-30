@@ -35,7 +35,7 @@ export default function DashboardTimeline({ transactions }: { transactions: Tx[]
   const items = (transactions ?? []).slice(0, 5)
 
   return (
-    <section className="fc-surface-calm p-5 sm:p-6">
+    <section className="glass-card rounded-2xl p-5 sm:p-6">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Что произошло</p>
         <Link to="/accounting/journal" className="text-xs font-semibold text-primary hover:underline">
