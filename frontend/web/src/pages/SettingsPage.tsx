@@ -8,7 +8,6 @@ import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
 import { CardSkeleton, TableSkeleton } from '../components/premium'
-import OperationalPage from '../components/shell/OperationalPage'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
@@ -179,16 +178,36 @@ export default function SettingsPage() {
   const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <OperationalPage
-      eyebrow="Аккаунт"
-      title="Настройки"
-      description="Профиль, интеграции, команда, биллинг и нормативные обновления."
-      secondaryActions={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <Link to="/onboarding/business-profile" className="btn-secondary w-full sm:w-auto">
           <Icon name="badge" className="text-lg" /> Профиль бизнеса
         </Link>
-      }
-    >
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Аккаунт</p>
+          <p className="mt-1 line-clamp-1 font-headline text-sm font-extrabold text-on-surface sm:text-base">{user?.email ?? '—'}</p>
+          <p className="text-[11px] text-on-surface-variant">{user?.role ?? 'Роль'}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Тема</p>
+          <p className="mt-1 font-headline text-base font-extrabold capitalize text-on-surface sm:text-lg">{theme}</p>
+          <p className="text-[11px] text-primary">Локально в браузере</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Разделы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">5</p>
+          <p className="text-[11px] text-on-surface-variant">Профиль · интеграции · команда</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Организация</p>
+          <p className="mt-1 line-clamp-2 font-headline text-sm font-extrabold text-on-surface">{user?.org_name ?? '—'}</p>
+          <p className="text-[11px] text-on-surface-variant">Текущий контур</p>
+        </div>
+      </div>
+
       <div className="page-section p-4 dark:border-outline/45 sm:p-5">
         <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
         <div className="flex flex-wrap gap-2">
@@ -248,7 +267,7 @@ export default function SettingsPage() {
       {tab === 'billing' && <BillingSection />}
       {tab === 'team' && <TeamSection isOwner={user?.role === 'owner'} />}
       {tab === 'regulatory' && <RegulatorySection />}
-    </OperationalPage>
+    </div>
   )
 }
 

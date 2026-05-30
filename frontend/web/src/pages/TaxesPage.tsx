@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { taxApi } from '../api/client'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
@@ -54,32 +53,61 @@ export default function TaxesPage() {
     : null
 
   return (
-    <OperationalPage
-      eyebrow="Комплаенс"
-      title="Налоги"
-      description="Расчёт УСН, НДС и взносов за период плюс календарь сроков сдачи."
-      primaryAction={
-        <Link to="/reports" className="btn-primary w-full sm:w-auto">
-          <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
-        </Link>
-      }
-      secondaryActions={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => refetch()}>
           <Icon name="calculate" className="text-lg" /> Пересчитать
         </button>
-      }
-      focusStrip={
-        daysToDeadline !== null && daysToDeadline <= 14 ? (
-          <FocusStrip
-            tone={daysToDeadline <= 3 ? 'amber' : 'neutral'}
-            headline={daysToDeadline <= 0 ? 'Срок уплаты наступил' : `До срока ${daysToDeadline} дн.`}
-            supporting="Подготовьте платёж и подачу в отчётности, пока данные журнала актуальны."
-            ctaLabel="Отчётность"
-            ctaTo="/reports"
-          />
-        ) : undefined
-      }
-    >
+        <Link to="/reports" className="btn-primary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">К уплате</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
+            {data ? fmt(data.total_to_pay) : '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">BYN · период</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">УСН</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {data ? fmt(data.usn_to_pay) : '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">BYN</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">До срока</p>
+          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${daysToDeadline != null && daysToDeadline <= 3 ? 'text-error' : 'text-on-surface'}`}>
+            {daysToDeadline != null ? (daysToDeadline <= 0 ? 'Сегодня' : `${daysToDeadline} дн.`) : '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">{data?.deadline ?? 'Дедлайн'}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">События</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {calendarData?.events?.length ?? 0}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Календарь {year}</p>
+        </div>
+      </div>
+
+      {daysToDeadline !== null && daysToDeadline <= 14 && (
+        <div className={`glass-card mb-4 rounded-2xl border p-4 ${daysToDeadline <= 3 ? 'border-amber-400/40' : 'border-outline/40'}`}>
+          <p className="text-sm font-semibold text-on-surface">
+            {daysToDeadline <= 0 ? 'Срок уплаты наступил' : `До срока ${daysToDeadline} дн.`}
+          </p>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Подготовьте платёж и подачу в отчётности, пока данные журнала актуальны.
+          </p>
+          <Link to="/reports" className="btn-primary mt-3 inline-flex text-sm">
+            Отчётность
+          </Link>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="page-section grid grid-cols-1 items-end gap-4 md:grid-cols-4">
         <div><label className="label">Период с</label><input type="date" className="input" value={periodStart} onChange={e => setPeriodStart(e.target.value)} /></div>
@@ -249,6 +277,6 @@ export default function TaxesPage() {
           </div>
         </div>
       </div>
-    </OperationalPage>
+    </div>
   )
 }

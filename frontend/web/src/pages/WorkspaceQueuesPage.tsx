@@ -6,7 +6,6 @@ import { workspaceApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { orgQueryKey } from '../lib/queryKeys'
 import { pushRecentClient } from '../lib/recentClients'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 
@@ -96,27 +95,45 @@ export default function WorkspaceQueuesPage() {
   }, [tab, inbox.length, approvals.length, topInbox, topApproval])
 
   return (
-    <OperationalPage
-      eyebrow="Рабочее пространство"
-      title="Общие очереди"
-      description="Входящие и согласования по всем клиентам — переключение организации сохраняет контекст внутри клиента."
-      focusStrip={
-        focus ? (
-          <FocusStrip
-            tone="primary"
-            headline={focus.headline}
-            supporting={focus.supporting}
-            ctaLabel="Открыть приоритетного клиента"
-            onCta={() => void openClient(focus.orgId, focus.orgName, focus.path)}
-          />
-        ) : undefined
-      }
-      primaryAction={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        {focus && (
+          <button
+            type="button"
+            className="btn-primary fc-btn-thumb text-sm"
+            disabled={!!activatingId}
+            onClick={() => void openClient(focus.orgId, focus.orgName, focus.path)}
+          >
+            Открыть приоритетного клиента
+          </button>
+        )}
         <Link to="/workspace" className="btn-secondary fc-btn-thumb text-sm">
           К клиентам
         </Link>
-      }
-    >
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Входящие</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{inbox.length}</p>
+          <p className="text-[11px] text-on-surface-variant">По клиентам</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Согласования</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{approvals.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Ожидают</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 sm:col-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Приоритет</p>
+          <p className="mt-1 line-clamp-2 text-sm font-semibold text-on-surface">
+            {focus?.headline ?? 'Очереди пусты'}
+          </p>
+          {focus?.supporting && (
+            <p className="mt-1 line-clamp-2 text-[11px] text-on-surface-variant">{focus.supporting}</p>
+          )}
+        </div>
+      </div>
+
       <div className="mb-6 flex gap-2 rounded-2xl border border-outline/35 bg-surface-container-low/50 p-1">
         {(
           [
@@ -193,6 +210,6 @@ export default function WorkspaceQueuesPage() {
             ))}
         </ul>
       )}
-    </OperationalPage>
+    </div>
   )
 }

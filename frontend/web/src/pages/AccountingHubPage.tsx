@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import AccountingHubPriorities from '../components/accounting/AccountingHubPriorities'
 import { useQuery } from '@tanstack/react-query'
@@ -28,13 +27,16 @@ export default function AccountingHubPage() {
   })
 
   const state = data?.state as {
-    document_completeness?: { needs_review?: number }
-    reporting_status?: { status?: string }
+    document_completeness?: { needs_review?: number; pending_ocr?: number }
+    reporting_status?: { status?: string; readiness_score?: number }
+    compliance_state?: { pending_approvals?: number }
   } | undefined
 
   const reviewCount = state?.document_completeness?.needs_review ?? 0
+  const ocrPending = state?.document_completeness?.pending_ocr ?? 0
   const reportingBlocked =
     state?.reporting_status?.status === 'blocked' || state?.reporting_status?.status === 'at_risk'
+  const readiness = state?.reporting_status?.readiness_score ?? null
 
   const focusCta = reviewCount > 0
     ? { label: 'Разобрать сканы', to: '/scan' as const }
@@ -43,35 +45,41 @@ export default function AccountingHubPage() {
       : { label: 'Журнал', to: '/accounting/journal' as const }
 
   return (
-    <OperationalPage
-      eyebrow="Деньги"
-      title="Центр учёта"
-      description="Состояние, очереди и один поток: первичка → проводки → готовность отчётности."
-      primaryAction={
-        <Link to="/accounting/journal" className="btn-primary w-full sm:w-auto">
-          <Icon name="edit_note" className="text-lg" /> Журнал операций
-        </Link>
-      }
-      secondaryActions={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <Link to="/scan" className="btn-secondary w-full sm:w-auto">
           <Icon name="document_scanner" className="text-lg" /> Сканер
         </Link>
-      }
-      focusStrip={
-        <FocusStrip
-          headline={
-            reviewCount > 0
-              ? `${reviewCount} док. ждут проверки`
-              : reportingBlocked
-                ? 'Отчётность требует внимания'
-                : 'Поток учёта без блокеров'
-          }
-          supporting="Документ → проверка → журнал → отчёт. Контекст сохраняется при переходах."
-          ctaLabel={focusCta.label}
-          ctaTo={focusCta.to}
-        />
-      }
-    >
+        <Link to={focusCta.to} className="btn-primary w-full sm:w-auto">
+          <Icon name="edit_note" className="text-lg" /> {focusCta.label}
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">OCR</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{ocrPending}</p>
+          <p className="text-[11px] text-on-surface-variant">В очереди</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">На проверке</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{reviewCount}</p>
+          <p className="text-[11px] text-primary">Документов</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Отчётность</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {readiness != null ? `${readiness}%` : reportingBlocked ? '!' : '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Готовность</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Разделы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{SHORTCUTS.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Учётный контур</p>
+        </div>
+      </div>
+
       <FinancialStateHero className="mb-6" />
 
       <AccountingHubPriorities />
@@ -94,6 +102,6 @@ export default function AccountingHubPage() {
           {terminology.accounting.chartStandard} — план счетов и субсчета в разделе «План счетов».
         </p>
       </div>
-    </OperationalPage>
+    </div>
   )
 }
