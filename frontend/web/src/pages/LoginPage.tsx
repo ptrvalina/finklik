@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { pingApi, PRODUCTION_API_BASE, resolveApiBase, teamApi } from '../api/client'
-import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
+import { AuthSplitLayout, AuthBrandMark } from '../components/layout/AuthLayout'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -45,10 +45,12 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout>
-      <AuthBrandMark>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Бизнес в кармане</p>
-      </AuthBrandMark>
+    <AuthSplitLayout>
+      <div className="lg:hidden">
+        <AuthBrandMark>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Бизнес в кармане</p>
+        </AuthBrandMark>
+      </div>
 
       <div className="card-elevated rounded-3xl border border-outline/60 p-8 shadow-float ring-1 ring-primary/[0.08] backdrop-blur-xl dark:border-white/[0.08]">
         <h2 className="mb-6 font-headline text-lg font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
@@ -122,6 +124,6 @@ export default function LoginPage() {
           Зарегистрироваться
         </Link>
       </p>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }
