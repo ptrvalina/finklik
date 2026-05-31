@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import OperationalPage from '../../components/shell/OperationalPage'
 
 const cards = [
   { to: 'hire', title: 'Приём сотрудников', desc: 'Анкета, приказ, ПУ-2, карточка', icon: 'person_add' },
@@ -11,17 +10,35 @@ const cards = [
 
 export default function EmployeesHub() {
   return (
-    <OperationalPage
-      eyebrow="Команда"
-      title="Кадры и ФСЗН"
-      description="Приём, табель, штатное расписание и кадровый планер — без лишних разделов ERP."
-    >
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/employees" className="btn-secondary text-sm">
+          Сотрудники
+        </Link>
+        <Link to="/taxes" className="btn-primary text-sm">
+          ФСЗН / налоги
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Разделы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{cards.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Кадровый контур</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 sm:col-span-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Команда</p>
+          <p className="mt-1 text-sm font-semibold text-on-surface">Приём, табель, штатное расписание и планер</p>
+          <p className="text-[11px] text-primary">Без лишних разделов ERP</p>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((c) => (
           <Link
             key={c.to}
             to={c.to}
-            className="card-elevated group flex flex-col gap-2 rounded-3xl p-5 shadow-card ring-1 ring-primary/[0.05] transition hover:border-primary/40"
+            className="glass-card group flex flex-col gap-2 rounded-2xl p-5 transition hover:border-primary/40"
           >
             <span className="material-symbols-outlined text-3xl text-primary">{c.icon}</span>
             <h2 className="text-lg font-semibold text-on-surface group-hover:text-primary">{c.title}</h2>
@@ -29,6 +46,6 @@ export default function EmployeesHub() {
           </Link>
         ))}
       </div>
-    </OperationalPage>
+    </div>
   )
 }

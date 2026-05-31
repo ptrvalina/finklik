@@ -5,7 +5,6 @@ import AppModal from '../components/ui/AppModal'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
 
@@ -228,6 +227,9 @@ export default function TransactionsPage() {
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
   const isSaving = addMutation.isPending || editMutation.isPending
+  const draftCount = transactions.filter((t: any) => t.status !== 'confirmed' && t.status !== 'synced').length
+  const syncPendingCount = syncJobs.filter((j: any) => j.status === 'pending' || j.status === 'running' || j.status === 'retry').length
+  const syncFailedCount = syncJobs.filter((j: any) => j.status === 'failed').length
 
   function getSyncBadge(tx: any) {
     const job = syncJobByTx.get(tx.id)
@@ -279,36 +281,56 @@ export default function TransactionsPage() {
 
   return (
     <>
-    <OperationalPage
-      eyebrow="Учёт"
-      title="Операции"
-      description={`${total} в списке · поток: добавить → категория → подтвердить → синхронизация с 1С.`}
-      primaryAction={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
+          <Icon name="auto_fix_high" className="text-lg" /> Правила
+        </button>
+        <Link to="/documents" className="btn-secondary w-full sm:w-auto">
+          <Icon name="upload_file" className="text-lg" /> Импорт
+        </Link>
         <button type="button" className="btn-primary w-full sm:w-auto" onClick={openCreate}>
           <Icon name="add" className="text-lg" /> Добавить
         </button>
-      }
-      secondaryActions={
-        <>
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setShowRulesModal(true)}>
-            <Icon name="auto_fix_high" className="text-lg" /> Правила
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операции</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{total}</p>
+          <p className="text-[11px] text-on-surface-variant">В списке</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{draftCount}</p>
+          <p className="text-[11px] text-on-surface-variant">На странице</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Синхронизация</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{syncPendingCount}</p>
+          <p className="text-[11px] text-on-surface-variant">В очереди</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ошибки</p>
+          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${syncFailedCount > 0 ? 'text-error' : 'text-on-surface'}`}>
+            {syncFailedCount}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">1С / синк</p>
+        </div>
+      </div>
+
+      {!isLoading && total === 0 && (
+        <div className="glass-card mb-4 rounded-2xl border border-primary/20 p-4">
+          <p className="text-sm font-semibold text-on-surface">Добавьте первую операцию</p>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Импортируйте CSV, отсканируйте чек или внесите сумму вручную — так заработают налоги и отчётность.
+          </p>
+          <button type="button" className="btn-primary mt-3 text-sm" onClick={openCreate}>
+            Добавить
           </button>
-          <Link to="/documents" className="btn-secondary w-full sm:w-auto">
-            <Icon name="upload_file" className="text-lg" /> Импорт
-          </Link>
-        </>
-      }
-      focusStrip={
-        !isLoading && total === 0 ? (
-          <FocusStrip
-            headline="Добавьте первую операцию"
-            supporting="Импортируйте CSV, отсканируйте чек или внесите сумму вручную — так заработают налоги и отчётность."
-            ctaLabel="Добавить"
-            onCta={openCreate}
-          />
-        ) : undefined
-      }
-    >
+        </div>
+      )}
+
       {/* Filter tabs — горизонтальный скролл на телефоне */}
       <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
         <div className="flex min-w-max gap-1 rounded-full border border-white/25 bg-surface/85 p-1 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(var(--color-surface)/0.55)] sm:inline-flex sm:min-w-0">
@@ -681,7 +703,7 @@ export default function TransactionsPage() {
           </button>
         </div>
       )}
-    </OperationalPage>
+    </div>
 
       {showModal && (
         <AppModal

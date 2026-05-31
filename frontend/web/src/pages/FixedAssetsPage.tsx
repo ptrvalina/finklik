@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { accountingApi } from '../api/client'
-import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: string | number) {
@@ -84,36 +83,60 @@ export default function FixedAssetsPage() {
   const items = assetsData?.items ?? []
   const active = items.filter((a: { is_active: boolean }) => a.is_active)
   const amortItems = amortData?.items ?? []
+  const totalBookValue = active.reduce((s: number, a: { purchase_amount?: string | number }) => s + Number(a.purchase_amount || 0), 0)
 
   return (
-    <OperationalPage
-      eyebrow="Бухгалтерский учёт · РБ"
-      title="Основные средства и амортизация"
-      description="Реестр ОС, линейная амортизация, проводки на счета 01/02 — в связке с планом счетов и журналом."
-      primaryAction={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <Link to="/accounting/chart" className="btn-secondary !min-h-10 text-xs">
           План счетов
         </Link>
-      }
-      focusStrip={
-        active.length === 0 ? (
-          <FocusStrip
-            headline="Добавьте первое основное средство"
-            supporting="Укажите инвентарный номер, стоимость и срок полезного использования."
-            ctaLabel="Форма ниже"
-            onCta={() => document.getElementById('fa-form')?.scrollIntoView({ behavior: 'smooth' })}
-          />
-        ) : (
-          <FocusStrip
-            tone="neutral"
-            headline={`В реестре ${active.length} активных ОС`}
-            supporting="Запустите месячное начисление амортизации после закрытия первички за период."
-            ctaLabel="К журналу"
-            ctaTo="/accounting"
-          />
-        )
-      }
-    >
+        <Link to="/accounting/journal" className="btn-primary !min-h-10 text-xs">
+          Журнал
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Активные</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{active.length}</p>
+          <p className="text-[11px] text-on-surface-variant">В реестре</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Стоимость</p>
+          <p className="mt-1 font-headline text-lg font-extrabold tabular-nums text-primary sm:text-xl">{fmt(totalBookValue)}</p>
+          <p className="text-[11px] text-on-surface-variant">BYN · баланс</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Начисления</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{amortItems.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Последние записи</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Период</p>
+          <p className="mt-1 font-headline text-base font-extrabold tabular-nums text-on-surface sm:text-lg">
+            {String(runMonth).padStart(2, '0')}.{runYear}
+          </p>
+          <p className="text-[11px] text-primary">Линейная амортизация</p>
+        </div>
+      </div>
+
+      {active.length === 0 && (
+        <div className="glass-card mb-4 rounded-2xl border border-primary/20 p-4">
+          <p className="text-sm font-semibold text-on-surface">Добавьте первое основное средство</p>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Укажите инвентарный номер, стоимость и срок полезного использования.
+          </p>
+          <button
+            type="button"
+            className="btn-primary mt-3 text-sm"
+            onClick={() => document.getElementById('fa-form')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            К форме
+          </button>
+        </div>
+      )}
+
       {msg && (
         <div className="rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 text-sm text-on-surface">{msg}</div>
       )}
@@ -271,6 +294,6 @@ export default function FixedAssetsPage() {
           </ul>
         </section>
       )}
-    </OperationalPage>
+    </div>
   )
 }

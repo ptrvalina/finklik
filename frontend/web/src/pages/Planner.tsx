@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { CardSkeleton } from '../components/premium'
-import OperationalPage from '../components/shell/OperationalPage'
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
@@ -354,18 +353,42 @@ export default function Planner() {
   }
 
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
+  const eventCount = eventsQuery.data?.length ?? 0
+  const myTaskCount = myTasksQuery.data?.length ?? 0
+  const assignedTaskCount = assignedTasksQuery.data?.length ?? 0
+  const openTaskCount = (allTasksQuery.data ?? []).filter((t) => t.status !== 'closed').length
 
   return (
-    <OperationalPage
-      eyebrow="Команда"
-      title="Планер"
-      description="Календарь событий и задачи организации. Задачи из списка отображаются в сетке месяца по дате создания."
-      primaryAction={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-primary fc-btn-thumb shrink-0" onClick={() => openCreate()}>
           + Событие
         </button>
-      }
-    >
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">События</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{eventCount}</p>
+          <p className="text-[11px] capitalize text-on-surface-variant">{monthLabel}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Мои задачи</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{myTaskCount}</p>
+          <p className="text-[11px] text-on-surface-variant">Активные</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ответственный</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{assignedTaskCount}</p>
+          <p className="text-[11px] text-on-surface-variant">Назначено мне</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Открытые</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{openTaskCount}</p>
+          <p className="text-[11px] text-on-surface-variant">Всего задач</p>
+        </div>
+      </div>
+
       <div className="card-elevated space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -730,7 +753,7 @@ export default function Planner() {
           onComment={(taskId, content) => commentMutation.mutate({ taskId, content })}
         />
       </div>
-    </OperationalPage>
+    </div>
   )
 }
 

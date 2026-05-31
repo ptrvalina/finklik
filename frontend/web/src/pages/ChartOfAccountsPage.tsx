@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { accountingApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { terminology } from '../i18n'
-import OperationalPage from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 
 type ChartTreeResponse = {
@@ -75,16 +74,8 @@ export default function ChartOfAccountsPage() {
   })
 
   return (
-    <OperationalPage
-      eyebrow="Расширенный учёт · РБ"
-      title={terminology.nav.chartOfAccounts}
-      description="Полный типовой план по Постановлению Минфина №50: синтетические и забалансовые счета, официальные и организационные субсчета."
-      primaryAction={
-        <Link to="/accounting/fixed-assets" className="btn-primary !min-h-10 text-xs">
-          {terminology.accounting.amortization}
-        </Link>
-      }
-      secondaryActions={
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
           className="btn-secondary !min-h-10 text-xs"
@@ -92,8 +83,40 @@ export default function ChartOfAccountsPage() {
         >
           Обновить
         </button>
-      }
-    >
+        <Link to="/accounting/fixed-assets" className="btn-primary !min-h-10 text-xs">
+          {terminology.accounting.amortization}
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Счета</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {data?.meta?.accounts_count ?? accountCount}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Синтетические</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Субсчета</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
+            {data?.meta?.official_subaccounts_count ?? '—'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Типовые</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Организация</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {data?.stats?.subaccounts_org ?? 0}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Свои субсчета</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Классы</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{filtered.length}</p>
+          <p className="text-[11px] text-primary">План №50 · РБ</p>
+        </div>
+      </div>
+
       {data?.meta && (
         <p className="mb-4 text-xs text-on-surface-variant">
           {data.meta.standard} · счетов {data.meta.accounts_count ?? '—'} · типовых субсчетов{' '}
@@ -177,6 +200,6 @@ export default function ChartOfAccountsPage() {
           ))}
         </div>
       )}
-    </OperationalPage>
+    </div>
   )
 }

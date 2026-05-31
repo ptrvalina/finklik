@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { assistantApi, type AssistantChatMessage, type AssistantSource } from '../api/client'
 import { Link } from 'react-router-dom'
-import OperationalPage from '../components/shell/OperationalPage'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -58,23 +57,45 @@ export default function AssistantPage() {
   }
 
   return (
-    <OperationalPage
-      narrow
-      eyebrow="Помощник"
-      title="Консультант"
-      description="Ориентиры по учёту и госпорталам (ИМНС, ФСЗН, Белстат). Не заменяет бухгалтера и официальные разъяснения."
-      secondaryActions={
-        <>
-          <Link to="/settings" className="btn-secondary w-full sm:w-auto">
-            <Icon name="vpn_key" className="text-lg" /> Ключ ИИ
-          </Link>
-          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-            <Icon name="assignment_turned_in" className="text-lg" /> Отчётность
-          </Link>
-        </>
-      }
-      className="pb-[max(1rem,env(safe-area-inset-bottom))]"
-    >
+    <div className="fc-page-shell mx-auto max-w-3xl pb-[max(1rem,env(safe-area-inset-bottom))] lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/settings" className="btn-secondary w-full sm:w-auto">
+          <Icon name="vpn_key" className="text-lg" /> Ключ ИИ
+        </Link>
+        <Link to="/reports" className="btn-secondary w-full sm:w-auto">
+          <Icon name="assignment_turned_in" className="text-lg" /> Отчётность
+        </Link>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">ИИ</p>
+          <p className="mt-1 font-headline text-base font-extrabold text-on-surface sm:text-lg">
+            {status?.llm_enabled ? 'Включён' : 'Демо'}
+          </p>
+          <p className="text-[11px] text-primary">{status?.model ?? 'модель'}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ключ</p>
+          <p className="mt-1 font-headline text-base font-extrabold text-on-surface sm:text-lg">
+            {orgIsolated ? 'Организация' : 'Платформа'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Изоляция</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Диалог</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{messages.length}</p>
+          <p className="text-[11px] text-on-surface-variant">Сообщений</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Источники</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            {sourcesCatalog?.groups?.length ?? 0}
+          </p>
+          <p className="text-[11px] text-on-surface-variant">Порталы РБ</p>
+        </div>
+      </div>
+
       <div
         className={`rounded-2xl border px-4 py-3 text-sm shadow-soft ${
           status?.llm_enabled
@@ -248,6 +269,6 @@ export default function AssistantPage() {
           Очистить диалог
         </button>
       )}
-    </OperationalPage>
+    </div>
   )
 }

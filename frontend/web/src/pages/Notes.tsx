@@ -4,7 +4,6 @@ import AppModal from '../components/ui/AppModal'
 import { motion } from 'framer-motion'
 import { notesApi } from '../api/client'
 import { CardSkeleton } from '../components/premium'
-import OperationalPage from '../components/shell/OperationalPage'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 
 const STORAGE_KEY = 'finklik.notes.v1'
@@ -149,28 +148,39 @@ export default function Notes() {
 
   if (notesQuery.isError) {
     return (
-      <OperationalPage eyebrow="Ещё" title="Заметки" narrow>
+      <div className="fc-page-shell mx-auto max-w-3xl pb-24 lg:pb-10">
         <CalmErrorState
           title="Заметки недоступны"
           fallbackMessage="Не удалось загрузить заметки. Проверьте сеть и попробуйте снова."
           onRetry={() => void notesQuery.refetch()}
         />
-      </OperationalPage>
+      </div>
     )
   }
 
   return (
-    <OperationalPage
-      eyebrow="Ещё"
-      title="Заметки"
-      description="Личные пометки по организации — синхронизируются с сервером."
-      narrow
-      primaryAction={
+    <div className="fc-page-shell mx-auto max-w-3xl pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-primary fc-btn-thumb" onClick={openCreate} disabled={busy}>
           <Icon name="add" className="text-lg" /> Новая
         </button>
-      }
-    >
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <div className="glass-card rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Заметки</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{sorted.length}</p>
+          <p className="text-[11px] text-on-surface-variant">В организации</p>
+        </div>
+        <div className="glass-card rounded-2xl p-4 sm:col-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Синхронизация</p>
+          <p className="mt-1 text-sm font-semibold text-on-surface">
+            {importUi ? `${importUi.count} локальных — можно импортировать` : 'С сервером'}
+          </p>
+          <p className="text-[11px] text-primary">Личные пометки по организации</p>
+        </div>
+      </div>
+
       {importUi && (
         <div className="card-elevated flex flex-col gap-3 border border-secondary/30 bg-secondary/5 p-4 ring-1 ring-secondary/15 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-on-surface">
@@ -292,6 +302,6 @@ export default function Notes() {
           </div>
         </AppModal>
       )}
-    </OperationalPage>
+    </div>
   )
 }
