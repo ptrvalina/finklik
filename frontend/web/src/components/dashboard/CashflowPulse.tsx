@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { GlassCard } from '../premium/GlassCard'
 
-const CHART_BRAND = '#10b981'
+const CHART_INCOME = '#2170e4'
+const CHART_INCOME_MINT = '#4edea3'
 const CHART_EXPENSE = '#f87171'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -46,13 +47,13 @@ export function CashflowPulse({
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 30 }}>
       <GlassCard className="relative overflow-hidden p-5 sm:p-8" hoverLift={false}>
         <div className="pointer-events-none absolute inset-0 opacity-[0.45] dark:opacity-[0.35]">
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-emerald-500/[0.07] via-transparent to-transparent" aria-hidden />
-          <div className="absolute -right-24 -top-16 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden />
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-primary/[0.08] via-transparent to-transparent" aria-hidden />
+          <div className="absolute -right-24 -top-16 h-56 w-56 rounded-full bg-primary/15 blur-3xl" aria-hidden />
         </div>
 
         <div className="relative z-[1] mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-600/90 dark:text-emerald-400/85">Денежный пульс</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Денежный пульс</p>
             <h3 className="mt-1 font-headline text-xl font-bold text-on-surface sm:text-2xl">Доходы и расходы по месяцам</h3>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant">
               Органическая динамика потока: слои градиента показывают устойчивость и давление расходов.
@@ -62,7 +63,7 @@ export function CashflowPulse({
             <div
               className={`flex max-w-md items-start gap-2 rounded-2xl border px-4 py-3 text-sm backdrop-blur-md ${
                 annotation.tone === 'positive'
-                  ? 'border-emerald-400/25 bg-emerald-500/10 text-emerald-50'
+                  ? 'border-primary/25 bg-primary/10 text-on-surface'
                   : annotation.tone === 'watch'
                     ? 'border-amber-400/30 bg-amber-500/10 text-amber-50'
                     : 'border-white/10 bg-white/[0.06] text-on-surface-variant'
@@ -80,9 +81,9 @@ export function CashflowPulse({
               <AreaChart data={chartData} margin={{ top: 12, right: 12, left: -12, bottom: 4 }}>
                 <defs>
                   <linearGradient id="pulseIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={CHART_BRAND} stopOpacity={0.42} />
-                    <stop offset="45%" stopColor={CHART_BRAND} stopOpacity={0.12} />
-                    <stop offset="100%" stopColor={CHART_BRAND} stopOpacity={0} />
+                    <stop offset="0%" stopColor={CHART_INCOME} stopOpacity={0.42} />
+                    <stop offset="45%" stopColor={CHART_INCOME_MINT} stopOpacity={0.12} />
+                    <stop offset="100%" stopColor={CHART_INCOME} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="pulseExpense" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={CHART_EXPENSE} stopOpacity={0.38} />
@@ -105,11 +106,11 @@ export function CashflowPulse({
                   type="natural"
                   dataKey="income"
                   name="Доходы"
-                  stroke={CHART_BRAND}
+                  stroke={CHART_INCOME}
                   strokeWidth={2.8}
                   fill="url(#pulseIncome)"
                   dot={false}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: CHART_BRAND, stroke: '#fff' }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: CHART_INCOME, stroke: '#fff' }}
                   isAnimationActive
                   animationDuration={1200}
                 />
@@ -132,7 +133,7 @@ export function CashflowPulse({
 
         <div className="relative z-[1] mt-4 flex flex-wrap items-center gap-6 border-t border-white/[0.06] pt-4 text-xs">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.65)]" />
+            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_rgba(33,112,228,0.45)]" />
             <span className="font-medium text-on-surface-variant">Доходы</span>
           </div>
           <div className="flex items-center gap-2">

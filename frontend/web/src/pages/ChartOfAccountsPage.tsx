@@ -177,7 +177,7 @@ export default function ChartOfAccountsPage() {
                   {cls.accounts.map((acc) => (
                     <li key={acc.code} className="rounded-xl px-2 py-2 hover:bg-surface-container-high">
                       <div className="flex items-baseline gap-2">
-                        <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300">{acc.code}</span>
+                        <span className="font-mono text-sm font-bold text-primary">{acc.code}</span>
                         <span className="text-sm text-on-surface">{acc.name_ru}</span>
                         {acc.is_off_balance && (
                           <span className="text-[10px] uppercase text-amber-600">забаланс</span>

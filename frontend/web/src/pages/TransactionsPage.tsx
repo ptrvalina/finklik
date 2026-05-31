@@ -350,7 +350,7 @@ export default function TransactionsPage() {
               }}
               className={`tap-highlight-none whitespace-nowrap rounded-full px-3 py-2 text-xs font-bold transition-all sm:px-5 sm:py-1.5 ${
                 filter === tab.key
-                  ? 'bg-gradient-to-r from-emerald-500 to-primary text-on-primary shadow-glow'
+                  ? 'bg-primary text-primary-on shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >

@@ -139,7 +139,7 @@
     @apply bg-primary/20 text-on-surface;
   }
   .dark ::selection {
-    @apply bg-emerald-500/25 text-on-surface;
+    @apply bg-primary/25 text-on-surface;
   }
 }
 
@@ -171,15 +171,15 @@
            text-sm font-semibold text-on-surface shadow-xs backdrop-blur-md
            transition-[border-color,background-color,box-shadow,transform] duration-[var(--fc-duration-fast)] ease-premium
            hover:border-primary/25 hover:bg-surface-container-low hover:shadow-soft
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
-           dark:border-white/[0.1] dark:bg-white/[0.04] dark:hover:border-emerald-400/25 dark:hover:bg-white/[0.07];
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))]
+           dark:border-white/[0.1] dark:bg-white/[0.04] dark:hover:border-primary/25 dark:hover:bg-white/[0.07];
   }
   .btn-ghost {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-3 py-2
            text-sm font-medium text-on-surface-variant
            transition-[background-color,color] duration-[var(--fc-duration-fast)] ease-premium
            hover:bg-surface-container-high hover:text-on-surface
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))];
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-canvas))];
   }
   .card {
     @apply rounded-3xl border border-outline/70 bg-surface/95 shadow-card backdrop-blur-md transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
@@ -223,7 +223,7 @@
     @apply w-full min-h-11 rounded-2xl border border-outline/90 bg-surface/95 px-4 py-2.5 text-sm text-on-surface
            shadow-xs backdrop-blur-sm transition-[border-color,box-shadow,ring] duration-[var(--fc-duration-fast)] ease-premium
            placeholder:text-on-surface-variant/60
-           focus:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-500/20
+           focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20
            dark:border-white/[0.1] dark:bg-[rgb(var(--color-surface)/0.5)];
   }
   .input[type='date'],
@@ -258,7 +258,7 @@
     box-shadow: var(--fc-glow-emerald), var(--fc-shadow-calm);
   }
   .fc-execution-card--tone-ok {
-    @apply border-emerald-500/30 bg-emerald-500/[0.06];
+    @apply border-primary/30 bg-primary/[0.06];
   }
   .fc-execution-card--tone-warn {
     @apply border-primary/25 bg-primary/[0.05];
@@ -267,7 +267,7 @@
     @apply border-amber-600/35 bg-amber-500/[0.08];
   }
   .fc-execution-card--tone-ready {
-    @apply border-emerald-400/30 bg-emerald-500/[0.05];
+    @apply border-secondary/30 bg-secondary/[0.06];
   }
   .fc-execution-card--tone-pending {
     @apply border-primary/25 bg-primary/[0.04];
@@ -309,7 +309,7 @@
     backdrop-filter: blur(8px);
   }
   .fc-surface-calm--ok {
-    @apply border-emerald-500/25 bg-emerald-500/[0.06];
+    @apply border-primary/25 bg-primary/[0.06];
   }
   /**
    * Stitch glass card — основной строительный блок премиум-редизайна.
@@ -342,7 +342,7 @@
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide;
   }
   .fc-status-ready {
-    @apply bg-emerald-500/10 text-emerald-700 dark:text-emerald-300;
+    @apply bg-secondary/10 text-secondary dark:text-secondary;
   }
   .fc-status-pending {
     @apply bg-amber-500/10 text-amber-700 dark:text-amber-300;
@@ -411,8 +411,8 @@
   }
   .metric-blade {
     @apply relative overflow-hidden rounded-3xl border border-outline/60 bg-surface/90 p-6 shadow-[0_12px_40px_-24px_rgba(0,77,64,0.16)] backdrop-blur-xl transition-[box-shadow,border-color,transform] duration-[var(--fc-duration-medium)] ease-premium
-           hover:border-emerald-400/25 hover:shadow-[0_18px_52px_-26px_rgba(16,185,129,0.18)]
-           dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.5)] dark:hover:border-emerald-400/20;
+           hover:border-primary/25 hover:shadow-[0_18px_52px_-26px_rgba(33,112,228,0.16)]
+           dark:border-white/[0.08] dark:bg-[rgb(var(--color-surface)/0.5)] dark:hover:border-primary/20;
   }
   .glass-panel {
     backdrop-filter: blur(var(--fc-blur-glass)) saturate(1.22);
@@ -432,8 +432,8 @@
   }
   .dark .fc-main-atmosphere {
     background:
-      radial-gradient(ellipse 90% 60% at 10% -15%, rgba(16, 185, 129, 0.14), transparent 52%),
-      radial-gradient(ellipse 70% 50% at 100% 5%, rgba(0, 77, 64, 0.35), transparent 48%),
+      radial-gradient(ellipse 90% 60% at 10% -15%, rgba(33, 112, 228, 0.14), transparent 52%),
+      radial-gradient(ellipse 70% 50% at 100% 5%, rgba(0, 26, 66, 0.35), transparent 48%),
       linear-gradient(180deg, #07111a 0%, #0a1824 45%, #07111a 100%);
   }
   .fc-main-atmosphere::before {
@@ -460,7 +460,7 @@
     background: radial-gradient(ellipse 85% 65% at 50% 100%, transparent 40%, rgba(15, 23, 42, 0.04) 100%);
   }
   .dark .fc-main-atmosphere::after {
-    background: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(16, 185, 129, 0.06), transparent 55%),
+    background: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(33, 112, 228, 0.08), transparent 55%),
       radial-gradient(ellipse 80% 60% at 50% 100%, transparent 35%, rgba(0, 0, 0, 0.45) 100%);
   }
   .tap-highlight-none {
@@ -505,7 +505,7 @@
       box-shadow var(--fc-duration-medium) var(--fc-motion-smooth),
       border-color var(--fc-duration-medium) var(--fc-motion-smooth),
       transform var(--fc-duration-medium) var(--fc-motion-smooth);
-    @apply p-4 sm:p-6 ring-1 ring-emerald-500/[0.05] dark:ring-emerald-400/[0.06];
+    @apply p-4 sm:p-6 ring-1 ring-primary/[0.06] dark:ring-primary/[0.08];
   }
   .page-section:hover,
   .fc-surface-section:hover {

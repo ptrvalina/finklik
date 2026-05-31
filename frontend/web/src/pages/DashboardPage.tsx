@@ -275,7 +275,7 @@ export default function DashboardPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="glass-card rounded-2xl p-6">
           <h3 className="label mb-6 flex items-center gap-2">
-            <Icon name="calculate" className="text-lg text-emerald-500" />
+            <Icon name="calculate" className="text-lg text-primary" />
             Налоги к уплате
           </h3>
           <div className="space-y-5">
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                   <span className="font-bold text-on-surface">{fmt(tax.amount)}</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
-                  <div className={`h-full rounded-full ${tax.due ? 'bg-red-400' : 'bg-emerald-500'}`} style={{ width: tax.due ? '70%' : '100%' }} />
+                  <div className={`h-full rounded-full ${tax.due ? 'bg-error' : 'bg-primary'}`} style={{ width: tax.due ? '70%' : '100%' }} />
                 </div>
                 <p className="mt-1 text-[10px] text-on-surface-variant">{tax.due ? 'К уплате' : 'Уплачен'}</p>
               </div>
@@ -299,10 +299,10 @@ export default function DashboardPage() {
         </div>
 
         {deadline && (
-          <div className="glass-card rounded-2xl border-l-4 border-l-emerald-400/60 p-6">
+          <div className="glass-card rounded-2xl border-l-4 border-l-primary/50 p-6">
             <div className="mb-3 flex items-center gap-3">
-              <Icon name="event" filled className="text-emerald-500" />
-              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Ближайший дедлайн</span>
+              <Icon name="event" filled className="text-primary" />
+              <span className="text-sm font-bold text-primary">Ближайший дедлайн</span>
             </div>
             <p className="font-headline text-2xl font-extrabold text-on-surface">{deadline}</p>
             {daysLeft !== null && (

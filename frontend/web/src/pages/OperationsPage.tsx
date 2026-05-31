@@ -213,7 +213,7 @@ const HealthMeter = memo(function HealthMeter({ label, value }: { label: string;
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-primary/70 to-emerald-400/80"
+          className="h-full rounded-full bg-gradient-to-r from-primary/70 to-secondary/80"
           style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>

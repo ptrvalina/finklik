@@ -109,7 +109,7 @@ export default function TaxesPage() {
       )}
 
       {/* Filters */}
-      <div className="page-section grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+      <div className="glass-card grid grid-cols-1 items-end gap-4 rounded-2xl p-4 sm:p-5 md:grid-cols-4">
         <div><label className="label">Период с</label><input type="date" className="input" value={periodStart} onChange={e => setPeriodStart(e.target.value)} /></div>
         <div><label className="label">Период по</label><input type="date" className="input" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} /></div>
         <label className="flex items-center gap-2 text-sm text-on-surface-variant pb-2">
@@ -177,7 +177,7 @@ export default function TaxesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tax summary */}
-        <div className="page-section">
+        <div className="glass-card rounded-2xl p-5 sm:p-6">
           <h2 className="mb-6 flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
             <Icon name="receipt" className="text-primary" /> Итоги периода
           </h2>
@@ -256,7 +256,7 @@ export default function TaxesPage() {
         </div>
 
         {/* Calendar */}
-        <div className="page-section">
+        <div className="glass-card rounded-2xl p-5 sm:p-6">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-headline text-lg font-bold text-on-surface">
               <Icon name="calendar_today" className="text-primary" /> Налоговый календарь

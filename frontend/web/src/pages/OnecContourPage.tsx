@@ -69,37 +69,45 @@ export default function OnecContourPage() {
     await refetch()
   }
 
+  const status = data?.status ?? ''
+
   return (
-    <div className="fc-page-shell-narrow">
-      <div className="fc-hero flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="fc-hero-strip" aria-hidden />
-        <div className="relative z-[1] flex w-full flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="page-heading">Контур 1С</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              Реестр организации в ФинКлик и состояние подключения к 1С.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="btn-secondary min-h-11 text-sm"
-              disabled={isFetching}
-              onClick={() => refetch()}
-            >
-              <Icon name="refresh" className="text-lg" />
-              {isFetching ? 'Обновляем…' : 'Обновить'}
-            </button>
-            <button type="button" className="btn-primary min-h-11 text-sm" onClick={() => pingHealth()}>
-              <Icon name="monitor_heart" className="text-lg" />
-              Проверить 1С
-            </button>
-          </div>
-        </div>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          className="btn-secondary min-h-10 text-sm"
+          disabled={isFetching}
+          onClick={() => refetch()}
+        >
+          <Icon name="refresh" className="text-lg" />
+          {isFetching ? 'Обновляем…' : 'Обновить'}
+        </button>
+        <button type="button" className="btn-primary min-h-10 text-sm" onClick={() => pingHealth()}>
+          <Icon name="monitor_heart" className="text-lg" />
+          Проверить 1С
+        </button>
       </div>
 
+      {data && !isLoading && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Статус</p>
+            <p className="mt-1 text-sm font-extrabold text-on-surface">{statusLabel(status)}</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Подключение</p>
+            <p className="mt-1 text-sm font-extrabold text-on-surface">{data.connection_configured ? 'Да' : 'Нет'}</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4 sm:col-span-2">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Контур</p>
+            <p className="mt-1 truncate font-mono text-sm font-semibold text-primary">{data.contour_key}</p>
+          </div>
+        </div>
+      )}
+
       {healthQuery.data && (
-        <div className="rounded-xl border border-outline/75 bg-surface-container-low/95 px-4 py-3 text-sm text-on-surface shadow-soft">
+        <div className="glass-card mb-4 rounded-2xl px-4 py-3 text-sm text-on-surface">
           <span className="font-bold text-primary">Последняя проверка /onec/health:</span>{' '}
           {healthQuery.data.connected ? (
             <span className="text-secondary">связь есть</span>
@@ -126,7 +134,7 @@ export default function OnecContourPage() {
 
       {data && !isLoading && (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-surface-container-low p-5 border border-outline/75 shadow-soft">
+          <div className="glass-card rounded-2xl p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <span className={`rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${statusBadgeClass(data.status)}`}>
                 {statusLabel(data.status)}

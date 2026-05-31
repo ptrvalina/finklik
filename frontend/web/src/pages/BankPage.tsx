@@ -236,6 +236,33 @@ export default function BankPage() {
 
       <ExecutionTopActionBanner pathPrefix="/bank" className="mb-4" />
 
+      {tab === 'overview' && accounts.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Баланс</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{fmt(balanceData?.balance)}</p>
+            <p className="text-[11px] text-on-surface-variant">BYN</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Счета</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{accounts.length}</p>
+            <p className="text-[11px] text-on-surface-variant">{accounts.filter((a) => a.is_active).length} активных</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операции</p>
+            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{statementsData?.total ?? statements.length}</p>
+            <p className="text-[11px] text-on-surface-variant">В выписке</p>
+          </div>
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Сверка</p>
+            <p className="mt-1 text-sm font-semibold text-on-surface">Журнал</p>
+            <Link to="/accounting/journal" className="text-[11px] font-bold text-primary hover:underline">
+              Открыть
+            </Link>
+          </div>
+        </div>
+      )}
+
       <p className="rounded-xl border border-outline/40 bg-surface-container-low/60 px-4 py-3 text-xs text-on-surface-variant">
         Импорт выписки и сверка связывают банк с журналом — так снижаются расхождения перед отчётностью.
       </p>
@@ -319,60 +346,20 @@ export default function BankPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setShowPayment(true)}>
               <Icon name="swap_horiz" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Transfer</p>
+              <p className="mt-2 font-semibold text-on-surface">Перевод</p>
             </button>
             <Link to="/reports" className="glass-card rounded-2xl p-4 transition hover:-translate-y-0.5">
               <Icon name="receipt_long" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Pay tax</p>
+              <p className="mt-2 font-semibold text-on-surface">Налог</p>
             </Link>
             <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setTab('reconciliation')}>
               <Icon name="upload_file" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Import statement</p>
+              <p className="mt-2 font-semibold text-on-surface">Импорт выписки</p>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-            {/* Main balance */}
-            <div className="metric-blade md:col-span-2">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <span className="label !mb-0">Общий баланс</span>
-                  <h3 className="text-4xl font-headline font-extrabold mt-2 text-on-surface">
-                    {fmt(balanceData?.balance)} <span className="text-xl text-primary/70">BYN</span>
-                  </h3>
-                </div>
-                <div className="bg-secondary/10 px-3 py-1 rounded-full flex items-center gap-1">
-                  <Icon name="trending_up" className="text-secondary text-sm" />
-                  <span className="text-secondary text-xs font-bold">+12.4%</span>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1 h-1 bg-surface-variant rounded-full overflow-hidden">
-                  <div className="w-3/4 h-full bg-primary shadow-[0_0_8px_rgba(129,236,255,0.5)]" />
-                </div>
-                <span className="text-[10px] text-on-surface-variant uppercase font-bold whitespace-nowrap">{balanceData?.account_number || '—'}</span>
-              </div>
-            </div>
-
-            {/* Linked accounts count */}
-            <div className="metric-blade">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary/40" />
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-surface-bright flex items-center justify-center">
-                  <Icon name="account_balance_wallet" className="text-secondary" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-on-surface">Привязано счетов</p>
-                  <p className="text-[10px] text-on-surface-variant">{accounts.filter(a => a.is_active).length} активных</p>
-                </div>
-              </div>
-              <p className="text-2xl font-headline font-bold text-on-surface">{accounts.length}</p>
-            </div>
-          </div>
-
           {/* Statements */}
-          <div className="fc-premium-surface shadow-soft">
+          <div className="glass-card overflow-hidden rounded-2xl">
             <div className="flex flex-col gap-1 border-b border-white/[0.06] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6 dark:border-white/[0.06]">
               <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Последние операции</h3>
               <span className="text-xs text-on-surface-variant">{statementsData?.total || 0} всего</span>
@@ -434,7 +421,7 @@ export default function BankPage() {
       {tab === 'accounts' && (
         <div className="space-y-4">
           {accounts.length === 0 ? (
-            <div className="page-section p-10 text-center sm:p-16">
+            <div className="glass-card rounded-2xl p-10 text-center sm:p-16">
               <Icon name="account_balance" className="text-5xl text-on-surface-variant/20" />
               <p className="text-on-surface-variant text-sm mt-4">У вас ещё нет привязанных счетов</p>
               <button type="button" className="btn-primary mt-4" onClick={() => setShowAddAccount(true)}>
@@ -505,7 +492,7 @@ export default function BankPage() {
 
       {/* Payments */}
       {tab === 'payments' && (
-        <div className="page-section w-full max-w-lg p-5 sm:p-8">
+        <div className="glass-card w-full max-w-lg rounded-2xl p-5 sm:p-8">
           <h2 className="mb-6 font-headline text-lg font-bold text-on-surface">Новый платёж</h2>
           <div className="space-y-4">
             <div>
@@ -551,7 +538,7 @@ export default function BankPage() {
 
       {tab === 'reconciliation' && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="page-section p-5 sm:p-6">
+          <div className="glass-card rounded-2xl p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Сверка учёт ↔ выписка</h3>
             <p className="mb-4 text-[11px] text-on-surface-variant">
               Обороты за период: весь учёт и отдельно операции с категорией <code className="text-teal-400">bank_import</code>.
@@ -586,7 +573,7 @@ export default function BankPage() {
               </div>
             )}
           </div>
-          <div className="page-section p-5 sm:p-6">
+          <div className="glass-card rounded-2xl p-5 sm:p-6">
             <h3 className="mb-1 font-headline text-base font-bold text-on-surface">Импорт выписки (JSON)</h3>
             <p className="mb-3 text-[11px] text-on-surface-variant">
               Массив строк: <code className="text-on-surface-variant">transaction_date</code>, <code className="text-on-surface-variant">amount</code>,{' '}

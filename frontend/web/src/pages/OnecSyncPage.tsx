@@ -79,9 +79,9 @@ export default function OnecSyncPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {(['pending', 'running', 'retry', 'success', 'failed'] as const).map((s) => (
-          <div key={s} className="rounded-xl bg-surface-container-low p-4 border border-outline/75 shadow-soft">
-            <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">{statusLabel(s)}</p>
-            <p className="mt-1 text-2xl font-extrabold text-on-surface">{stats[s] || 0}</p>
+          <div key={s} className="glass-card rounded-2xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{statusLabel(s)}</p>
+            <p className="mt-1 font-headline text-2xl font-extrabold tabular-nums text-on-surface">{stats[s] || 0}</p>
           </div>
         ))}
       </div>

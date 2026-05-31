@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
       </div>
 
       {automationKpi && (
-        <div className="page-section p-4 sm:p-6">
+        <div className="glass-card rounded-2xl p-4 sm:p-6">
           <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -143,7 +143,7 @@ export default function AnalyticsPage() {
               return (
                 <div
                   key={m.key}
-                  className="rounded-2xl border border-outline/50 bg-surface/80 p-3 shadow-xs backdrop-blur-md transition hover:border-emerald-400/25 dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]"
+                  className="rounded-2xl border border-outline/50 bg-surface/80 p-3 shadow-xs backdrop-blur-md transition hover:border-primary/30 dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]"
                 >
                   <p className="text-xs text-on-surface-variant">{m.label}</p>
                   <p className={`mt-1 text-lg font-extrabold ${ok ? 'text-secondary' : 'text-amber-500'}`}>{value.toFixed(1)}%</p>
@@ -225,8 +225,8 @@ export default function AnalyticsPage() {
               <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                 <defs>
                   <linearGradient id="barIncomeG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="#059669" stopOpacity={0.85} />
+                    <stop offset="0%" stopColor="#4edea3" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#2170e4" stopOpacity={0.88} />
                   </linearGradient>
                   <linearGradient id="barExpenseG" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#fca5a5" stopOpacity={0.9} />
@@ -245,7 +245,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="glass-card flex-1 rounded-2xl border-emerald-500/[0.12] p-4 sm:p-6">
+          <div className="glass-card flex-1 rounded-2xl border-primary/15 p-4 sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <PremiumEmptyState
@@ -312,11 +312,11 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        <div className="page-section col-span-12 overflow-hidden p-0">
+        <div className="glass-card col-span-12 overflow-hidden rounded-2xl p-0">
           <CounterpartyTurnover />
         </div>
 
-        <div className="page-section col-span-12 p-4 sm:p-6 lg:p-8">
+        <div className="glass-card col-span-12 rounded-2xl p-4 sm:p-6 lg:p-8">
           <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
           {loadingSummary ? (
             <div
