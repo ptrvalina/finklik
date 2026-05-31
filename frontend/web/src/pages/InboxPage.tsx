@@ -95,16 +95,16 @@ export default function InboxPage() {
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-6">
       <div className="mb-4 grid grid-cols-3 gap-3">
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Open</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Открыто</p>
           <p className="mt-1 font-headline text-2xl font-extrabold tabular-nums">{items.length}</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Urgent</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Срочно</p>
           <p className="mt-1 font-headline text-2xl font-extrabold tabular-nums text-error">{urgent.length}</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Priority</p>
-          <p className="mt-1 text-sm font-semibold text-on-surface">{urgent.length > 0 ? 'Needs action' : 'Calm queue'}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Приоритет</p>
+          <p className="mt-1 text-sm font-semibold text-on-surface">{urgent.length > 0 ? 'Нужны действия' : 'Спокойная очередь'}</p>
         </div>
       </div>
 
@@ -214,23 +214,23 @@ export default function InboxPage() {
           {/* Contextual metadata */}
           <aside className="hidden flex-col lg:flex">
             <div className="border-b border-outline/40 px-4 py-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Contextual metadata</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Контекст</p>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
               {selected ? (
                 <>
                   <div className="glass-card rounded-xl p-3">
-                    <p className="text-[10px] font-bold uppercase text-on-surface-variant">Status</p>
+                    <p className="text-[10px] font-bold uppercase text-on-surface-variant">Статус</p>
                     <p className="mt-1 text-sm font-semibold">{STATUS_RU[selected.status] ?? selected.status}</p>
                   </div>
                   {selected.due_at && (
                     <div className="glass-card rounded-xl p-3">
-                      <p className="text-[10px] font-bold uppercase text-on-surface-variant">Due</p>
+                      <p className="text-[10px] font-bold uppercase text-on-surface-variant">Срок</p>
                       <p className="mt-1 text-sm font-semibold">{fmtTime(selected.due_at)}</p>
                     </div>
                   )}
                   <div className="glass-card rounded-xl p-3">
-                    <p className="text-[10px] font-bold uppercase text-on-surface-variant">Related</p>
+                    <p className="text-[10px] font-bold uppercase text-on-surface-variant">Связи</p>
                     <div className="mt-2 space-y-2">
                       {selected.linked_document_id && (
                         <Link to="/documents" className="block text-sm font-semibold text-primary hover:underline">
@@ -255,7 +255,7 @@ export default function InboxPage() {
                 <p className="text-sm text-on-surface-variant">Контекст появится при выборе сообщения.</p>
               )}
               <div className="glass-card rounded-xl p-3">
-                <p className="text-[10px] font-bold uppercase text-on-surface-variant">Assignee</p>
+                <p className="text-[10px] font-bold uppercase text-on-surface-variant">Ответственный</p>
                 <p className="mt-1 text-sm font-semibold">{user?.full_name ?? '—'}</p>
               </div>
               <button type="button" className="btn-secondary w-full text-sm" onClick={() => navigate('/operations')}>

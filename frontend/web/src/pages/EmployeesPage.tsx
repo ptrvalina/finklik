@@ -255,7 +255,7 @@ export default function EmployeesPage() {
 
       {tab === 'active' && employees.length > 0 && (
         <div className="glass-card mb-6 rounded-2xl p-6 sm:p-8">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Next scheduled payout</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ближайшая выплата</p>
           <p className="mt-1 text-sm text-on-surface-variant">
             {MONTHS[payrollMonth]} {payrollYear}
           </p>
@@ -266,7 +266,7 @@ export default function EmployeesPage() {
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-high">
               <div className="h-full w-full rounded-full bg-primary" />
             </div>
-            <span className="text-xs font-bold text-primary">{verifiedCount}/{verifiedCount} Verified</span>
+            <span className="text-xs font-bold text-primary">{verifiedCount}/{verifiedCount} проверено</span>
           </div>
         </div>
       )}

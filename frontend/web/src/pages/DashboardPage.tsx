@@ -189,6 +189,23 @@ export default function DashboardPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric fc-scroll-region pb-24 lg:pb-10">
+      {/* Mobile Stitch balance hero */}
+      <div className="fc-mobile-balance-hero lg:hidden">
+        <p className="fc-mobile-balance-hero__label relative">Деньги на счетах</p>
+        <p className="fc-mobile-balance-hero__amount relative">
+          {cashOnHand != null ? fmt(cashOnHand) : '—'}{' '}
+          <span className="text-lg font-bold text-white/70">BYN</span>
+        </p>
+        <p className="fc-mobile-balance-hero__meta relative">
+          {bankConnected ? 'По подключённым счетам' : 'Подключите банк для остатка'}
+        </p>
+        {cashOnHand != null && (
+          <Link to="/bank" className="btn-primary relative mt-4 inline-flex min-h-10 text-sm">
+            Банк и выписки
+          </Link>
+        )}
+      </div>
+
       {/* KPI strip — Stitch metric cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
         <div className="glass-card rounded-2xl p-4">

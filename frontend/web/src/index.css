@@ -541,6 +541,25 @@
   .fc-hero-strip {
     @apply pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#0058be] via-[#2170e4] to-[#4edea3] opacity-95;
   }
+  /* Stitch mobile home — тёмный balance hero (только узкие экраны) */
+  .fc-mobile-balance-hero {
+    @apply relative mb-4 overflow-hidden rounded-3xl border border-white/10 p-5 shadow-[0_24px_64px_-24px_rgba(0,88,190,0.55)];
+    background: linear-gradient(145deg, #0a1622 0%, #0d1f35 42%, #0a2848 100%);
+  }
+  .fc-mobile-balance-hero::before {
+    content: '';
+    @apply pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-40;
+    background: radial-gradient(circle, rgba(78, 222, 163, 0.45) 0%, transparent 70%);
+  }
+  .fc-mobile-balance-hero__label {
+    @apply text-[10px] font-bold uppercase tracking-[0.2em] text-white/55;
+  }
+  .fc-mobile-balance-hero__amount {
+    @apply mt-2 font-headline text-3xl font-extrabold tabular-nums tracking-tight text-white;
+  }
+  .fc-mobile-balance-hero__meta {
+    @apply mt-2 text-xs text-white/65;
+  }
   .fc-page-shell-tight {
     @apply mx-auto w-full max-w-4xl space-y-6 sm:space-y-8;
   }

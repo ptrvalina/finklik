@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FocusStrip } from '../shell/OperationalPage'
+import { FocusStrip } from '../shell/FocusStrip'
 
 type Props = {
   draftCount: number

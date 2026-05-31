@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { workspaceApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { orgQueryKey } from '../lib/queryKeys'
-import { FocusStrip } from '../components/shell/OperationalPage'
+import { FocusStrip } from '../components/shell/FocusStrip'
 import { CardSkeleton } from '../components/premium'
 import { listRecentClients, pushRecentClient } from '../lib/recentClients'
 import WorkspaceMissionPanel from '../components/workspace/WorkspaceMissionPanel'
@@ -272,30 +272,30 @@ export default function WorkspaceCommandPage() {
 
       {!isLoading && !isError && organizations.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Processing feed</h2>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Лента обработки</h2>
           <div className="glass-card overflow-hidden rounded-2xl">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-outline/40 bg-surface-container-low/60 text-left text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">
-                  <th className="px-4 py-3">Client</th>
-                  <th className="px-4 py-3">Task</th>
-                  <th className="px-4 py-3">Volume</th>
-                  <th className="px-4 py-3">Urgency</th>
+                  <th className="px-4 py-3">Клиент</th>
+                  <th className="px-4 py-3">Задача</th>
+                  <th className="px-4 py-3">Объём</th>
+                  <th className="px-4 py-3">Срочность</th>
                 </tr>
               </thead>
               <tbody>
                 {organizations.slice(0, 8).map((row) => {
                   const wl = workloadScore(row)
-                  const urgency = wl > 5 ? 'Critical' : wl > 0 ? 'Pending' : 'Ready'
+                  const urgency = wl > 5 ? 'Критично' : wl > 0 ? 'В работе' : 'Готово'
                   return (
                     <tr key={row.organization_id} className="border-b border-outline/25 last:border-0">
                       <td className="px-4 py-3 font-medium text-on-surface">{row.organization_name}</td>
                       <td className="px-4 py-3 text-on-surface-variant">
-                        {(row.needs_review ?? 0) > 0 ? 'OCR review' : (row.open_inbox ?? 0) > 0 ? 'Inbox' : 'Reporting'}
+                        {(row.needs_review ?? 0) > 0 ? 'Проверка OCR' : (row.open_inbox ?? 0) > 0 ? 'Входящие' : 'Отчётность'}
                       </td>
                       <td className="px-4 py-3 tabular-nums">{wl || row.open_inbox || 0}</td>
                       <td className="px-4 py-3">
-                        <span className={`fc-status ${urgency === 'Critical' ? 'fc-status-action' : urgency === 'Pending' ? 'fc-status-pending' : 'fc-status-ready'}`}>
+                        <span className={`fc-status ${urgency === 'Критично' ? 'fc-status-action' : urgency === 'В работе' ? 'fc-status-pending' : 'fc-status-ready'}`}>
                           {urgency}
                         </span>
                       </td>

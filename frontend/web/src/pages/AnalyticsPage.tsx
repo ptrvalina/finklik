@@ -104,26 +104,26 @@ export default function AnalyticsPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Total revenue</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Выручка</p>
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalIncome)}</p>
           <p className="text-[11px] text-primary">BYN · {year}</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Total expenses</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Расходы</p>
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalExpense)}</p>
           <p className="text-[11px] text-on-surface-variant">BYN</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Net profit</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Прибыль</p>
           <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${totalProfit >= 0 ? 'text-primary' : 'text-error'}`}>
             {fmt(totalProfit)}
           </p>
-          <p className="text-[11px] text-on-surface-variant">Margin {margin}%</p>
+          <p className="text-[11px] text-on-surface-variant">Маржа {margin}%</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Health score</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Индекс</p>
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{healthScore}/100</p>
-          <p className="text-[11px] text-primary">{healthScore >= 80 ? 'Optimal' : healthScore >= 60 ? 'Stable' : 'Watch'}</p>
+          <p className="text-[11px] text-primary">{healthScore >= 80 ? 'Отлично' : healthScore >= 60 ? 'Стабильно' : 'Внимание'}</p>
         </div>
       </div>
 

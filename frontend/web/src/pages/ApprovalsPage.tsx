@@ -19,10 +19,10 @@ type ApprovalItem = {
 }
 
 const STATUS_RU: Record<string, { label: string; tone: 'pending' | 'ready' | 'action' }> = {
-  pending: { label: 'PENDING REVIEW', tone: 'pending' },
-  approved: { label: 'APPROVED', tone: 'ready' },
-  rejected: { label: 'REJECTED', tone: 'action' },
-  clarification: { label: 'RE-SUBMISSION', tone: 'action' },
+  pending: { label: 'На согласовании', tone: 'pending' },
+  approved: { label: 'Согласовано', tone: 'ready' },
+  rejected: { label: 'Отклонено', tone: 'action' },
+  clarification: { label: 'Доработка', tone: 'action' },
 }
 
 const KIND_ICON: Record<string, string> = {
@@ -89,19 +89,19 @@ export default function ApprovalsPage() {
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Waiting approval</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ожидают</p>
           <p className="mt-2 font-headline text-3xl font-extrabold tabular-nums text-on-surface">{items.length}</p>
-          <p className="mt-1 text-sm text-on-surface-variant">Items</p>
+          <p className="mt-1 text-sm text-on-surface-variant">Запросов</p>
         </div>
         <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Urgent actions</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Срочные</p>
           <p className="mt-2 font-headline text-3xl font-extrabold tabular-nums text-error">{urgentCount || items.length}</p>
-          <p className="mt-1 text-sm text-on-surface-variant">Due within 24 hours</p>
+          <p className="mt-1 text-sm text-on-surface-variant">До 24 часов</p>
         </div>
         <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Recently processed</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Обработано</p>
           <p className="mt-2 font-headline text-3xl font-extrabold tabular-nums text-primary">{history.length}</p>
-          <p className="mt-1 text-sm text-on-surface-variant">This week</p>
+          <p className="mt-1 text-sm text-on-surface-variant">За неделю</p>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function ApprovalsPage() {
 
       {!isLoading && !isError && items.length > 0 && (
         <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Pending actions</h2>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Требуют решения</h2>
           <ul className="space-y-4">
             {items.map((item) => {
               const st = STATUS_RU[item.status] ?? { label: item.status, tone: 'pending' as const }
@@ -148,7 +148,7 @@ export default function ApprovalsPage() {
                         </div>
                         <p className="mt-2 font-headline text-lg font-bold text-on-surface">{item.title}</p>
                         {item.note && <p className="mt-1 text-sm text-on-surface-variant">{item.note}</p>}
-                        <p className="mt-2 text-xs text-on-surface-variant">Submitted · {fmtDate(item.created_at)}</p>
+                        <p className="mt-2 text-xs text-on-surface-variant">Подано · {fmtDate(item.created_at)}</p>
                       </div>
                     </div>
                     {manage && (
@@ -159,7 +159,7 @@ export default function ApprovalsPage() {
                           disabled={resolveMutation.isPending}
                           onClick={() => resolveMutation.mutate({ id: item.id, status: 'rejected' })}
                         >
-                          Reject
+                          Отклонить
                         </button>
                         <button
                           type="button"
@@ -167,7 +167,7 @@ export default function ApprovalsPage() {
                           disabled={resolveMutation.isPending}
                           onClick={() => resolveMutation.mutate({ id: item.id, status: 'approved' })}
                         >
-                          Approve
+                          Согласовать
                         </button>
                       </div>
                     )}
@@ -182,15 +182,15 @@ export default function ApprovalsPage() {
 
       {history.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Recently processed</h2>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface-variant">Недавно обработано</h2>
           <div className="glass-card overflow-hidden rounded-2xl">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-outline/40 bg-surface-container-low/60 text-left text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">
-                  <th className="px-4 py-3">Transaction</th>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="hidden px-4 py-3 sm:table-cell">Type</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Запрос</th>
+                  <th className="px-4 py-3">Дата</th>
+                  <th className="hidden px-4 py-3 sm:table-cell">Тип</th>
+                  <th className="px-4 py-3">Статус</th>
                 </tr>
               </thead>
               <tbody>

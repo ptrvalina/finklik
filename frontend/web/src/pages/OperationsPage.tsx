@@ -338,7 +338,7 @@ export default function OperationsPage() {
             <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
               {workPackCount}
             </p>
-            <p className="text-[11px] text-on-surface-variant">Work packs</p>
+            <p className="text-[11px] text-on-surface-variant">Пакеты работ</p>
           </div>
         </div>
       )}
