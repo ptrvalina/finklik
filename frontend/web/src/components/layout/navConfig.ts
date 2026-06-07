@@ -248,7 +248,7 @@ export function getActiveZoneGroup(role?: string | null, pathname?: string): Nav
 }
 
 /** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */
-const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'calendar', 'team', 'clients'])
+const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'reporting', 'calendar', 'team', 'clients'])
 
 export function shouldShowZoneSubnav(zoneId: ZoneId): boolean {
   return !ZONES_WITHOUT_SIDEBAR_SUBNAV.has(zoneId)
