@@ -8,6 +8,7 @@ import { calmActionError } from '../../i18n/messages.ru'
 import { buildSubmissionExportActions, parseReportPeriod } from '../../utils/submissionExport'
 import AppModal from '../../components/ui/AppModal'
 import SignatureModal from '../signing/SignatureModal'
+import { orgQueryKey } from '../../lib/queryKeys'
 import { CardSkeleton, PremiumEmptyState } from '../../components/premium'
 
 export type ReportingAuthority = 'imns' | 'fsszn' | 'belgosstrakh' | 'belstat'
@@ -798,6 +799,8 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
         }
         onCompleted={() => {
           void qc.invalidateQueries({ queryKey: ['submissions', orgId || '__none__'], exact: false })
+          void qc.invalidateQueries({ queryKey: orgQueryKey('execution-feed'), exact: false })
+          void qc.invalidateQueries({ queryKey: orgQueryKey('financial-state-bundle'), exact: false })
           flash('success', 'Документ подписан; проверка и аудит зафиксированы на сервере.')
         }}
       />

@@ -4,13 +4,7 @@ import AppModal from '../../components/ui/AppModal'
 import { signingApi, type SigningDocumentKind, type SigningRequestResponse } from '../../api/client'
 import { formatApiDetail } from '../../utils/apiError'
 import { calmActionError } from '../../i18n/messages.ru'
-
-function localClientSignBase64(documentHashHex: string, serverMockB64: string | null | undefined): string {
-  if (serverMockB64 && serverMockB64.trim()) return serverMockB64.trim()
-  const marker = `MOCK-CMS:${documentHashHex}`
-  if (typeof globalThis.btoa === 'function') return globalThis.btoa(marker)
-  throw new Error('Нет btoa: подключите модуль ЭЦП или включите mock на API')
-}
+import { defaultSigningProvider } from './signingProvider'
 
 type SignatureModalProps = {
   open: boolean
@@ -54,16 +48,13 @@ export default function SignatureModal({
   })
 
   const completeMutation = useMutation({
-    mutationFn: (payload: { signing_request_id: string; signature_base64: string }) =>
+    mutationFn: (payload: { signing_request_id: string; signature_base64: string; certificate_metadata?: Record<string, unknown> | null }) =>
       signingApi
         .complete({
           signing_request_id: payload.signing_request_id,
           signature_base64: payload.signature_base64,
           certificate_pem: null,
-          certificate_metadata: {
-            placeholder: true,
-            note: 'Сертификат с модуля ЭЦП организации подставляется при интеграции; ключ не передаётся на сервер.',
-          },
+          certificate_metadata: payload.certificate_metadata,
         })
         .then((r) => r.data),
   })
@@ -85,10 +76,12 @@ export default function SignatureModal({
     setBusySign(true)
     setError(null)
     try {
-      const sig = localClientSignBase64(session.document_hash, session.mock_signature_base64)
+      const provider = defaultSigningProvider()
+      const signed = await provider.sign(session.document_hash, session.mock_signature_base64)
       await completeMutation.mutateAsync({
         signing_request_id: session.signing_request_id,
-        signature_base64: sig,
+        signature_base64: signed.signature_base64,
+        certificate_metadata: signed.certificate_metadata,
       })
       onCompleted?.()
       onClose()

@@ -11,9 +11,16 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa, utils
 
 
+def _b64decode_strict(data: bytes) -> bytes:
+    try:
+        return base64.standard_b64decode(data, validate=True)
+    except TypeError:
+        return base64.standard_b64decode(data)
+
+
 def _mock_sig_valid(signature_b64: str, document_hash_hex: str) -> bool:
     try:
-        raw = base64.standard_b64decode(signature_b64.encode("ascii"), validate=True)
+        raw = _b64decode_strict(signature_b64.encode("ascii"))
         text = raw.decode("ascii", errors="ignore")
         return text == f"MOCK-CMS:{document_hash_hex}"
     except (binascii.Error, ValueError):
@@ -46,7 +53,7 @@ def verify_signature_against_hash(
         return False, "document_hash_must_be_sha256"
 
     try:
-        sig_bytes = base64.standard_b64decode(sig.encode("ascii"), validate=True)
+        sig_bytes = _b64decode_strict(sig.encode("ascii"))
     except (binascii.Error, ValueError):
         return False, "invalid_signature_base64"
 

@@ -23,6 +23,8 @@ from app.services.signing_document_envelope import build_document_signing_envelo
 from app.services.signing_facade import compute_digest, mock_signature_b64_preview
 from app.services.signature_providers import default_provider
 from app.services.signature_verification import verify_signature_against_hash
+from app.services.financial_state_service import refresh_financial_state_audit
+from app.internal.audit.service import safe_log_audit
 
 router = APIRouter(
     prefix="/signing",
@@ -221,6 +223,20 @@ async def complete_signing_request(
         hash_algorithm=req.hash_algorithm,
         actor="user",
     )
+    await safe_log_audit(
+        db,
+        user_id=str(current_user.id),
+        action="document_signed",
+        entity_type="signing_request",
+        entity_id=req.id,
+        metadata={
+            "document_kind": req.document_kind,
+            "document_id": req.document_id,
+            "document_hash": req.document_hash,
+            "audit_event": "DocumentSigned",
+        },
+    )
+    await refresh_financial_state_audit(db, oid)
     await db.flush()
 
     return {
