@@ -1,6 +1,6 @@
 import type { OperationalSessionV1 } from './operationalSession'
 
-export type FlowStepId = 'scan' | 'journal' | 'reporting'
+export type FlowStepId = 'scan' | 'verify' | 'journal' | 'reporting' | 'signing'
 export type FlowStepState = 'idle' | 'active' | 'done'
 
 export type OperationalFlowStep = {
@@ -11,7 +11,7 @@ export type OperationalFlowStep = {
   hint?: string
 }
 
-/** Цепочка OCR → журнал → отчётность для правой панели контекста. */
+/** Цепочка Скан → Проверка → Журнал → Отчётность → Подпись. */
 export function buildOperationalFlow(session: OperationalSessionV1): {
   steps: OperationalFlowStep[]
   suggestedPath: string | null
@@ -24,10 +24,18 @@ export function buildOperationalFlow(session: OperationalSessionV1): {
     id: 'scan',
     title: 'Скан',
     state: hasOcr ? 'done' : 'active',
+    path: '/scan',
+    hint: 'Загрузить документ',
+  }
+
+  const verify: OperationalFlowStep = {
+    id: 'verify',
+    title: 'Проверка',
+    state: hasOcr && !hasTx ? 'active' : hasTx ? 'done' : 'idle',
     path: session.lastOcrDoc
       ? `/scan?doc_id=${encodeURIComponent(session.lastOcrDoc.id)}`
       : '/scan',
-    hint: hasOcr ? session.lastOcrDoc!.title : 'Загрузить документ',
+    hint: hasOcr ? 'Проверить поля документа' : undefined,
   }
 
   let journalState: FlowStepState = 'idle'
@@ -41,7 +49,7 @@ export function buildOperationalFlow(session: OperationalSessionV1): {
     path: session.lastTransaction
       ? `/accounting/journal?tx_id=${encodeURIComponent(session.lastTransaction.id)}`
       : '/accounting/journal',
-    hint: hasTx ? session.lastTransaction!.title : hasOcr ? 'Провести проводку' : undefined,
+    hint: hasTx ? session.lastTransaction!.title : hasOcr ? 'Провести операцию' : undefined,
   }
 
   let reportingState: FlowStepState = 'idle'
@@ -53,13 +61,26 @@ export function buildOperationalFlow(session: OperationalSessionV1): {
     title: 'Отчётность',
     state: reportingState,
     path: session.lastReportingBlocker?.path ?? '/reports',
-    hint: session.lastReportingBlocker?.label,
+    hint: session.lastReportingBlocker?.label ?? 'Проверить готовность периода',
+  }
+
+  let signingState: FlowStepState = 'idle'
+  if (hasReporting) signingState = 'done'
+  else if (hasTx) signingState = 'active'
+
+  const signing: OperationalFlowStep = {
+    id: 'signing',
+    title: 'Подпись',
+    state: signingState,
+    path: '/reports/imns',
+    hint: 'Подписать и отправить отчёт',
   }
 
   let suggestedPath: string | null = null
-  if (hasOcr && !hasTx) suggestedPath = journal.path
+  if (!hasOcr) suggestedPath = '/scan'
+  else if (hasOcr && !hasTx) suggestedPath = verify.path
   else if (hasTx && !hasReporting) suggestedPath = '/reports'
   else if (session.nextStep?.path) suggestedPath = session.nextStep.path
 
-  return { steps: [scan, journal, reporting], suggestedPath }
+  return { steps: [scan, verify, journal, reporting, signing], suggestedPath }
 }

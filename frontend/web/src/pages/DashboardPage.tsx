@@ -174,7 +174,7 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-3xl space-y-5 lg:space-y-6">
         <div className="hidden lg:block">
-          <FinancialStateHero cashOnHand={cashOnHand} />
+          <FinancialStateHero cashOnHand={cashOnHand} dashboardLite />
         </div>
         <WorkNowCard />
         <DashboardBlockers />

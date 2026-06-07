@@ -44,9 +44,17 @@ function fmtTime(iso?: string | null) {
 }
 
 function priorityTag(p?: string | null) {
-  if (p === 'urgent' || p === 'high') return { label: 'URGENT', className: 'fc-status fc-status-action' }
-  if (p === 'normal') return { label: 'NORMAL', className: 'fc-status fc-status-pending' }
+  if (p === 'urgent' || p === 'high') return { label: 'Срочно', className: 'fc-status fc-status-action' }
+  if (p === 'normal') return { label: 'Обычный', className: 'fc-status fc-status-pending' }
   return null
+}
+
+const KIND_RU: Record<string, string> = {
+  document: 'Документ',
+  payment: 'Платёж',
+  report: 'Отчёт',
+  question: 'Вопрос',
+  task: 'Задача',
 }
 
 export default function InboxPage({ embedded = false }: { embedded?: boolean }) {
@@ -176,17 +184,33 @@ export default function InboxPage({ embedded = false }: { embedded?: boolean }) 
               <>
                 <div className="border-b border-outline/40 px-5 py-4">
                   <p className="font-headline text-lg font-bold text-on-surface">{selected.title}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{selected.kind} · {STATUS_RU[selected.status] ?? selected.status}</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    {KIND_RU[selected.kind] ?? selected.kind} · {STATUS_RU[selected.status] ?? selected.status}
+                  </p>
                 </div>
                 <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
                   <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-surface-container-high px-4 py-3 text-sm text-on-surface">
-                    {selected.body || 'Запрос без текста — откройте связанные материалы справа.'}
-                  </div>
-                  <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#131b2e] px-4 py-3 text-sm text-white dark:bg-on-surface">
-                    Принято в работу. Проверю документы и вернусь с результатом.
+                    {selected.body || 'Запрос без текста — откройте связанные материалы ниже.'}
                   </div>
                   <OperationalCommentsPanel targetKind="operational_inbox" targetId={selected.id} />
                 </div>
+                {(selected.linked_document_id || selected.linked_transaction_id) && (
+                  <div className="flex flex-wrap gap-2 border-t border-outline/40 px-4 py-3 lg:hidden">
+                    {selected.linked_document_id && (
+                      <Link to="/documents" className="btn-secondary min-h-10 flex-1 text-sm">
+                        Документы
+                      </Link>
+                    )}
+                    {selected.linked_transaction_id && (
+                      <Link
+                        to={`/accounting/journal?tx_id=${encodeURIComponent(selected.linked_transaction_id)}`}
+                        className="btn-secondary min-h-10 flex-1 text-sm"
+                      >
+                        Журнал
+                      </Link>
+                    )}
+                  </div>
+                )}
                 {manage && (
                   <div className="flex gap-2 border-t border-outline/40 p-4">
                     <button

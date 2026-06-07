@@ -61,12 +61,6 @@ export default function ReportingReadinessHero() {
           ))}
         </ul>
       )}
-
-      {!ready && blockers.length > 0 && (
-        <Link to="/accounting/journal" className="btn-ghost mt-4 inline-flex text-sm font-semibold text-primary">
-          Исправить в журнале
-        </Link>
-      )}
     </section>
   )
 }

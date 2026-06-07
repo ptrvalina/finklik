@@ -21,16 +21,31 @@ export default function WorkNowCard() {
     return <div className="fc-skeleton-pulse h-44 rounded-2xl" />
   }
 
-  if (isError || !top) {
+  if (isError) {
     return (
       <section className="glass-card rounded-2xl p-5 sm:p-6">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Следующий шаг</p>
-        <p className="mt-2 text-sm text-on-surface-variant">
-          Срочных задач нет — проверьте очередь или добавьте операции.
-        </p>
-        <Link to="/operations" className="btn-secondary mt-4 inline-flex min-h-10 text-sm">
-          Все задачи
+        <p className="mt-2 text-sm text-on-surface-variant">Не удалось загрузить задачи. Проверьте связь и откройте очередь.</p>
+        <Link to="/inbox" className="btn-primary mt-4 inline-flex min-h-10 text-sm">
+          Очередь
         </Link>
+      </section>
+    )
+  }
+
+  if (!top) {
+    return (
+      <section className="glass-card rounded-2xl p-5 sm:p-6">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Следующий шаг</p>
+        <p className="mt-2 text-sm text-on-surface-variant">Срочных задач нет — можно проверить очередь или загрузить документ.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link to="/scan" className="btn-primary inline-flex min-h-10 text-sm">
+            Сканер
+          </Link>
+          <Link to="/inbox" className="btn-secondary inline-flex min-h-10 text-sm">
+            Очередь
+          </Link>
+        </div>
       </section>
     )
   }
@@ -65,11 +80,6 @@ export default function WorkNowCard() {
           </span>
         </div>
       </div>
-      {items.length > 1 && (
-        <Link to="/operations" className="mt-3 inline-flex text-xs font-semibold text-primary">
-          Ещё {items.length - 1} в ленте →
-        </Link>
-      )}
     </section>
   )
 }

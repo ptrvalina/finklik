@@ -111,25 +111,6 @@ export default function WorkspaceCommandPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      {!isLoading && !isError && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-          {[
-            { label: 'Due today', value: deadlines.filter((d) => d.days_until === 0).length, tag: totals.issues > 0 ? 'CRITICAL' : undefined },
-            { label: 'OCR batches', value: totals.needs_review, tag: totals.needs_review > 10 ? 'CRITICAL' : undefined },
-            { label: 'Unassigned', value: totals.inbox },
-            { label: 'Missing docs', value: totals.pending_ocr },
-          ].map((m) => (
-            <div key={m.label} className="glass-card rounded-2xl p-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{m.label}</p>
-                {m.tag && <span className="fc-status fc-status-action text-[9px]">{m.tag}</span>}
-              </div>
-              <p className="mt-1 font-headline text-2xl font-extrabold tabular-nums text-on-surface">{m.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
       {topClient && (
         <div className="mb-6">
           <FocusStrip
@@ -181,8 +162,8 @@ export default function WorkspaceCommandPage() {
             { label: 'Клиентов', value: totals.clients },
             { label: 'Входящие', value: totals.inbox },
             { label: 'Согласования', value: totals.approvals },
-            { label: 'OCR проверка', value: totals.needs_review },
-            { label: 'OCR обработка', value: totals.pending_ocr },
+            { label: 'OCR на проверке', value: totals.needs_review },
+            { label: 'OCR в обработке', value: totals.pending_ocr },
             { label: 'Замечания', value: totals.issues },
           ].map((m) => (
             <div key={m.label} className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-3 py-3 text-center">

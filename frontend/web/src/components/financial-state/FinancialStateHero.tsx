@@ -62,11 +62,14 @@ export default function FinancialStateHero({
   compact,
   className = '',
   cashOnHand,
+  dashboardLite,
 }: {
   compact?: boolean
   className?: string
   /** Остаток по счетам — главная цифра «сколько реально есть». Если не передан, показываем только поток. */
   cashOnHand?: number | null
+  /** На главной: без сетки измерений — blockers/readiness уже рядом. */
+  dashboardLite?: boolean
 }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: orgQueryKey('financial-state-bundle'),
@@ -101,7 +104,16 @@ export default function FinancialStateHero({
     )
   }
 
-  if (isError || !state || !meta) return null
+  if (isError || !state || !meta) {
+    return (
+      <section className={`glass-card rounded-2xl p-5 sm:p-6 ${className}`}>
+        <p className="text-sm text-on-surface-variant">Не удалось загрузить состояние бизнеса.</p>
+        <Link to="/bank" className="btn-primary mt-3 inline-flex text-sm">
+          Банк и выписки
+        </Link>
+      </section>
+    )
+  }
 
   const monthlyNet = Number(state.cashflow_state.monthly_net ?? 0)
   const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
@@ -159,7 +171,7 @@ export default function FinancialStateHero({
               </span>
             </p>
           )}
-          {!compact && (
+          {!compact && !dashboardLite && (
             <p className="mt-2 text-xs text-on-surface-variant">
               {terminology.execution.compliance}: {state.compliance_state.summary}
             </p>
@@ -174,7 +186,7 @@ export default function FinancialStateHero({
           </Link>
         </div>
       </div>
-      {!compact && (
+      {!compact && !dashboardLite && (
         <div className="mt-5 grid gap-3 border-t border-outline/20 pt-5 sm:grid-cols-3">
           {dims.map((d) => (
             <div key={d.label} className="min-w-0">

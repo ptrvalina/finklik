@@ -33,6 +33,20 @@ const KIND_ICON: Record<string, string> = {
   access: 'vpn_key',
 }
 
+const SUBJECT_KIND_RU: Record<string, string> = {
+  payroll: 'Зарплата',
+  payment: 'Платёж',
+  report: 'Отчёт',
+  contract: 'Договор',
+  access: 'Доступ',
+}
+
+function subjectHref(kind: string): string | null {
+  if (kind === 'report') return '/reports'
+  if (kind === 'payment' || kind === 'payroll') return '/accounting/journal'
+  return null
+}
+
 function canResolveApprovals(role: string | undefined) {
   return role === 'admin' || role === 'accountant'
 }
@@ -102,7 +116,7 @@ export default function ApprovalsPage({ embedded = false }: { embedded?: boolean
         <div className="glass-card rounded-2xl p-5 sm:p-6">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Обработано</p>
           <p className="mt-2 font-headline text-3xl font-extrabold tabular-nums text-primary">{history.length}</p>
-          <p className="mt-1 text-sm text-on-surface-variant">За неделю</p>
+          <p className="mt-1 text-sm text-on-surface-variant">Недавно согласовано</p>
         </div>
       </div>
       )}
@@ -146,11 +160,18 @@ export default function ApprovalsPage({ embedded = false }: { embedded?: boolean
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={statusPillClass(st.tone)}>{st.label}</span>
-                          <span className="text-[10px] font-semibold uppercase text-on-surface-variant">{item.subject_kind}</span>
+                          <span className="text-[10px] font-semibold uppercase text-on-surface-variant">
+                            {SUBJECT_KIND_RU[item.subject_kind] ?? item.subject_kind}
+                          </span>
                         </div>
                         <p className="mt-2 font-headline text-lg font-bold text-on-surface">{item.title}</p>
                         {item.note && <p className="mt-1 text-sm text-on-surface-variant">{item.note}</p>}
                         <p className="mt-2 text-xs text-on-surface-variant">Подано · {fmtDate(item.created_at)}</p>
+                        {subjectHref(item.subject_kind) && (
+                          <Link to={subjectHref(item.subject_kind)!} className="mt-2 inline-flex text-sm font-semibold text-primary">
+                            Открыть предмет →
+                          </Link>
+                        )}
                       </div>
                     </div>
                     {manage && (
@@ -202,7 +223,9 @@ export default function ApprovalsPage({ embedded = false }: { embedded?: boolean
                     <tr key={row.id} className="border-b border-outline/25 last:border-0">
                       <td className="px-4 py-3 font-medium text-on-surface">{row.title}</td>
                       <td className="px-4 py-3 text-on-surface-variant">{fmtDate(row.created_at)}</td>
-                      <td className="hidden px-4 py-3 text-on-surface-variant sm:table-cell">{row.subject_kind}</td>
+                      <td className="hidden px-4 py-3 text-on-surface-variant sm:table-cell">
+                        {SUBJECT_KIND_RU[row.subject_kind] ?? row.subject_kind}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={statusPillClass(st.tone)}>{st.label}</span>
                       </td>

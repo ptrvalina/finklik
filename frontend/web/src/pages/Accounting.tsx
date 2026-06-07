@@ -662,27 +662,6 @@ export default function Accounting() {
 
       {hotkeysOpen && <JournalHotkeysHelp onClose={() => setHotkeysOpen(false)} />}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операций</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.count}</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Чистый поток</p>
-          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums ${stats.net >= 0 ? 'text-primary' : 'text-error'}`}>
-            {stats.net >= 0 ? '+' : '−'}{fmt(Math.abs(stats.net))}
-          </p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.drafts}</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Замечания</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.issues}</p>
-        </div>
-      </div>
-
       <JournalWorkspaceChrome
         workspaceFocus={workspaceFocus}
         onWorkspaceFocus={setWorkspaceFocus}

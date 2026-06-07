@@ -36,7 +36,7 @@ export default function InboxQueuesPage() {
             Согласования
           </button>
         </div>
-        <Link to="/operations" className="btn-ghost hidden min-h-10 text-xs sm:inline-flex">
+        <Link to="/operations" className="btn-ghost min-h-10 text-xs">
           Все задачи
         </Link>
       </div>

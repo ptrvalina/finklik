@@ -291,6 +291,10 @@ export default function OperationsPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric mx-auto max-w-3xl pb-28 sm:pb-10">
+      <div className="mb-4">
+        <h1 className="page-heading">Все задачи</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Полная лента. Главный шаг — на главной.</p>
+      </div>
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         {mode !== 'advanced' && (
           <button
@@ -306,48 +310,6 @@ export default function OperationsPage() {
         </Link>
       </div>
 
-      {!isLoading && !isError && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Готовность</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-              {data?.readiness_score ?? '—'}%
-            </p>
-            <p className="text-[11px] text-primary">{MODE_LABEL[mode]}</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В очереди</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-              {data?.pending_count ?? items.length}
-            </p>
-            <p className="text-[11px] text-on-surface-variant">Задач</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Блокеры</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">
-              {data?.blocked_count ?? 0}
-            </p>
-            <p className="text-[11px] text-on-surface-variant">Требуют внимания</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Пакеты</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
-              {workPackCount}
-            </p>
-            <p className="text-[11px] text-on-surface-variant">Пакеты работ</p>
-          </div>
-        </div>
-      )}
-
-      {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') && (
-        <div className="fixed inset-x-0 top-0 z-20 border-b border-outline/30 bg-[rgb(var(--color-surface)/0.92)] px-3 py-2 shadow-sm backdrop-blur-md sm:hidden">
-          <p className="mx-auto max-w-3xl line-clamp-2 text-[11px] font-medium leading-snug text-on-surface">
-            {simplified.headline}
-          </p>
-        </div>
-      )}
-
-      <div className={!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') ? 'mt-8 sm:mt-0' : ''}>
       {!isLoading && !isError && trustData && showDiagnostics && (
         <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
           <summary className="cursor-pointer font-medium text-on-surface/90">
@@ -595,7 +557,17 @@ export default function OperationsPage() {
         <PremiumEmptyState
           icon="task_alt"
           title="Нет открытых операций"
-          description="Все ключевые проверки пройдены — можно заниматься стратегией или следующим периодом."
+          description="Ключевые проверки пройдены. Следующий шаг — на главной или в сканере."
+          actions={
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link to="/" className="btn-primary min-h-11 px-4 text-sm">
+                На главную
+              </Link>
+              <Link to="/scan" className="btn-secondary min-h-11 px-4 text-sm">
+                Сканер
+              </Link>
+            </div>
+          }
         />
       )}
 
@@ -703,7 +675,6 @@ export default function OperationsPage() {
           </span>
         </button>
       )}
-      </div>
     </div>
   )
 }
