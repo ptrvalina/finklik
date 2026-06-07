@@ -16,6 +16,7 @@ import {
   getMobileBarItemsForRole,
   getNavGroupsForRole,
   getZonesForRole,
+  shouldShowZoneSubnav,
 } from './navConfig'
 import OrgSwitcher from '../workspace/OrgSwitcher'
 import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
@@ -173,7 +174,7 @@ export default function Layout() {
               </NavLink>
             )
           })}
-          {activeZoneGroup && activeZoneGroup.items.length > 1 && (
+          {activeZoneGroup && activeZoneGroup.items.length > 1 && shouldShowZoneSubnav(activeZone) && (
             <div className="mt-4 border-t border-outline/30 px-1 pt-3">
               <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant/80">{activeZoneGroup.label}</p>
               <div className="space-y-0.5">

@@ -46,8 +46,8 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'money',
     label: 'Банк',
     items: [
-      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Счёт, выписка и платежи банка' },
-      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Операции и проводки' },
+      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Счёт, выписка и платежи' },
+      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Проводки по операциям' },
       { to: '/scan', label: 'Сканер', icon: 'document_scanner', end: true, description: 'Первичные документы' },
       { to: '/documents', label: 'Документы', icon: 'folder', end: true, description: 'Счета и акты' },
     ],
@@ -226,4 +226,11 @@ export function getZonesForRole(role?: string | null): ZoneMeta[] {
 export function getActiveZoneGroup(role?: string | null, pathname?: string): NavGroup | undefined {
   if (!pathname) return undefined
   return getNavGroupsForRole(role).find((g) => g.id === getActiveZone(pathname))
+}
+
+/** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */
+const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'team', 'clients'])
+
+export function shouldShowZoneSubnav(zoneId: ZoneId): boolean {
+  return !ZONES_WITHOUT_SIDEBAR_SUBNAV.has(zoneId)
 }

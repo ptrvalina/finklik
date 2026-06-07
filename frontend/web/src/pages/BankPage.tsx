@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import { FocusStrip } from '../components/shell/FocusStrip'
 import { orgQueryKey } from '../lib/queryKeys'
 import { calmError } from '../i18n/messages.ru'
 import { PARTNER_BANK } from '../lib/partnerBank'
@@ -171,6 +171,7 @@ export default function BankPage() {
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-accounts') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-balance') })
       setShowConnect(false)
       setAccountNumber('')
       flash('success', 'Счёт подключён')
@@ -214,24 +215,10 @@ export default function BankPage() {
       void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
       void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
       void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
-      flash('success', `Выписка получена: ${res.data?.import_result?.created ?? 0} новых операций`)
+      flash('success', `Выписка загружена: ${res.data?.import_result?.created ?? 0} новых операций`)
       void refetchStatements()
     },
     onError: () => flash('error', calmError('bankImport')),
-  })
-
-  const oauthUrlMutation = useMutation({
-    mutationFn: (accountId: string) => bankApi.oauthUrl(accountId),
-    onSuccess: (res) => {
-      const url = res.data?.oauth_url
-      const accountId = res.data?.account_id
-      if (accountId && typeof window !== 'undefined') {
-        localStorage.setItem('bank_oauth_account_id', String(accountId))
-      }
-      if (url) window.open(url, '_blank', 'noopener,noreferrer')
-      flash('success', 'Откройте интернет-банк для подтверждения доступа')
-    },
-    onError: () => flash('error', calmError('bankOAuth')),
   })
 
   function flash(type: 'success' | 'error', text: string) {
@@ -252,10 +239,7 @@ export default function BankPage() {
   const primaryAccount = accounts.find((a) => a.is_primary) ?? accounts[0]
   const statements: StatementRow[] = statementsData?.transactions ?? []
 
-  const paymentRows = useMemo(
-    () => statements.filter((tx) => tx.type === 'debit' && /платёж|платеж/i.test(tx.description)),
-    [statements],
-  )
+  const paymentRows = useMemo(() => statements.filter((tx) => tx.type === 'debit'), [statements])
 
   const tabItems: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', icon: 'account_balance', label: 'Счёт' },
@@ -304,16 +288,16 @@ export default function BankPage() {
           variant="compact"
           icon="receipt_long"
           title="Операций не найдено"
-          description="Измените фильтры или запросите выписку из банка за нужный период."
+          description="Измените фильтры или загрузите выписку из банка за нужный период."
           actions={
-            accounts.length > 0 ? (
+            primaryAccount ? (
               <button
                 type="button"
                 className="btn-primary min-h-11 px-5 text-sm"
                 disabled={statementRequestMutation.isPending}
                 onClick={() => statementRequestMutation.mutate()}
               >
-                Запросить выписку
+                Загрузить из банка
               </button>
             ) : (
               <button type="button" className="btn-primary min-h-11 px-5 text-sm" onClick={() => setShowConnect(true)}>
@@ -357,57 +341,16 @@ export default function BankPage() {
   return (
     <>
       <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
-        <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full" style={{ background: PARTNER_BANK.color }} />
-              <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{PARTNER_BANK.tagline}</p>
-            </div>
-            <h1 className="page-heading mt-1">Банк</h1>
-            <p className="mt-1 max-w-xl text-sm text-on-surface-variant">
-              Счёт, выписка и платежи {PARTNER_BANK.name} — без подключения других банков.
-            </p>
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-2.5 w-2.5 rounded-full" style={{ background: PARTNER_BANK.color }} />
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{PARTNER_BANK.name}</p>
           </div>
-          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-surface px-5 py-4 shadow-soft">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Доступно на счёте</p>
-            <MoneyAmount value={balanceData?.balance} emptyAsZero className="mt-1 font-headline text-3xl font-extrabold text-primary" />
-            {primaryAccount ? (
-              <p className="mt-2 font-mono text-[11px] text-on-surface-variant">{primaryAccount.account_number}</p>
-            ) : null}
-          </div>
+          <h1 className="page-heading mt-1">Банк</h1>
+          <p className="mt-1 max-w-xl text-sm text-on-surface-variant">
+            Счёт, выписка и платежи — движение денег на расчётном счёте. Проводки и отчётность — в журнале.
+          </p>
         </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)}>
-            <Icon name="edit_document" className="text-lg" /> Платёжное поручение
-          </button>
-          <button
-            type="button"
-            className="btn-secondary text-sm"
-            onClick={() => {
-              setTab('statement')
-              applyStatementFilters()
-            }}
-          >
-            <Icon name="cloud_download" className="text-lg" /> Запросить выписку
-          </button>
-          {!primaryAccount ? (
-            <button type="button" className="btn-secondary text-sm" onClick={() => setShowConnect(true)}>
-              <Icon name="link" className="text-lg" /> Подключить счёт
-            </button>
-          ) : null}
-        </div>
-
-        {!primaryAccount && (
-          <div className="mb-4">
-            <FocusStrip
-              headline={`Подключите счёт ${PARTNER_BANK.name}`}
-              supporting="Укажите IBAN расчётного счёта — выписка и платежи будут доступны сразу после привязки."
-              ctaLabel="Подключить"
-              onCta={() => setShowConnect(true)}
-            />
-          </div>
-        )}
 
         {message && (
           <div
@@ -441,44 +384,78 @@ export default function BankPage() {
 
         {tab === 'overview' && (
           <div className="mt-4 space-y-4">
-            {primaryAccount && (
-              <div className="glass-card rounded-2xl border-l-4 p-5" style={{ borderLeftColor: PARTNER_BANK.color }}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-on-surface">{PARTNER_BANK.name}</p>
-                    <p className="mt-1 font-mono text-xs text-on-surface-variant">{primaryAccount.account_number}</p>
-                    <p className="mt-0.5 text-[11px] text-on-surface-variant">BIC {PARTNER_BANK.bic} · {primaryAccount.currency}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-ghost !text-xs"
-                    onClick={() => primaryAccount && oauthUrlMutation.mutate(primaryAccount.id)}
-                  >
-                    <Icon name="sync" className="text-sm" /> Обновить через интернет-банк
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="glass-card overflow-hidden rounded-2xl">
-              <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3 sm:px-6">
-                <h2 className="font-headline text-base font-bold text-on-surface">Последние операции</h2>
-                <button type="button" className="btn-ghost !text-xs" onClick={() => setTab('statement')}>
-                  Вся выписка
+            {!primaryAccount ? (
+              <div className="glass-card rounded-2xl border border-dashed border-outline/50 p-6 text-center">
+                <Icon name="account_balance" className="text-4xl text-primary" />
+                <h2 className="mt-3 font-headline text-lg font-bold text-on-surface">Подключите расчётный счёт</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm text-on-surface-variant">
+                  Укажите IBAN счёта в {PARTNER_BANK.name} — после этого доступны баланс, выписка и платежи.
+                </p>
+                <button type="button" className="btn-primary mt-4 text-sm" onClick={() => setShowConnect(true)}>
+                  Подключить счёт
                 </button>
               </div>
-              <StatementTable rows={statements} loading={statementsLoading} />
-            </div>
+            ) : (
+              <>
+                <div className="glass-card rounded-2xl border-l-4 p-5" style={{ borderLeftColor: PARTNER_BANK.color }}>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Доступно</p>
+                      <MoneyAmount value={balanceData?.balance} emptyAsZero className="mt-1 font-headline text-3xl font-extrabold text-primary" />
+                      <p className="mt-3 text-sm font-bold text-on-surface">{primaryAccount.bank_name}</p>
+                      <p className="mt-1 font-mono text-xs text-on-surface-variant">{primaryAccount.account_number}</p>
+                      <p className="mt-0.5 text-[11px] text-on-surface-variant">
+                        BIC {PARTNER_BANK.bic} · {primaryAccount.currency}
+                      </p>
+                      <span className="mt-2 inline-flex rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-bold text-secondary">
+                        Счёт подключён
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)}>
+                        <Icon name="edit_document" className="text-lg" /> Платёж
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary text-sm"
+                        disabled={statementRequestMutation.isPending}
+                        onClick={() => {
+                          applyStatementFilters()
+                          setTab('statement')
+                          statementRequestMutation.mutate()
+                        }}
+                      >
+                        <Icon name="cloud_download" className="text-lg" /> Выписка
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {primaryAccount && (
+              <div className="glass-card overflow-hidden rounded-2xl">
+                <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3 sm:px-6">
+                  <h2 className="font-headline text-base font-bold text-on-surface">Последние операции</h2>
+                  <button type="button" className="btn-ghost !text-xs" onClick={() => setTab('statement')}>
+                    Вся выписка
+                  </button>
+                </div>
+                <StatementTable rows={statements} loading={statementsLoading} />
+              </div>
+            )}
           </div>
         )}
 
         {tab === 'statement' && (
           <div className="mt-4 space-y-4">
             <div className="glass-card rounded-2xl p-4 sm:p-6">
-              <h2 className="font-headline text-base font-bold text-on-surface">Фильтры выписки</h2>
-              <p className="mt-1 text-xs text-on-surface-variant">Период, контрагент и назначение платежа — для просмотра и выгрузки.</p>
+              <h2 className="font-headline text-base font-bold text-on-surface">Выписка по счёту</h2>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                Загрузите операции из банка, отфильтруйте и выгрузите CSV. Для проводок откройте журнал.
+              </p>
               <div className="mt-4">
-                <StatementFilters />
+                <StatementFilters compact />
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button type="button" className="btn-primary text-sm" onClick={applyStatementFilters}>
@@ -494,7 +471,7 @@ export default function BankPage() {
                   }}
                 >
                   <Icon name="cloud_download" className="text-lg" />
-                  {statementRequestMutation.isPending ? 'Запрос…' : 'Запросить из банка'}
+                  {statementRequestMutation.isPending ? 'Загрузка…' : 'Загрузить из банка'}
                 </button>
                 <button
                   type="button"
@@ -504,6 +481,9 @@ export default function BankPage() {
                 >
                   <Icon name="download" className="text-lg" /> CSV
                 </button>
+                <Link to="/accounting/journal" className="btn-secondary text-sm">
+                  <Icon name="menu_book" className="text-lg" /> Журнал
+                </Link>
               </div>
             </div>
 
@@ -522,14 +502,19 @@ export default function BankPage() {
             <div className="glass-card rounded-2xl p-4 sm:p-6">
               <h2 className="font-headline text-base font-bold text-on-surface">Платёжное поручение</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                Сформируйте поручение на оплату контрагенту — сумма попадёт в учёт и журнал.
+                Сформируйте поручение, скачайте файл и проведите оплату в интернет-банке {PARTNER_BANK.name}.
               </p>
-              <button type="button" className="btn-primary mt-4 text-sm" onClick={() => setShowPayment(true)}>
-                <Icon name="add" className="text-lg" /> Новое поручение
-              </button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)} disabled={!primaryAccount}>
+                  <Icon name="add" className="text-lg" /> Новое поручение
+                </button>
+                <Link to="/counterparties" className="btn-secondary text-sm">
+                  <Icon name="handshake" className="text-lg" /> Контрагенты
+                </Link>
+              </div>
               {lastPaymentOrder ? (
                 <div className="mt-4 rounded-xl border border-outline/40 bg-surface-container-low p-4">
-                  <p className="text-xs font-semibold text-on-surface">Последнее сформированное поручение</p>
+                  <p className="text-xs font-semibold text-on-surface">Последнее поручение</p>
                   <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-on-surface-variant">
                     {lastPaymentOrder.text}
                   </pre>
@@ -547,6 +532,7 @@ export default function BankPage() {
             <div className="glass-card overflow-hidden rounded-2xl">
               <div className="border-b border-outline/20 px-4 py-3 sm:px-6">
                 <h2 className="font-headline text-base font-bold text-on-surface">Исходящие платежи</h2>
+                <p className="mt-0.5 text-xs text-on-surface-variant">Списания по выписке за выбранный период</p>
               </div>
               <StatementTable rows={paymentRows} loading={statementsLoading} />
             </div>
@@ -575,10 +561,7 @@ export default function BankPage() {
           }
         >
           <div className="mb-4 flex items-center gap-3 rounded-xl border border-outline/40 bg-surface-container-low p-3">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ background: `${PARTNER_BANK.color}22` }}
-            >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${PARTNER_BANK.color}22` }}>
               <Icon name="account_balance" className="text-xl text-primary" />
             </div>
             <div>
@@ -593,9 +576,6 @@ export default function BankPage() {
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value.toUpperCase())}
           />
-          <p className="mt-2 text-[11px] text-on-surface-variant">
-            После привязки можно синхронизировать выписку через интернет-банк.
-          </p>
         </AppModal>
       )}
 
