@@ -1,4 +1,4 @@
-/** Business-first IA — Главная / Банк / Отчётность / Команда / Контрагенты / Настройки. */
+/** Business-first IA — Главная / Банк / Учёт / Команда / Контрагенты / Настройки. */
 
 export type ZoneId = 'today' | 'money' | 'reporting' | 'team' | 'clients' | 'settings'
 
@@ -12,7 +12,7 @@ export type ZoneMeta = {
 export const ZONES: ZoneMeta[] = [
   { id: 'today', label: 'Главная', icon: 'hub', defaultTo: '/' },
   { id: 'money', label: 'Банк', icon: 'account_balance', defaultTo: '/bank' },
-  { id: 'reporting', label: 'Отчётность', icon: 'assignment_turned_in', defaultTo: '/reports' },
+  { id: 'reporting', label: 'Учёт', icon: 'menu_book', defaultTo: '/accounting' },
   { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/employees' },
   { id: 'clients', label: 'Контрагенты', icon: 'handshake', defaultTo: '/counterparties' },
   { id: 'settings', label: 'Настройки', icon: 'settings', defaultTo: '/settings' },
@@ -47,18 +47,18 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Банк',
     items: [
       { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Счёт, выписка и платежи' },
-      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Проводки по операциям' },
       { to: '/scan', label: 'Сканер', icon: 'document_scanner', end: true, description: 'Первичные документы' },
       { to: '/documents', label: 'Документы', icon: 'folder', end: true, description: 'Счета и акты' },
     ],
   },
   {
     id: 'reporting',
-    label: 'Отчётность',
+    label: 'Учёт',
     items: [
-      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Готовность и подача' },
-      { to: '/calendar', label: 'Календарь', icon: 'event', end: true, description: 'Налоги, отчёты и сроки' },
-      { to: '/planner', label: 'Задачи команды', icon: 'task_alt', end: true, description: 'Поручения сотрудникам' },
+      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true, description: 'Журнал, отчёты и сроки' },
+      { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', end: true, description: 'Операции и проводки' },
+      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Подача в органы' },
+      { to: '/calendar', label: 'Календарь', icon: 'event', end: true, description: 'Налоги и дедлайны' },
     ],
   },
   {
@@ -67,6 +67,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/employees', label: 'Команда', icon: 'groups', end: true, description: 'Приём, табель и кадровые процессы' },
       { to: '/employees/list', label: 'Сотрудники', icon: 'badge', end: true, description: 'Список и личные дела' },
+      { to: '/planner', label: 'Задачи', icon: 'task_alt', end: true, description: 'Поручения команде' },
     ],
   },
   {
@@ -150,7 +151,7 @@ export function flattenNavForSheetWithAssistant(items: NavItem[]) {
 export const MOBILE_BAR_ITEMS = [
   { to: '/', label: 'Главная', icon: 'hub', end: true },
   { to: '/bank', label: 'Банк', icon: 'account_balance' },
-  { to: '/reports', label: 'Отчётность', icon: 'assignment_turned_in' },
+  { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
 ]
 
@@ -160,7 +161,7 @@ export function getMobileBarItemsForRole(role?: string | null) {
     return [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/workspace/queues', label: 'Очереди', icon: 'all_inbox', end: true },
-      { to: '/bank', label: 'Банк', icon: 'account_balance' },
+      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true },
       { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
     ]
   }
@@ -180,15 +181,22 @@ function pathInZone(pathname: string, zoneId: ZoneId): boolean {
   }
   if (zoneId === 'money') {
     return (
-      pathname.startsWith('/accounting/journal') ||
       pathname.startsWith('/accounting/fixed-assets') ||
       pathname.startsWith('/bank') ||
       pathname.startsWith('/documents') ||
       pathname.startsWith('/scan')
     )
   }
-  if (zoneId === 'reporting') return pathname.startsWith('/reports') || pathname.startsWith('/calendar') || pathname.startsWith('/planner')
-  if (zoneId === 'team') return pathname.startsWith('/employees')
+  if (zoneId === 'reporting') {
+    return (
+      pathname === '/accounting' ||
+      pathname.startsWith('/accounting/journal') ||
+      pathname.startsWith('/reports') ||
+      pathname.startsWith('/calendar') ||
+      pathname.startsWith('/taxes')
+    )
+  }
+  if (zoneId === 'team') return pathname.startsWith('/employees') || pathname.startsWith('/planner')
   if (zoneId === 'clients') return pathname.startsWith('/counterparties') || pathname.startsWith('/workspace')
   return (
     pathname.startsWith('/settings') ||
@@ -205,7 +213,7 @@ export function getActiveZone(pathname: string): ZoneId {
   for (const z of ZONES) {
     if (pathInZone(pathname, z.id)) return z.id
   }
-  if (pathname.startsWith('/accounting')) return 'money'
+  if (pathname.startsWith('/accounting/fixed-assets')) return 'money'
   return 'today'
 }
 
@@ -229,7 +237,7 @@ export function getActiveZoneGroup(role?: string | null, pathname?: string): Nav
 }
 
 /** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */
-const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'team', 'clients'])
+const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'reporting', 'team', 'clients'])
 
 export function shouldShowZoneSubnav(zoneId: ZoneId): boolean {
   return !ZONES_WITHOUT_SIDEBAR_SUBNAV.has(zoneId)

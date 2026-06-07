@@ -366,12 +366,12 @@ export default function Planner() {
           <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
             {screenTab === 'tasks'
               ? 'Поручения сотрудникам с доступом в систему: бухгалтеру, менеджеру или администратору.'
-              : 'Сроки поручений и рабочие события. Налоговые дедлайны — в календаре отчётности.'}
+              : 'Сроки поручений и рабочие события. Налоговые дедлайны — в календаре учёта.'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/calendar" className="btn-secondary shrink-0 text-sm">
-            Календарь отчётности
+            Календарь учёта
           </Link>
           <Link to="/employees/list" className="btn-secondary shrink-0 text-sm">
             Сотрудники
@@ -420,7 +420,7 @@ export default function Planner() {
         <p className="text-xs text-on-surface-variant">
           Полоски с заливкой — события; пунктир — поручения с дедлайном. Налоги и отчёты смотрите в{' '}
           <Link to="/calendar" className="font-semibold text-primary underline">
-            календаре отчётности
+            календаре учёта
           </Link>
           .
         </p>

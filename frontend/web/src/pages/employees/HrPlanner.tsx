@@ -56,7 +56,7 @@ export default function EmployeesHrPlanner() {
       <p className="text-sm text-on-surface-variant">
         Напоминания по ПУ-2 и документам попадают в{' '}
         <Link className="font-medium text-primary underline" to="/calendar">
-          календарь отчётности
+          календаре учёта
         </Link>
         . Поручения команде — в{' '}
         <Link className="font-medium text-primary underline" to="/planner">

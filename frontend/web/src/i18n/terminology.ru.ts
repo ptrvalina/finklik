@@ -9,7 +9,7 @@ export const terminology = {
     home: 'Главная',
     executionFeed: 'Лента работы',
     workspace: 'Контрагенты',
-    reports: 'Отчётность',
+    reports: 'Отчёты',
     accounting: 'Учёт',
     employees: 'Сотрудники',
     bank: 'Банк',

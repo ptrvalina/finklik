@@ -120,21 +120,23 @@ export default function CalendarPage() {
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="page-heading">Календарь отчётности</h1>
+          <h1 className="page-heading">Календарь</h1>
           <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-            Налоги, зарплата и обязательные сроки. Поручения команде — в разделе задач.
+            Сроки налогов, зарплаты и обязательной отчётности.
           </p>
         </div>
-        <Link to="/planner" className="btn-secondary w-full sm:w-auto">
-          <Icon name="task_alt" className="text-lg" /> Задачи команды
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/accounting" className="btn-secondary w-full sm:w-auto">
+            <Icon name="menu_book" className="text-lg" /> Учёт
+          </Link>
+          <Link to="/reports" className="btn-secondary w-full sm:w-auto">
+            <Icon name="assignment_turned_in" className="text-lg" /> Отчёты
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         {monthNav}
-        <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-          <Icon name="assignment_turned_in" className="text-lg" /> Дедлайны
-        </Link>
         <button
           type="button"
           className="btn-primary fc-btn-thumb w-full sm:w-auto"
@@ -258,7 +260,7 @@ export default function CalendarPage() {
             )}
           </ul>
           <Link to="/reports" className="btn-secondary mt-4 w-full text-center text-sm">
-            К отчётности
+            К отчётам
           </Link>
           {openTasks.length > 0 ? (
             <div className="mt-4 border-t border-outline/30 pt-4">

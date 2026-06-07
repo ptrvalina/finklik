@@ -30,6 +30,10 @@ export function JournalWorkspaceChrome({
 }: Props) {
   return (
     <div className="rounded-2xl border border-outline/35 bg-surface/90 p-4 sm:p-5">
+      <div className="mb-4">
+        <h1 className="page-heading">Журнал</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Операции и категории — основа для отчётов.</p>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 rounded-xl border border-outline/40 bg-surface-container-low/60 p-0.5">
           {(
@@ -52,17 +56,17 @@ export function JournalWorkspaceChrome({
           ))}
         </div>
         <div className="flex flex-wrap gap-1.5 text-[10px]">
+          <Link to="/reports" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
+            Отчёты
+          </Link>
+          <Link to="/calendar" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
+            Календарь
+          </Link>
           <Link to="/bank" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
             Банк
           </Link>
-          <Link to="/documents" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Документы
-          </Link>
           <Link to="/scan" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
             Сканер
-          </Link>
-          <Link to="/reports" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Отчётность
           </Link>
         </div>
       </div>

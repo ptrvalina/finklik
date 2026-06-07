@@ -16,6 +16,7 @@ import EmployeesStaffing from './pages/employees/Staffing'
 import EmployeesListPage from './pages/EmployeesPage'
 import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
 import Accounting from './pages/Accounting'
+import AccountingHub from './pages/accounting/Hub'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
 import Planner from './pages/Planner'
@@ -75,10 +76,17 @@ function LegacyReportingRedirect() {
   return <Navigate to={`/reports/${authority}`} replace />
 }
 
-/** Старые ссылки `/accounting` → журнал с сохранением query (контрагент, пресеты). */
-function AccountingJournalRedirect() {
+/** Точка входа в учёт: хаб или редирект в журнал при query (контрагент, пресеты). */
+function AccountingEntry() {
   const location = useLocation()
-  return <Navigate to={`/accounting/journal${location.search}${location.hash}`} replace />
+  if (location.search || location.hash) {
+    return <Navigate to={`/accounting/journal${location.search}${location.hash}`} replace />
+  }
+  return (
+    <RoleRoute allow={['admin', 'accountant']}>
+      <AccountingHub />
+    </RoleRoute>
+  )
 }
 
 export default function App() {
@@ -165,11 +173,10 @@ function AppRoutes() {
             <Route path="timesheet" element={<EmployeesTimesheet />} />
             <Route path="staffing" element={<EmployeesStaffing />} />
           </Route>
-          <Route path="accounting/hub" element={<Navigate to="/accounting/journal" replace />} />
           <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
           <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
           <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
-          <Route path="accounting" element={<AccountingJournalRedirect />} />
+          <Route path="accounting" element={<AccountingEntry />} />
           <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
           <Route path="websites" element={<Navigate to="/settings" replace />} />
           <Route path="notes" element={<Navigate to="/planner" replace />} />
