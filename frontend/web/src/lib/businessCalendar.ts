@@ -87,13 +87,17 @@ export function mergeUpcomingBusinessEvents(input: {
   obligations?: RawObligation[]
   tasks?: RawTask[]
   limit?: number
+  /** Не показывать события дальше N дней (по умолчанию 30). */
+  maxDaysAhead?: number
 }): BusinessCalendarEvent[] {
   const today = todayStr()
+  const horizon = input.maxDaysAhead ?? 30
   const out: BusinessCalendarEvent[] = []
   const seen = new Set<string>()
 
   const push = (e: BusinessCalendarEvent) => {
     if (!e.date || e.date < today) return
+    if (daysUntil(e.date) > horizon) return
     const key = dedupeKey(e)
     if (seen.has(key)) return
     seen.add(key)

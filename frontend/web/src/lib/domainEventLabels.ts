@@ -19,18 +19,18 @@ export function domainEventToActivityLabel(ev: DomainEvent): { title: string; de
         return { title: 'Импортирована выписка', detail: desc ?? (amount ? amount : undefined) }
       }
       if (source === 'scan') {
-        return { title: 'Распознан документ', detail: desc ?? (amount ? amount : undefined) }
+        return { title: 'Загружен документ', detail: desc ?? (amount ? amount : undefined) }
       }
       if (p.status === 'posted' || p.status === 'confirmed') {
-        return { title: 'Проведён документ', detail: desc ?? (amount ? amount : undefined) }
+        return { title: 'Проведена операция', detail: desc ?? (amount ? amount : undefined) }
       }
-      return { title: 'Добавлена операция', detail: desc ?? (amount ? amount : undefined) }
+      return { title: 'Проведена операция', detail: desc ?? (amount ? amount : undefined) }
     }
     case 'TransactionUpdated':
       return { title: 'Обновлена операция', detail: desc ?? (amount ? amount : undefined) }
     case 'DocumentOcrProcessed':
     case 'OCRLinked':
-      return { title: 'Документ распознан', detail: desc }
+      return { title: 'Загружен документ', detail: desc }
     case 'SubmissionCompleted':
       return { title: 'Подан отчёт', detail: typeof p.report_type === 'string' ? p.report_type : undefined }
     case 'ReportGenerated':
@@ -40,7 +40,7 @@ export function domainEventToActivityLabel(ev: DomainEvent): { title: string; de
     case 'ReportPreparationStarted':
       return { title: 'Начата подготовка отчётности', detail: undefined }
     case 'DocumentSigned':
-      return { title: 'Документ подписан', detail: desc }
+      return { title: 'Подписан отчёт', detail: desc }
     case 'ApprovalCompleted':
       return { title: 'Согласование завершено', detail: desc }
     case 'ApprovalRequested':

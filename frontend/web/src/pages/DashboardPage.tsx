@@ -1,15 +1,13 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { dashboardApi, bankApi, teamApi } from '../api/client'
+import { bankApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
-import WorkNowCard from '../components/dashboard/WorkNowCard'
-import DashboardBlockers from '../components/dashboard/DashboardBlockers'
-import DashboardBusinessCalendar from '../components/dashboard/DashboardBusinessCalendar'
-import FinancialStateHero from '../components/financial-state/FinancialStateHero'
-import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
-import DashboardTimeline from '../components/dashboard/DashboardTimeline'
+import BusinessHero from '../components/dashboard/BusinessHero'
+import DashboardCalendarCard from '../components/dashboard/DashboardCalendarCard'
+import DashboardAttentionCard from '../components/dashboard/DashboardAttentionCard'
+import DashboardReportingCard from '../components/dashboard/DashboardReportingCard'
+import DashboardActivityCard from '../components/dashboard/DashboardActivityCard'
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { orgQueryKey } from '../lib/queryKeys'
@@ -17,23 +15,15 @@ import { orgQueryKey } from '../lib/queryKeys'
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const isManager = (user?.role || '').toLowerCase() === 'manager'
-  const { data: metrics, isLoading, isError, refetch } = useQuery({
-    queryKey: orgQueryKey('dashboard'),
-    queryFn: () => dashboardApi.getMetrics().then((r) => r.data),
-    enabled: !isManager,
-    retry: 1,
-    staleTime: 45_000,
-    placeholderData: (prev) => prev,
-  })
 
-  const { data: bankData } = useQuery({
+  const { data: bankData, isLoading: bankAccountsLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey('bank-accounts-dashboard'),
     queryFn: () => bankApi.listAccounts().then((r) => r.data),
     enabled: !isManager,
     staleTime: 60_000,
   })
 
-  const { data: bankBalance } = useQuery({
+  const { data: bankBalance, isLoading: balanceLoading } = useQuery({
     queryKey: orgQueryKey('bank-balance-dashboard'),
     queryFn: () => bankApi.getBalance().then((r) => r.data),
     enabled: !isManager,
@@ -51,39 +41,26 @@ export default function DashboardPage() {
   const bankConnected = (((bankData as { accounts?: unknown[] } | undefined)?.accounts ?? []) as unknown[]).length > 0
   const rawBalance = (bankBalance as { balance?: number | string } | undefined)?.balance
   const cashOnHand = bankConnected && rawBalance != null && Number.isFinite(Number(rawBalance)) ? Number(rawBalance) : null
-
   const profileIncomplete = businessProfile ? !businessProfile.business_profile_completed : false
-
-  const metricsForHero = useMemo(
-    () =>
-      metrics
-        ? {
-            next_tax_deadline: metrics.next_tax_deadline,
-            tax_usn_quarter: metrics.tax_usn_quarter,
-            tax_vat_month: metrics.tax_vat_month,
-            tax_fsszn_quarter: metrics.tax_fsszn_quarter,
-          }
-        : undefined,
-    [metrics],
-  )
+  const isLoading = bankAccountsLoading || balanceLoading
 
   if (!isManager && isLoading) {
     return (
-      <div className="fc-page-shell fc-page-shell-asymmetric">
-        <CardSkeleton className="min-h-[120px]" />
-        <CardSkeleton className="mt-3 min-h-[88px]" />
-        <CardSkeleton className="mt-3 min-h-[120px]" />
-        <CardSkeleton className="mt-3 min-h-[88px]" />
-        <CardSkeleton className="mt-3 min-h-[100px]" />
-        <CardSkeleton className="mt-3 min-h-[100px]" />
+      <div className="fc-owner-dashboard">
+        <CardSkeleton className="min-h-[180px] rounded-2xl" />
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <CardSkeleton className="min-h-[200px] rounded-xl" />
+          <CardSkeleton className="min-h-[200px] rounded-xl" />
+          <CardSkeleton className="min-h-[200px] rounded-xl" />
+          <CardSkeleton className="min-h-[200px] rounded-xl" />
+        </div>
       </div>
     )
   }
 
   if (!isManager && isError) {
     return (
-      <div className="max-w-3xl">
-        <h1 className="page-heading mb-4">Главная</h1>
+      <div className="fc-owner-dashboard max-w-3xl">
         <CalmErrorState
           title="Главная недоступна"
           fallbackMessage="Не удалось загрузить данные. Проверьте подключение и повторите попытку."
@@ -120,17 +97,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric fc-scroll-region pb-24 lg:pb-10">
-      <div className="mx-auto max-w-3xl space-y-3">
-        <FinancialStateHero cashOnHand={cashOnHand} metrics={metricsForHero} dashboardLite compact />
-        <WorkNowCard />
-        <DashboardBusinessCalendar />
-        <DashboardBlockers />
-        <ReportingReadinessHero />
-        <DashboardTimeline />
+    <div className="fc-owner-dashboard fc-scroll-region pb-20 lg:pb-6">
+      <BusinessHero cashOnHand={cashOnHand} />
+
+      <div className="fc-owner-dashboard-grid">
+        <DashboardCalendarCard />
+        <DashboardAttentionCard />
+        <DashboardReportingCard />
+        <DashboardActivityCard />
       </div>
 
-      {profileIncomplete && <OnboardingChecklist />}
+      {profileIncomplete && (
+        <div className="mt-3">
+          <OnboardingChecklist />
+        </div>
+      )}
     </div>
   )
 }

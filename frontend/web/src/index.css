@@ -541,6 +541,32 @@
   .fc-hero-strip {
     @apply pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#0058be] via-[#2170e4] to-[#4edea3] opacity-95;
   }
+
+  /* Owner dashboard — hero + 2×2 cards, один экран ноутбука */
+  .fc-owner-dashboard {
+    @apply mx-auto w-full max-w-6xl px-1 sm:px-2;
+  }
+  .fc-business-hero {
+    @apply relative overflow-hidden rounded-2xl p-5 sm:p-6;
+    background: linear-gradient(135deg, #2170e4 0%, #0058be 48%, #131b2e 100%);
+    box-shadow: 0 20px 56px -24px rgba(0, 88, 190, 0.45);
+  }
+  .fc-business-hero-glow {
+    @apply pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-50;
+    background: radial-gradient(circle, rgba(78, 222, 163, 0.35) 0%, transparent 68%);
+  }
+  .fc-business-hero-chart {
+    @apply h-[100px] min-h-[88px] rounded-xl bg-white/[0.08] p-2 ring-1 ring-white/10 sm:h-[112px];
+  }
+  .fc-owner-dashboard-grid {
+    @apply mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2;
+  }
+  .fc-dashboard-card {
+    @apply min-h-[210px] rounded-xl border border-outline/30 bg-surface p-4 shadow-[var(--fc-shadow-calm)];
+  }
+  .fc-dashboard-card-title {
+    @apply font-headline text-base font-bold tracking-tight text-on-surface sm:text-lg;
+  }
   /* Stitch mobile home — тёмный balance hero (только узкие экраны) */
   .fc-mobile-balance-hero {
     @apply relative mb-4 overflow-hidden rounded-3xl border border-white/10 p-5 shadow-[0_24px_64px_-24px_rgba(0,88,190,0.55)];

@@ -277,6 +277,30 @@ export function canLeaveFixStep(data: CalmOverviewLike | undefined): boolean {
   return score >= READINESS_THRESHOLD
 }
 
+export function deriveOwnerReportingStatus(
+  data: CalmOverviewLike | undefined,
+  fsState?: { reporting_status?: { status?: string } } | undefined,
+): { label: string; hint?: string; tone: 'ok' | 'action' | 'warn' } {
+  const rs = data?.financial_state?.reporting_status?.status ?? fsState?.reporting_status?.status ?? ''
+  const blockers = data?.readiness?.blockers?.length ?? 0
+  const issues = data?.consistency_issues?.length ?? 0
+
+  if (rs === 'submitted') {
+    return { label: 'Готова к подаче', hint: 'Отчёт отправлен', tone: 'ok' }
+  }
+  if (rs === 'ready' && blockers === 0 && issues === 0) {
+    return { label: 'Готова к подаче', tone: 'ok' }
+  }
+  if (rs === 'ready_to_submit' || rs === 'signed') {
+    return { label: 'Требуется подпись', hint: 'Подпишите отчёт перед отправкой', tone: 'action' }
+  }
+  return {
+    label: 'Есть блокеры',
+    hint: 'Исправьте замечания в журнале и документах',
+    tone: 'warn',
+  }
+}
+
 export function buildHomeReportingChecklist(data: CalmOverviewLike | undefined) {
   const blockers = data?.readiness?.blockers ?? []
   const score = data?.readiness?.score ?? 0
