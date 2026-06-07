@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { formatMoney } from '../../lib/formatMoney'
 
 type Tx = {
   id: string
@@ -9,8 +10,9 @@ type Tx = {
   status?: string
 }
 
-function fmt(n: number | string | undefined): string {
-  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+function fmt(n: number | string | undefined, income?: boolean): string {
+  const num = Number(n || 0)
+  return formatMoney(income ? Math.abs(num) : -Math.abs(num), { signed: true })
 }
 
 function eventMeta(tx: Tx): { icon: string; tone: string; why: string } {
@@ -35,20 +37,20 @@ export default function DashboardTimeline({ transactions }: { transactions: Tx[]
   const items = (transactions ?? []).slice(0, 5)
 
   return (
-    <section className="glass-card rounded-2xl p-5 sm:p-6">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Что произошло</p>
+    <section className="rounded-xl border border-outline/30 bg-surface p-4">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Последние события</p>
         <Link to="/accounting/journal" className="text-xs font-semibold text-primary hover:underline">
-          Все операции
+          Журнал
         </Link>
       </div>
 
       {items.length === 0 ? (
         <p className="text-sm text-on-surface-variant">
-          Пока тихо. Отсканируйте документ или добавьте операцию — события появятся здесь.
+          Событий пока нет. Добавьте операцию или отсканируйте документ.
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {items.map((tx) => {
             const meta = eventMeta(tx)
             return (
@@ -73,8 +75,7 @@ export default function DashboardTimeline({ transactions }: { transactions: Tx[]
                     tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-on-surface'
                   }`}
                 >
-                  {tx.type === 'income' ? '+' : '−'}
-                  {fmt(tx.amount)} BYN
+                  {fmt(tx.amount, tx.type === 'income')}
                 </p>
               </li>
             )
