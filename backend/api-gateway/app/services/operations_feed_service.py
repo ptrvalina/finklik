@@ -191,9 +191,11 @@ async def build_execution_feed(
                 title=f"Готовность отчётности {score}% — ниже порога {READINESS_THRESHOLD}%",
                 context="Исправьте замечания в журнале и документах перед сдачей.",
                 action_path="/reports",
-                ai_why=overview.readiness.suggested_fixes[0]
+                ai_why=(
+                    overview.readiness.suggested_fixes[0]
                     if overview.readiness.suggested_fixes
-                    else "Готовность отчётности ниже целевого порога — проверьте журнал и первичные документы.",
+                    else "Готовность отчётности ниже целевого порога — проверьте журнал и первичные документы."
+                ),
             )
         )
 

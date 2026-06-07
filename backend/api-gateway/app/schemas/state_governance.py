@@ -53,5 +53,3 @@ class StateAuditEntry(BaseModel):
     source: str
     actor: str
     timestamp: datetime
-
-

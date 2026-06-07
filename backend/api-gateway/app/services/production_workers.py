@@ -46,7 +46,6 @@ async def amortization_scheduler_forever() -> None:
         today = date.today()
         if today.day != 1:
             continue
-        prev = today.replace(day=1)
         if today.month == 1:
             year, month = today.year - 1, 12
         else:

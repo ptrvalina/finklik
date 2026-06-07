@@ -234,7 +234,6 @@ async def post_ledger_entry(
     vat_amount: Decimal | None = None,
     actor: str = "user",
 ) -> LedgerEntry:
-    from app.events.constants import EV_ACCOUNT_CREATED
     from app.services.ledger_engine import assert_posting_allowed
 
     await assert_posting_allowed(

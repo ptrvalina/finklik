@@ -7,17 +7,6 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-def _json_safe(obj: Any) -> Any:
-    """Убирает Decimal и прочие типы, не сериализуемые в JSON."""
-    if isinstance(obj, Decimal):
-        return float(obj)
-    if isinstance(obj, dict):
-        return {str(k): _json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_json_safe(x) for x in obj]
-    return obj
-
 from app.events.bootstrap import get_event_store
 from app.events.constants import (
     EV_AI_SUGGESTION_RECORDED,
@@ -45,6 +34,17 @@ from app.events.constants import (
     EV_BUSINESS_PROFILE_COMPLETED,
 )
 from app.models.transaction import Transaction
+
+
+def _json_safe(obj: Any) -> Any:
+    """Убирает Decimal и прочие типы, не сериализуемые в JSON."""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(x) for x in obj]
+    return obj
 
 
 def _dec_str(v: Decimal | None) -> str | None:
