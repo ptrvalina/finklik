@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fxApi, type NbrbRateRow } from '../../api/client'
 import { TableSkeleton } from '../../components/premium'
+import MoneyAmount from '../../components/ui/MoneyAmount'
+import BynSymbol from '../../components/ui/BynSymbol'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -65,13 +67,6 @@ export default function CurrencyPage() {
     if (to !== 'BYN' && !available.has(to)) setTo('BYN')
   }, [ratesQuery.data?.rates, from, to])
 
-  const fmtRate = (r: NbrbRateRow) => {
-    const unit = parseFloat(r.byn_per_unit)
-    return Number.isFinite(unit)
-      ? unit.toLocaleString('ru-BY', { minimumFractionDigits: 4, maximumFractionDigits: 6 })
-      : r.byn_per_unit
-  }
-
   const highlighted = useMemo(() => {
     const want = new Set(['USD', 'EUR', 'RUB', 'CNY', 'PLN', 'BYN'])
     const rows = ratesQuery.data?.rates ?? []
@@ -89,7 +84,7 @@ export default function CurrencyPage() {
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
           Официальные курсы <strong className="text-on-surface">Национального банка Республики Беларусь</strong> — те же
           данные, что использует бизнес и отчётность. Сервер ФинКлик периодически обновляет справочник; конвертация идёт
-          через белорусский рубль (BYN) по правилам НБ.
+          через белорусский рубль (<BynSymbol className="inline-block h-[0.85em] w-[0.72em] align-[-0.05em]" />) по правилам НБ.
         </p>
       </div>
 
@@ -198,8 +193,15 @@ export default function CurrencyPage() {
                       className="flex items-center justify-between rounded-lg border border-outline/75 bg-surface-container-low/90 px-3 py-2 shadow-soft"
                     >
                       <span className="font-semibold text-on-surface">{r.code}</span>
-                      <span className="text-sm text-on-surface-variant">
-                        1 {r.code} = {fmtRate(r)} BYN
+                      <span className="inline-flex items-baseline gap-1 text-sm text-on-surface-variant">
+                        1 {r.code} ={' '}
+                        <MoneyAmount
+                          value={r.byn_per_unit}
+                          minimumFractionDigits={4}
+                          maximumFractionDigits={6}
+                          className="inline-flex text-sm"
+                          symbolClassName="h-[0.7em] w-[0.6em]"
+                        />
                       </span>
                     </div>
                   ))}
@@ -212,8 +214,16 @@ export default function CurrencyPage() {
                       <th className="px-3 py-2">Код</th>
                       <th className="px-3 py-2">Валюта</th>
                       <th className="px-3 py-2 text-right">Единиц</th>
-                      <th className="px-3 py-2 text-right">Курс (BYN)</th>
-                      <th className="px-3 py-2 text-right">1 ед. = BYN</th>
+                      <th className="px-3 py-2 text-right">
+                        <span className="inline-flex items-center justify-end gap-1">
+                          Курс (<BynSymbol className="h-3 w-3" />)
+                        </span>
+                      </th>
+                      <th className="px-3 py-2 text-right">
+                        <span className="inline-flex items-center justify-end gap-1">
+                          1 ед. = <BynSymbol className="h-3 w-3" />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline/55 text-on-surface">
@@ -225,7 +235,15 @@ export default function CurrencyPage() {
                           <td className="px-3 py-2 text-on-surface-variant">{r.name}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.scale}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.official_rate_byn}</td>
-                          <td className="px-3 py-2 text-right tabular-nums font-medium text-on-surface">{fmtRate(r)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums font-medium text-on-surface">
+                            <MoneyAmount
+                              value={r.byn_per_unit}
+                              minimumFractionDigits={4}
+                              maximumFractionDigits={6}
+                              className="inline-flex justify-end text-sm"
+                              symbolClassName="h-[0.65em] w-[0.55em]"
+                            />
+                          </td>
                         </tr>
                       ))}
                   </tbody>

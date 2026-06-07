@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { accountingApi } from '../api/client'
 import { orgQueryKey } from '../lib/queryKeys'
-
-function fmt(n: string | number) {
-  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+import MoneyAmount from '../components/ui/MoneyAmount'
 
 const METHODS: Record<string, string> = {
   straight_line: 'Линейный',
@@ -104,8 +101,10 @@ export default function FixedAssetsPage() {
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Стоимость</p>
-          <p className="mt-1 font-headline text-lg font-extrabold tabular-nums text-primary sm:text-xl">{fmt(totalBookValue)}</p>
-          <p className="text-[11px] text-on-surface-variant">BYN · баланс</p>
+          <p className="mt-1 font-headline text-lg font-extrabold tabular-nums text-primary sm:text-xl">
+            <MoneyAmount value={totalBookValue} emptyAsZero className="text-inherit" />
+          </p>
+          <p className="text-[11px] text-on-surface-variant">баланс</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Начисления</p>
@@ -164,7 +163,7 @@ export default function FixedAssetsPage() {
           />
           <input
             className="input rounded-xl"
-            placeholder="Стоимость, BYN"
+            placeholder="Стоимость"
             inputMode="decimal"
             value={form.purchase_amount}
             onChange={(e) => setForm({ ...form, purchase_amount: e.target.value })}
@@ -249,7 +248,7 @@ export default function FixedAssetsPage() {
                     <span className="font-mono text-xs text-on-surface-variant">{a.inventory_number}</span> · {a.name}
                   </p>
                   <p className="mt-1 text-xs text-on-surface-variant">
-                    Ввод {a.purchase_date} · {fmt(a.purchase_amount)} BYN · {a.useful_life_months} мес. · счета{' '}
+                    Ввод {a.purchase_date} · <MoneyAmount value={a.purchase_amount} className="inline-flex" /> · {a.useful_life_months} мес. · счета{' '}
                     {a.asset_account}/{a.depreciation_account}
                   </p>
                 </div>
@@ -288,7 +287,7 @@ export default function FixedAssetsPage() {
                 <span className="shrink-0 text-on-surface-variant">
                   {String(e.period_month).padStart(2, '0')}.{e.period_year}
                 </span>
-                <span className="shrink-0 font-semibold tabular-nums text-on-surface">{fmt(e.amount)} BYN</span>
+                <MoneyAmount value={e.amount} className="inline-flex shrink-0 font-semibold text-on-surface" />
               </li>
             ))}
           </ul>

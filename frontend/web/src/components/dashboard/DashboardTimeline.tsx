@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { eventsApi, dashboardApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { formatMoney } from '../../lib/formatMoney'
+import { formatMoneyAmount } from '../../lib/formatMoney'
 import { domainEventToActivityLabel, formatActivityWhen } from '../../lib/domainEventLabels'
 
 type Tx = {
@@ -16,7 +16,7 @@ type Tx = {
 }
 
 function txToActivity(tx: Tx): { id: string; title: string; detail?: string; when: string } {
-  const amount = tx.amount != null ? formatMoney(tx.amount) : undefined
+  const amount = tx.amount != null ? formatMoneyAmount(tx.amount) : undefined
   if (tx.source === 'bank') {
     return {
       id: tx.id,

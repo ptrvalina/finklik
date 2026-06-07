@@ -7,6 +7,7 @@ import { calmActionError } from '../i18n/messages.ru'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
+import MoneyAmount from '../components/ui/MoneyAmount'
 import { CardSkeleton, TableSkeleton } from '../components/premium'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -937,7 +938,14 @@ function BillingSection() {
             </div>
             <p className="text-2xl font-extrabold text-primary">{currentPlan?.name || 'Бесплатный'}</p>
             <p className="text-xs text-on-surface-variant mt-1">
-              {currentPlan?.price_byn ? `${(currentPlan.price_byn / 100).toFixed(2)} BYN/мес` : 'Бесплатно'}
+              {currentPlan?.price_byn ? (
+                <>
+                  <MoneyAmount value={currentPlan.price_byn / 100} className="inline-flex" />
+                  /мес
+                </>
+              ) : (
+                'Бесплатно'
+              )}
             </p>
             {sub?.trial_ends_at && (
               <p className="text-xs text-amber-400 mt-2">
@@ -982,8 +990,14 @@ function BillingSection() {
                 }`}>
                   <h4 className="text-sm font-bold text-on-surface">{p.name}</h4>
                   <p className="text-xl font-extrabold text-primary mt-1">
-                    {p.price_byn ? `${(p.price_byn / 100).toFixed(0)} BYN` : 'Бесплатно'}
-                    {p.price_byn > 0 && <span className="text-xs font-normal text-on-surface-variant">/мес</span>}
+                    {p.price_byn ? (
+                      <>
+                        <MoneyAmount value={p.price_byn / 100} className="inline-flex text-inherit" />
+                        <span className="text-xs font-normal text-on-surface-variant">/мес</span>
+                      </>
+                    ) : (
+                      'Бесплатно'
+                    )}
                   </p>
                   <ul className="mt-3 space-y-1 text-xs text-on-surface-variant">
                     <li>{p.max_transactions} операций</li>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, reportingCalmApi, taxApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { formatMoney } from '../../lib/formatMoney'
+import MoneyAmount from '../ui/MoneyAmount'
 import { formatRelativeWhen, mergeUpcomingBusinessEvents } from '../../lib/businessCalendar'
 
 export default function DashboardBusinessCalendar() {
@@ -73,8 +73,12 @@ export default function DashboardBusinessCalendar() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold leading-snug text-on-surface">{ev.title}</p>
                   {(ev.subtitle || ev.amount != null) && (
-                    <p className="text-xs text-on-surface-variant">
-                      {[ev.subtitle, ev.amount != null ? formatMoney(ev.amount) : null].filter(Boolean).join(' · ')}
+                    <p className="flex flex-wrap items-baseline gap-1 text-xs text-on-surface-variant">
+                      {ev.subtitle ? <span>{ev.subtitle}</span> : null}
+                      {ev.subtitle && ev.amount != null ? <span>·</span> : null}
+                      {ev.amount != null ? (
+                        <MoneyAmount value={ev.amount} className="inline-flex text-xs" symbolClassName="h-[0.65em] w-[0.55em]" />
+                      ) : null}
                     </p>
                   )}
                 </div>

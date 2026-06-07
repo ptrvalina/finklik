@@ -3,6 +3,7 @@ import { employeesApi, scannerApi, workforceApi } from '../../api/client'
 import { saveBlob } from '../../utils/fileDownload'
 import { calmActionError } from '../../i18n/messages.ru'
 import { formatApiDetail } from '../../utils/apiError'
+import MoneyAmount from '../../components/ui/MoneyAmount'
 
 type Row = {
   id: string
@@ -358,7 +359,7 @@ export default function EmployeesHire() {
         {wizardStep === 2 && (
           <div className="grid gap-3 md:grid-cols-2">
             <input className="input" placeholder="Должность (кратко) *" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
-            <input className="input" type="number" step="0.01" placeholder="Оклад (BYN) *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
+            <input className="input" type="number" step="0.01" placeholder="Оклад *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
             <input className="input" type="date" value={form.hire_date} onChange={(e) => setForm((p) => ({ ...p, hire_date: e.target.value }))} />
             <input className="input" placeholder="Подразделение" value={form.subdivision} onChange={(e) => setForm((p) => ({ ...p, subdivision: e.target.value }))} />
             <select className="input" value={form.employment_type} onChange={(e) => setForm((p) => ({ ...p, employment_type: e.target.value as any }))}>
@@ -400,7 +401,7 @@ export default function EmployeesHire() {
             <div className="rounded-xl border border-outline/60 bg-surface-container-low/50 p-4 text-sm">
               <p><span className="text-on-surface-variant">ФИО:</span> {form.full_name || '—'}</p>
               <p><span className="text-on-surface-variant">Должность:</span> {form.position || '—'}</p>
-              <p><span className="text-on-surface-variant">Оклад:</span> {form.salary ? `${form.salary} BYN` : '—'}</p>
+              <p><span className="text-on-surface-variant">Оклад:</span> {form.salary ? <MoneyAmount value={form.salary} className="inline-flex" /> : '—'}</p>
             </div>
             <label className="flex items-center gap-2 text-sm text-on-surface-variant">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

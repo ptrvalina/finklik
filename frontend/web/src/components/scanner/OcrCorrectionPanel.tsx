@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { OcrFieldLabel } from './OcrFieldConfidence'
+import { OcrFieldLabel, OcrConfidenceBadge } from './OcrFieldConfidence'
+import { CurrencyFieldLabel } from '../ui/CurrencyFieldLabel'
 import {
   fieldNeedsReview,
   firstLowConfidenceField,
@@ -211,7 +212,18 @@ export default function OcrCorrectionPanel({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <OcrFieldLabel label="Сумма, BYN" confidence={fc?.amount} validation={fieldValidation?.amount} />
+          <div className="mb-1 flex flex-wrap items-center gap-1">
+            <span className="label !mb-0">
+              <CurrencyFieldLabel>Сумма</CurrencyFieldLabel>
+            </span>
+            <OcrConfidenceBadge value={fc?.amount} />
+            {fieldNeedsReview(fc, 'amount') && (
+              <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300">проверьте</span>
+            )}
+            {fieldValidation?.amount && fieldValidation.amount !== 'ok' && (
+              <span className="text-[10px] text-on-surface-variant">{fieldValidation.amount}</span>
+            )}
+          </div>
           <input
             id="ocr-field-amount"
             ref={register('amount')}
@@ -229,7 +241,7 @@ export default function OcrCorrectionPanel({
           />
         </div>
         <div>
-          <label className="label">НДС, BYN</label>
+          <label className="label"><CurrencyFieldLabel>НДС</CurrencyFieldLabel></label>
           <input
             ref={register('vatAmount')}
             type="text"

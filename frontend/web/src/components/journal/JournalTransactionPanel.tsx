@@ -10,6 +10,8 @@ import {
 import { journalPipelineBadgeClass, journalPipelineLabel } from '../../lib/journalPipelineLabels'
 import { txValidationIssues } from '../../lib/journalRowAttention'
 import { orgQueryKey } from '../../lib/queryKeys'
+import MoneyAmount from '../ui/MoneyAmount'
+import { CurrencyFieldLabel } from '../ui/CurrencyFieldLabel'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -159,10 +161,9 @@ export function JournalTransactionPanel({
       <div className="flex shrink-0 items-start justify-between gap-2 border-b border-outline/35 px-4 py-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операция</p>
-          <p className="font-headline text-base font-bold text-on-surface">
+          <p className="font-headline text-base font-bold text-on-surface inline-flex items-baseline gap-1">
             {tx.type === 'income' ? '+' : '−'}
-            {Number(tx.amount || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2 })}{' '}
-            <span className="text-sm font-normal text-on-surface-variant">BYN</span>
+            <MoneyAmount value={tx.amount as number | string} className="inline-flex text-inherit" />
           </p>
           <p className="mt-0.5 text-xs text-on-surface-variant">{String(tx.transaction_date)}</p>
         </div>
@@ -248,7 +249,7 @@ export function JournalTransactionPanel({
           </div>
 
           <div>
-            <label className="label">Сумма (BYN)</label>
+            <label className="label"><CurrencyFieldLabel /></label>
             <input className="input mt-1 min-h-10 w-full rounded-xl" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
           </div>
 

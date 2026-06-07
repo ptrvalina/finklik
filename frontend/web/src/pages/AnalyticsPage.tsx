@@ -11,10 +11,8 @@ import { orgQueryKey } from '../lib/queryKeys'
 import { useThemeStore } from '../store/themeStore'
 import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { InsightCard, RecommendationCard, WarningCard } from '../components/premium-os'
-
-function fmt(n: any) {
-  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+import MoneyAmount from '../components/ui/MoneyAmount'
+import { formatMoneyAmount } from '../lib/formatMoney'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -105,18 +103,21 @@ export default function AnalyticsPage() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Выручка</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalIncome)}</p>
-          <p className="text-[11px] text-primary">BYN · {year}</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            <MoneyAmount value={totalIncome} className="text-inherit" />
+          </p>
+          <p className="text-[11px] text-primary">{year}</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Расходы</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{fmt(totalExpense)}</p>
-          <p className="text-[11px] text-on-surface-variant">BYN</p>
+          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
+            <MoneyAmount value={totalExpense} className="text-inherit" />
+          </p>
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Прибыль</p>
           <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${totalProfit >= 0 ? 'text-primary' : 'text-error'}`}>
-            {fmt(totalProfit)}
+            <MoneyAmount value={totalProfit} className="text-inherit" />
           </p>
           <p className="text-[11px] text-on-surface-variant">Маржа {margin}%</p>
         </div>
@@ -236,7 +237,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.25)'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
+                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [formatMoneyAmount(v)]} />
                 <Bar dataKey="income" name="Доходы" fill="url(#barIncomeG)" radius={[8, 8, 0, 0]} opacity={0.92} />
                 <Bar dataKey="expense" name="Расходы" fill="url(#barExpenseG)" radius={[8, 8, 0, 0]} opacity={0.88} />
               </BarChart>
@@ -339,7 +340,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 10" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.22)'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru')} BYN`]} />
+                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [formatMoneyAmount(v)]} />
                 <Area
                   type="natural"
                   dataKey="profit"
@@ -413,10 +414,16 @@ function CounterpartyTurnover() {
               {items.map((row: any) => (
                 <tr key={row.counterparty_id} className="transition-colors hover:bg-surface-container-high">
                   <td className="px-4 py-3 text-sm font-bold text-on-surface sm:px-6 sm:py-4 lg:px-8">{row.name}</td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-secondary sm:px-6 sm:py-4 lg:px-8">+{fmt(row.income)}</td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-error sm:px-6 sm:py-4 lg:px-8">−{fmt(row.expense)}</td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-secondary sm:px-6 sm:py-4 lg:px-8">
+                    <MoneyAmount value={row.income} signed className="inline-flex justify-end text-inherit" />
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-error sm:px-6 sm:py-4 lg:px-8">
+                    <span className="inline-flex items-baseline justify-end gap-1 tabular-nums">
+                      −<MoneyAmount value={row.expense} className="inline-flex text-inherit" symbolClassName="h-[0.78em] w-[0.68em] shrink-0" />
+                    </span>
+                  </td>
                   <td className={`px-4 py-3 text-right font-headline text-sm font-extrabold sm:px-6 sm:py-4 lg:px-8 ${row.income - row.expense >= 0 ? 'text-secondary' : 'text-error'}`}>
-                    {fmt(row.income - row.expense)}
+                    <MoneyAmount value={row.income - row.expense} className="inline-flex justify-end text-inherit" />
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-on-surface-variant sm:px-6 sm:py-4 lg:px-8">{row.count}</td>
                 </tr>

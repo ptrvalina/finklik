@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi, reportingCalmApi, taxApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { formatMoney } from '../../lib/formatMoney'
+import MoneyAmount from '../ui/MoneyAmount'
 import { snapshotReportingStatusRu } from '../../lib/financialSnapshotLabels'
 import { pickNextTaxObligation } from '../../lib/nextTaxObligation'
 
@@ -107,7 +107,6 @@ export default function FinancialStateHero({
   }
 
   const monthlyNet = Number(state.cashflow_state.monthly_net ?? 0)
-  const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
   const reportingLabel = snapshotReportingStatusRu(state.reporting_status.status)
   const businessStatus = state.operational_readiness.label || state.cashflow_state.summary
 
@@ -121,17 +120,19 @@ export default function FinancialStateHero({
       <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
         <div>
           <p className="text-[10px] text-on-surface-variant">На счетах</p>
-          <p className="font-headline text-2xl font-extrabold tabular-nums text-on-surface sm:text-3xl">
-            {hasCash ? formatMoney(cashOnHand) : '—'}
-          </p>
+          <MoneyAmount
+            value={cashOnHand ?? 0}
+            emptyAsZero
+            className="font-headline text-2xl font-extrabold text-on-surface sm:text-3xl"
+          />
         </div>
         <div>
           <p className="text-[10px] text-on-surface-variant">За месяц</p>
-          <p
-            className={`text-lg font-bold tabular-nums ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
-          >
-            {formatMoney(monthlyNet, { signed: true })}
-          </p>
+          <MoneyAmount
+            value={monthlyNet}
+            signed
+            className={`text-lg font-bold ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+          />
         </div>
       </div>
 
@@ -156,7 +157,12 @@ export default function FinancialStateHero({
         {nextTax ? (
           <p className="text-on-surface">
             <span className="font-semibold">{nextTax.name}</span>
-            {nextTax.amount ? <> · {nextTax.amount}</> : null}
+            {nextTax.amount ? (
+              <>
+                {' '}
+                · <MoneyAmount value={nextTax.amount} className="inline-flex text-xs" symbolClassName="h-[0.65em] w-[0.55em]" />
+              </>
+            ) : null}
             {' · '}
             <span className="text-on-surface-variant">до {nextTax.dueDate}</span>
           </p>

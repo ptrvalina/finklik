@@ -567,6 +567,9 @@
   .fc-dashboard-card-title {
     @apply font-headline text-base font-bold tracking-tight text-on-surface sm:text-lg;
   }
+  .fc-dashboard-card--short {
+    @apply min-h-0 py-3.5;
+  }
   /* Stitch mobile home — тёмный balance hero (только узкие экраны) */
   .fc-mobile-balance-hero {
     @apply relative mb-4 overflow-hidden rounded-3xl border border-white/10 p-5 shadow-[0_24px_64px_-24px_rgba(0,88,190,0.55)];

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
 import { dashboardApi, reportsApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { formatMoney } from '../../lib/formatMoney'
+import MoneyAmount from '../ui/MoneyAmount'
 import {
   buildSparkline,
   computeMonthOverMonth,
@@ -25,7 +25,7 @@ function DeltaLine({ label, value, pct }: { label: string; value: number | null;
     <p className="text-sm text-white/85">
       {label}:{' '}
       <span className={`font-bold tabular-nums ${positive ? 'text-emerald-200' : 'text-red-200'}`}>
-        {formatMoney(value, { signed: true })}
+        <MoneyAmount value={value} signed className="inline-flex text-inherit" symbolClassName="h-[0.75em] w-[0.65em] text-inherit" />
         {pctStr}
       </span>
     </p>
@@ -66,7 +66,6 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
     return Number.isFinite(fallback) ? fallback : null
   }, [tx30, metrics])
 
-  const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
   const hasChart = sparkData.length >= 2
 
   return (
@@ -75,9 +74,12 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
       <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/75">Деньги на счетах</p>
-          <p className="mt-1 font-headline text-4xl font-extrabold tabular-nums tracking-tight text-white sm:text-5xl">
-            {hasCash ? formatMoney(cashOnHand) : '—'}
-          </p>
+          <MoneyAmount
+            value={cashOnHand ?? 0}
+            emptyAsZero
+            className="mt-1 font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl"
+            symbolClassName="h-[0.55em] w-[0.48em] text-white"
+          />
           <div className="mt-3 space-y-1">
             <DeltaLine label="Изменение за 30 дней" value={net30} />
             <DeltaLine

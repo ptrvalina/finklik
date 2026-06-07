@@ -26,6 +26,7 @@ import {
   type ReportingFlowStep,
 } from './reportingFlowModel'
 import ReportingPeriodNarrative from './ReportingPeriodNarrative'
+import MoneyAmount from '../../components/ui/MoneyAmount'
 
 function StepRail({
   steps,
@@ -426,8 +427,8 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
                   <ul className="mt-2 space-y-1 text-sm">
                     {data?.obligations_preview?.slice(0, 4).map((o: any) => (
                       <li key={o.id} className="flex justify-between gap-2 text-on-surface">
-                        <span>
-                          {String(o.obligation_type || '').toUpperCase()} · {o.amount} BYN
+                        <span className="inline-flex flex-wrap items-baseline gap-1">
+                          {String(o.obligation_type || '').toUpperCase()} · <MoneyAmount value={o.amount} className="inline-flex" />
                         </span>
                         <span className="text-xs text-on-surface-variant">{o.due_date}</span>
                       </li>

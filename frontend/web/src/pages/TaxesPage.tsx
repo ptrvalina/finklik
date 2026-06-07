@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { taxApi } from '../api/client'
 import { orgQueryKey } from '../lib/queryKeys'
-
-function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+import MoneyAmount from '../components/ui/MoneyAmount'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -67,16 +66,15 @@ export default function TaxesPage() {
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">К уплате</p>
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">
-            {data ? fmt(data.total_to_pay) : '—'}
+            {data ? <MoneyAmount value={data.total_to_pay} className="text-inherit" /> : '—'}
           </p>
-          <p className="text-[11px] text-on-surface-variant">BYN · период</p>
+          <p className="text-[11px] text-on-surface-variant">за период</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">УСН</p>
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-            {data ? fmt(data.usn_to_pay) : '—'}
+            {data ? <MoneyAmount value={data.usn_to_pay} className="text-inherit" /> : '—'}
           </p>
-          <p className="text-[11px] text-on-surface-variant">BYN</p>
         </div>
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">До срока</p>
@@ -195,20 +193,23 @@ export default function TaxesPage() {
                 </div>
               )}
               {[
-                { label: 'Доходы', value: `${fmt(data.income)} BYN`, color: 'text-secondary' },
-                { label: 'Расходы', value: `${fmt(data.expense)} BYN`, color: 'text-error' },
-                { label: 'УСН к уплате', value: `${fmt(data.usn_to_pay)} BYN`, bold: true },
-                { label: 'НДС к уплате', value: `${fmt(data.vat_to_pay)} BYN` },
-                { label: 'ФСЗН (наниматель)', value: `${fmt(data.fsszn_employer_amount)} BYN` },
+                { label: 'Доходы', amount: data.income, color: 'text-secondary' },
+                { label: 'Расходы', amount: data.expense, color: 'text-error' },
+                { label: 'УСН к уплате', amount: data.usn_to_pay, bold: true },
+                { label: 'НДС к уплате', amount: data.vat_to_pay },
+                { label: 'ФСЗН (наниматель)', amount: data.fsszn_employer_amount },
               ].map(row => (
                 <div key={row.label} className="flex items-center justify-between border-b border-outline-variant/10 pb-3 last:border-0">
                   <span className="text-sm text-on-surface-variant">{row.label}</span>
-                  <span className={`text-sm ${row.bold ? 'font-bold' : ''} ${row.color || 'text-on-surface'}`}>{row.value}</span>
+                  <MoneyAmount
+                    value={row.amount}
+                    className={`text-sm ${row.bold ? 'font-bold' : ''} ${row.color || 'text-on-surface'}`}
+                  />
                 </div>
               ))}
               <div className="border-t-2 border-outline-variant/20 pt-3 flex items-center justify-between">
                 <span className="text-sm font-bold text-on-surface">Итого к уплате</span>
-                <span className="text-lg font-extrabold font-headline text-primary">{fmt(data.total_to_pay)} BYN</span>
+                <MoneyAmount value={data.total_to_pay} className="text-lg font-extrabold font-headline text-primary" />
               </div>
               {data.deadline && (
                 <div className="mt-4 bg-error/10 border border-error/20 rounded-xl px-4 py-3 flex items-center gap-3">

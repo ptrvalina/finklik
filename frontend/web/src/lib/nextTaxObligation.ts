@@ -1,5 +1,3 @@
-import { formatMoney } from './formatMoney'
-
 type Obligation = { id: string; obligation_type: string; amount: string; due_date: string; status?: string }
 type TaxEvent = { title: string; event_date: string; event_type?: string }
 type Metrics = {
@@ -27,7 +25,7 @@ function amountForTaxTitle(title: string, metrics?: Metrics): number | null {
 
 export type NextTaxDisplay = {
   name: string
-  amount: string | null
+  amount: number | string | null
   dueDate: string
 }
 
@@ -47,7 +45,7 @@ export function pickNextTaxObligation(
   if (taxOb) {
     return {
       name: OBLIGATION_RU[taxOb.obligation_type] ?? taxOb.obligation_type,
-      amount: formatMoney(taxOb.amount, { showCurrency: true }),
+      amount: taxOb.amount,
       dueDate: taxOb.due_date,
     }
   }
@@ -66,7 +64,7 @@ export function pickNextTaxObligation(
     const rawAmount = amountForTaxTitle(title, metrics)
     return {
       name: title,
-      amount: rawAmount != null && rawAmount > 0 ? formatMoney(rawAmount) : null,
+      amount: rawAmount != null && rawAmount > 0 ? rawAmount : null,
       dueDate: deadline,
     }
   }
@@ -79,7 +77,7 @@ export function pickNextTaxObligation(
     const rawAmount = amountForTaxTitle(nextEvent.title, metrics)
     return {
       name: nextEvent.title,
-      amount: rawAmount != null && rawAmount > 0 ? formatMoney(rawAmount) : null,
+      amount: rawAmount != null && rawAmount > 0 ? rawAmount : null,
       dueDate: nextEvent.event_date,
     }
   }

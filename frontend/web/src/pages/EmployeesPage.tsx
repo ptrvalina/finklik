@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { employeesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import { calmError } from '../i18n/messages.ru'
-
-function fmt(n: any) { return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+import MoneyAmount from '../components/ui/MoneyAmount'
+import { CurrencyFieldLabel } from '../components/ui/CurrencyFieldLabel'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
@@ -260,7 +261,7 @@ export default function EmployeesPage() {
             {MONTHS[payrollMonth]} {payrollYear}
           </p>
           <p className="mt-3 font-headline text-3xl font-extrabold tabular-nums text-on-surface sm:text-4xl">
-            {fmt(totalPayroll)} <span className="text-lg font-bold text-on-surface-variant">BYN</span>
+            <MoneyAmount value={totalPayroll} className="text-inherit" />
           </p>
           <div className="mt-4 flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-high">
@@ -341,19 +342,19 @@ export default function EmployeesPage() {
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-on-surface-variant">К выдаче</span>
-                          <p className="font-headline font-bold text-primary">{fmt(r.net_salary)}</p>
+                          <p className="font-headline font-bold text-primary"><MoneyAmount value={r.net_salary} className="inline-flex text-inherit" /></p>
                         </div>
                         <div className="text-right">
                           <span className="text-on-surface-variant">Начислено</span>
-                          <p className="font-bold text-on-surface">{fmt(r.gross_salary)}</p>
+                          <p className="font-bold text-on-surface"><MoneyAmount value={r.gross_salary} className="inline-flex text-inherit" /></p>
                         </div>
                         <div>
                           <span className="text-on-surface-variant">НДФЛ</span>
-                          <p className="text-red-300">{fmt(r.income_tax)}</p>
+                          <p className="text-red-300"><MoneyAmount value={r.income_tax} className="inline-flex text-inherit" /></p>
                         </div>
                         <div className="text-right">
                           <span className="text-on-surface-variant">ФСЗН 34%</span>
-                          <p className="text-violet-300">{fmt(r.fsszn_employer)}</p>
+                          <p className="text-violet-300"><MoneyAmount value={r.fsszn_employer} className="inline-flex text-inherit" /></p>
                         </div>
                       </div>
                     </li>
@@ -373,15 +374,15 @@ export default function EmployeesPage() {
                         {payroll.map(r => (
                           <tr key={r.id}>
                             <td className="px-4 py-3 font-medium text-on-surface whitespace-nowrap">{r.employee_id.slice(0, 8)}…</td>
-                            <td className="px-4 py-3 text-right">{fmt(r.base_salary)}</td>
-                            <td className="px-4 py-3 text-right text-secondary">{fmt(r.bonus)}</td>
-                            <td className="px-4 py-3 text-right">{fmt(r.sick_pay)}</td>
-                            <td className="px-4 py-3 text-right">{fmt(r.vacation_pay)}</td>
-                            <td className="px-4 py-3 text-right font-bold">{fmt(r.gross_salary)}</td>
-                            <td className="px-4 py-3 text-right text-error">{fmt(r.income_tax)}</td>
-                            <td className="px-4 py-3 text-right text-error">{fmt(r.fsszn_employee)}</td>
-                            <td className="px-4 py-3 text-right font-bold text-primary">{fmt(r.net_salary)}</td>
-                            <td className="px-4 py-3 text-right text-tertiary">{fmt(r.fsszn_employer)}</td>
+                            <td className="px-4 py-3 text-right"><MoneyAmount value={r.base_salary} className="inline-flex justify-end" /></td>
+                            <td className="px-4 py-3 text-right text-secondary"><MoneyAmount value={r.bonus} className="inline-flex justify-end text-inherit" /></td>
+                            <td className="px-4 py-3 text-right"><MoneyAmount value={r.sick_pay} className="inline-flex justify-end" /></td>
+                            <td className="px-4 py-3 text-right"><MoneyAmount value={r.vacation_pay} className="inline-flex justify-end" /></td>
+                            <td className="px-4 py-3 text-right font-bold"><MoneyAmount value={r.gross_salary} className="inline-flex justify-end" /></td>
+                            <td className="px-4 py-3 text-right text-error"><MoneyAmount value={r.income_tax} className="inline-flex justify-end text-inherit" /></td>
+                            <td className="px-4 py-3 text-right text-error"><MoneyAmount value={r.fsszn_employee} className="inline-flex justify-end text-inherit" /></td>
+                            <td className="px-4 py-3 text-right font-bold text-primary"><MoneyAmount value={r.net_salary} className="inline-flex justify-end text-inherit" /></td>
+                            <td className="px-4 py-3 text-right text-tertiary"><MoneyAmount value={r.fsszn_employer} className="inline-flex justify-end text-inherit" /></td>
                             <td className="px-4 py-3 text-right">
                               <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold uppercase ${
                                 r.status === 'paid' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-surface-variant text-on-surface-variant border border-outline-variant/20'
@@ -461,7 +462,7 @@ export default function EmployeesPage() {
                             <p className="mt-1 font-mono text-[10px] text-on-surface-variant">ИД {emp.identification_number}</p>
                           )}
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
-                            <span className="font-bold text-on-surface">{fmt(emp.salary)} BYN</span>
+                            <MoneyAmount value={emp.salary} className="inline-flex font-bold text-on-surface" />
                             <span>·</span>
                             <span>{tab === 'fired' ? emp.fire_date || '—' : `с ${emp.hire_date}`}</span>
                             {emp.has_children > 0 && (
@@ -545,7 +546,9 @@ export default function EmployeesPage() {
                       </td>
                       <td className="px-6 py-4 text-xs text-on-surface-variant font-mono">{emp.identification_number || '—'}</td>
                       <td className="px-6 py-4 text-sm text-on-surface-variant">{emp.position}</td>
-                      <td className="px-6 py-4 text-sm text-right font-bold text-on-surface">{fmt(emp.salary)} BYN</td>
+                      <td className="px-6 py-4 text-sm text-right font-bold text-on-surface">
+                        <MoneyAmount value={emp.salary} className="inline-flex justify-end text-inherit" />
+                      </td>
                       <td className="px-6 py-4 text-xs text-on-surface-variant">{tab === 'fired' ? emp.fire_date || '—' : emp.hire_date}</td>
                       <td className="px-6 py-4 text-center">
                         {emp.has_children > 0 ? <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 font-bold">{emp.has_children}</span> : '—'}
@@ -594,7 +597,7 @@ export default function EmployeesPage() {
                 </li>
                 <li className="flex justify-between border-b border-outline/25 pb-2">
                   <span className="text-on-surface-variant">ФОТ / мес</span>
-                  <span className="font-bold tabular-nums">{fmt(totalPayroll)} BYN</span>
+                  <span className="font-bold tabular-nums"><MoneyAmount value={totalPayroll} className="inline-flex" /></span>
                 </li>
                 <li className="flex justify-between">
                   <span className="text-on-surface-variant">С детьми</span>
@@ -712,7 +715,7 @@ export default function EmployeesPage() {
                   />
                 </div>
                 <div>
-                  <label className="label">Оклад (BYN)</label>
+                  <label className="label"><CurrencyFieldLabel>Оклад</CurrencyFieldLabel></label>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -902,7 +905,7 @@ export default function EmployeesPage() {
         >
           <p className="text-sm font-semibold text-on-surface">{selectedEmployee.full_name}</p>
           <p className="mb-4 text-xs text-on-surface-variant">
-            Оклад: {fmt(selectedEmployee.salary)} BYN · {selectedEmployee.position}
+            Оклад: <MoneyAmount value={selectedEmployee.salary} className="inline-flex" /> · {selectedEmployee.position}
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div>
@@ -974,17 +977,17 @@ export default function EmployeesPage() {
                 Расчётный лист — {MONTHS[salaryResult.period_month]} {salaryResult.period_year}
               </h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <PR label="Оклад" value={fmt(salaryResult.base_salary)} />
-                <PR label="Бонус" value={fmt(salaryResult.bonus)} color="text-secondary" />
-                <PR label="Больничные" value={fmt(salaryResult.sick_pay)} />
-                <PR label="Отпускные" value={fmt(salaryResult.vacation_pay)} />
+                <PR label="Оклад" value={<MoneyAmount value={salaryResult.base_salary} className="inline-flex" />} />
+                <PR label="Бонус" value={<MoneyAmount value={salaryResult.bonus} className="inline-flex text-inherit" />} color="text-secondary" />
+                <PR label="Больничные" value={<MoneyAmount value={salaryResult.sick_pay} className="inline-flex" />} />
+                <PR label="Отпускные" value={<MoneyAmount value={salaryResult.vacation_pay} className="inline-flex" />} />
                 <div className="col-span-2 my-1 border-t border-outline/70" />
-                <PR label="Начислено" value={fmt(salaryResult.gross_salary)} bold />
-                <PR label="НДФЛ 13%" value={`−${fmt(salaryResult.income_tax)}`} color="text-error" />
-                <PR label="ФСЗН 1%" value={`−${fmt(salaryResult.fsszn_employee)}`} color="text-error" />
+                <PR label="Начислено" value={<MoneyAmount value={salaryResult.gross_salary} className="inline-flex" />} bold />
+                <PR label="НДФЛ 13%" value={<DeductionAmount value={salaryResult.income_tax} />} color="text-error" />
+                <PR label="ФСЗН 1%" value={<DeductionAmount value={salaryResult.fsszn_employee} />} color="text-error" />
                 <div className="col-span-2 my-1 border-t-2 border-outline-variant/80" />
-                <PR label="К выдаче" value={`${fmt(salaryResult.net_salary)} BYN`} bold color="text-primary" />
-                <PR label="ФСЗН 34%" value={fmt(salaryResult.fsszn_employer)} color="text-tertiary" sub />
+                <PR label="К выдаче" value={<MoneyAmount value={salaryResult.net_salary} className="inline-flex text-inherit" />} bold color="text-primary" />
+                <PR label="ФСЗН 34%" value={<MoneyAmount value={salaryResult.fsszn_employer} className="inline-flex text-inherit" />} color="text-tertiary" sub />
               </div>
             </div>
           )}
@@ -994,7 +997,15 @@ export default function EmployeesPage() {
   )
 }
 
-function PR({ label, value, bold, color, sub }: { label: string; value: string; bold?: boolean; color?: string; sub?: boolean }) {
+function DeductionAmount({ value }: { value: number }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 tabular-nums">
+      −<MoneyAmount value={value} className="inline-flex text-inherit" symbolClassName="h-[0.78em] w-[0.68em] shrink-0" />
+    </span>
+  )
+}
+
+function PR({ label, value, bold, color, sub }: { label: string; value: ReactNode; bold?: boolean; color?: string; sub?: boolean }) {
   return (
     <div className="flex justify-between items-center">
       <span className={sub ? 'text-xs text-on-surface-variant' : 'text-on-surface-variant'}>{label}</span>

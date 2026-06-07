@@ -8,16 +8,13 @@ import { FocusStrip } from '../components/shell/FocusStrip'
 import { orgQueryKey } from '../lib/queryKeys'
 import { calmError } from '../i18n/messages.ru'
 import { useThemeStore } from '../store/themeStore'
-import { formatMoney } from '../lib/formatMoney'
+import MoneyAmount from '../components/ui/MoneyAmount'
+import { CurrencyFieldLabel } from '../components/ui/CurrencyFieldLabel'
 
 const CashflowPulse = lazy(async () => {
   const m = await import('../components/dashboard/CashflowPulse')
   return { default: m.CashflowPulse }
 })
-
-function fmt(n: unknown) {
-  return formatMoney(n as number | string | null)
-}
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -277,7 +274,7 @@ export default function BankPage() {
           <div className="relative overflow-hidden rounded-2xl border border-outline/60 bg-surface p-6 shadow-sm sm:p-8">
             <h2 className="font-headline text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
               У вас{' '}
-              <span className="text-primary">{fmt(balanceData?.balance)}</span>{' '}
+              <MoneyAmount value={balanceData?.balance} emptyAsZero className="text-primary font-headline text-xl font-extrabold sm:text-2xl" />{' '}
               на {accounts.length}{' '}
               {accounts.length === 1 ? 'подключённом счёте' : 'подключённых счетах'}
             </h2>
@@ -306,9 +303,11 @@ export default function BankPage() {
                   style={{ borderLeftColor: acc.color || '#2170e4' }}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{acc.bank_name}</p>
-                  <p className="mt-2 font-headline text-lg font-bold tabular-nums text-on-surface">
-                    {acc.is_primary ? fmt(balanceData?.balance) : '—'}
-                  </p>
+                  <MoneyAmount
+                    value={acc.is_primary ? balanceData?.balance : 0}
+                    emptyAsZero
+                    className="mt-2 font-headline text-lg font-bold text-on-surface"
+                  />
                   <p className="mt-1 truncate font-mono text-[10px] text-on-surface-variant">{acc.account_number}</p>
                 </div>
               ))}
@@ -363,7 +362,11 @@ export default function BankPage() {
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-extrabold font-headline ${tx.type === 'credit' ? 'text-secondary' : 'text-on-surface'}`}>
-                        {formatMoney(tx.type === 'credit' ? tx.amount : -Number(tx.amount || 0), { signed: true })}
+                        <MoneyAmount
+                          value={tx.type === 'credit' ? tx.amount : -Number(tx.amount || 0)}
+                          signed
+                          className={`text-sm font-extrabold font-headline ${tx.type === 'credit' ? 'text-secondary' : 'text-on-surface'}`}
+                        />
                       </p>
                     </div>
                   </div>
@@ -462,7 +465,7 @@ export default function BankPage() {
               />
             </div>
             <div>
-              <label className="label">Сумма (BYN)</label>
+              <label className="label"><CurrencyFieldLabel /></label>
               <input
                 type="number"
                 step="0.01"
@@ -516,16 +519,18 @@ export default function BankPage() {
             </button>
             {recData && (
               <div className="space-y-2 rounded-xl border border-outline/75 bg-surface-container-low p-4 font-mono text-xs text-on-surface">
-                <p>
-                  Учёт: доход {fmt(recData.book?.total_income)} · расход {fmt(recData.book?.total_expense)} · чистый{' '}
-                  <span className="font-semibold text-on-surface">{fmt(recData.book?.net)}</span> ({recData.book?.transactions_count} оп.)
+                <p className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
+                  Учёт: доход <MoneyAmount value={recData.book?.total_income} emptyAsZero className="inline-flex text-xs" symbolClassName="h-[0.7em] w-[0.6em]" /> · расход{' '}
+                  <MoneyAmount value={recData.book?.total_expense} emptyAsZero className="inline-flex text-xs" symbolClassName="h-[0.7em] w-[0.6em]" /> · чистый{' '}
+                  <MoneyAmount value={recData.book?.net} emptyAsZero className="inline-flex text-xs font-semibold text-on-surface" symbolClassName="h-[0.7em] w-[0.6em]" /> ({recData.book?.transactions_count} оп.)
                 </p>
-                <p>
-                  Импорт банка: доход {fmt(recData.bank_import?.total_income)} · расход {fmt(recData.bank_import?.total_expense)} · чистый{' '}
-                  <span className="font-semibold text-on-surface">{fmt(recData.bank_import?.net)}</span> ({recData.bank_import?.lines_count} оп.)
+                <p className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
+                  Импорт банка: доход <MoneyAmount value={recData.bank_import?.total_income} emptyAsZero className="inline-flex text-xs" symbolClassName="h-[0.7em] w-[0.6em]" /> · расход{' '}
+                  <MoneyAmount value={recData.bank_import?.total_expense} emptyAsZero className="inline-flex text-xs" symbolClassName="h-[0.7em] w-[0.6em]" /> · чистый{' '}
+                  <MoneyAmount value={recData.bank_import?.net} emptyAsZero className="inline-flex text-xs font-semibold text-on-surface" symbolClassName="h-[0.7em] w-[0.6em]" /> ({recData.bank_import?.lines_count} оп.)
                 </p>
-                <p className="font-medium text-amber-800">
-                  Δ (учёт − импорт): {fmt(recData.delta_net_book_minus_bank_import)}
+                <p className="flex flex-wrap items-baseline gap-x-1 font-medium text-amber-800">
+                  Δ (учёт − импорт): <MoneyAmount value={recData.delta_net_book_minus_bank_import} signed emptyAsZero className="inline-flex text-xs" symbolClassName="h-[0.7em] w-[0.6em]" />
                 </p>
               </div>
             )}
@@ -680,7 +685,7 @@ export default function BankPage() {
               />
             </div>
             <div>
-              <label className="label">Сумма (BYN)</label>
+              <label className="label"><CurrencyFieldLabel /></label>
               <input
                 type="number"
                 step="0.01"

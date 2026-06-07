@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { GlassCard } from '../premium/GlassCard'
+import MoneyAmount from '../ui/MoneyAmount'
+import { formatMoneyAmount } from '../../lib/formatMoney'
 
 const CHART_INCOME = '#2170e4'
 const CHART_INCOME_MINT = '#4edea3'
@@ -30,15 +32,12 @@ export function CashflowPulse({
     const netPrev = prev.income - prev.expense
     const delta = netLast - netPrev
     if (Math.abs(delta) < 1) {
-      return { tone: 'neutral' as const, text: 'Чистый поток стабилен относительно прошлого месяца.' }
+      return { tone: 'neutral' as const, delta: 0, direction: 'neutral' as const }
     }
     if (delta > 0) {
-      return { tone: 'positive' as const, text: `Чистый денежный поток улучшился примерно на ${delta.toLocaleString('ru-BY', { maximumFractionDigits: 0 })} BYN к прошлому месяцу.` }
+      return { tone: 'positive' as const, delta, direction: 'up' as const }
     }
-    return {
-      tone: 'watch' as const,
-      text: `Чистый поток сжался примерно на ${Math.abs(delta).toLocaleString('ru-BY', { maximumFractionDigits: 0 })} BYN — проверьте крупные списания.`,
-    }
+    return { tone: 'watch' as const, delta: Math.abs(delta), direction: 'down' as const }
   }, [chartData])
 
   const lastRow = chartData.length > 0 ? chartData[chartData.length - 1] : null
@@ -70,7 +69,21 @@ export function CashflowPulse({
               }`}
             >
               <Icon name="insights" className="mt-0.5 flex-shrink-0 text-lg opacity-90" />
-              <span>{annotation.text}</span>
+              <span>
+                {annotation.direction === 'neutral' ? (
+                  'Чистый поток стабилен относительно прошлого месяца.'
+                ) : annotation.direction === 'up' ? (
+                  <>
+                    Чистый денежный поток улучшился примерно на{' '}
+                    <MoneyAmount value={annotation.delta} className="inline-flex font-semibold text-inherit" /> к прошлому месяцу.
+                  </>
+                ) : (
+                  <>
+                    Чистый поток сжался примерно на{' '}
+                    <MoneyAmount value={annotation.delta} className="inline-flex font-semibold text-inherit" /> — проверьте крупные списания.
+                  </>
+                )}
+              </span>
             </div>
           )}
         </div>
@@ -101,7 +114,7 @@ export function CashflowPulse({
                 <CartesianGrid strokeDasharray="3 12" stroke={theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.22)'} vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: axisMuted }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: axisMuted }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [`${v.toLocaleString('ru-BY')} BYN`]} />
+                <Tooltip contentStyle={tipStyle} formatter={(v: number) => [formatMoneyAmount(v)]} />
                 <Area
                   type="natural"
                   dataKey="income"
@@ -144,7 +157,7 @@ export function CashflowPulse({
             <span className="text-on-surface-variant/90">
               Последний месяц: чистый поток{' '}
               <strong className="text-on-surface">
-                {(lastRow.income - lastRow.expense).toLocaleString('ru-BY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} BYN
+                <MoneyAmount value={lastRow.income - lastRow.expense} className="inline-flex font-semibold text-inherit" />
               </strong>
             </span>
           )}

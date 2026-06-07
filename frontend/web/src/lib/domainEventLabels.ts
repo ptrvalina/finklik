@@ -1,4 +1,4 @@
-import { formatMoney } from './formatMoney'
+import { formatMoneyAmount } from './formatMoney'
 
 type DomainEvent = {
   event_type: string
@@ -10,7 +10,7 @@ type DomainEvent = {
 export function domainEventToActivityLabel(ev: DomainEvent): { title: string; detail?: string } {
   const p = ev.payload ?? {}
   const desc = typeof p.description === 'string' ? p.description : undefined
-  const amount = p.amount != null ? formatMoney(p.amount as number | string) : null
+  const amount = p.amount != null ? formatMoneyAmount(p.amount as number | string) : null
   const source = typeof p.source === 'string' ? p.source : ''
 
   switch (ev.event_type) {

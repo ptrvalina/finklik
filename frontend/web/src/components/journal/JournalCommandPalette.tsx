@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
+import MoneyAmount from '../ui/MoneyAmount'
 
 type Tx = { id: string; description?: string | null; transaction_date?: string; amount?: number | string }
 
@@ -156,8 +157,8 @@ export function JournalCommandPalette({
                 }}
               >
                 <span className="font-medium text-on-surface line-clamp-1">{tx.description || '—'}</span>
-                <span className="text-xs text-on-surface-variant">
-                  {tx.transaction_date} · {tx.amount} BYN
+                <span className="text-xs text-on-surface-variant inline-flex flex-wrap items-baseline gap-1">
+                  {tx.transaction_date} · <MoneyAmount value={tx.amount} className="inline-flex text-xs" symbolClassName="h-[0.65em] w-[0.55em] shrink-0" />
                 </span>
               </button>
             ))

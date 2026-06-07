@@ -7,10 +7,8 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import { orgQueryKey } from '../lib/queryKeys'
 import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
-
-function fmt(n: any) {
-  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+import MoneyAmount from '../components/ui/MoneyAmount'
+import { CurrencyFieldLabel } from '../components/ui/CurrencyFieldLabel'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -510,14 +508,13 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex flex-shrink-0 flex-col items-end gap-2">
                         <p
-                          className={`font-headline text-sm font-extrabold ${
+                          className={`font-headline text-sm font-extrabold inline-flex items-baseline gap-1 ${
                             tx.type === 'income' ? 'text-emerald-700' : 'text-on-surface'
                           }`}
                         >
                           {tx.type === 'income' ? '+' : '−'}
-                          {fmt(tx.amount)}
+                          <MoneyAmount value={tx.amount} className="inline-flex text-inherit" symbolClassName="h-[0.65em] w-[0.55em] shrink-0" />
                         </p>
-                        <span className="text-[10px] text-on-surface-variant">BYN</span>
                         <div className="flex gap-1">
                           <button
                             type="button"
@@ -618,8 +615,10 @@ export default function TransactionsPage() {
                             tx.type === 'income' ? 'text-secondary' : 'text-on-surface'
                           }`}
                         >
-                          {tx.type === 'income' ? '+' : '−'}
-                          {fmt(tx.amount)} BYN
+                          <span className="inline-flex items-baseline justify-end gap-1">
+                            {tx.type === 'income' ? '+' : '−'}
+                            <MoneyAmount value={tx.amount} className="inline-flex text-inherit" />
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-center sm:px-6 sm:py-4">
                           <div className="flex flex-wrap items-center justify-center gap-1">
@@ -748,7 +747,7 @@ export default function TransactionsPage() {
               })}
             </div>
             <div>
-              <label className="label">Сумма (BYN)</label>
+              <label className="label"><CurrencyFieldLabel /></label>
               <input
                 type="number"
                 step="0.01"
