@@ -7,6 +7,7 @@ import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import { formatApiDetail } from '../utils/apiError'
 import { calmActionError } from '../i18n/messages.ru'
+import MoneyAmount from '../components/ui/MoneyAmount'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -284,17 +285,23 @@ export default function CounterpartiesPage() {
   }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Контрагенты</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Справочник партнёров и быстрый переход в журнал.</p>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-heading">Контрагенты</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">Партнёры, сальдо и быстрый переход в журнал.</p>
+        </div>
+        <div className="rounded-xl border border-outline/60 bg-surface-container-low px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В справочнике</p>
+          <p className="mt-1 font-headline text-2xl font-extrabold text-on-surface">{items.length}</p>
+        </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" className="btn-primary text-sm w-full sm:w-auto" onClick={openCreate}>
           <Icon name="add" className="text-lg" /> Добавить
         </button>
-        <button type="button" className="btn-secondary fc-btn-thumb w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
+        <button type="button" className="btn-secondary text-sm w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
           <Icon name="bolt" className="text-lg" /> По УНП
         </button>
       </div>
@@ -312,46 +319,36 @@ export default function CounterpartiesPage() {
       )}
 
       {frequent.length > 0 && (
-        <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Часто за неделю</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {frequent.map((cp) => {
-              const q = new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()
-              return (
-                <Link
-                  key={cp.id}
-                  to={`/accounting/journal?${q}`}
-                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-outline/60 bg-surface px-3 py-2 text-sm font-medium text-on-surface hover:border-primary/40"
-                >
-                  <span className="truncate max-w-[160px]">{cp.name}</span>
-                  <span className="text-[10px] text-on-surface-variant">→ учёт</span>
-                </Link>
-              )
-            })}
-          </div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Частые:</span>
+          {frequent.map((cp) => {
+            const q = new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()
+            return (
+              <Link
+                key={cp.id}
+                to={`/accounting/journal?${q}`}
+                className="inline-flex max-w-[180px] items-center gap-1 rounded-lg border border-outline/50 bg-surface px-2.5 py-1.5 text-xs font-medium text-on-surface hover:border-primary/40"
+              >
+                <span className="truncate">{cp.name}</span>
+                <Icon name="arrow_forward" className="text-sm text-on-surface-variant" />
+              </Link>
+            )
+          })}
         </div>
       )}
 
       <DataTableShell
         toolbar={
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-            <div className="min-w-0 flex-1">
-              <label className="label">Поиск по названию или УНП</label>
-              <div className="relative mt-1">
-                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
-                <input
-                  ref={searchRef}
-                  className="input min-h-11 rounded-xl pl-10"
-                  placeholder="Начните вводить название или УНП..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  aria-describedby="cp-search-hint"
-                />
-              </div>
-              <p id="cp-search-hint" className="mt-1.5 text-[10px] text-on-surface-variant">
-                Горячая клавиша <kbd className="rounded border border-outline/60 px-1">/</kbd> · Escape снимает выбор строк
-              </p>
-            </div>
+          <div className="relative flex-1 min-w-0">
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+            <input
+              ref={searchRef}
+              className="input min-h-11 w-full rounded-xl pl-10"
+              placeholder="Название или УНП…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Поиск контрагентов"
+            />
           </div>
         }
         bulkBar={
@@ -424,10 +421,21 @@ export default function CounterpartiesPage() {
                       <p className="font-mono text-xs text-on-surface-variant">
                         УНП {cp.unp} · {CP_KIND_LABEL[cp.cp_kind || 'both'] || cp.cp_kind}
                       </p>
-                      <p className="mt-1 text-xs text-on-surface-variant">
-                        Сальдо: {cp.balance_net ?? '0'} · Последняя оп.:{' '}
-                        {cp.last_transaction_date || '—'}{' '}
-                        {cp.last_transaction_amount != null ? `(${cp.last_transaction_amount})` : ''}
+                      <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-xs text-on-surface-variant">
+                        <span>
+                          Сальдо: <MoneyAmount value={cp.balance_net} emptyAsZero className="text-xs font-semibold text-on-surface" />
+                        </span>
+                        {cp.last_transaction_date ? (
+                          <span>
+                            · {cp.last_transaction_date}
+                            {cp.last_transaction_amount != null ? (
+                              <>
+                                {' '}
+                                (<MoneyAmount value={cp.last_transaction_amount} emptyAsZero className="text-xs" />)
+                              </>
+                            ) : null}
+                          </span>
+                        ) : null}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-on-surface-variant">
                         {cp.phone && (
@@ -490,10 +498,17 @@ export default function CounterpartiesPage() {
                         <p className="text-[10px] text-on-surface-variant">{CP_KIND_LABEL[cp.cp_kind || 'both']}</p>
                       </td>
                       <td className="px-4 py-3 font-mono text-sm text-on-surface-variant sm:px-6 sm:py-4">{cp.unp}</td>
-                      <td className="px-4 py-3 text-sm sm:px-6 sm:py-4">{cp.balance_net ?? '0'}</td>
+                      <td className="px-4 py-3 text-sm sm:px-6 sm:py-4">
+                        <MoneyAmount value={cp.balance_net} emptyAsZero className="font-semibold text-on-surface" />
+                      </td>
                       <td className="px-4 py-3 text-sm text-on-surface-variant sm:px-6 sm:py-4">
                         {cp.last_transaction_date || '—'}
-                        {cp.last_transaction_amount != null ? ` · ${cp.last_transaction_amount}` : ''}
+                        {cp.last_transaction_amount != null ? (
+                          <>
+                            {' · '}
+                            <MoneyAmount value={cp.last_transaction_amount} emptyAsZero className="text-sm" />
+                          </>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 sm:px-6 sm:py-4">
                         <div className="flex justify-end">

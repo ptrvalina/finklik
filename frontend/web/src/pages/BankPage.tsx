@@ -1,20 +1,14 @@
-import { useEffect, useState, lazy, Suspense, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { bankApi, reportsApi } from '../api/client'
+import { bankApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { FocusStrip } from '../components/shell/FocusStrip'
 import { orgQueryKey } from '../lib/queryKeys'
 import { calmError } from '../i18n/messages.ru'
-import { useThemeStore } from '../store/themeStore'
 import MoneyAmount from '../components/ui/MoneyAmount'
 import { CurrencyFieldLabel } from '../components/ui/CurrencyFieldLabel'
-
-const CashflowPulse = lazy(async () => {
-  const m = await import('../components/dashboard/CashflowPulse')
-  return { default: m.CashflowPulse }
-})
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -26,11 +20,10 @@ function Icon({ name, filled, className = '' }: { name: string; filled?: boolean
 
 type BankAccount = { id: string; bank_name: string; bank_bic: string; account_number: string; currency: string; is_primary: boolean; is_active: boolean; color: string }
 type BankInfo = { name: string; bic: string; color: string }
-type Tab = 'overview' | 'accounts' | 'payments' | 'reconciliation'
+type Tab = 'overview' | 'accounts' | 'reconciliation'
 
 export default function BankPage() {
   const qc = useQueryClient()
-  const theme = useThemeStore((s) => s.theme)
   const bankYear = new Date().getFullYear()
   const [tab, setTab] = useState<Tab>('overview')
   const [showAddAccount, setShowAddAccount] = useState(false)
@@ -77,34 +70,6 @@ export default function BankPage() {
     queryFn: () => bankApi.reconciliation(recDateFrom, recDateTo).then((r) => r.data),
     enabled: tab === 'reconciliation',
   })
-  const { data: summaryData } = useQuery({
-    queryKey: orgQueryKey(['monthly-summary-bank', bankYear]),
-    queryFn: () => reportsApi.monthlySummary(bankYear).then((r) => r.data),
-    staleTime: 120_000,
-  })
-
-  const chartData = useMemo(
-    () =>
-      (summaryData?.months ?? [])
-        .filter((m: { income?: number; expense?: number }) => (m.income ?? 0) > 0 || (m.expense ?? 0) > 0)
-        .map((m: { label: string; income: number; expense: number }) => ({
-          month: m.label,
-          income: m.income,
-          expense: m.expense,
-        })),
-    [summaryData],
-  )
-  const tipStyle = useMemo(
-    () => ({
-      background: theme === 'dark' ? 'rgba(12,24,36,0.94)' : 'rgba(255,255,255,0.96)',
-      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(226,232,240,0.9)',
-      borderRadius: 16,
-      fontSize: 13,
-      color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
-    }),
-    [theme],
-  )
-  const axisMuted = '#64748b'
 
   const addAccountMutation = useMutation({
     mutationFn: () => bankApi.createAccount(accountForm),
@@ -204,19 +169,24 @@ export default function BankPage() {
   const tabItems: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', icon: 'monitoring', label: 'Обзор' },
     { key: 'accounts', icon: 'account_balance', label: 'Счета' },
-    { key: 'payments', icon: 'payments', label: 'Платежи' },
     { key: 'reconciliation', icon: 'compare_arrows', label: 'Сверка' },
   ]
 
   return (
     <>
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Банк</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Движение денег: баланс, выписка и сверка с журналом.</p>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-heading">Банк</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">Баланс, выписка и сверка с журналом.</p>
+        </div>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">На счетах</p>
+          <MoneyAmount value={balanceData?.balance} emptyAsZero className="mt-1 font-headline text-2xl font-extrabold text-primary" />
+        </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap justify-end gap-2">
+      <div className="mb-3 flex flex-wrap justify-end gap-2">
         <button type="button" className="btn-primary text-sm w-full sm:w-auto" onClick={() => setShowPayment(true)}>
           <Icon name="send" className="text-lg" /> Новый платёж
         </button>
@@ -270,30 +240,7 @@ export default function BankPage() {
 
       {/* Overview */}
       {tab === 'overview' && (
-        <div className="space-y-5 sm:space-y-6">
-          <div className="relative overflow-hidden rounded-2xl border border-outline/60 bg-surface p-6 shadow-sm sm:p-8">
-            <h2 className="font-headline text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
-              У вас{' '}
-              <MoneyAmount value={balanceData?.balance} emptyAsZero className="text-primary font-headline text-xl font-extrabold sm:text-2xl" />{' '}
-              на {accounts.length}{' '}
-              {accounts.length === 1 ? 'подключённом счёте' : 'подключённых счетах'}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-              Сверка выписки с журналом снижает расхождения перед отчётностью.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button type="button" className="btn-primary min-h-10 px-4 text-sm font-bold" onClick={() => setShowPayment(true)}>
-                Новый платёж
-              </button>
-              <button type="button" className="btn-secondary min-h-10 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
-                Импорт выписки
-              </button>
-              <Link to="/accounting/journal" className="btn-secondary min-h-10 px-4 text-sm font-bold">
-                Журнал
-              </Link>
-            </div>
-          </div>
-
+        <div className="mt-3 space-y-4">
           {accounts.length > 0 && (
             <div className="-mx-1 flex gap-3 overflow-x-auto pb-2">
               {accounts.map((acc) => (
@@ -446,52 +393,6 @@ export default function BankPage() {
                 Подтвердить
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payments */}
-      {tab === 'payments' && (
-        <div className="glass-card w-full max-w-lg rounded-2xl p-5 sm:p-8">
-          <h2 className="mb-6 font-headline text-lg font-bold text-on-surface">Новый платёж</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="label">Получатель</label>
-              <input
-                className="input min-h-11 rounded-xl"
-                value={paymentForm.recipient_name}
-                onChange={(e) => setPaymentForm((f) => ({ ...f, recipient_name: e.target.value }))}
-                placeholder="ООО Ромашка"
-              />
-            </div>
-            <div>
-              <label className="label"><CurrencyFieldLabel /></label>
-              <input
-                type="number"
-                step="0.01"
-                inputMode="decimal"
-                className="input min-h-11 rounded-xl"
-                value={paymentForm.amount}
-                onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="label">Назначение</label>
-              <input
-                className="input min-h-11 rounded-xl"
-                value={paymentForm.description}
-                onChange={(e) => setPaymentForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Оплата по договору..."
-              />
-            </div>
-            <button
-              type="button"
-              className="btn-primary min-h-12 w-full"
-              disabled={!paymentForm.amount || !paymentForm.recipient_name || !paymentForm.description || paymentMutation.isPending}
-              onClick={() => paymentMutation.mutate()}
-            >
-              <Icon name="send" /> {paymentMutation.isPending ? 'Отправляем...' : 'Отправить платёж'}
-            </button>
           </div>
         </div>
       )}

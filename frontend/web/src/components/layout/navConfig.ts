@@ -1,4 +1,4 @@
-/** Business-first IA — Главная / Деньги / Отчётность / Команда / Клиенты / Настройки. */
+/** Business-first IA — Главная / Банк / Отчётность / Команда / Контрагенты / Настройки. */
 
 export type ZoneId = 'today' | 'money' | 'reporting' | 'team' | 'clients' | 'settings'
 
@@ -11,10 +11,10 @@ export type ZoneMeta = {
 
 export const ZONES: ZoneMeta[] = [
   { id: 'today', label: 'Главная', icon: 'hub', defaultTo: '/' },
-  { id: 'money', label: 'Деньги', icon: 'payments', defaultTo: '/accounting/journal' },
+  { id: 'money', label: 'Банк', icon: 'account_balance', defaultTo: '/bank' },
   { id: 'reporting', label: 'Отчётность', icon: 'assignment_turned_in', defaultTo: '/reports' },
   { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/employees' },
-  { id: 'clients', label: 'Клиенты', icon: 'handshake', defaultTo: '/counterparties' },
+  { id: 'clients', label: 'Контрагенты', icon: 'handshake', defaultTo: '/counterparties' },
   { id: 'settings', label: 'Настройки', icon: 'settings', defaultTo: '/settings' },
 ]
 
@@ -37,17 +37,17 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'today',
     label: 'Главная',
     items: [
-      { to: '/', label: 'Обзор', icon: 'hub', end: true, description: 'Деньги, риск, следующий шаг' },
+      { to: '/', label: 'Обзор', icon: 'hub', end: true, description: 'Баланс, риски и ближайшие сроки' },
       { to: '/inbox', label: 'Очередь', icon: 'inbox', end: true, description: 'Входящие и согласования' },
       { to: '/operations', label: 'Все задачи', icon: 'bolt', end: true, description: 'Полная лента исполнения' },
     ],
   },
   {
     id: 'money',
-    label: 'Деньги',
+    label: 'Банк',
     items: [
+      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Баланс, выписка и платежи' },
       { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Операции и проводки' },
-      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Выписка и платежи' },
       { to: '/scan', label: 'Сканер', icon: 'document_scanner', end: true, description: 'Первичные документы' },
       { to: '/documents', label: 'Документы', icon: 'folder', end: true, description: 'Счета и акты' },
     ],
@@ -70,9 +70,9 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: 'clients',
-    label: 'Клиенты',
+    label: 'Контрагенты',
     items: [
-      { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true, description: 'Справочник партнёров' },
+      { to: '/counterparties', label: 'Справочник', icon: 'handshake', end: true, description: 'Партнёры, УНП и сальдо' },
     ],
   },
   {
@@ -148,9 +148,9 @@ export function flattenNavForSheetWithAssistant(items: NavItem[]) {
 
 export const MOBILE_BAR_ITEMS = [
   { to: '/', label: 'Главная', icon: 'hub', end: true },
-  { to: '/accounting/journal', label: 'Деньги', icon: 'payments' },
+  { to: '/bank', label: 'Банк', icon: 'account_balance' },
   { to: '/reports', label: 'Отчётность', icon: 'assignment_turned_in' },
-  { to: '/counterparties', label: 'Клиенты', icon: 'handshake', end: true },
+  { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
 ]
 
 export function getMobileBarItemsForRole(role?: string | null) {
@@ -159,8 +159,8 @@ export function getMobileBarItemsForRole(role?: string | null) {
     return [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/workspace/queues', label: 'Очереди', icon: 'all_inbox', end: true },
-      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book' },
-      { to: '/counterparties', label: 'Клиенты', icon: 'handshake', end: true },
+      { to: '/bank', label: 'Банк', icon: 'account_balance' },
+      { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
     ]
   }
   if (r === 'manager') {

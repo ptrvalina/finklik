@@ -8,7 +8,7 @@ export const terminology = {
   nav: {
     home: 'Главная',
     executionFeed: 'Лента работы',
-    workspace: 'Клиенты',
+    workspace: 'Контрагенты',
     reports: 'Отчётность',
     accounting: 'Учёт',
     employees: 'Сотрудники',
