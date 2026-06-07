@@ -59,36 +59,24 @@ export default function EmployeesPage() {
     return list
   }, [employees, query, sortKey, sortDir])
 
-  const totalPayroll = employees.filter((e) => e.is_active).reduce((s, e) => s + Number(e.salary || 0), 0)
-
   function toggleSortDir() {
     setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
   }
 
+  function openDossier(id: string, edit = false) {
+    navigate(`/employees/dossier/${id}`, { state: edit ? { edit: true } : undefined })
+  }
+
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Link to="/employees" className="btn-ghost !px-0 !text-xs text-on-surface-variant">
-            <Icon name="arrow_back" className="text-sm" /> Команда
-          </Link>
-          <h1 className="page-heading mt-2">Сотрудники</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Список работников — нажмите на строку, чтобы открыть личное дело.
-          </p>
-        </div>
-        {tab === 'active' && employees.length > 0 ? (
-          <div className="rounded-xl border border-outline/60 bg-surface-container-low px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Фонд окладов</p>
-            <MoneyAmount value={totalPayroll} className="mt-1 font-headline text-2xl font-extrabold text-on-surface" />
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mb-4 flex flex-wrap justify-end gap-2">
-        <Link to="/employees/hire" className="btn-primary text-sm">
-          <Icon name="person_add" className="text-lg" /> Нанять
+      <div className="mb-4">
+        <Link to="/employees" className="btn-ghost !px-0 !text-xs text-on-surface-variant">
+          <Icon name="arrow_back" className="text-sm" /> Команда
         </Link>
+        <h1 className="page-heading mt-2">Сотрудники</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Список работников — откройте карточку для просмотра и корректировки данных.
+        </p>
       </div>
 
       <div className="mb-4 flex min-w-max gap-1 rounded-xl border border-outline/75 bg-surface-container-high p-1 sm:inline-flex">
@@ -97,7 +85,7 @@ export default function EmployeesPage() {
           onClick={() => setTab('active')}
           className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'active' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
         >
-          Работают {tab === 'active' ? rows.length : ''}
+          Работают
         </button>
         <button
           type="button"
@@ -154,12 +142,12 @@ export default function EmployeesPage() {
               description={
                 tab === 'fired'
                   ? 'Здесь появятся бывшие работники после оформления увольнения.'
-                  : 'Добавьте первого сотрудника через приём — от этого строятся зарплата и отчётность.'
+                  : 'Добавьте сотрудника через раздел «Приём» в команде.'
               }
               actions={
                 tab === 'active' ? (
-                  <Link to="/employees/hire" className="btn-primary min-h-11 px-5 text-sm">
-                    Нанять сотрудника
+                  <Link to="/employees/hire" className="btn-secondary min-h-11 px-5 text-sm">
+                    Перейти к приёму
                   </Link>
                 ) : undefined
               }
@@ -169,11 +157,11 @@ export default function EmployeesPage() {
           <>
             <ul className="divide-y divide-outline/10 lg:hidden">
               {rows.map((emp) => (
-                <li key={emp.id}>
+                <li key={emp.id} className="flex items-stretch">
                   <button
                     type="button"
-                    className="flex w-full gap-3 p-4 text-left transition hover:bg-surface-container-high"
-                    onClick={() => navigate(`/employees/dossier/${emp.id}`)}
+                    className="flex min-w-0 flex-1 gap-3 p-4 text-left transition hover:bg-surface-container-high"
+                    onClick={() => openDossier(emp.id)}
                   >
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                       <Icon name="person" className="text-xl text-primary" />
@@ -190,6 +178,14 @@ export default function EmployeesPage() {
                     </div>
                     <MoneyAmount value={emp.salary} className="shrink-0 text-sm font-bold" />
                   </button>
+                  <button
+                    type="button"
+                    className="flex w-12 shrink-0 items-center justify-center border-l border-outline/10 text-primary"
+                    aria-label="Редактировать"
+                    onClick={() => openDossier(emp.id, true)}
+                  >
+                    <Icon name="edit" className="text-xl" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -205,28 +201,51 @@ export default function EmployeesPage() {
                     <th className="px-4 py-3 text-center">Ижд.</th>
                     <th className="px-4 py-3 text-center">Инв.</th>
                     <th className="px-4 py-3">{tab === 'fired' ? 'Уволен' : 'Принят'}</th>
+                    <th className="px-4 py-3 w-12" />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((emp) => (
-                    <tr
-                      key={emp.id}
-                      className="cursor-pointer transition hover:bg-surface-container-high"
-                      onClick={() => navigate(`/employees/dossier/${emp.id}`)}
-                    >
-                      <td className="px-4 py-3 font-semibold text-on-surface">{emp.full_name}</td>
-                      <td className="px-4 py-3 text-on-surface-variant">{emp.position}</td>
-                      <td className="px-4 py-3 text-xs">{EMPLOYMENT_LABEL[employmentType(emp)]}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-on-surface-variant">
+                    <tr key={emp.id} className="group transition hover:bg-surface-container-high">
+                      <td
+                        className="cursor-pointer px-4 py-3 font-semibold text-on-surface"
+                        onClick={() => openDossier(emp.id)}
+                      >
+                        {emp.full_name}
+                      </td>
+                      <td className="cursor-pointer px-4 py-3 text-on-surface-variant" onClick={() => openDossier(emp.id)}>
+                        {emp.position}
+                      </td>
+                      <td className="cursor-pointer px-4 py-3 text-xs" onClick={() => openDossier(emp.id)}>
+                        {EMPLOYMENT_LABEL[employmentType(emp)]}
+                      </td>
+                      <td
+                        className="cursor-pointer px-4 py-3 text-right tabular-nums text-on-surface-variant"
+                        onClick={() => openDossier(emp.id)}
+                      >
                         {workHoursPerWeek(emp)} ч
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold">
+                      <td className="cursor-pointer px-4 py-3 text-right font-semibold" onClick={() => openDossier(emp.id)}>
                         <MoneyAmount value={emp.salary} className="inline-flex justify-end" />
                       </td>
-                      <td className="px-4 py-3 text-center tabular-nums">{totalDependents(emp) || '—'}</td>
-                      <td className="px-4 py-3 text-center">{emp.disability_group ?? '—'}</td>
-                      <td className="px-4 py-3 text-xs text-on-surface-variant">
+                      <td className="cursor-pointer px-4 py-3 text-center tabular-nums" onClick={() => openDossier(emp.id)}>
+                        {totalDependents(emp) || '—'}
+                      </td>
+                      <td className="cursor-pointer px-4 py-3 text-center" onClick={() => openDossier(emp.id)}>
+                        {emp.disability_group ?? '—'}
+                      </td>
+                      <td className="cursor-pointer px-4 py-3 text-xs text-on-surface-variant" onClick={() => openDossier(emp.id)}>
                         {tab === 'fired' ? emp.fire_date || '—' : emp.hire_date}
+                      </td>
+                      <td className="px-2 py-3">
+                        <button
+                          type="button"
+                          className="btn-ghost !p-2 opacity-60 group-hover:opacity-100"
+                          aria-label="Редактировать"
+                          onClick={() => openDossier(emp.id, true)}
+                        >
+                          <Icon name="edit" className="text-lg text-primary" />
+                        </button>
                       </td>
                     </tr>
                   ))}

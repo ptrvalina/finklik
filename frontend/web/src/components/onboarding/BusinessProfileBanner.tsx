@@ -7,6 +7,7 @@ import { orgQueryKey } from '../../lib/queryKeys'
 export default function BusinessProfileBanner() {
   const location = useLocation()
   const skip =
+    location.pathname !== '/' ||
     location.pathname.startsWith('/onboarding') ||
     location.pathname.startsWith('/login') ||
     location.pathname.startsWith('/register')
