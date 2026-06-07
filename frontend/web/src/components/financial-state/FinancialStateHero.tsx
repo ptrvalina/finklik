@@ -88,7 +88,7 @@ export default function FinancialStateHero({
         : state.document_completeness.pending_ocr > 0
           ? { to: '/scan', label: 'Разобрать сканы' }
           : state.compliance_state.pending_approvals > 0
-            ? { to: '/approvals', label: 'Согласования' }
+            ? { to: '/inbox?tab=approvals', label: 'Согласования' }
             : { to: '/operations', label: terminology.execution.executionFeed }
     return { risk, primaryCta }
   }, [state])
@@ -107,8 +107,8 @@ export default function FinancialStateHero({
   const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
 
   const dims = [
-    { label: 'Готовность', value: `${state.operational_readiness.score}%`, hint: state.operational_readiness.label },
-    { label: 'Первичка', value: `${state.document_completeness.score}%`, hint: state.document_completeness.summary },
+    { label: 'Операции', value: state.operational_readiness.label, hint: 'Готовность к закрытию периода' },
+    { label: 'Первичка', value: state.document_completeness.summary, hint: state.document_completeness.pending_ocr > 0 ? 'Есть документы на проверку' : 'Документы в порядке' },
     {
       label: terminology.nav.reports,
       value: snapshotReportingStatusRu(state.reporting_status.status),
@@ -169,8 +169,8 @@ export default function FinancialStateHero({
           <Link to={meta.primaryCta.to} className="btn-primary fc-btn-thumb text-sm">
             {meta.primaryCta.label}
           </Link>
-          <Link to="/control/state" className="btn-ghost text-xs font-semibold text-primary">
-            Подробнее о состоянии
+          <Link to="/bank" className="btn-ghost text-xs font-semibold text-primary">
+            Банк и выписки
           </Link>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { JournalCommandPalette } from '../components/journal/JournalCommandPalet
 import { JournalMobileVirtualList } from '../components/journal/JournalMobileVirtualList'
 import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
+import { WorkflowSidePanel, WorkflowCompletionBanner, WorkflowContinuityBar } from '../components/workflow'
 import { JournalSplitLayout } from '../components/journal/JournalSplitLayout'
 import { JournalEvidencePanel } from '../components/journal/JournalEvidencePanel'
 import { JournalTransactionPanel } from '../components/journal/JournalTransactionPanel'
@@ -25,7 +25,6 @@ import { loadJournalUiSession, saveJournalUiSession } from '../lib/journalUiSess
 import { orgQueryKey } from '../lib/queryKeys'
 import { useAuthStore } from '../store/authStore'
 import { useOperational } from '../context/OperationalContext'
-import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { JournalHotkeysHelp } from '../components/journal/JournalHotkeysHelp'
 
 /** Совместимость: прежний экспорт для тестов / импортов */
@@ -645,6 +644,7 @@ export default function Accounting() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric accounting-journal pb-24 lg:pb-8">
+      <WorkflowContinuityBar />
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-xl text-sm" onClick={() => setCommandOpen(true)}>
           <Icon name="keyboard_command_key" className="text-lg" /> Команды
@@ -652,9 +652,6 @@ export default function Accounting() {
         <button type="button" className="btn-ghost shrink-0 rounded-xl text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
           ?
         </button>
-        <Link to="/accounting/hub" className="btn-ghost shrink-0 rounded-xl text-xs">
-          <Icon name="apps" className="text-lg" /> Хаб
-        </Link>
         <button type="button" className="btn-secondary shrink-0 rounded-xl text-sm" onClick={downloadKudir}>
           КУДиР
         </button>
@@ -685,8 +682,6 @@ export default function Accounting() {
           <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{stats.issues}</p>
         </div>
       </div>
-
-      <FinancialStateHero compact className="mb-4 max-lg:hidden" />
 
       <JournalWorkspaceChrome
         workspaceFocus={workspaceFocus}

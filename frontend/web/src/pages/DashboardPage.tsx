@@ -1,15 +1,15 @@
 import { useMemo, lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi, reportsApi, bankApi, businessOsApi, teamApi } from '../api/client'
+import { dashboardApi, reportsApi, bankApi, teamApi } from '../api/client'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
-import { ExecutiveBriefing } from '../components/dashboard/ExecutiveBriefing'
-import ClientJourneyPanel from '../components/dashboard/ClientJourneyPanel'
 import WorkNowCard from '../components/dashboard/WorkNowCard'
-import DashboardFocusStrip from '../components/dashboard/DashboardFocusStrip'
-import { orgQueryKey } from '../lib/queryKeys'
+import DashboardBlockers from '../components/dashboard/DashboardBlockers'
+import FinancialStateHero from '../components/financial-state/FinancialStateHero'
+import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
+import DashboardTimeline from '../components/dashboard/DashboardTimeline'
 
 const CashflowPulse = lazy(async () => {
   const m = await import('../components/dashboard/CashflowPulse')
@@ -17,22 +17,11 @@ const CashflowPulse = lazy(async () => {
 })
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
-import { AIRecommendationPanel } from '../components/premium-os'
 import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
-import FinancialStateHero from '../components/financial-state/FinancialStateHero'
-import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
-import DashboardTimeline from '../components/dashboard/DashboardTimeline'
+import { orgQueryKey } from '../lib/queryKeys'
 
 function fmt(n: any) {
   return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return (
-    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-      {name}
-    </span>
-  )
 }
 
 export default function DashboardPage() {
@@ -72,19 +61,9 @@ export default function DashboardPage() {
     staleTime: 60_000,
   })
 
-  /** Остаток по счетам — главная цифра «сколько денег реально есть». Тихо падает на старом бэкенде. */
   const { data: bankBalance } = useQuery({
     queryKey: orgQueryKey('bank-balance-dashboard'),
     queryFn: () => bankApi.getBalance().then((r) => r.data),
-    enabled: !isManager,
-    retry: false,
-    staleTime: 60_000,
-  })
-
-  /** Снимок состояния бизнеса (новый API; при старом бэкенде запрос тихо падает — блок скрыт). */
-  const { data: businessState } = useQuery({
-    queryKey: orgQueryKey('business-state'),
-    queryFn: () => businessOsApi.getState().then((r) => r.data),
     enabled: !isManager,
     retry: false,
     staleTime: 60_000,
@@ -97,26 +76,20 @@ export default function DashboardPage() {
     staleTime: 120_000,
   })
 
-  const summaryMonths = useMemo(() => {
-    const rows = summaryData?.months ?? []
-    return rows.map((m: any) => ({
-      label: m.label,
-      income: Number(m.income ?? 0),
-      expense: Number(m.expense ?? 0),
-    }))
-  }, [summaryData])
+  const chartData = useMemo(
+    () =>
+      (summaryData?.months ?? [])
+        .filter((m: any) => m.income > 0 || m.expense > 0)
+        .map((m: any) => ({ month: m.label, income: m.income, expense: m.expense })),
+    [summaryData],
+  )
 
   const bankConnected = (((bankData as { accounts?: unknown[] } | undefined)?.accounts ?? []) as unknown[]).length > 0
   const rawBalance = (bankBalance as { balance?: number | string } | undefined)?.balance
   const cashOnHand = bankConnected && rawBalance != null && Number.isFinite(Number(rawBalance)) ? Number(rawBalance) : null
 
-  const chartData = (summaryData?.months ?? [])
-    .filter((m: any) => m.income > 0 || m.expense > 0)
-    .map((m: any) => ({ month: m.label, income: m.income, expense: m.expense }))
-
   const transactions = txData?.items ?? []
-  const draftCount = transactions.filter((t: any) => t.status === 'draft').length
-  const pendingOcr = Number(metrics?.documents_pending_ocr ?? 0)
+  const profileIncomplete = businessProfile ? !businessProfile.business_profile_completed : false
 
   const tipStyle = {
     background: theme === 'dark' ? 'rgba(12,24,36,0.94)' : 'rgba(255,255,255,0.96)',
@@ -133,14 +106,11 @@ export default function DashboardPage() {
   if (!isManager && isLoading) {
     return (
       <div className="fc-page-shell fc-page-shell-asymmetric">
-        <div className="mb-6 h-40 max-w-3xl rounded-[1.75rem]">
-          <CardSkeleton className="h-full border-0" />
-        </div>
-        <CardSkeleton className="mt-8 min-h-[140px]" />
-        <div className="mt-8 grid gap-4 lg:grid-cols-12">
-          <CardSkeleton className="min-h-[220px] lg:col-span-4" />
-          <CardSkeleton className="min-h-[220px] lg:col-span-8" />
-        </div>
+        <CardSkeleton className="min-h-[160px]" />
+        <CardSkeleton className="mt-6 min-h-[140px]" />
+        <CardSkeleton className="mt-6 min-h-[120px]" />
+        <CardSkeleton className="mt-6 min-h-[120px]" />
+        <CardSkeleton className="mt-6 min-h-[180px]" />
       </div>
     )
   }
@@ -158,16 +128,13 @@ export default function DashboardPage() {
     )
   }
 
-  const deadline = metrics?.next_tax_deadline
-  const daysLeft = deadline ? Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000) : null
-
   if (isManager) {
     return (
       <div className="fc-page-shell-tight">
         <div className="fc-hero">
           <div className="fc-hero-strip" aria-hidden />
           <h1 className="page-heading">Главная</h1>
-          <p className="mt-2 text-on-surface-variant">Виджет менеджера: новые задачи, сканы и отчёты команды.</p>
+          <p className="mt-2 text-on-surface-variant">Новые задачи, сканы и отчёты команды.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <Link to="/scan" className="card-elevated p-6 transition hover:-translate-y-0.5">
@@ -176,11 +143,11 @@ export default function DashboardPage() {
           </Link>
           <Link to="/planner" className="card-elevated p-6 transition hover:-translate-y-0.5">
             <p className="font-headline font-semibold">Создать задачу</p>
-            <p className="mt-1 text-sm text-on-surface-variant">Поручение собственнику/бухгалтеру</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Поручение собственнику или бухгалтеру</p>
           </Link>
           <Link to="/planner" className="card-elevated p-6 transition hover:-translate-y-0.5">
             <p className="font-headline font-semibold">Подготовить отчёт</p>
-            <p className="mt-1 text-sm text-on-surface-variant">Ответить на запрос в планере</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Ответить на запрос в планёре</p>
           </Link>
         </div>
       </div>
@@ -189,7 +156,6 @@ export default function DashboardPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric fc-scroll-region pb-24 lg:pb-10">
-      {/* Mobile Stitch balance hero */}
       <div className="fc-mobile-balance-hero lg:hidden">
         <p className="fc-mobile-balance-hero__label relative">Деньги на счетах</p>
         <p className="fc-mobile-balance-hero__amount relative">
@@ -206,114 +172,39 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* KPI strip — Stitch metric cards */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Деньги</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-            {cashOnHand != null ? fmt(cashOnHand) : '—'} <span className="text-sm font-bold text-on-surface-variant">BYN</span>
-          </p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">OCR</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{pendingOcr}</p>
-          <p className="text-[11px] text-on-surface-variant">{pendingOcr > 0 ? 'ждут проверки' : 'всё проверено'}</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{draftCount}</p>
-          <p className="text-[11px] text-on-surface-variant">в журнале</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Дедлайн</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-            {daysLeft != null ? daysLeft : '—'}
-          </p>
-          <p className="text-[11px] text-on-surface-variant">{daysLeft != null ? 'дней до налога' : 'нет срочных'}</p>
-        </div>
-      </div>
-
-      {/* Stitch dashboard grid: состояние слева, действия справа */}
-      <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
-        <div className="space-y-6 lg:col-span-8">
+      <div className="mx-auto max-w-3xl space-y-5 lg:space-y-6">
+        <div className="hidden lg:block">
           <FinancialStateHero cashOnHand={cashOnHand} />
-          <ReportingReadinessHero />
+        </div>
+        <WorkNowCard />
+        <DashboardBlockers />
+        <ReportingReadinessHero />
+        <div className="hidden sm:block">
           <DashboardTimeline transactions={transactions} />
         </div>
-        <div className="space-y-6 lg:col-span-4">
-          <WorkNowCard />
-          <DashboardFocusStrip
-            draftCount={draftCount}
-            pendingOcr={pendingOcr}
-            overdueCount={Number(businessState?.overdue_obligations_count ?? 0)}
-            daysLeft={daysLeft}
-            profileIncomplete={businessProfile ? !businessProfile.business_profile_completed : false}
-          />
-        </div>
       </div>
 
-      <OnboardingChecklist />
+      {profileIncomplete && <OnboardingChecklist />}
 
-      <DashboardDetailsPanel title="Аналитика, налоги и операции">
-      <ExecutiveBriefing metrics={metrics} months={summaryMonths} draftCount={draftCount} bankConnected={bankConnected} />
-
-      <div className="mt-8">
-        <ClientJourneyPanel metrics={metrics} transactions={transactions} />
-      </div>
-
-      <div className="mt-8">
-        <AIRecommendationPanel metrics={metrics} transactions={transactions} />
-      </div>
-
-      <div className="mt-6">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Денежный пульс</p>
-        <Suspense fallback={<div className="h-52 rounded-3xl border border-outline/30 bg-surface-container-low/40 animate-pulse dark:border-white/[0.06]" aria-hidden />}>
-          <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
-        </Suspense>
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="glass-card rounded-2xl p-6">
-          <h3 className="label mb-6 flex items-center gap-2">
-            <Icon name="calculate" className="text-lg text-primary" />
-            Налоги к уплате
-          </h3>
-          <div className="space-y-5">
-            {[
-              { name: 'УСН 6%', amount: metrics?.tax_usn_quarter ?? 0, due: true },
-              { name: 'НДС (0/10/20%)', amount: metrics?.tax_vat_month ?? 0, due: true },
-              { name: 'ФСЗН 34%', amount: metrics?.tax_fsszn_quarter ?? 0, due: false },
-            ].map((tax) => (
-              <div key={tax.name}>
-                <div className="mb-2 flex justify-between text-sm">
-                  <span className="font-medium text-on-surface">{tax.name}</span>
-                  <span className="font-bold text-on-surface">{fmt(tax.amount)}</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
-                  <div className={`h-full rounded-full ${tax.due ? 'bg-error' : 'bg-primary'}`} style={{ width: tax.due ? '70%' : '100%' }} />
-                </div>
-                <p className="mt-1 text-[10px] text-on-surface-variant">{tax.due ? 'К уплате' : 'Уплачен'}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {deadline && (
-          <div className="glass-card rounded-2xl border-l-4 border-l-primary/50 p-6">
-            <div className="mb-3 flex items-center gap-3">
-              <Icon name="event" filled className="text-primary" />
-              <span className="text-sm font-bold text-primary">Ближайший дедлайн</span>
-            </div>
-            <p className="font-headline text-2xl font-extrabold text-on-surface">{deadline}</p>
-            {daysLeft !== null && (
-              <p className="mt-1 text-xs text-on-surface-variant">
-                {daysLeft} {daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'} осталось
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-      </DashboardDetailsPanel>
+      {chartData.length > 0 && (
+        <DashboardDetailsPanel title="Денежный пульс и налоги">
+          <Suspense
+            fallback={
+              <div
+                className="h-52 animate-pulse rounded-3xl border border-outline/30 bg-surface-container-low/40 dark:border-white/[0.06]"
+                aria-hidden
+              />
+            }
+          >
+            <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
+          </Suspense>
+          {metrics?.next_tax_deadline && (
+            <p className="mt-4 text-sm text-on-surface-variant">
+              Ближайший налоговый срок: <span className="font-semibold text-on-surface">{metrics.next_tax_deadline}</span>
+            </p>
+          )}
+        </DashboardDetailsPanel>
+      )}
     </div>
   )
 }

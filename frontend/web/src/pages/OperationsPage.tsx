@@ -10,7 +10,6 @@ import OperationsProgressStrip from '../components/operations/OperationsProgress
 import { WorkPackCard } from '../components/operations/WorkPackCard'
 import { orgQueryKey } from '../lib/queryKeys'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
-import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { executionRiskIfIgnored } from '../lib/executionPresentation'
 import { markOperationsSeen } from '../lib/pilotProgress'
 import { useOperational } from '../context/OperationalContext'
@@ -303,10 +302,7 @@ export default function OperationsPage() {
           </button>
         )}
         <Link to="/inbox" className="btn-secondary text-sm">
-          Входящие
-        </Link>
-        <Link to="/approvals" className="btn-secondary text-sm">
-          Согласования
+          Очередь
         </Link>
       </div>
 
@@ -352,15 +348,10 @@ export default function OperationsPage() {
       )}
 
       <div className={!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator') ? 'mt-8 sm:mt-0' : ''}>
-      {!isLoading && !isError && (
-        <div className="mb-6">
-          <FinancialStateHero compact />
-        </div>
-      )}
       {!isLoading && !isError && trustData && showDiagnostics && (
         <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
           <summary className="cursor-pointer font-medium text-on-surface/90">
-            Надёжность и фоновые процессы
+            Диагностика и фоновые процессы
           </summary>
           <div className="mt-3 space-y-4 text-on-surface-variant">
             <div>

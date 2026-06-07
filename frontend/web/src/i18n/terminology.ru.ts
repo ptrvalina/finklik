@@ -30,10 +30,10 @@ export const terminology = {
 
   execution: {
     financialState: 'Состояние бизнеса',
-    financialStateShort: 'Финансовое состояние',
+    financialStateShort: 'Состояние бизнеса',
     processSummary: 'Сводка процессов',
     workPack: 'Пакет задач',
-    trustSurface: 'Надёжность системы',
+    trustSurface: 'Диагностика системы',
     reportingReadiness: 'Готовность отчётности',
     operationalIssues: 'Требует внимания',
     aiSuggestion: 'Подсказка системы',

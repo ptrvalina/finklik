@@ -1,6 +1,6 @@
-/** Execution-first IA — NOW / MONEY / REPORTING / TEAM / CONTROL. */
+/** Business-first IA — СЕГОДНЯ / ДЕНЬГИ / ОТЧЁТНОСТЬ / КОМАНДА / НАСТРОЙКИ. */
 
-export type ZoneId = 'now' | 'money' | 'reporting' | 'team' | 'control'
+export type ZoneId = 'today' | 'money' | 'reporting' | 'team' | 'settings'
 
 export type ZoneMeta = {
   id: ZoneId
@@ -10,13 +10,12 @@ export type ZoneMeta = {
   defaultTo: string
 }
 
-/** Stitch sidebar: только 5 зон, подразделы — в header tabs. */
 export const ZONES: ZoneMeta[] = [
-  { id: 'now', label: 'Сейчас', icon: 'hub', defaultTo: '/' },
-  { id: 'money', label: 'Деньги', icon: 'payments', defaultTo: '/accounting/hub' },
+  { id: 'today', label: 'Сегодня', icon: 'hub', defaultTo: '/' },
+  { id: 'money', label: 'Деньги', icon: 'payments', defaultTo: '/accounting/journal' },
   { id: 'reporting', label: 'Отчётность', icon: 'assignment_turned_in', defaultTo: '/reports' },
-  { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/planner' },
-  { id: 'control', label: 'Контроль', icon: 'monitoring', defaultTo: '/control/state' },
+  { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/employees' },
+  { id: 'settings', label: 'Настройки', icon: 'settings', defaultTo: '/settings' },
 ]
 
 export type NavFlyoutItem = { to: string; label: string }
@@ -38,36 +37,29 @@ export type NavGroup = {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    id: 'now',
-    label: 'Сейчас',
+    id: 'today',
+    label: 'Сегодня',
     items: [
       {
         to: '/',
         label: 'Главная',
         icon: 'hub',
         end: true,
-        description: 'Фокус дня, состояние, следующий шаг',
-      },
-      {
-        to: '/operations',
-        label: 'Лента работы',
-        icon: 'bolt',
-        end: true,
-        description: 'Исполнение и приоритеты',
+        description: 'Деньги, риск, следующий шаг',
       },
       {
         to: '/inbox',
-        label: 'Входящие',
+        label: 'Очередь',
         icon: 'inbox',
         end: true,
-        description: 'Запросы и поручения по организации',
+        description: 'Входящие и согласования',
       },
       {
-        to: '/approvals',
-        label: 'Согласования',
-        icon: 'approval',
+        to: '/operations',
+        label: 'Все задачи',
+        icon: 'bolt',
         end: true,
-        description: 'Ожидающие подтверждения',
+        description: 'Полная лента исполнения',
       },
     ],
   },
@@ -76,19 +68,17 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Деньги',
     items: [
       {
-        to: '/accounting/hub',
-        label: 'Учёт',
+        to: '/accounting/journal',
+        label: 'Журнал',
         icon: 'menu_book',
         end: true,
-        description: 'Журнал, банк, документы, план счетов',
+        description: 'Операции и проводки',
         flyout: [
-          { to: '/accounting/journal', label: 'Журнал операций' },
           { to: '/bank', label: 'Банк' },
+          { to: '/scan', label: 'Сканер' },
           { to: '/documents', label: 'Документы' },
           { to: '/counterparties', label: 'Контрагенты' },
-          { to: '/accounting/chart', label: 'План счетов' },
           { to: '/accounting/fixed-assets', label: 'Основные средства' },
-          { to: '/scan', label: 'Сканер' },
         ],
       },
     ],
@@ -101,11 +91,8 @@ export const NAV_GROUPS: NavGroup[] = [
         to: '/reports',
         label: 'Отчёты',
         icon: 'assignment_turned_in',
-        description: 'Готовность, блокеры, подача',
-        flyout: [
-          { to: '/calendar', label: 'Календарь' },
-          { to: '/employees', label: 'Кадры и ФСЗН' },
-        ],
+        description: 'Готовность и подача',
+        flyout: [{ to: '/calendar', label: 'Календарь' }],
       },
     ],
   },
@@ -113,6 +100,12 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'team',
     label: 'Команда',
     items: [
+      {
+        to: '/employees',
+        label: 'Сотрудники',
+        icon: 'badge',
+        description: 'Кадры, зарплата, ФСЗН',
+      },
       {
         to: '/planner',
         label: 'Планёр',
@@ -122,61 +115,59 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: 'control',
-    label: 'Контроль',
+    id: 'settings',
+    label: 'Настройки',
     items: [
       {
-        to: '/control/state',
-        label: 'Контроль',
-        icon: 'monitoring',
-        description: 'Состояние, надёжность, настройки',
+        to: '/settings',
+        label: 'Настройки',
+        icon: 'settings',
+        end: true,
+        description: 'Профиль, интеграции, команда',
         flyout: [
-          { to: '/control/state', label: 'Финансовое состояние' },
-          { to: '/control/trust', label: 'Надёжность' },
+          { to: '/accounting/chart', label: 'План счетов' },
           { to: '/analytics', label: 'Аналитика' },
-          { to: '/settings', label: 'Настройки' },
+          { to: '/assistant', label: 'Консультант' },
         ],
       },
     ],
   },
 ]
 
-const MANAGER_ALLOWED = new Set(['/', '/operations', '/scan', '/planner', '/inbox'])
+const MANAGER_ALLOWED = new Set(['/', '/inbox', '/operations', '/scan', '/planner'])
 
 function filterNavGroups(groups: NavGroup[], allowed: Set<string>): NavGroup[] {
   return groups
     .map((g) => ({
       ...g,
       items: g.items.filter(
-        (i) =>
-          allowed.has(i.to) ||
-          (i.flyout?.some((f) => allowed.has(f.to)) ?? false),
+        (i) => allowed.has(i.to) || (i.flyout?.some((f) => allowed.has(f.to)) ?? false),
       ),
     }))
     .filter((g) => g.items.length > 0)
 }
 
 function augmentWorkspaceNav(groups: NavGroup[]): NavGroup[] {
-  const idx = groups.findIndex((g) => g.id === 'team')
+  const idx = groups.findIndex((g) => g.id === 'today')
   if (idx < 0) return groups
-  const team = groups[idx]
-  if (team.items.some((i) => i.to === '/workspace')) return groups
+  const today = groups[idx]
+  if (today.items.some((i) => i.to === '/workspace/queues')) return groups
   const wsItems: NavItem[] = [
+    {
+      to: '/workspace/queues',
+      label: 'Очереди клиентов',
+      icon: 'all_inbox',
+      end: true,
+      description: 'Сроки, OCR, входящие по всем организациям',
+    },
     {
       to: '/workspace',
       label: 'Клиенты',
       icon: 'corporate_fare',
-      description: 'Пространство бухгалтера',
-    },
-    {
-      to: '/workspace/queues',
-      label: 'Общие очереди',
-      icon: 'all_inbox',
-      end: true,
-      description: 'Входящие и согласования по всем клиентам',
+      description: 'Переключение организаций',
     },
   ]
-  return groups.map((g, i) => (i === idx ? { ...g, items: [...wsItems, ...team.items] } : g))
+  return groups.map((g, i) => (i === idx ? { ...g, items: [...wsItems, ...today.items] } : g))
 }
 
 export function getNavGroupsForRole(role?: string | null): NavGroup[] {
@@ -233,7 +224,7 @@ export const ASSISTANT_SHEET_ITEM = {
   label: 'Консультант',
   icon: 'smart_toy',
   end: true as const,
-  description: 'ИИ по учёту и отчётности',
+  description: 'Помощь по учёту и отчётности',
 }
 
 export function flattenNavForSheetWithAssistant(
@@ -242,27 +233,36 @@ export function flattenNavForSheetWithAssistant(
   return dedupeSheet([...flattenNavForSheet(items), ASSISTANT_SHEET_ITEM])
 }
 
-/** Мобильная панель: исполнение и учёт. */
 export const MOBILE_BAR_ITEMS = [
-  { to: '/', label: 'Главная', icon: 'hub', end: true },
-  { to: '/operations', label: 'Лента', icon: 'bolt', end: true },
-  { to: '/inbox', label: 'Входящие', icon: 'inbox', end: true },
-  { to: '/accounting/hub', label: 'Учёт', icon: 'menu_book' },
+  { to: '/', label: 'Сегодня', icon: 'hub', end: true },
+  { to: '/accounting/journal', label: 'Деньги', icon: 'menu_book' },
+  { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in' },
+  { to: '/inbox', label: 'Очередь', icon: 'inbox', end: true },
 ]
 
 export function getMobileBarItemsForRole(role?: string | null) {
-  if ((role || '').toLowerCase() !== 'manager') return MOBILE_BAR_ITEMS
-  return [
-    { to: '/', label: 'Главная', icon: 'hub', end: true },
-    { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
-    { to: '/planner', label: 'Планёр', icon: 'event_note' },
-  ]
+  const r = (role || '').toLowerCase()
+  if (r === 'accountant') {
+    return [
+      { to: '/workspace/queues', label: 'Очереди', icon: 'all_inbox', end: true },
+      { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
+      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book' },
+    ]
+  }
+  if (r === 'manager') {
+    return [
+      { to: '/', label: 'Сегодня', icon: 'hub', end: true },
+      { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
+      { to: '/planner', label: 'Планёр', icon: 'event_note' },
+    ]
+  }
+  return MOBILE_BAR_ITEMS
 }
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
 
 function pathInZone(pathname: string, zoneId: ZoneId): boolean {
-  if (zoneId === 'now') {
+  if (zoneId === 'today') {
     return (
       pathname === '/' ||
       pathname.startsWith('/operations') ||
@@ -280,16 +280,18 @@ function pathInZone(pathname: string, zoneId: ZoneId): boolean {
     )
   }
   if (zoneId === 'reporting') {
-    return pathname.startsWith('/reports') || pathname.startsWith('/calendar') || pathname.startsWith('/employees')
+    return pathname.startsWith('/reports') || pathname.startsWith('/calendar')
   }
   if (zoneId === 'team') {
-    return pathname.startsWith('/planner') || pathname.startsWith('/workspace')
+    return pathname.startsWith('/planner') || pathname.startsWith('/workspace') || pathname.startsWith('/employees')
   }
   return (
-    pathname.startsWith('/control') ||
-    pathname.startsWith('/analytics') ||
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/assistant')
+    pathname.startsWith('/assistant') ||
+    pathname.startsWith('/analytics') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/control') ||
+    pathname.startsWith('/notes')
   )
 }
 
@@ -297,12 +299,11 @@ export function getActiveZone(pathname: string): ZoneId {
   for (const z of ZONES) {
     if (pathInZone(pathname, z.id)) return z.id
   }
-  return 'now'
+  return 'today'
 }
 
 export type ZoneTab = { to: string; label: string; end?: boolean }
 
-/** Табы в header для активной зоны (Stitch top bar). */
 export function getZoneTabs(pathname: string, role?: string | null): ZoneTab[] {
   const zone = getActiveZone(pathname)
   const groups = getNavGroupsForRole(role)
@@ -319,9 +320,6 @@ export function getZoneTabs(pathname: string, role?: string | null): ZoneTab[] {
     } else {
       tabs.push({ to: item.to, label: item.label, end: item.end })
     }
-  }
-  if (zone === 'control' && (role || '').toLowerCase() !== 'manager') {
-    tabs.push({ to: '/assistant', label: 'Консультант', end: true })
   }
   const seen = new Set<string>()
   return tabs.filter((t) => {

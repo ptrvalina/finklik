@@ -49,7 +49,7 @@ function priorityTag(p?: string | null) {
   return null
 }
 
-export default function InboxPage() {
+export default function InboxPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const role = useAuthStore((s) => s.user?.role)
@@ -92,7 +92,8 @@ export default function InboxPage() {
   const urgent = items.filter((i) => i.priority === 'high' || i.priority === 'urgent')
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-6">
+    <div className={embedded ? 'pb-6' : 'fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-6'}>
+      {!embedded && (
       <div className="mb-4 grid grid-cols-3 gap-3">
         <div className="glass-card rounded-2xl p-4">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Открыто</p>
@@ -107,6 +108,7 @@ export default function InboxPage() {
           <p className="mt-1 text-sm font-semibold text-on-surface">{urgent.length > 0 ? 'Нужны действия' : 'Спокойная очередь'}</p>
         </div>
       </div>
+      )}
 
       {isLoading && <CardSkeleton className="min-h-[420px]" />}
       {isError && (
@@ -136,7 +138,7 @@ export default function InboxPage() {
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">search</span>
                 <input
                   className="input min-h-10 w-full rounded-xl pl-10 text-sm"
-                  placeholder="Search messages…"
+                  placeholder="Поиск…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />

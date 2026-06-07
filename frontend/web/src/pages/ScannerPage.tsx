@@ -8,7 +8,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
-import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
+import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace'
+import { WorkflowContinuityBar } from '../components/workflow'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useOcrAutosave } from '../hooks/useOcrAutosave'
 import {
@@ -19,11 +20,9 @@ import {
 } from '../lib/ocrCorrectionFields'
 import type { FieldRegion } from '../components/scanner/OcrPreviewOverlay'
 import { useOperational } from '../context/OperationalContext'
-import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import { useAuthStore } from '../store/authStore'
 import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
 import { useMinWidthLg } from '../lib/useMinWidthLg'
-import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -437,22 +436,13 @@ export default function ScannerPage() {
       )}
 
     <div className="fc-page-shell fc-page-shell-asymmetric scanner-page pb-20 lg:pb-8">
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В очереди</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{reviewCount}</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">История</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface">{history.length}</p>
-        </div>
-        <div className="glass-card col-span-2 rounded-2xl p-4 sm:col-span-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Режим</p>
-          <p className="mt-1 text-sm font-semibold text-on-surface">
-            {reviewCount > 0 ? 'Пакетная проверка OCR' : 'Загрузка и распознавание'}
-          </p>
-        </div>
-      </div>
+      <WorkflowContinuityBar />
+      <p className="mb-4 text-sm text-on-surface-variant">
+        {reviewCount > 0
+          ? `Проверить документов: ${reviewCount}`
+          : 'Загрузите первичку или выберите файл из истории'}
+        {history.length > 0 ? ` · В истории: ${history.length}` : ''}
+      </p>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
@@ -462,7 +452,6 @@ export default function ScannerPage() {
           <Icon name="receipt_long" className="text-lg" /> Журнал
         </Link>
       </div>
-      <FinancialStateHero compact className="mb-4 max-lg:hidden" />
 
       {batchSummary && batchSummary.total > 1 && (
         <div className="fc-surface-calm mb-4 flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -759,9 +748,8 @@ export default function ScannerPage() {
           })()}
         </div>
 
-        {/* Right: OCR results + readiness */}
+        {/* Right: OCR results */}
         <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
-          <ReportingReadinessHero />
           {scanResult && editDraft && (
             <div className="glass-card space-y-4 rounded-2xl p-4">
               <OcrReviewBanner

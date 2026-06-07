@@ -52,7 +52,7 @@ function statusPillClass(tone: 'pending' | 'ready' | 'action') {
   return 'fc-status fc-status-pending'
 }
 
-export default function ApprovalsPage() {
+export default function ApprovalsPage({ embedded = false }: { embedded?: boolean }) {
   const qc = useQueryClient()
   const role = useAuthStore((s) => s.user?.role)
   const manage = canResolveApprovals(role)
@@ -86,7 +86,8 @@ export default function ApprovalsPage() {
   const urgentCount = items.filter((i) => i.subject_kind === 'payment' || i.subject_kind === 'report').length
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+    <div className={embedded ? 'pb-6' : 'fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10'}>
+      {!embedded && (
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="glass-card rounded-2xl p-5 sm:p-6">
           <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ожидают</p>
@@ -104,6 +105,7 @@ export default function ApprovalsPage() {
           <p className="mt-1 text-sm text-on-surface-variant">За неделю</p>
         </div>
       </div>
+      )}
 
       {isLoading && <CardSkeleton className="min-h-[120px]" />}
       {isError && (

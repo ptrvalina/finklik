@@ -88,7 +88,7 @@ export default function WorkspaceQueuesPage() {
         supporting: `${topApproval.organization_name}: ${topApproval.title}`,
         orgId: topApproval.organization_id,
         orgName: topApproval.organization_name,
-        path: '/approvals',
+        path: '/inbox?tab=approvals',
       }
     }
     return null
@@ -202,7 +202,7 @@ export default function WorkspaceQueuesPage() {
                   type="button"
                   className="btn-primary mt-3 min-h-10 text-sm"
                   disabled={activatingId === item.organization_id}
-                  onClick={() => void openClient(item.organization_id, item.organization_name, '/approvals')}
+                  onClick={() => void openClient(item.organization_id, item.organization_name, '/inbox?tab=approvals')}
                 >
                   {activatingId === item.organization_id ? 'Переключаем…' : 'Согласовать у клиента'}
                 </button>
