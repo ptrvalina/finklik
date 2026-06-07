@@ -18,14 +18,14 @@ export default function WorkNowCard() {
   const top = data?.top_action ?? items[0]
 
   if (isLoading) {
-    return <div className="fc-skeleton-pulse h-28 rounded-xl" />
+    return <div className="fc-skeleton-pulse h-24 rounded-xl" />
   }
 
   if (isError) {
     return (
-      <section className="rounded-xl border border-outline/30 bg-surface p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующий шаг</p>
-        <p className="mt-2 text-sm text-on-surface-variant">Не удалось загрузить задачи.</p>
+      <section className="rounded-xl border border-outline/30 bg-surface p-3.5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующее действие</p>
+        <p className="mt-2 text-sm text-on-surface-variant">Не удалось загрузить задачу.</p>
         <Link to="/inbox" className="btn-primary mt-3 inline-flex min-h-9 text-sm">
           Открыть очередь
         </Link>
@@ -35,14 +35,11 @@ export default function WorkNowCard() {
 
   if (!top) {
     return (
-      <section className="rounded-xl border border-outline/30 bg-surface p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующий шаг</p>
-        <p className="mt-2 text-sm text-on-surface-variant">Срочных задач нет — можно загрузить документ или проверить очередь.</p>
+      <section className="rounded-xl border border-outline/30 bg-surface p-3.5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующее действие</p>
+        <p className="mt-2 text-sm text-on-surface-variant">Срочных задач нет — можно загрузить документ или проверить очередь позже.</p>
         <Link to="/scan" className="btn-primary mt-3 inline-flex min-h-9 text-sm">
           Открыть сканер
-        </Link>
-        <Link to="/inbox" className="ml-3 inline-flex text-xs font-semibold text-primary hover:underline">
-          Очередь
         </Link>
       </section>
     )
@@ -51,9 +48,9 @@ export default function WorkNowCard() {
   const go = () => navigate(top.action_path || '/operations')
 
   return (
-    <section className="rounded-xl border border-outline/30 bg-surface p-4">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующий шаг</p>
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="rounded-xl border border-outline/30 bg-surface p-3.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Следующее действие</p>
+      <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="font-headline text-base font-bold leading-snug text-on-surface sm:text-lg">{top.title}</h3>
           {(top.context || top.ai_why) && (

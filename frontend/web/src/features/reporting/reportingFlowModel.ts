@@ -292,8 +292,8 @@ export function buildHomeReportingChecklist(data: CalmOverviewLike | undefined) 
     { label: 'Документы', done: !hasCode(['doc', 'ocr', 'первич', 'document', 'скан']) },
     { label: 'Журнал', done: !hasCode(['journal', 'журнал', 'операц', 'transaction']) },
     { label: 'Проверки', done: checksOk },
-    { label: 'Подпись', done: ['ready_to_submit', 'submitted', 'signed'].includes(rs) },
-    { label: 'Отправка', done: rs === 'submitted' },
+    { label: 'Подписать', done: ['ready_to_submit', 'submitted', 'signed'].includes(rs) },
+    { label: 'Отправить', done: rs === 'submitted' },
   ]
 }
 

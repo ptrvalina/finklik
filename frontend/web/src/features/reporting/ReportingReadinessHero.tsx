@@ -12,7 +12,7 @@ export default function ReportingReadinessHero() {
   })
 
   if (isLoading) {
-    return <div className="fc-skeleton-pulse h-28 rounded-xl" />
+    return <div className="fc-skeleton-pulse h-24 rounded-xl" />
   }
 
   const period = buildReportingPeriodNarrative(data)
@@ -20,21 +20,18 @@ export default function ReportingReadinessHero() {
   const ready = checklist.every((item) => item.done)
 
   return (
-    <section className="rounded-xl border border-outline/30 bg-surface p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-outline/30 bg-surface p-3.5">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Отчётность</p>
-          <p className="mt-1 font-headline text-base font-semibold text-on-surface">{period.headline}</p>
-          <p className="mt-0.5 text-sm text-on-surface-variant">
-            {ready ? 'Можно переходить к подписи и отправке.' : 'Закройте пункты чеклиста перед подачей.'}
-          </p>
+          <p className="mt-1 font-headline text-sm font-semibold text-on-surface">{period.headline}</p>
         </div>
-        <Link to="/reports" className="btn-secondary fc-btn-thumb shrink-0 self-start text-sm">
-          {ready ? 'Подать отчёт' : 'Открыть отчётность'}
+        <Link to="/reports" className="shrink-0 text-xs font-semibold text-primary hover:underline">
+          {ready ? 'Подать →' : 'Открыть →'}
         </Link>
       </div>
 
-      <ul className="mt-3 space-y-1.5 border-t border-outline/20 pt-3">
+      <ul className="mt-2.5 space-y-1 border-t border-outline/20 pt-2.5">
         {checklist.map((item) => (
           <li key={item.label} className="flex items-center gap-2 text-sm">
             <span
