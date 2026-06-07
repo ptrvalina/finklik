@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { operationsApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
-import { terminology } from '../../i18n/terminology.ru'
+import { formatMoney } from '../../lib/formatMoney'
 import { snapshotReportingStatusRu } from '../../lib/financialSnapshotLabels'
 
 type StateBlock = {
@@ -21,35 +21,11 @@ type StateBlock = {
   risk_level: string
 }
 
-type StatePrediction = {
-  id: string
-  horizon_days: number
-  message: string
-  affected_dimension: string
-  severity: 'info' | 'warning' | 'risk'
-}
-
-const SEVERITY_RANK: Record<string, number> = { risk: 3, warning: 2, info: 1 }
-
-/** Топ-прогноз: сначала по тяжести, затем по ближайшему горизонту. */
-function pickTopPrediction(predictions: StatePrediction[] | undefined): StatePrediction | null {
-  if (!predictions || predictions.length === 0) return null
-  return [...predictions].sort((a, b) => {
-    const sev = (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0)
-    if (sev !== 0) return sev
-    return a.horizon_days - b.horizon_days
-  })[0]
-}
-
-function fmtMoney(value: number): string {
-  return value.toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-const RISK_RU: Record<string, { headline: string; tone: 'ok' | 'warn' | 'risk' }> = {
-  low: { headline: 'Ситуация под контролем', tone: 'ok' },
-  medium: { headline: 'Есть темы для внимания', tone: 'warn' },
-  high: { headline: 'Нужны действия до дедлайнов', tone: 'warn' },
-  critical: { headline: 'Блокеры мешают отчётности', tone: 'risk' },
+const RISK_RU: Record<string, { label: string; tone: 'ok' | 'warn' | 'risk' }> = {
+  low: { label: 'Низкий', tone: 'ok' },
+  medium: { label: 'Средний', tone: 'warn' },
+  high: { label: 'Высокий', tone: 'warn' },
+  critical: { label: 'Критический', tone: 'risk' },
 }
 
 function toneClasses(tone: 'ok' | 'warn' | 'risk') {
@@ -62,13 +38,13 @@ export default function FinancialStateHero({
   compact,
   className = '',
   cashOnHand,
+  nextTaxDeadline,
   dashboardLite,
 }: {
   compact?: boolean
   className?: string
-  /** Остаток по счетам — главная цифра «сколько реально есть». Если не передан, показываем только поток. */
   cashOnHand?: number | null
-  /** На главной: без сетки измерений — blockers/readiness уже рядом. */
+  nextTaxDeadline?: string | null
   dashboardLite?: boolean
 }) {
   const { data, isLoading, isError } = useQuery({
@@ -80,36 +56,26 @@ export default function FinancialStateHero({
   })
 
   const state = data?.state as StateBlock | undefined
-  const topPrediction = pickTopPrediction(data?.predictions as StatePrediction[] | undefined)
 
-  const meta = useMemo(() => {
+  const riskMeta = useMemo(() => {
     if (!state) return null
-    const risk = RISK_RU[state.risk_level] ?? RISK_RU.medium
-    const primaryCta =
-      state.reporting_status.status === 'blocked' || state.reporting_status.status === 'at_risk'
-        ? { to: '/reports', label: 'Открыть отчётность' }
-        : state.document_completeness.pending_ocr > 0
-          ? { to: '/scan', label: 'Разобрать сканы' }
-          : state.compliance_state.pending_approvals > 0
-            ? { to: '/inbox?tab=approvals', label: 'Согласования' }
-            : { to: '/operations', label: terminology.execution.executionFeed }
-    return { risk, primaryCta }
+    return RISK_RU[state.risk_level] ?? RISK_RU.medium
   }, [state])
 
   if (isLoading) {
     return (
       <div
-        className={`animate-pulse rounded-[1.75rem] border border-outline/25 bg-surface-container-low/50 ${compact ? 'h-28' : 'h-36'} ${className}`}
+        className={`animate-pulse rounded-xl border border-outline/25 bg-surface-container-low/50 ${compact ? 'h-24' : 'h-28'} ${className}`}
       />
     )
   }
 
-  if (isError || !state || !meta) {
+  if (isError || !state || !riskMeta) {
     return (
-      <section className={`glass-card rounded-2xl p-5 sm:p-6 ${className}`}>
-        <p className="text-sm text-on-surface-variant">Не удалось загрузить состояние бизнеса.</p>
-        <Link to="/bank" className="btn-primary mt-3 inline-flex text-sm">
-          Банк и выписки
+      <section className={`rounded-xl border border-outline/30 bg-surface p-4 ${className}`}>
+        <p className="text-sm text-on-surface-variant">Не удалось загрузить остаток и движение денег.</p>
+        <Link to="/bank" className="mt-2 inline-flex text-xs font-semibold text-primary hover:underline">
+          Открыть банк
         </Link>
       </section>
     )
@@ -117,85 +83,59 @@ export default function FinancialStateHero({
 
   const monthlyNet = Number(state.cashflow_state.monthly_net ?? 0)
   const hasCash = cashOnHand != null && Number.isFinite(cashOnHand)
-
-  const dims = [
-    { label: 'Операции', value: state.operational_readiness.label, hint: 'Готовность к закрытию периода' },
-    { label: 'Первичка', value: state.document_completeness.summary, hint: state.document_completeness.pending_ocr > 0 ? 'Есть документы на проверку' : 'Документы в порядке' },
-    {
-      label: terminology.nav.reports,
-      value: snapshotReportingStatusRu(state.reporting_status.status),
-      hint: state.reporting_status.summary,
-    },
-  ]
+  const reportingLabel = snapshotReportingStatusRu(state.reporting_status.status)
 
   return (
     <section
-      className={`fc-execution-card p-5 sm:p-6 ${toneClasses(meta.risk.tone)} ${className}`}
-      aria-label={terminology.execution.financialStateShort}
+      className={`fc-execution-card p-4 ${toneClasses(riskMeta.tone)} ${className}`}
+      aria-label="Деньги"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-            {terminology.execution.financialStateShort}
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Деньги</p>
+
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <div>
+          <p className="text-[10px] text-on-surface-variant">На счетах</p>
+          <p className="font-headline text-2xl font-extrabold tabular-nums text-on-surface sm:text-3xl">
+            {hasCash ? formatMoney(cashOnHand) : '—'}
           </p>
-          <h2 className="mt-2 font-headline text-xl font-bold leading-snug text-on-surface sm:text-2xl">{meta.risk.headline}</h2>
-
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {hasCash ? (
-              <>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Деньги</span>
-                <span className="font-headline text-2xl font-extrabold tabular-nums text-on-surface sm:text-3xl">
-                  {fmtMoney(cashOnHand as number)} <span className="text-base font-bold text-on-surface-variant">BYN</span>
-                </span>
-                <span className={`text-xs font-semibold tabular-nums ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                  поток за месяц {monthlyNet >= 0 ? '+' : '−'}{fmtMoney(Math.abs(monthlyNet))}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Поток за месяц</span>
-                <span className={`font-headline text-2xl font-extrabold tabular-nums sm:text-3xl ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {monthlyNet >= 0 ? '+' : '−'}{fmtMoney(Math.abs(monthlyNet))} <span className="text-base font-bold text-on-surface-variant">BYN</span>
-                </span>
-              </>
-            )}
-          </div>
-
-          <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{state.cashflow_state.summary}</p>
-          {topPrediction && (
-            <p className="mt-2 flex items-start gap-1.5 text-xs text-on-surface-variant">
-              <span className="material-symbols-outlined text-sm leading-tight text-primary/80" aria-hidden>trending_up</span>
-              <span>
-                <span className="font-semibold text-on-surface">Прогноз (~{topPrediction.horizon_days} дн.):</span>{' '}
-                {topPrediction.message}
-              </span>
-            </p>
-          )}
-          {!compact && !dashboardLite && (
-            <p className="mt-2 text-xs text-on-surface-variant">
-              {terminology.execution.compliance}: {state.compliance_state.summary}
-            </p>
-          )}
         </div>
-        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-          <Link to={meta.primaryCta.to} className="btn-primary fc-btn-thumb text-sm">
-            {meta.primaryCta.label}
-          </Link>
-          <Link to="/bank" className="btn-ghost text-xs font-semibold text-primary">
-            Банк и выписки
-          </Link>
+        <div>
+          <p className="text-[10px] text-on-surface-variant">За месяц</p>
+          <p className={`text-lg font-bold tabular-nums ${monthlyNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            {formatMoney(monthlyNet, { signed: true })}
+          </p>
         </div>
       </div>
-      {!compact && !dashboardLite && (
-        <div className="mt-5 grid gap-3 border-t border-outline/20 pt-5 sm:grid-cols-3">
-          {dims.map((d) => (
-            <div key={d.label} className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">{d.label}</p>
-              <p className="mt-1 text-sm font-semibold text-on-surface">{d.value}</p>
-              <p className="mt-0.5 line-clamp-2 text-xs text-on-surface-variant">{d.hint}</p>
-            </div>
-          ))}
-        </div>
+
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant">
+        {nextTaxDeadline ? (
+          <span>
+            Налог к уплате: <span className="font-semibold text-on-surface">{nextTaxDeadline}</span>
+          </span>
+        ) : null}
+        <span>
+          Риск:{' '}
+          <span className={`font-semibold ${riskMeta.tone === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : riskMeta.tone === 'risk' ? 'text-red-600' : 'text-amber-700 dark:text-amber-400'}`}>
+            {riskMeta.label}
+          </span>
+        </span>
+        {!dashboardLite ? (
+          <span>
+            Отчётность: <span className="font-semibold text-on-surface">{reportingLabel}</span>
+          </span>
+        ) : null}
+      </div>
+
+      {!compact && state.compliance_state.overdue_obligations > 0 && (
+        <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+          Просрочено обязательств: {state.compliance_state.overdue_obligations}
+        </p>
+      )}
+
+      {!dashboardLite && (
+        <Link to="/bank" className="mt-3 inline-flex text-xs font-semibold text-primary hover:underline">
+          Банк и выписки →
+        </Link>
       )}
     </section>
   )

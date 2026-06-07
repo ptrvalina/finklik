@@ -1,7 +1,7 @@
 import { useMemo, lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi, reportsApi, bankApi, teamApi } from '../api/client'
 import { Link } from 'react-router-dom'
+import { dashboardApi, reportsApi, bankApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
@@ -10,19 +10,15 @@ import DashboardBlockers from '../components/dashboard/DashboardBlockers'
 import FinancialStateHero from '../components/financial-state/FinancialStateHero'
 import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
 import DashboardTimeline from '../components/dashboard/DashboardTimeline'
-
-const CashflowPulse = lazy(async () => {
-  const m = await import('../components/dashboard/CashflowPulse')
-  return { default: m.CashflowPulse }
-})
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import DashboardDetailsPanel from '../components/dashboard/DashboardDetailsPanel'
 import { orgQueryKey } from '../lib/queryKeys'
 
-function fmt(n: any) {
-  return Number(n || 0).toLocaleString('ru-BY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+const CashflowPulse = lazy(async () => {
+  const m = await import('../components/dashboard/CashflowPulse')
+  return { default: m.CashflowPulse }
+})
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
@@ -101,16 +97,16 @@ export default function DashboardPage() {
     backdropFilter: 'blur(12px)',
   }
 
-  const axisMuted = theme === 'dark' ? '#64748b' : '#64748b'
+  const axisMuted = '#64748b'
 
   if (!isManager && isLoading) {
     return (
       <div className="fc-page-shell fc-page-shell-asymmetric">
-        <CardSkeleton className="min-h-[160px]" />
-        <CardSkeleton className="mt-6 min-h-[140px]" />
-        <CardSkeleton className="mt-6 min-h-[120px]" />
-        <CardSkeleton className="mt-6 min-h-[120px]" />
-        <CardSkeleton className="mt-6 min-h-[180px]" />
+        <CardSkeleton className="min-h-[120px]" />
+        <CardSkeleton className="mt-4 min-h-[100px]" />
+        <CardSkeleton className="mt-4 min-h-[48px]" />
+        <CardSkeleton className="mt-4 min-h-[100px]" />
+        <CardSkeleton className="mt-4 min-h-[140px]" />
       </div>
     )
   }
@@ -156,32 +152,17 @@ export default function DashboardPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric fc-scroll-region pb-24 lg:pb-10">
-      <div className="fc-mobile-balance-hero lg:hidden">
-        <p className="fc-mobile-balance-hero__label relative">Деньги на счетах</p>
-        <p className="fc-mobile-balance-hero__amount relative">
-          {cashOnHand != null ? fmt(cashOnHand) : '—'}{' '}
-          <span className="text-lg font-bold text-white/70">BYN</span>
-        </p>
-        <p className="fc-mobile-balance-hero__meta relative">
-          {bankConnected ? 'По подключённым счетам' : 'Подключите банк для остатка'}
-        </p>
-        {cashOnHand != null && (
-          <Link to="/bank" className="btn-primary relative mt-4 inline-flex min-h-10 text-sm">
-            Банк и выписки
-          </Link>
-        )}
-      </div>
-
-      <div className="mx-auto max-w-3xl space-y-5 lg:space-y-6">
-        <div className="hidden lg:block">
-          <FinancialStateHero cashOnHand={cashOnHand} dashboardLite />
-        </div>
+      <div className="mx-auto max-w-3xl space-y-4">
+        <FinancialStateHero
+          cashOnHand={cashOnHand}
+          nextTaxDeadline={metrics?.next_tax_deadline ?? null}
+          dashboardLite
+          compact
+        />
         <WorkNowCard />
         <DashboardBlockers />
         <ReportingReadinessHero />
-        <div className="hidden sm:block">
-          <DashboardTimeline transactions={transactions} />
-        </div>
+        <DashboardTimeline transactions={transactions} />
       </div>
 
       {profileIncomplete && <OnboardingChecklist />}
@@ -198,11 +179,6 @@ export default function DashboardPage() {
           >
             <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
           </Suspense>
-          {metrics?.next_tax_deadline && (
-            <p className="mt-4 text-sm text-on-surface-variant">
-              Ближайший налоговый срок: <span className="font-semibold text-on-surface">{metrics.next_tax_deadline}</span>
-            </p>
-          )}
         </DashboardDetailsPanel>
       )}
     </div>

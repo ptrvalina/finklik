@@ -277,6 +277,26 @@ export function canLeaveFixStep(data: CalmOverviewLike | undefined): boolean {
   return score >= READINESS_THRESHOLD
 }
 
+export function buildHomeReportingChecklist(data: CalmOverviewLike | undefined) {
+  const blockers = data?.readiness?.blockers ?? []
+  const score = data?.readiness?.score ?? 0
+  const hasCode = (fragments: string[]) =>
+    blockers.some((b) => {
+      const hay = `${b.code ?? ''} ${b.label}`.toLowerCase()
+      return fragments.some((f) => hay.includes(f))
+    })
+  const rs = data?.financial_state?.reporting_status?.status ?? ''
+  const checksOk = (data?.consistency_issues?.length ?? 0) === 0 && score >= READINESS_THRESHOLD
+
+  return [
+    { label: 'Документы', done: !hasCode(['doc', 'ocr', 'первич', 'document', 'скан']) },
+    { label: 'Журнал', done: !hasCode(['journal', 'журнал', 'операц', 'transaction']) },
+    { label: 'Проверки', done: checksOk },
+    { label: 'Подпись', done: ['ready_to_submit', 'submitted', 'signed'].includes(rs) },
+    { label: 'Отправка', done: rs === 'submitted' },
+  ]
+}
+
 export function readinessBlockedReason(data: CalmOverviewLike | undefined): string | null {
   const score = data?.readiness?.score
   if (score === null || score === undefined) return 'Ждём расчёт готовности…'

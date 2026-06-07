@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import { useThemeStore } from '../../store/themeStore'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
@@ -13,9 +12,9 @@ import {
   ASSISTANT_SHEET_ITEM,
   flattenNavForSheet,
   getActiveZone,
+  getActiveZoneGroup,
   getMobileBarItemsForRole,
   getNavGroupsForRole,
-  getZoneTabs,
   getZonesForRole,
 } from './navConfig'
 import OrgSwitcher from '../workspace/OrgSwitcher'
@@ -42,12 +41,10 @@ function pathActive(pathname: string, to: string, end?: boolean) {
 
 export default function Layout() {
   const { user, logout } = useAuthStore()
-  const theme = useThemeStore((s) => s.theme)
-  const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const navigate = useNavigate()
   const location = useLocation()
   const qc = useQueryClient()
-  const { connected, notifications, dismissNotification } = useWebSocket()
+  const { notifications, dismissNotification } = useWebSocket()
   const { toasts, addToast, dismissToast } = useToastStack()
   const reportToastHandled = useRef(new Set<string>())
   const [moreOpen, setMoreOpen] = useState(false)
@@ -61,8 +58,12 @@ export default function Layout() {
   const navGroups = getNavGroupsForRole(role)
   const mobileBarItems = getMobileBarItemsForRole(role)
   const activeZone = getActiveZone(location.pathname)
-  const zoneTabs = getZoneTabs(location.pathname, role)
+  const activeZoneGroup = getActiveZoneGroup(role, location.pathname)
   const zonesForRole = getZonesForRole(role)
+  const onWorkflowRoute =
+    location.pathname.startsWith('/scan') ||
+    location.pathname.startsWith('/accounting') ||
+    location.pathname.startsWith('/reports')
   const { data: plannerNotifications = [] } = useQuery({
     queryKey: ['notifications', 'list'],
     queryFn: () => notificationsApi.list(20).then((r) => r.data ?? []),
@@ -76,8 +77,7 @@ export default function Layout() {
     mutationFn: () => notificationsApi.markAllRead(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
-  const { hasAnchors, panelOpen, setPanelOpen, session } = useOperational()
-  const showContextPanel = hasAnchors || Boolean(session.nextStep)
+  const { panelOpen, setPanelOpen } = useOperational()
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -151,7 +151,7 @@ export default function Layout() {
             </div>
             <div className="min-w-0">
               <h1 className="font-headline text-[15px] font-bold tracking-tight text-on-surface">ФинКлик</h1>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant/70">Operating System</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant/70">Финансы и учёт</p>
             </div>
           </div>
           <div className="mt-4">
@@ -173,6 +173,27 @@ export default function Layout() {
               </NavLink>
             )
           })}
+          {activeZoneGroup && activeZoneGroup.items.length > 1 && (
+            <div className="mt-4 border-t border-outline/30 px-1 pt-3">
+              <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant/80">{activeZoneGroup.label}</p>
+              <div className="space-y-0.5">
+                {activeZoneGroup.items.map((item) => {
+                  const subActive = pathActive(location.pathname, item.to, item.end)
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={`fc-zone-sub-item ${subActive ? 'fc-zone-sub-item--active' : ''}`}
+                    >
+                      <Icon name={item.icon} filled={subActive} className="text-[18px]" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="relative z-[1] mt-auto space-y-2 border-t border-outline/40 px-3 py-4">
@@ -216,79 +237,39 @@ export default function Layout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Stitch flat header + zone tabs */}
         <header className="fc-shell-header">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex min-w-0 shrink-0 items-center gap-2 lg:hidden">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0058be] to-[#131b2e] ring-1 ring-primary/25 shadow-soft">
-                <Icon name="account_balance" className="text-lg text-white" />
-              </div>
-              <OrgSwitcher placement="header" className="min-w-0 flex-shrink" />
+          <div className="mr-auto flex min-w-0 items-center gap-2 lg:hidden">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#0058be] to-[#131b2e] ring-1 ring-primary/25">
+              <Icon name="account_balance" className="text-base text-white" />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setSearchOpen((v) => !v)}
-              className="group hidden min-w-0 max-w-md flex-1 items-center gap-2 rounded-xl border border-outline/50 bg-surface-container-low px-4 py-2 text-left text-sm text-on-surface-variant transition hover:border-primary/30 lg:flex"
-              aria-label="Глобальный поиск"
-            >
-              <Icon name="search" className="text-lg text-primary/60 group-hover:text-primary" />
-              <span className="truncate">Поиск операций, документов, действий…</span>
-              <span className="ml-auto rounded-md bg-surface px-2 py-0.5 text-[10px] font-semibold text-on-surface-variant/70 ring-1 ring-outline/60">⌘K</span>
-            </button>
-
-            {zoneTabs.length > 1 && (
-              <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:flex" aria-label="Подразделы">
-                {zoneTabs.map((tab) => {
-                  const tabActive = pathActive(location.pathname, tab.to, tab.end)
-                  return (
-                    <NavLink key={tab.to} to={tab.to} end={tab.end} className={`fc-zone-tab ${tabActive ? 'fc-zone-tab--active' : ''}`}>
-                      {tab.label}
-                    </NavLink>
-                  )
-                })}
-              </nav>
-            )}
+            <OrgSwitcher placement="header" className="min-w-0 flex-shrink" />
           </div>
 
-          <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-            {!isManager && (
-              <NavLink
-                to="/accounting/journal"
-                className="hidden items-center gap-1.5 rounded-xl bg-[#131b2e] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#0f1524] sm:inline-flex dark:bg-on-surface dark:text-canvas"
-              >
-                <Icon name="add" className="text-lg" />
-                Новая операция
-              </NavLink>
-            )}
-            {showContextPanel && (
-              <button
-                type="button"
-                onClick={() => setPanelOpen(true)}
-                className="tap-highlight-none hidden min-h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 text-xs font-bold text-primary sm:inline-flex xl:hidden"
-                aria-label="Контекст работы"
-              >
-                <Icon name="playlist_play" className="text-lg" />
-                Поток учёта
-              </button>
-            )}
-            <div className="hidden items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.07] px-3 py-1.5 text-[11px] font-semibold text-primary shadow-xs dark:border-primary/30 dark:bg-primary/10 dark:text-emerald-300 sm:flex">
-              <span className={`h-2 w-2 rounded-full shadow-[0_0_0_3px_rgb(0_168_107/0.28)] ${connected ? 'bg-primary' : 'bg-on-surface-variant/50 shadow-none'}`} />
-              {connected ? 'Онлайн' : 'Офлайн'}
-            </div>
-            {/* Колокольчик + тема */}
-            <div className="relative flex items-center gap-0.5 rounded-2xl border border-outline/60 bg-surface/95 p-1 shadow-card backdrop-blur-md dark:border-outline/45 dark:bg-surface/90 sm:gap-1 sm:p-1.5" ref={notifMenuRef}>
+          <button
+            type="button"
+            onClick={() => setSearchOpen((v) => !v)}
+            className="group hidden max-w-[220px] flex-1 items-center gap-1.5 rounded-lg border border-outline/40 bg-transparent px-2.5 py-1.5 text-left text-xs text-on-surface-variant transition hover:border-outline/60 lg:flex"
+            aria-label="Поиск"
+          >
+            <Icon name="search" className="text-base text-on-surface-variant/70" />
+            <span className="truncate">Поиск…</span>
+            <span className="ml-auto rounded bg-surface-container-high px-1.5 py-0.5 text-[9px] text-on-surface-variant/60">⌘K</span>
+          </button>
+
+          <div className="flex flex-shrink-0 items-center gap-1 sm:gap-1.5">
+            <div className="relative" ref={notifMenuRef}>
               <button
                 type="button"
                 onClick={() => setNotifOpen((v) => !v)}
-                className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-on-surface-variant"
+                className="tap-highlight-none relative flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 aria-label="Уведомления"
               >
                 <Icon name="notifications" className="text-xl" />
                 {unreadCount > 0 && (
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas dark:ring-outline/50 sm:right-1.5 sm:top-1.5" />
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-canvas" />
                 )}
               </button>
               {notifOpen && (
-                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift dark:bg-surface">
+                <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-outline/70 bg-surface p-2 shadow-lift">
                   <div className="flex items-center justify-between px-2 py-1">
                     <p className="text-sm font-semibold">Уведомления</p>
                     <button
@@ -323,23 +304,13 @@ export default function Layout() {
                   </div>
                 </div>
               )}
-              <span className="hidden h-6 w-px bg-outline/90 dark:bg-outline-variant sm:block" aria-hidden />
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="tap-highlight-none flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface hover:text-on-surface sm:h-10 sm:w-10 dark:text-on-surface-variant dark:hover:text-on-surface"
-                aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-                title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-              >
-                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-xl" />
-              </button>
             </div>
             <button
               type="button"
-              className={`tap-highlight-none flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 sm:h-11 sm:w-11 dark:border-outline/45 ${
-                searchOpen ? 'bg-primary/10 text-primary ring-2 ring-primary/20' : 'bg-surface-container-low text-on-surface-variant shadow-soft hover:bg-surface dark:text-on-surface-variant'
+              className={`tap-highlight-none flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg lg:hidden ${
+                searchOpen ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface-container-high'
               }`}
-              aria-label={searchOpen ? 'Закрыть поиск' : 'Поиск'}
+              aria-label="Поиск"
               aria-expanded={searchOpen}
               onClick={() => setSearchOpen((v) => !v)}
             >
@@ -386,31 +357,6 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Mobile zone tabs */}
-        {zoneTabs.length > 1 && (
-          <nav
-            className="flex gap-1 overflow-x-auto border-b border-outline/40 bg-surface px-3 py-1 lg:hidden"
-            aria-label="Подразделы"
-          >
-            {zoneTabs.map((tab) => {
-              const tabActive = pathActive(location.pathname, tab.to, tab.end)
-              return (
-                <NavLink
-                  key={tab.to}
-                  to={tab.to}
-                  end={tab.end}
-                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                    tabActive ? 'bg-primary/10 text-primary' : 'text-on-surface-variant'
-                  }`}
-                >
-                  {tab.label}
-                </NavLink>
-              )
-            })}
-          </nav>
-        )}
-
-        {/* Mobile expanded search */}
         {searchOpen && (
           <div className="border-b border-outline/75 bg-surface-container-low/95 px-4 py-3 dark:border-outline/35/80">
             <div className="relative">
@@ -465,11 +411,11 @@ export default function Layout() {
               <Outlet />
             </div>
           </main>
-          <OperationalContinuityPanel variant="rail" />
+          {onWorkflowRoute && <OperationalContinuityPanel variant="rail" />}
         </div>
       </div>
 
-      {panelOpen && (
+      {panelOpen && onWorkflowRoute && (
         <>
           <button
             type="button"
