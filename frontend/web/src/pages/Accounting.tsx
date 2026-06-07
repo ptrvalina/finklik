@@ -8,7 +8,7 @@ import { JournalCommandPalette } from '../components/journal/JournalCommandPalet
 import { JournalMobileVirtualList } from '../components/journal/JournalMobileVirtualList'
 import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import { WorkflowSidePanel, WorkflowCompletionBanner, WorkflowContinuityBar } from '../components/workflow'
+import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
 import { JournalSplitLayout } from '../components/journal/JournalSplitLayout'
 import { JournalEvidencePanel } from '../components/journal/JournalEvidencePanel'
 import { JournalTransactionPanel } from '../components/journal/JournalTransactionPanel'
@@ -644,7 +644,6 @@ export default function Accounting() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric accounting-journal pb-24 lg:pb-8">
-      <WorkflowContinuityBar />
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-xl text-sm" onClick={() => setCommandOpen(true)}>
           <Icon name="keyboard_command_key" className="text-lg" /> Команды

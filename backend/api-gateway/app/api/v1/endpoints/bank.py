@@ -7,7 +7,7 @@ import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, or_
 from pydantic import BaseModel, Field
 import httpx
 
@@ -76,8 +76,19 @@ class OAuthImportPayload(BaseModel):
 
 @router.get("/banks")
 async def list_available_banks():
-    """Список доступных банков Беларуси."""
-    return {"banks": BELARUSIAN_BANKS}
+    """Список банков: для white-label — только банк-партнёр."""
+    if settings.PARTNER_BANK_BIC:
+        return {
+            "banks": [
+                {
+                    "name": settings.PARTNER_BANK_NAME,
+                    "bic": settings.PARTNER_BANK_BIC,
+                    "color": settings.PARTNER_BANK_COLOR,
+                }
+            ],
+            "partner_only": True,
+        }
+    return {"banks": BELARUSIAN_BANKS, "partner_only": False}
 
 
 @router.get("/accounts")
@@ -109,6 +120,9 @@ async def create_account(
         )
         for acc in existing.scalars().all():
             acc.is_primary = False
+
+    if settings.PARTNER_BANK_BIC and body.bank_bic.upper() != settings.PARTNER_BANK_BIC.upper():
+        raise HTTPException(400, f"Доступен только счёт {settings.PARTNER_BANK_NAME}")
 
     account = BankAccount(
         organization_id=workspace_organization_id(current_user),
@@ -241,35 +255,52 @@ async def get_balance(
 
 @router.get("/statements")
 async def get_statements(
-    limit: int = Query(20, le=100),
+    limit: int = Query(20, le=500),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    counterparty: str | None = Query(None, max_length=120),
+    purpose: str | None = Query(None, max_length=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Statements based on real transactions."""
+    """Выписка по операциям с фильтрами по дате, контрагенту и назначению."""
     from app.models.transaction import Transaction
-    from sqlalchemy import func
+    from app.models.counterparty import Counterparty
 
     org_id = workspace_organization_id(current_user)
-    result = await db.execute(
-        select(Transaction)
+    query = (
+        select(Transaction, Counterparty.name)
+        .outerjoin(Counterparty, Transaction.counterparty_id == Counterparty.id)
         .where(Transaction.organization_id == org_id)
-        .order_by(Transaction.transaction_date.desc())
-        .limit(limit)
     )
-    txs = result.scalars().all()
+    if date_from:
+        query = query.where(Transaction.transaction_date >= date_from)
+    if date_to:
+        query = query.where(Transaction.transaction_date <= date_to)
+    if purpose and purpose.strip():
+        query = query.where(Transaction.description.ilike(f"%{purpose.strip()}%"))
+    if counterparty and counterparty.strip():
+        q = f"%{counterparty.strip()}%"
+        query = query.where(or_(Counterparty.name.ilike(q), Transaction.description.ilike(q)))
+
+    count_q = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = int(count_q.scalar() or 0)
+
+    result = await db.execute(query.order_by(Transaction.transaction_date.desc()).limit(limit))
+    rows = result.all()
 
     statements = []
-    for tx in txs:
+    for tx, cp_name in rows:
         statements.append({
             "id": tx.id,
             "date": str(tx.transaction_date),
             "amount": float(tx.amount),
             "type": "credit" if tx.type == "income" else "debit",
             "description": tx.description or tx.type,
-            "counterparty": tx.counterparty_id or "—",
+            "counterparty": cp_name or "—",
         })
 
-    return {"transactions": statements, "total": len(statements)}
+    return {"transactions": statements, "total": total}
 
 
 @router.post("/payment")

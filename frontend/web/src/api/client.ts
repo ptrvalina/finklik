@@ -507,7 +507,13 @@ export const bankApi = {
   updateAccount: (id: string, data: any) => api.put(`/bank/accounts/${id}`, data),
   deleteAccount: (id: string) => api.delete(`/bank/accounts/${id}`),
   getBalance: () => api.get('/bank/balance'),
-  getStatements: (limit?: number) => api.get('/bank/statements', { params: { limit } }),
+  getStatements: (params?: {
+    limit?: number
+    date_from?: string
+    date_to?: string
+    counterparty?: string
+    purpose?: string
+  }) => api.get('/bank/statements', { params }),
   createPayment: (data: any) => api.post('/bank/payment', data),
   importStatement: (lines: any[]) => api.post('/bank/statement/import', { lines }),
   reconciliation: (date_from: string, date_to: string) =>

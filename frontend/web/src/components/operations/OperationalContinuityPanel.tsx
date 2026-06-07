@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { useOperational } from '../../context/OperationalContext'
 import { formatNextStepCta } from '../../context/OperationalContext'
 import { verbLabel } from '../../lib/operationalVerbs'
-import OperationalFlowLadder from './OperationalFlowLadder'
 
 function relTime(at: number) {
   const min = Math.round((Date.now() - at) / 60_000)
@@ -43,7 +42,6 @@ export default function OperationalContinuityPanel({ variant }: { variant: 'rail
 
   const body = (
     <>
-      <OperationalFlowLadder session={session} />
       {hasAnchors && (
         <>
       <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Сейчас в работе</p>

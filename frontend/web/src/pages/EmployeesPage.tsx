@@ -208,13 +208,28 @@ export default function EmployeesPage() {
   const payroll: SalaryRecord[] = payrollData ?? []
   const isSaving = createMutation.isPending || updateMutation.isPending
   const totalPayroll = employees.filter((e) => e.is_active).reduce((s, e) => s + Number(e.salary || 0), 0)
-  const verifiedCount = employees.filter((e) => e.is_active).length
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/calendar" className="btn-secondary text-sm">
-          <Icon name="calendar_today" className="text-lg" /> График
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-heading">Сотрудники</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">Кадры, зарплата и взносы — всё для команды в одном месте.</p>
+        </div>
+        {tab === 'active' && employees.length > 0 ? (
+          <div className="rounded-xl border border-outline/60 bg-surface-container-low px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">
+              Фонд {MONTHS[payrollMonth]} {payrollYear}
+            </p>
+            <MoneyAmount value={totalPayroll} className="mt-1 font-headline text-2xl font-extrabold text-on-surface" />
+            <p className="mt-1 text-[11px] text-on-surface-variant">{filtered.length} активных</p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        <Link to="/planner" className="btn-secondary text-sm">
+          <Icon name="event_note" className="text-lg" /> Задачи команды
         </Link>
         <Link to="/employees/hire" className="btn-primary text-sm">
           <Icon name="person_add" className="text-lg" /> Нанять
@@ -253,24 +268,6 @@ export default function EmployeesPage() {
           ))}
         </div>
       </div>
-
-      {tab === 'active' && employees.length > 0 && (
-        <div className="glass-card mb-6 rounded-2xl p-6 sm:p-8">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ближайшая выплата</p>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {MONTHS[payrollMonth]} {payrollYear}
-          </p>
-          <p className="mt-3 font-headline text-3xl font-extrabold tabular-nums text-on-surface sm:text-4xl">
-            <MoneyAmount value={totalPayroll} className="text-inherit" />
-          </p>
-          <div className="mt-4 flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-high">
-              <div className="h-full w-full rounded-full bg-primary" />
-            </div>
-            <span className="text-xs font-bold text-primary">{verifiedCount}/{verifiedCount} проверено</span>
-          </div>
-        </div>
-      )}
 
       {isError && <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm">Не удалось загрузить</div>}
 
@@ -583,21 +580,17 @@ export default function EmployeesPage() {
 
           <aside className="hidden space-y-4 lg:col-span-4 lg:block">
             <div className="glass-card rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-on-surface">HR Planner</h3>
-              <div className="mt-4 rounded-xl border border-error/20 bg-error/5 p-3">
-                <p className="text-[10px] font-bold uppercase text-error">Critical resource gap</p>
-                <p className="mt-1 text-xs text-on-surface-variant">
-                  Проверьте табель и отсутствия перед ближайшей выплатой.
-                </p>
-              </div>
+              <h3 className="text-sm font-bold text-on-surface">Сводка команды</h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex justify-between border-b border-outline/25 pb-2">
                   <span className="text-on-surface-variant">Активных</span>
-                  <span className="font-bold">{verifiedCount}</span>
+                  <span className="font-bold">{employees.filter((e) => e.is_active).length}</span>
                 </li>
                 <li className="flex justify-between border-b border-outline/25 pb-2">
                   <span className="text-on-surface-variant">ФОТ / мес</span>
-                  <span className="font-bold tabular-nums"><MoneyAmount value={totalPayroll} className="inline-flex" /></span>
+                  <span className="font-bold tabular-nums">
+                    <MoneyAmount value={totalPayroll} className="inline-flex" />
+                  </span>
                 </li>
                 <li className="flex justify-between">
                   <span className="text-on-surface-variant">С детьми</span>
@@ -609,7 +602,7 @@ export default function EmployeesPage() {
               <h3 className="text-sm font-bold text-on-surface">Quick actions</h3>
               <div className="mt-3 grid gap-2">
                 <Link to="/employees/hire" className="btn-primary min-h-10 w-full text-sm">Hire employee</Link>
-                <Link to="/planner" className="btn-secondary min-h-10 w-full text-sm">Team planner</Link>
+                <Link to="/planner" className="btn-secondary min-h-10 w-full text-sm">Задачи команды</Link>
               </div>
             </div>
           </aside>

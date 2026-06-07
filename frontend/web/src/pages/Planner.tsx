@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -356,12 +357,19 @@ export default function Planner() {
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Планер</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          {screenTab === 'calendar' ? 'События и сроки по календарю' : 'Задачи команды и личные поручения'}
-        </p>
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-heading">Планёр</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            {screenTab === 'calendar'
+              ? 'Календарь команды: сроки, встречи и напоминания.'
+              : 'Задачи сотрудникам и запросы отчётов — кто за что отвечает.'}
+          </p>
+        </div>
+        <Link to="/employees" className="btn-secondary shrink-0 text-sm">
+          Сотрудники
+        </Link>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

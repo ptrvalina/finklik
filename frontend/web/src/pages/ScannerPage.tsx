@@ -9,7 +9,6 @@ import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
 import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace'
-import { WorkflowContinuityBar } from '../components/workflow'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useOcrAutosave } from '../hooks/useOcrAutosave'
 import {
@@ -436,7 +435,6 @@ export default function ScannerPage() {
       )}
 
     <div className="fc-page-shell fc-page-shell-asymmetric scanner-page pb-20 lg:pb-8">
-      <WorkflowContinuityBar />
       <p className="mb-4 text-sm text-on-surface-variant">
         {reviewCount > 0
           ? `Проверить документов: ${reviewCount}`

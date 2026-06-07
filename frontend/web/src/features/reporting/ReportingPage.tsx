@@ -6,7 +6,6 @@ import { orgQueryKey } from '../../lib/queryKeys'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
 import { buildReportingPeriodNarrative } from './reportingFlowModel'
-import { WorkflowContinuityBar } from '../../components/workflow'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -54,7 +53,6 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   if (filter) {
     return (
       <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-        <WorkflowContinuityBar />
         <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
           <Link to={base} className="btn-secondary !min-h-10 text-xs">
             Все органы
@@ -77,7 +75,6 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <WorkflowContinuityBar />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="page-heading">Отчётность</h1>

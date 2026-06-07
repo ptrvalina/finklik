@@ -2,6 +2,9 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string
+  readonly VITE_PARTNER_BANK_NAME?: string
+  readonly VITE_PARTNER_BANK_BIC?: string
+  readonly VITE_PARTNER_BANK_COLOR?: string
 }
 
 interface ImportMeta {

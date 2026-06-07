@@ -46,7 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'money',
     label: 'Банк',
     items: [
-      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Баланс, выписка и платежи' },
+      { to: '/bank', label: 'Банк', icon: 'account_balance', end: true, description: 'Счёт, выписка и платежи банка' },
       { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Операции и проводки' },
       { to: '/scan', label: 'Сканер', icon: 'document_scanner', end: true, description: 'Первичные документы' },
       { to: '/documents', label: 'Документы', icon: 'folder', end: true, description: 'Счета и акты' },
@@ -64,8 +64,8 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'team',
     label: 'Команда',
     items: [
-      { to: '/employees', label: 'Сотрудники', icon: 'badge', end: true, description: 'Кадры и зарплата' },
-      { to: '/planner', label: 'Планёр', icon: 'event_note', end: true, description: 'Задачи и поручения' },
+      { to: '/employees', label: 'Сотрудники', icon: 'badge', end: true, description: 'Кадры, найм и ведомость зарплаты' },
+      { to: '/planner', label: 'Планёр', icon: 'event_note', end: true, description: 'Задачи команде и календарь' },
     ],
   },
   {
