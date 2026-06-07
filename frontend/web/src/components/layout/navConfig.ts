@@ -57,7 +57,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Отчётность',
     items: [
       { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Готовность и подача' },
-      { to: '/calendar', label: 'Календарь', icon: 'event', end: true, description: 'Сроки и обязательства' },
+      { to: '/calendar', label: 'Календарь', icon: 'event', end: true, description: 'Налоги, отчёты и сроки' },
+      { to: '/planner', label: 'Задачи команды', icon: 'task_alt', end: true, description: 'Поручения сотрудникам' },
     ],
   },
   {
@@ -66,7 +67,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/employees', label: 'Команда', icon: 'groups', end: true, description: 'Приём, табель и кадровые процессы' },
       { to: '/employees/list', label: 'Сотрудники', icon: 'badge', end: true, description: 'Список и личные дела' },
-      { to: '/planner', label: 'Планёр', icon: 'event_note', end: true, description: 'Задачи команде и календарь' },
     ],
   },
   {
@@ -168,7 +168,7 @@ export function getMobileBarItemsForRole(role?: string | null) {
     return [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
-      { to: '/planner', label: 'Планёр', icon: 'event_note' },
+      { to: '/planner', label: 'Задачи', icon: 'task_alt' },
     ]
   }
   return MOBILE_BAR_ITEMS
@@ -187,8 +187,8 @@ function pathInZone(pathname: string, zoneId: ZoneId): boolean {
       pathname.startsWith('/scan')
     )
   }
-  if (zoneId === 'reporting') return pathname.startsWith('/reports') || pathname.startsWith('/calendar')
-  if (zoneId === 'team') return pathname.startsWith('/planner') || pathname.startsWith('/employees')
+  if (zoneId === 'reporting') return pathname.startsWith('/reports') || pathname.startsWith('/calendar') || pathname.startsWith('/planner')
+  if (zoneId === 'team') return pathname.startsWith('/employees')
   if (zoneId === 'clients') return pathname.startsWith('/counterparties') || pathname.startsWith('/workspace')
   return (
     pathname.startsWith('/settings') ||

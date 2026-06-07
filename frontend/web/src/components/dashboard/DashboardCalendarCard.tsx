@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api, reportingCalmApi, taxApi } from '../../api/client'
+import { api, plannerApi, reportingCalmApi, taxApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
 import { formatRelativeWhen, mergeUpcomingBusinessEvents, type BusinessCalendarEvent } from '../../lib/businessCalendar'
 import { CALENDAR_BUCKET_LABEL, calendarBucket, type CalendarBucket } from '../../lib/dashboardOwnerMetrics'
@@ -47,6 +47,12 @@ export default function DashboardCalendarCard() {
     staleTime: 45_000,
   })
 
+  const { data: plannerTasks, isLoading: tasksLoading } = useQuery({
+    queryKey: orgQueryKey('planner-home-tasks'),
+    queryFn: () => plannerApi.listTasks('all').then((r) => r.data),
+    staleTime: 60_000,
+  })
+
   const events = useMemo(
     () =>
       mergeUpcomingBusinessEvents({
@@ -54,14 +60,15 @@ export default function DashboardCalendarCard() {
         userEvents,
         timeline: reporting?.timeline,
         obligations: reporting?.obligations_preview,
+        tasks: plannerTasks,
         maxDaysAhead: 30,
         limit: 12,
       }),
-    [taxData, userEvents, reporting],
+    [taxData, userEvents, reporting, plannerTasks],
   )
 
   const groups = useMemo(() => groupEvents(events), [events])
-  const isLoading = taxLoading || calLoading || repLoading
+  const isLoading = taxLoading || calLoading || repLoading || tasksLoading
 
   return (
     <article className="fc-dashboard-card flex flex-col">

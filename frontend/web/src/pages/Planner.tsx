@@ -29,17 +29,6 @@ function monthBounds(y: number, m: number) {
   return { date_from: from, date_to: to }
 }
 
-/** Неделя пн–вс для произвольной даты. */
-function weekBoundsAround(ref: Date) {
-  const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate())
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  const mon = new Date(d)
-  mon.setDate(d.getDate() + diff)
-  const sun = new Date(mon)
-  sun.setDate(mon.getDate() + 6)
-  return { period_start: fmtLocalDate(mon), period_end: fmtLocalDate(sun) }
-}
 
 function buildMonthWeeks(year: number, month: number): (number | null)[][] {
   const first = new Date(year, month - 1, 1)
@@ -69,8 +58,21 @@ type PlannerTask = {
   assignee_id: string
   author_id: string
   status: string
+  due_date?: string | null
   created_at: string
   closed_at?: string | null
+}
+
+const TASK_STATUS: Record<string, string> = {
+  open: 'В работе',
+  closed: 'Выполнена',
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  owner: 'владелец',
+  admin: 'админ',
+  accountant: 'бухгалтер',
+  manager: 'менеджер',
 }
 
 type PlannerComment = {
@@ -108,16 +110,15 @@ export default function Planner() {
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
 
   const [viewMode, setViewMode] = useState<'mine' | 'assigned'>('mine')
-  const [screenTab, setScreenTab] = useState<'calendar' | 'tasks'>('calendar')
+  const [screenTab, setScreenTab] = useState<'calendar' | 'tasks'>('tasks')
   const [taskKind, setTaskKind] = useState<'task' | 'report_request'>('task')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [attachments, setAttachments] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
   const [reportText, setReportText] = useState<Record<string, string>>({})
   const [commentText, setCommentText] = useState<Record<string, string>>({})
-
-  const [prodTab, setProdTab] = useState<'week' | 'month'>('month')
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<CalEvent | null>(null)
@@ -145,22 +146,6 @@ export default function Planner() {
     queryFn: () => plannerApi.listTasks('all').then((r) => r.data as PlannerTask[]),
   })
 
-  const prodRange = useMemo(() => {
-    if (prodTab === 'month') {
-      const { date_from, date_to } = monthBounds(viewYear, viewMonth)
-      return { period_start: date_from, period_end: date_to }
-    }
-    return weekBoundsAround(new Date())
-  }, [prodTab, viewYear, viewMonth])
-
-  const productivityQuery = useQuery({
-    queryKey: ['calendar-productivity', prodRange.period_start, prodRange.period_end],
-    queryFn: () =>
-      calendarApi
-        .productivitySummary({ period_start: prodRange.period_start, period_end: prodRange.period_end })
-        .then((r) => r.data as any),
-  })
-
   const myTasksQuery = useQuery({
     queryKey: ['planner', 'mine'],
     queryFn: () => plannerApi.listTasks('mine').then((r) => r.data as PlannerTask[]),
@@ -175,8 +160,20 @@ export default function Planner() {
   })
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data])
+  const memberById = useMemo(() => {
+    const m: Record<string, { full_name: string; role?: string }> = {}
+    for (const member of members) {
+      m[member.id] = { full_name: member.full_name, role: member.role }
+    }
+    return m
+  }, [members])
   const assignees = useMemo(
-    () => members.filter((m: any) => ['owner', 'admin', 'accountant'].includes((m.role || '').toLowerCase())),
+    () =>
+      members.filter(
+        (m: { is_active?: boolean; role?: string }) =>
+          m.is_active !== false &&
+          ['owner', 'admin', 'accountant', 'manager'].includes((m.role || '').toLowerCase()),
+      ),
     [members],
   )
 
@@ -195,9 +192,12 @@ export default function Planner() {
     const y = viewYear
     const mo = viewMonth
     for (const t of allTasksQuery.data ?? []) {
-      const c = new Date(t.created_at)
-      if (c.getFullYear() !== y || c.getMonth() + 1 !== mo) continue
-      const k = fmtLocalDate(c)
+      if (t.status === 'closed') continue
+      const raw = t.due_date || t.created_at
+      if (!raw) continue
+      const d = new Date(raw)
+      if (d.getFullYear() !== y || d.getMonth() + 1 !== mo) continue
+      const k = fmtLocalDate(d)
       if (!m[k]) m[k] = []
       m[k].push(t)
     }
@@ -210,6 +210,7 @@ export default function Planner() {
         title: title.trim(),
         description: description.trim() || undefined,
         assignee_id: assigneeId,
+        due_date: dueDate || undefined,
         attachments: attachments
           .split(',')
           .map((v) => v.trim())
@@ -218,6 +219,7 @@ export default function Planner() {
     onSuccess: () => {
       setTitle('')
       setDescription('')
+      setDueDate('')
       qc.invalidateQueries({ queryKey: ['planner'] })
     },
   })
@@ -360,29 +362,25 @@ export default function Planner() {
     <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="page-heading">Планёр</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {screenTab === 'calendar'
-              ? 'Календарь команды: сроки, встречи и напоминания.'
-              : 'Задачи сотрудникам и запросы отчётов — кто за что отвечает.'}
+          <h1 className="page-heading">Задачи команды</h1>
+          <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
+            {screenTab === 'tasks'
+              ? 'Поручения сотрудникам с доступом в систему: бухгалтеру, менеджеру или администратору.'
+              : 'Сроки поручений и рабочие события. Налоговые дедлайны — в календаре отчётности.'}
           </p>
         </div>
-        <Link to="/employees/list" className="btn-secondary shrink-0 text-sm">
-          Сотрудники
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/calendar" className="btn-secondary shrink-0 text-sm">
+            Календарь отчётности
+          </Link>
+          <Link to="/employees/list" className="btn-secondary shrink-0 text-sm">
+            Сотрудники
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setScreenTab('calendar')}
-            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
-              screenTab === 'calendar' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
-            }`}
-          >
-            Календарь
-          </button>
           <button
             type="button"
             onClick={() => setScreenTab('tasks')}
@@ -390,7 +388,16 @@ export default function Planner() {
               screenTab === 'tasks' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
             }`}
           >
-            Задачи
+            Поручения
+          </button>
+          <button
+            type="button"
+            onClick={() => setScreenTab('calendar')}
+            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
+              screenTab === 'calendar' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+            }`}
+          >
+            На календаре
           </button>
         </div>
         {screenTab === 'calendar' ? (
@@ -403,13 +410,20 @@ export default function Planner() {
             className="btn-primary fc-btn-thumb shrink-0 w-full sm:w-auto"
             onClick={() => document.getElementById('planner-new-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           >
-            + Задача
+            + Поручение
           </button>
         )}
       </div>
 
       {screenTab === 'calendar' && (
       <div className="card-elevated space-y-4 p-5">
+        <p className="text-xs text-on-surface-variant">
+          Полоски с заливкой — события; пунктир — поручения с дедлайном. Налоги и отчёты смотрите в{' '}
+          <Link to="/calendar" className="font-semibold text-primary underline">
+            календаре отчётности
+          </Link>
+          .
+        </p>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className="btn-secondary px-2 py-1 text-sm" onClick={prevMonth}>
@@ -517,6 +531,28 @@ export default function Planner() {
                           </span>
                         ))}
                         {evs.length > 3 ? <span className="text-[10px] text-on-surface-variant">+{evs.length - 3} событ.</span> : null}
+                        {tks.slice(0, 2).map((task) => (
+                          <span
+                            key={task.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setScreenTab('tasks')
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.stopPropagation()
+                                setScreenTab('tasks')
+                              }
+                            }}
+                            className="truncate rounded border border-dashed border-primary/60 bg-primary/5 px-1 py-0.5 text-[10px] font-medium text-primary"
+                            title={task.title}
+                          >
+                            ◦ {task.title}
+                          </span>
+                        ))}
+                        {tks.length > 2 ? <span className="text-[10px] text-on-surface-variant">+{tks.length - 2} поруч.</span> : null}
                       </div>
                     </div>
                   )
@@ -628,7 +664,10 @@ export default function Planner() {
       <>
       <form id="planner-new-task" onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2 scroll-mt-24">
         <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Новая задача планера</h2>
+          <div>
+            <h2 className="text-lg font-semibold">Новое поручение</h2>
+            <p className="mt-0.5 text-xs text-on-surface-variant">Выберите ответственного из команды с доступом в ФинКлик.</p>
+          </div>
           {canRequestReport && (
             <div className="inline-flex rounded-xl border border-outline/70 p-1">
               <button
@@ -658,13 +697,17 @@ export default function Planner() {
           onChange={(e) => setTitle(e.target.value)}
         />
         <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
-          <option value="">Назначить ответственного</option>
-          {assignees.map((m: any) => (
+          <option value="">Кому поручить</option>
+          {assignees.map((m: { id: string; full_name: string; role?: string }) => (
             <option key={m.id} value={m.id}>
-              {m.full_name} ({m.role})
+              {m.full_name} ({ROLE_LABEL[(m.role || '').toLowerCase()] || m.role})
             </option>
           ))}
         </select>
+        <label className="block text-sm">
+          <span className="label">Срок выполнения</span>
+          <input className="input mt-1 w-full" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </label>
         <textarea
           className="input md:col-span-2 min-h-[90px]"
           placeholder={taskKind === 'report_request' ? 'Укажите период, детализацию и ожидаемый формат отчёта' : 'Описание и контекст задачи'}
@@ -677,8 +720,8 @@ export default function Planner() {
           value={attachments}
           onChange={(e) => setAttachments(e.target.value)}
         />
-        <button className="btn-primary md:col-span-2" type="submit" disabled={createTaskMutation.isPending}>
-          Создать задачу
+        <button className="btn-primary md:col-span-2" type="submit" disabled={createTaskMutation.isPending || !title.trim() || !assigneeId}>
+          Создать поручение
         </button>
       </form>
 
@@ -689,26 +732,27 @@ export default function Planner() {
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${viewMode === 'mine' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
             onClick={() => setViewMode('mine')}
           >
-            Мои задачи ({(myTasksQuery.data ?? []).length})
+            Выдал
           </button>
           <button
             type="button"
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${viewMode === 'assigned' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
             onClick={() => setViewMode('assigned')}
           >
-            Я ответственный ({(assignedTasksQuery.data ?? []).length})
+            Мне поручено
           </button>
         </div>
       </div>
 
       <div className="grid gap-4">
         <TaskList
-          title={viewMode === 'mine' ? 'Мои задачи' : 'Задачи, где я ответственный'}
+          title={viewMode === 'mine' ? 'Поручения, которые я выдал' : 'Поручения, назначенные мне'}
           tasks={viewMode === 'mine' ? myTasksQuery.data ?? [] : assignedTasksQuery.data ?? []}
           loading={viewMode === 'mine' ? myTasksQuery.isLoading : assignedTasksQuery.isLoading}
           onClose={(id) => closeTaskMutation.mutate(id)}
           canClose
           userId={user?.id || ''}
+          memberById={memberById}
           onReport={(taskId, content) => reportMutation.mutate({ taskId, content })}
           reportText={reportText}
           setReportText={setReportText}
@@ -730,6 +774,7 @@ function TaskList(props: {
   canClose?: boolean
   onClose: (id: string) => void
   userId: string
+  memberById: Record<string, { full_name: string; role?: string }>
   onReport: (taskId: string, content: string) => void
   reportText: Record<string, string>
   setReportText: Dispatch<SetStateAction<Record<string, string>>>
@@ -744,6 +789,7 @@ function TaskList(props: {
     canClose,
     onClose,
     userId,
+    memberById,
     onReport,
     reportText,
     setReportText,
@@ -762,7 +808,7 @@ function TaskList(props: {
         </div>
       ) : tasks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-outline-variant/40 bg-surface-container-low/40 px-4 py-6 text-center">
-          <p className="text-sm text-on-surface-variant">Задач нет — создайте первую в форме выше.</p>
+          <p className="text-sm text-on-surface-variant">Поручений пока нет — создайте первое выше.</p>
           <button
             type="button"
             className="btn-secondary mx-auto mt-4 min-h-10 px-5 text-sm"
@@ -780,6 +826,7 @@ function TaskList(props: {
               canClose={canClose}
               onClose={onClose}
               userId={userId}
+              memberById={memberById}
               onReport={onReport}
               reportText={reportText}
               setReportText={setReportText}
@@ -799,6 +846,7 @@ function TaskCard(props: {
   canClose?: boolean
   onClose: (id: string) => void
   userId: string
+  memberById: Record<string, { full_name: string; role?: string }>
   onReport: (taskId: string, content: string) => void
   reportText: Record<string, string>
   setReportText: Dispatch<SetStateAction<Record<string, string>>>
@@ -806,7 +854,9 @@ function TaskCard(props: {
   setCommentText: Dispatch<SetStateAction<Record<string, string>>>
   onComment: (taskId: string, content: string) => void
 }) {
-  const { task, canClose, onClose, userId, onReport, reportText, setReportText, commentText, setCommentText, onComment } = props
+  const { task, canClose, onClose, userId, memberById, onReport, reportText, setReportText, commentText, setCommentText, onComment } = props
+  const assignee = memberById[task.assignee_id]
+  const author = memberById[task.author_id]
   const commentsQuery = useQuery({
     queryKey: ['planner-comments', task.id],
     queryFn: () => plannerApi.listComments(task.id).then((r) => r.data as PlannerComment[]),
@@ -817,12 +867,18 @@ function TaskCard(props: {
         <div>
           <p className="font-semibold">{task.title}</p>
           <p className="text-xs text-on-surface-variant">{task.description || 'Без описания'}</p>
+          <p className="mt-1 text-[11px] text-on-surface-variant">
+            Ответственный: {assignee?.full_name || '—'} · Выдал: {author?.full_name || '—'}
+            {task.due_date ? ` · Срок: ${task.due_date.slice(0, 10)}` : ''}
+          </p>
         </div>
-        <span className={`text-xs ${task.status === 'closed' ? 'text-emerald-600' : 'text-amber-600'}`}>{task.status}</span>
+        <span className={`text-xs font-semibold ${task.status === 'closed' ? 'text-emerald-600' : 'text-amber-600'}`}>
+          {TASK_STATUS[task.status] || task.status}
+        </span>
       </div>
       {task.status !== 'closed' && canClose && (
         <button className="btn-secondary mt-3 mr-2" onClick={() => onClose(task.id)}>
-          Закрыть
+          Отметить выполненной
         </button>
       )}
       <div className="mt-3 space-y-2 rounded-lg bg-surface-container-low/40 p-2">

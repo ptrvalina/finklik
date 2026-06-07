@@ -566,7 +566,7 @@ export const scannerApi = {
 
 export const plannerApi = {
   listTasks: (mode: 'all' | 'mine' | 'assigned' = 'all') => api.get('/planner/tasks', { params: { mode } }),
-  createTask: (data: { title: string; description?: string; attachments?: string[]; assignee_id: string }) =>
+  createTask: (data: { title: string; description?: string; attachments?: string[]; assignee_id: string; due_date?: string }) =>
     api.post('/planner/tasks', data),
   closeTask: (id: string) => api.post(`/planner/tasks/${id}/close`),
   createReport: (id: string, data: { content: string; attachments?: string[] }) =>

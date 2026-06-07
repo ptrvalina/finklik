@@ -53,11 +53,16 @@ export default function EmployeesHrPlanner() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm">
+      <p className="text-sm text-on-surface-variant">
+        Напоминания по ПУ-2 и документам попадают в{' '}
+        <Link className="font-medium text-primary underline" to="/calendar">
+          календарь отчётности
+        </Link>
+        . Поручения команде — в{' '}
         <Link className="font-medium text-primary underline" to="/planner">
-          Открыть общий календарь планера
-        </Link>{' '}
-        — там же отображаются задачи планера и все события организации.
+          задачах команды
+        </Link>
+        .
       </p>
       <div className="grid gap-6 md:grid-cols-2">
       <div className="card-elevated space-y-3 p-6">
@@ -85,7 +90,7 @@ export default function EmployeesHrPlanner() {
         <button type="button" className="btn-primary" disabled={busy} onClick={() => void addDocReminder()}>
           Добавить в календарь
         </button>
-        <p className="text-xs text-on-surface-variant">События попадают в общий календарь в разделе «Планер».</p>
+        <p className="text-xs text-on-surface-variant">События попадают в календарь отчётности.</p>
       </div>
       </div>
     </div>

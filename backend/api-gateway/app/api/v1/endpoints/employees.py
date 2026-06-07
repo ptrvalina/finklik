@@ -127,13 +127,16 @@ def _employee_to_response(enc, pii_enc, e: Employee) -> EmployeeResponse:
 @router.get("", response_model=list[EmployeeResponse])
 async def list_employees(
     active_only: bool = Query(True),
+    inactive_only: bool = Query(False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     enc = get_encryptor()
     pii_enc = get_aes_gcm_encryptor()
     filters = [Employee.organization_id == workspace_organization_id(current_user)]
-    if active_only:
+    if inactive_only:
+        filters.append(Employee.is_active == False)
+    elif active_only:
         filters.append(Employee.is_active == True)
 
     result = await db.execute(

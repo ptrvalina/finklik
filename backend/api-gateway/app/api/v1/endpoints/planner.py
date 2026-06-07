@@ -34,6 +34,7 @@ def _task_payload(task: PlannerTask) -> PlannerTaskResponse:
         description=task.description,
         attachments=list(task.attachments or []),
         status=task.status,
+        due_date=task.due_date,
         created_at=task.created_at,
         closed_at=task.closed_at,
     )
@@ -68,6 +69,7 @@ async def create_task(
         description=body.description,
         attachments=body.attachments,
         status="open",
+        due_date=body.due_date,
     )
     db.add(task)
     await db.flush()

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, taxApi } from '../api/client'
+import { api, plannerApi, taxApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
 
@@ -50,6 +50,11 @@ export default function CalendarPage() {
       const to = `${year}-${String(month + 1).padStart(2, '0')}-${daysInMonth}`
       return api.get(`/calendar/events?date_from=${from}&date_to=${to}`).then(r => r.data)
     },
+  })
+
+  const { data: openTasks = [] } = useQuery({
+    queryKey: ['planner', 'open-for-calendar'],
+    queryFn: () => plannerApi.listTasks('all').then((r) => (r.data as Array<{ id: string; title: string; status: string; due_date?: string | null }>).filter((t) => t.status !== 'closed')),
   })
 
   const userEvents: CalEvent[] = userEventsData || []
@@ -113,6 +118,18 @@ export default function CalendarPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-heading">Календарь отчётности</h1>
+          <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
+            Налоги, зарплата и обязательные сроки. Поручения команде — в разделе задач.
+          </p>
+        </div>
+        <Link to="/planner" className="btn-secondary w-full sm:w-auto">
+          <Icon name="task_alt" className="text-lg" /> Задачи команды
+        </Link>
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         {monthNav}
         <Link to="/reports" className="btn-secondary w-full sm:w-auto">
@@ -243,6 +260,26 @@ export default function CalendarPage() {
           <Link to="/reports" className="btn-secondary mt-4 w-full text-center text-sm">
             К отчётности
           </Link>
+          {openTasks.length > 0 ? (
+            <div className="mt-4 border-t border-outline/30 pt-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Поручения</p>
+              <ul className="mt-2 space-y-2">
+                {openTasks.slice(0, 5).map((task) => (
+                  <li key={task.id} className="rounded-lg border border-outline/40 px-2 py-1.5 text-xs">
+                    <Link to="/planner" className="font-medium text-on-surface hover:text-primary">
+                      {task.title}
+                    </Link>
+                    {task.due_date ? (
+                      <p className="text-[10px] text-on-surface-variant">Срок: {task.due_date.slice(0, 10)}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/planner" className="btn-ghost mt-2 w-full text-xs">
+                Все поручения
+              </Link>
+            </div>
+          ) : null}
         </aside>
       </div>
 

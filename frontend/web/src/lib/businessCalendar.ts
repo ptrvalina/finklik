@@ -78,7 +78,7 @@ function dedupeKey(e: BusinessCalendarEvent): string {
 type RawCal = { id?: string; title: string; event_date: string; event_type?: string }
 type RawTimeline = { id?: string; title: string; date?: string; kind?: string; subtitle?: string }
 type RawObligation = { id: string; obligation_type: string; amount: string; due_date: string; status?: string }
-type RawTask = { id: string; title: string; status: string; created_at?: string }
+type RawTask = { id: string; title: string; status: string; created_at?: string; due_date?: string | null }
 
 export function mergeUpcomingBusinessEvents(input: {
   taxEvents?: RawCal[]
@@ -145,13 +145,13 @@ export function mergeUpcomingBusinessEvents(input: {
 
   for (const task of input.tasks ?? []) {
     if (task.status === 'closed') continue
-    const created = task.created_at?.slice(0, 10)
-    if (!created) continue
+    const date = (task.due_date || task.created_at)?.slice(0, 10)
+    if (!date) continue
     push({
       id: `task-${task.id}`,
-      date: created,
+      date,
       title: task.title,
-      subtitle: 'Задача',
+      subtitle: 'Поручение',
       kind: 'task',
       to: '/planner',
     })

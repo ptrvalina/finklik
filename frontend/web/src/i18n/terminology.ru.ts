@@ -14,7 +14,7 @@ export const terminology = {
     employees: 'Сотрудники',
     bank: 'Банк',
     scan: 'Скан и OCR',
-    planner: 'Планёр',
+    planner: 'Задачи команды',
     settings: 'Настройки',
     analytics: 'Аналитика',
     calendar: 'Календарь',

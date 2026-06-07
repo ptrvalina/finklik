@@ -38,10 +38,12 @@ export default function EmployeesPage() {
   const [sortKey, setSortKey] = useState<EmployeeSortKey>('name')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  const activeOnly = tab === 'active'
   const { data, isLoading } = useQuery({
-    queryKey: ['employees', activeOnly],
-    queryFn: () => employeesApi.list({ active_only: activeOnly }).then((r) => r.data as EmployeeRow[]),
+    queryKey: ['employees', tab],
+    queryFn: () =>
+      employeesApi
+        .list(tab === 'active' ? { active_only: true } : { active_only: false, inactive_only: true })
+        .then((r) => r.data as EmployeeRow[]),
   })
 
   const employees = data ?? []

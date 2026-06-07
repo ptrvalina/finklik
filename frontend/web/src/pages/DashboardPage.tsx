@@ -84,12 +84,12 @@ export default function DashboardPage() {
             <p className="mt-1 text-sm text-on-surface-variant">Камера или файл документа</p>
           </Link>
           <Link to="/planner" className="card-elevated p-6 transition hover:-translate-y-0.5">
-            <p className="font-headline font-semibold">Создать задачу</p>
-            <p className="mt-1 text-sm text-on-surface-variant">Поручение собственнику или бухгалтеру</p>
+            <p className="font-headline font-semibold">Создать поручение</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Задача для бухгалтера или владельца</p>
           </Link>
           <Link to="/planner" className="card-elevated p-6 transition hover:-translate-y-0.5">
-            <p className="font-headline font-semibold">Подготовить отчёт</p>
-            <p className="mt-1 text-sm text-on-surface-variant">Ответить на запрос в планёре</p>
+            <p className="font-headline font-semibold">Ответить на поручение</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Отчёт или комментарий по задаче</p>
           </Link>
         </div>
       </div>

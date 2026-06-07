@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -8,6 +8,7 @@ class PlannerTaskCreate(BaseModel):
     description: str | None = None
     attachments: list[str] = Field(default_factory=list)
     assignee_id: str = Field(min_length=36, max_length=36)
+    due_date: date | None = None
 
 
 class PlannerReportCreate(BaseModel):
@@ -24,6 +25,7 @@ class PlannerTaskResponse(BaseModel):
     description: str | None
     attachments: list[str]
     status: str
+    due_date: date | None
     created_at: datetime
     closed_at: datetime | None
 

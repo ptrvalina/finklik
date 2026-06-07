@@ -7,7 +7,7 @@ const cards = [
   { to: 'staffing', title: 'Штатное расписание', desc: 'Должности, оклады, подразделения', icon: 'account_tree' },
 ] as const
 
-const externalCards = [{ to: '/planner', title: 'Планёр', desc: 'Задачи команде и календарь', icon: 'event_note' }] as const
+const externalCards = [{ to: '/planner', title: 'Задачи команды', desc: 'Поручения бухгалтеру и менеджерам', icon: 'task_alt' }] as const
 
 export default function EmployeesHub() {
   return (
