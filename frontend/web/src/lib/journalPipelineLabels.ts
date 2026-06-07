@@ -2,7 +2,7 @@
 export function journalPipelineLabel(status?: string | null): string {
   switch (status) {
     case 'parsed':
-      return 'Разобрана'
+      return 'Из банка или скана'
     case 'categorized':
       return 'С категорией'
     case 'verified':

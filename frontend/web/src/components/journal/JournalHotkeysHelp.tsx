@@ -44,6 +44,19 @@ export function JournalHotkeysHelp({ onClose }: Props) {
           </li>
         ))}
       </ul>
+      <div className="mt-4 border-t border-outline/25 pt-3">
+        <p className="text-xs font-semibold text-on-surface">Термины</p>
+        <dl className="mt-2 space-y-1.5 text-xs text-on-surface-variant">
+          <div>
+            <dt className="inline font-semibold text-on-surface">Провести — </dt>
+            <dd className="inline">подтвердить операцию; после этого она учитывается в КУДиР и отчётах.</dd>
+          </div>
+          <div>
+            <dt className="inline font-semibold text-on-surface">Черновик — </dt>
+            <dd className="inline">операция ещё не включена в книгу доходов и расходов.</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   )
 }

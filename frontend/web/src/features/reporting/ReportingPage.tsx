@@ -6,6 +6,7 @@ import { orgQueryKey } from '../../lib/queryKeys'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
 import { buildReportingPeriodNarrative } from './reportingFlowModel'
+import AccountingNavTabs from '../../components/accounting/AccountingNavTabs'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -53,6 +54,7 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   if (filter) {
     return (
       <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+        <AccountingNavTabs />
         <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
           <Link to="/accounting/journal" className="btn-secondary !min-h-10 text-xs">
             Журнал
@@ -78,11 +80,12 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <AccountingNavTabs />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="page-heading">Отчёты</h1>
           <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-            Подача в органы после закрытия журнала. {periodNarrative.headline}
+            Подача в органы после проведения операций в журнале. {periodNarrative.headline}
           </p>
           {blockerCount > 0 && (
             <p className="mt-1 text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -94,12 +97,6 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/accounting/journal" className="btn-secondary text-sm">
-            Журнал
-          </Link>
-          <Link to="/accounting/kudir" className="btn-secondary text-sm">
-            КУДиР
-          </Link>
           <Link to={focusCta.to} className="btn-primary text-sm">
             {focusCta.label}
           </Link>

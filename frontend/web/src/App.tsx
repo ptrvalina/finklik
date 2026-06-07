@@ -18,6 +18,7 @@ import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
 import Accounting from './pages/Accounting'
 import AccountingHub from './pages/accounting/Hub'
 import KudirPage from './pages/accounting/KudirPage'
+import TaxesPage from './pages/TaxesPage'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
 import Planner from './pages/Planner'
@@ -176,6 +177,7 @@ function AppRoutes() {
           </Route>
           <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
           <Route path="accounting/kudir" element={<RoleRoute allow={['admin', 'accountant']}><KudirPage /></RoleRoute>} />
+          <Route path="accounting/taxes" element={<RoleRoute allow={['admin', 'accountant']}><TaxesPage /></RoleRoute>} />
           <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
           <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
           <Route path="accounting" element={<AccountingEntry />} />
@@ -189,7 +191,7 @@ function AppRoutes() {
           <Route path="transactions" element={<Navigate to="/accounting/journal" replace />} />
           <Route path="analytics" element={<RoleRoute allow={['admin', 'accountant']}><AnalyticsPage /></RoleRoute>} />
           <Route path="calendar" element={<RoleRoute allow={['admin', 'accountant']}><CalendarPage /></RoleRoute>} />
-          <Route path="taxes" element={<Navigate to="/bank" replace />} />
+          <Route path="taxes" element={<Navigate to="/accounting/taxes" replace />} />
           <Route path="reporting" element={<Navigate to="/reports" replace />} />
           <Route path="reporting/:authority" element={<LegacyReportingRedirect />} />
           <Route path="documents" element={<RoleRoute allow={['admin', 'accountant']}><DocumentsPage /></RoleRoute>} />

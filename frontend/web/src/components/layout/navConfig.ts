@@ -56,10 +56,11 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'reporting',
     label: 'Учёт',
     items: [
-      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true, description: 'Журнал, КУДиР и отчёты' },
-      { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', end: true, description: 'Операции и проводки' },
-      { to: '/accounting/kudir', label: 'КУДиР', icon: 'book', end: true, description: 'Доходы и расходы за год' },
-      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Подача в органы' },
+      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true, description: 'Обзор, журнал, КУДиР и налоги' },
+      { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', end: true, description: 'Доходы и расходы' },
+      { to: '/accounting/kudir', label: 'КУДиР', icon: 'book', end: true, description: 'Книга доходов и расходов' },
+      { to: '/accounting/taxes', label: 'Налоги', icon: 'calculate', end: true, description: 'УСН, ФСЗН и сроки' },
+      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Подача в ИМНС и ФСЗН' },
     ],
   },
   {
@@ -200,6 +201,7 @@ function pathInZone(pathname: string, zoneId: ZoneId): boolean {
       pathname === '/accounting' ||
       pathname.startsWith('/accounting/journal') ||
       pathname.startsWith('/accounting/kudir') ||
+      pathname.startsWith('/accounting/taxes') ||
       pathname.startsWith('/reports') ||
       pathname.startsWith('/taxes')
     )
@@ -246,7 +248,7 @@ export function getActiveZoneGroup(role?: string | null, pathname?: string): Nav
 }
 
 /** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */
-const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'reporting', 'calendar', 'team', 'clients'])
+const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'calendar', 'team', 'clients'])
 
 export function shouldShowZoneSubnav(zoneId: ZoneId): boolean {
   return !ZONES_WITHOUT_SIDEBAR_SUBNAV.has(zoneId)

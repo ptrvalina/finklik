@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { taxApi } from '../api/client'
 import { orgQueryKey } from '../lib/queryKeys'
 import MoneyAmount from '../components/ui/MoneyAmount'
+import AccountingNavTabs from '../components/accounting/AccountingNavTabs'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-outlined ${className}`}>{name}</span>
@@ -53,6 +54,19 @@ export default function TaxesPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <AccountingNavTabs />
+
+      <div className="mb-4">
+        <h1 className="page-heading">Налоги</h1>
+        <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
+          Расчёт УСН и ФСЗН по данным журнала. Сроки уплаты — в{' '}
+          <Link to="/calendar" className="font-semibold text-primary hover:underline">
+            календаре
+          </Link>
+          .
+        </p>
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => refetch()}>
           <Icon name="calculate" className="text-lg" /> Пересчитать

@@ -20,7 +20,7 @@ type Props = {
   onFilterIssues: () => void
 }
 
-/** Компактная шапка журнала: режим журнал/ввод, метрики, быстрые ссылки — без дублирующих баннеров. */
+/** Шапка журнала: режим просмотра/ввода и ключевые метрики периода. */
 export function JournalWorkspaceChrome({
   workspaceFocus,
   onWorkspaceFocus,
@@ -31,15 +31,25 @@ export function JournalWorkspaceChrome({
   return (
     <div className="rounded-2xl border border-outline/35 bg-surface/90 p-4 sm:p-5">
       <div className="mb-4">
-        <h1 className="page-heading">Журнал</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Операции и категории — основа для отчётов.</p>
+        <h1 className="page-heading">Журнал операций</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Все доходы и расходы — из{' '}
+          <Link to="/bank" className="font-semibold text-primary hover:underline">
+            банка
+          </Link>
+          ,{' '}
+          <Link to="/scan" className="font-semibold text-primary hover:underline">
+            сканера
+          </Link>{' '}
+          и ручного ввода. После «Провести» операция попадает в КУДиР и отчёты.
+        </p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 rounded-xl border border-outline/40 bg-surface-container-low/60 p-0.5">
           {(
             [
-              { id: 'ledger' as const, label: 'Журнал', icon: 'receipt_long' },
-              { id: 'capture' as const, label: 'Ввод', icon: 'edit_note' },
+              { id: 'ledger' as const, label: 'Список', icon: 'receipt_long' },
+              { id: 'capture' as const, label: 'Новая операция', icon: 'edit_note' },
             ] as const
           ).map((t) => (
             <button
@@ -55,23 +65,6 @@ export function JournalWorkspaceChrome({
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1.5 text-[10px]">
-          <Link to="/accounting/kudir" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            КУДиР
-          </Link>
-          <Link to="/reports" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Отчёты
-          </Link>
-          <Link to="/calendar" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Календарь
-          </Link>
-          <Link to="/bank" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Банк
-          </Link>
-          <Link to="/scan" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
-            Сканер
-          </Link>
-        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-outline/25 pt-4 text-sm tabular-nums">
@@ -79,11 +72,16 @@ export function JournalWorkspaceChrome({
           <span className="text-on-surface-variant">В фильтре </span>
           <strong className="text-on-surface">{stats.count}</strong>
         </span>
-        <span className="text-emerald-600 dark:text-emerald-400">+{fmt(stats.income)}</span>
-        <span className="text-on-surface">−{fmt(stats.expense)}</span>
+        <span className="text-emerald-600 dark:text-emerald-400">+{fmt(stats.income)} BYN</span>
+        <span className="text-on-surface">−{fmt(stats.expense)} BYN</span>
         {stats.drafts > 0 && (
-          <button type="button" className="font-semibold text-amber-600 dark:text-amber-400" onClick={onFilterDrafts}>
-            {stats.drafts} черновиков
+          <button
+            type="button"
+            className="font-semibold text-amber-600 dark:text-amber-400"
+            onClick={onFilterDrafts}
+            title="Черновики не учитываются в КУДиР, пока не проведены"
+          >
+            {stats.drafts} черновиков — провести
           </button>
         )}
         {stats.issues > 0 && (
@@ -92,7 +90,7 @@ export function JournalWorkspaceChrome({
           </button>
         )}
         {stats.drafts === 0 && stats.issues === 0 && stats.count > 0 && (
-          <span className="text-xs text-emerald-700 dark:text-emerald-300">Готово к отчётности по фильтру</span>
+          <span className="text-xs text-emerald-700 dark:text-emerald-300">Можно сверять КУДиР и готовить отчёты</span>
         )}
       </div>
     </div>

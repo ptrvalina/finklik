@@ -15,6 +15,7 @@ import { JournalTransactionPanel } from '../components/journal/JournalTransactio
 import { journalPipelineBadgeClass, journalPipelineLabel } from '../lib/journalPipelineLabels'
 import { txAiConfidenceLabel, txAttentionKind, txCanPost, txValidationIssues } from '../lib/journalRowAttention'
 import { JournalWorkspaceChrome } from '../components/journal/JournalWorkspaceChrome'
+import AccountingNavTabs from '../components/accounting/AccountingNavTabs'
 import { useMinWidthLg } from '../lib/useMinWidthLg'
 import {
   JOURNAL_CATEGORY_KEYS,
@@ -224,6 +225,14 @@ export default function Accounting() {
     })
     if (changed) setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    const filter = searchParams.get('filter')
+    const focus = searchParams.get('focus')
+    if (filter === 'drafts') setAttentionFilter('drafts')
+    else if (filter === 'issues') setAttentionFilter('issues')
+    if (focus === 'capture') setWorkspaceFocus('capture')
+  }, [searchParams])
 
   const txQuery = useQuery({
     queryKey: ledgerQueryKey,
@@ -632,6 +641,8 @@ export default function Accounting() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric accounting-journal pb-24 lg:pb-8">
+      <AccountingNavTabs />
+
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button type="button" className="btn-primary fc-btn-thumb shrink-0 rounded-xl text-sm" onClick={() => setCommandOpen(true)}>
           <Icon name="keyboard_command_key" className="text-lg" /> Команды
@@ -639,9 +650,6 @@ export default function Accounting() {
         <button type="button" className="btn-ghost shrink-0 rounded-xl text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
           ?
         </button>
-        <Link to="/accounting/kudir" className="btn-secondary shrink-0 rounded-xl text-sm">
-          КУДиР
-        </Link>
         <Link to="/scan" className="btn-secondary shrink-0 rounded-xl text-sm">
           <Icon name="document_scanner" className="text-lg" /> Сканер
         </Link>
@@ -798,8 +806,9 @@ export default function Accounting() {
                   className="btn-secondary whitespace-nowrap"
                   onClick={() => uploadToKudirMutation.mutate()}
                   disabled={!scanFile || uploadToKudirMutation.isPending}
+                  title="Загрузить документ и добавить операцию в журнал"
                 >
-                  В КУДиР
+                  Загрузить в журнал
                 </button>
               </div>
             </div>
@@ -925,6 +934,7 @@ export default function Accounting() {
                 className="btn-secondary min-h-9 px-4 text-xs font-bold"
                 disabled={selectedDraftCount === 0 || bulkPostMutation.isPending}
                 onClick={() => bulkPostMutation.mutate()}
+                title="Подтвердить черновики для КУДиР и отчётности"
               >
                 {bulkPostMutation.isPending ? 'Проведение…' : `Провести (${selectedDraftCount})`}
               </button>
@@ -1082,6 +1092,7 @@ export default function Accounting() {
                                   className="btn-primary min-h-8 px-2 text-[10px] font-bold"
                                   disabled={postOneMutation.isPending}
                                   onClick={() => postOneMutation.mutate(String(tx.id))}
+                                  title="Подтвердить для КУДиР и отчётности"
                                 >
                                   Провести
                                 </button>
