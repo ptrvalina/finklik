@@ -17,6 +17,7 @@ import EmployeesListPage from './pages/EmployeesPage'
 import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
 import Accounting from './pages/Accounting'
 import AccountingHub from './pages/accounting/Hub'
+import KudirPage from './pages/accounting/KudirPage'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
 import Planner from './pages/Planner'
@@ -174,6 +175,7 @@ function AppRoutes() {
             <Route path="staffing" element={<EmployeesStaffing />} />
           </Route>
           <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
+          <Route path="accounting/kudir" element={<RoleRoute allow={['admin', 'accountant']}><KudirPage /></RoleRoute>} />
           <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
           <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
           <Route path="accounting" element={<AccountingEntry />} />

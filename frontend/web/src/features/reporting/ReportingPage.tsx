@@ -97,6 +97,9 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
           <Link to="/accounting/journal" className="btn-secondary text-sm">
             Журнал
           </Link>
+          <Link to="/accounting/kudir" className="btn-secondary text-sm">
+            КУДиР
+          </Link>
           <Link to={focusCta.to} className="btn-primary text-sm">
             {focusCta.label}
           </Link>

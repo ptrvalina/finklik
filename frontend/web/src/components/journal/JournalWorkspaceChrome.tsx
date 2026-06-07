@@ -56,6 +56,9 @@ export function JournalWorkspaceChrome({
           ))}
         </div>
         <div className="flex flex-wrap gap-1.5 text-[10px]">
+          <Link to="/accounting/kudir" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
+            КУДиР
+          </Link>
           <Link to="/reports" className="rounded-lg border border-outline/35 px-2 py-1 font-semibold text-on-surface-variant hover:text-primary">
             Отчёты
           </Link>

@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, us
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { dashboardApi, documentsApi, scannerApi } from '../api/client'
+import { dashboardApi, scannerApi } from '../api/client'
 import { DataTableShell, useDataTableSelection } from '../components/datatable'
 import { JournalCommandPalette } from '../components/journal/JournalCommandPalette'
 import { JournalMobileVirtualList } from '../components/journal/JournalMobileVirtualList'
@@ -495,18 +495,6 @@ export default function Accounting() {
     },
   })
 
-  async function downloadKudir() {
-    const from = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10)
-    const to = new Date().toISOString().slice(0, 10)
-    const { data } = await documentsApi.transactionsCsv(from, to)
-    const url = URL.createObjectURL(new Blob([data]))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'kudir.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   function submit(e: FormEvent) {
     e.preventDefault()
     if (!amount || !description) return
@@ -651,9 +639,9 @@ export default function Accounting() {
         <button type="button" className="btn-ghost shrink-0 rounded-xl text-xs" onClick={() => setHotkeysOpen((v) => !v)}>
           ?
         </button>
-        <button type="button" className="btn-secondary shrink-0 rounded-xl text-sm" onClick={downloadKudir}>
+        <Link to="/accounting/kudir" className="btn-secondary shrink-0 rounded-xl text-sm">
           КУДиР
-        </button>
+        </Link>
         <Link to="/scan" className="btn-secondary shrink-0 rounded-xl text-sm">
           <Icon name="document_scanner" className="text-lg" /> Сканер
         </Link>

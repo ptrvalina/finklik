@@ -5,6 +5,12 @@ const cards = [
     to: '/accounting/journal',
     title: 'Журнал',
     desc: 'Операции, категории и проводки — из банка и сканов',
+    icon: 'receipt_long',
+  },
+  {
+    to: '/accounting/kudir',
+    title: 'КУДиР',
+    desc: 'Книга учёта доходов и расходов за год',
     icon: 'menu_book',
   },
   {
@@ -12,12 +18,6 @@ const cards = [
     title: 'Отчёты',
     desc: 'Готовность данных и подача в ИМНС, ФСЗН и другие органы',
     icon: 'assignment_turned_in',
-  },
-  {
-    to: '/calendar',
-    title: 'Календарь',
-    desc: 'Сроки налогов, зарплаты и обязательной отчётности',
-    icon: 'event',
   },
 ] as const
 
@@ -27,7 +27,7 @@ export default function AccountingHub() {
       <div className="mb-6">
         <h1 className="page-heading">Учёт</h1>
         <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-          Журнал операций, подготовка и сдача отчётов, календарь сроков. Деньги на счёте — в разделе «Банк».
+          Журнал операций, книга доходов и расходов, подготовка отчётов. Сроки — в разделе «Календарь», деньги на счёте — в «Банке».
         </p>
       </div>
 

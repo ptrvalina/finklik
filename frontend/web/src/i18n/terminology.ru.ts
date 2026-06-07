@@ -18,6 +18,7 @@ export const terminology = {
     settings: 'Настройки',
     analytics: 'Аналитика',
     calendar: 'Календарь',
+    kudir: 'КУДиР',
     chartOfAccounts: 'План счетов',
   },
 

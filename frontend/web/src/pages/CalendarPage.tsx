@@ -122,7 +122,7 @@ export default function CalendarPage() {
         <div>
           <h1 className="page-heading">Календарь</h1>
           <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-            Сроки налогов, зарплаты и обязательной отчётности.
+            Сроки налогов, зарплаты и обязательной отчётности. Учёт операций — в журнале и КУДиР.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
