@@ -67,6 +67,8 @@ export default function EmployeesHire() {
 
   const [editId, setEditId] = useState<string | null>(null)
   const [editBody, setEditBody] = useState<Record<string, unknown>>({})
+  const [wizardStep, setWizardStep] = useState(1)
+  const wizardSteps = ['Личные данные', 'Должность и оклад', 'Документы', 'Подтверждение']
 
   const [exportRange, setExportRange] = useState({
     employeeId: '',
@@ -180,6 +182,7 @@ export default function EmployeesHire() {
         disability: '',
       }))
       setConsent(false)
+      setWizardStep(1)
     } catch (e: any) {
       const m = e?.response?.data?.detail
       setErr(typeof m === 'string' ? m : 'Ошибка при создании')
@@ -315,79 +318,126 @@ export default function EmployeesHire() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-on-surface-variant">
-        Следующий номер приказа (подсказка):{' '}
-        <span className="font-medium text-on-surface">{seqInfo?.hire_next_label || '—'}</span>
-      </p>
+      {rows.length === 0 && !loading && (
+        <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5">
+          <h2 className="text-lg font-semibold text-on-surface">Первый сотрудник</h2>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Заполните анкету по шагам — минимум: ФИО, должность и оклад.
+          </p>
+        </div>
+      )}
+
+      {seqInfo?.hire_next_label ? (
+        <p className="text-sm text-on-surface-variant">
+          Следующий номер приказа:{' '}
+          <span className="font-medium text-on-surface">{seqInfo.hire_next_label}</span>
+        </p>
+      ) : null}
 
       <div className="card-elevated space-y-4 p-6">
-        <h2 className="text-lg font-semibold text-on-surface">Анкета приёма</h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          <input className="input" placeholder="ФИО *" value={form.full_name} onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))} />
-          <input className="input" placeholder="Телефон" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
-          <input className="input" placeholder="Идентификационный номер" value={form.identification_number} onChange={(e) => setForm((p) => ({ ...p, identification_number: e.target.value }))} />
-          <input className="input" placeholder="Должность (кратко) *" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
-          <input className="input" placeholder="Код должности (ОКРБ)" value={form.position_code} onChange={(e) => setForm((p) => ({ ...p, position_code: e.target.value }))} />
-          <input className="input" placeholder="Наименование должности" value={form.position_name} onChange={(e) => setForm((p) => ({ ...p, position_name: e.target.value }))} />
-          <input className="input" type="number" step="0.01" placeholder="Оклад (BYN) *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
-          <input className="input" type="date" value={form.hire_date} onChange={(e) => setForm((p) => ({ ...p, hire_date: e.target.value }))} />
-          <input className="input" placeholder="Подразделение" value={form.subdivision} onChange={(e) => setForm((p) => ({ ...p, subdivision: e.target.value }))} />
-          <select className="input" value={form.employment_type} onChange={(e) => setForm((p) => ({ ...p, employment_type: e.target.value as any }))}>
-            <option value="">Трудоустройство</option>
-            <option value="primary">Основное место</option>
-            <option value="secondary">По совместительству</option>
-          </select>
-          <input className="input" placeholder="Расчётный счёт" value={form.bank_account} onChange={(e) => setForm((p) => ({ ...p, bank_account: e.target.value }))} />
-          <input className="input" placeholder="Номер трудового договора" value={form.contract_number} onChange={(e) => setForm((p) => ({ ...p, contract_number: e.target.value }))} />
-          <input className="input" type="date" placeholder="Дата договора" value={form.contract_date} onChange={(e) => setForm((p) => ({ ...p, contract_date: e.target.value }))} />
-          <input className="input" placeholder="Номер приказа о приёме (можно оставить пустым — будет авто)" value={form.hire_order_number} onChange={(e) => setForm((p) => ({ ...p, hire_order_number: e.target.value }))} />
-          <input className="input" type="date" value={form.hire_order_date} onChange={(e) => setForm((p) => ({ ...p, hire_order_date: e.target.value }))} />
-          <textarea className="input md:col-span-2 min-h-[72px]" placeholder="Премии и надбавки по договору" value={form.bonuses_contract} onChange={(e) => setForm((p) => ({ ...p, bonuses_contract: e.target.value }))} />
-          <input className="input" type="number" min={0} placeholder="Детей (вычеты)" value={form.dependents_children} onChange={(e) => setForm((p) => ({ ...p, dependents_children: e.target.value }))} />
-          <input className="input" type="number" min={0} placeholder="Иных иждивенцев" value={form.dependents_other} onChange={(e) => setForm((p) => ({ ...p, dependents_other: e.target.value }))} />
-          <select className="input" value={form.disability} onChange={(e) => setForm((p) => ({ ...p, disability: e.target.value as any }))}>
-            <option value="">Инвалидность — нет</option>
-            <option value="1">I группа</option>
-            <option value="2">II группа</option>
-            <option value="3">III группа</option>
-          </select>
-          <textarea className="input md:col-span-2 min-h-[64px]" placeholder="Текст инвалидного удостоверения / выписка" value={form.disability_certificate_text} onChange={(e) => setForm((p) => ({ ...p, disability_certificate_text: e.target.value }))} />
-          <textarea className="input md:col-span-2 min-h-[56px]" placeholder="Паспортные данные (доп. текст)" value={form.passport_data} onChange={(e) => setForm((p) => ({ ...p, passport_data: e.target.value }))} />
-          <select className="input" value={form.id_document_type} onChange={(e) => setForm((p) => ({ ...p, id_document_type: e.target.value as any }))}>
-            <option value="">Документ без структурированных реквизитов</option>
-            <option value="passport">Паспорт</option>
-            <option value="residence_permit">Вид на жительство</option>
-            <option value="refugee_certificate">Удостоверение беженца</option>
-            <option value="other">Иной</option>
-          </select>
-          {form.id_document_type ? (
-            <>
-              <input className="input" placeholder="Серия" value={form.id_doc.series} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, series: e.target.value } }))} />
-              <input className="input" placeholder="Номер *" value={form.id_doc.number} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, number: e.target.value } }))} />
-              <input className="input md:col-span-2" placeholder="Кем выдан *" value={form.id_doc.issued_by} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, issued_by: e.target.value } }))} />
-              <input className="input" type="date" value={form.id_doc.issued_date} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, issued_date: e.target.value } }))} />
-              <input className="input" type="date" value={form.id_doc.expiry_date} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, expiry_date: e.target.value } }))} />
-            </>
-          ) : null}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-on-surface">Приём сотрудника</h2>
+          <span className="text-xs font-bold text-on-surface-variant">
+            Шаг {wizardStep} из {wizardSteps.length}: {wizardSteps[wizardStep - 1]}
+          </span>
         </div>
-        <input ref={passportRef} type="file" accept="image/*,.pdf" className="hidden" onChange={() => void scanPassport()} />
-        <input ref={disabilityRef} type="file" accept="image/*,.pdf" className="hidden" onChange={() => void scanDisability()} />
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary" onClick={() => passportRef.current?.click()}>
-            Скан паспорта
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => disabilityRef.current?.click()}>
-            Скан инвалидного удостоверения
-          </button>
+        <div className="flex gap-1">
+          {wizardSteps.map((_, i) => (
+            <div key={i} className={`h-1 flex-1 rounded-full ${i + 1 <= wizardStep ? 'bg-primary' : 'bg-outline/30'}`} />
+          ))}
         </div>
-        <label className="flex items-center gap-2 text-sm text-on-surface-variant">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          Согласие на обработку персональных данных
-        </label>
-        {err ? <p className="text-sm text-rose-500">{err}</p> : null}
-        <button type="button" className="btn-primary" disabled={submitting} onClick={() => void handleCreate()}>
-          {submitting ? 'Сохранение…' : 'Принять сотрудника'}
-        </button>
+
+        {wizardStep === 1 && (
+          <div className="grid gap-3 md:grid-cols-2">
+            <input className="input md:col-span-2" placeholder="ФИО *" value={form.full_name} onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))} />
+            <input className="input" placeholder="Телефон" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
+            <input className="input" placeholder="Идентификационный номер" value={form.identification_number} onChange={(e) => setForm((p) => ({ ...p, identification_number: e.target.value }))} />
+          </div>
+        )}
+
+        {wizardStep === 2 && (
+          <div className="grid gap-3 md:grid-cols-2">
+            <input className="input" placeholder="Должность (кратко) *" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
+            <input className="input" type="number" step="0.01" placeholder="Оклад (BYN) *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
+            <input className="input" type="date" value={form.hire_date} onChange={(e) => setForm((p) => ({ ...p, hire_date: e.target.value }))} />
+            <input className="input" placeholder="Подразделение" value={form.subdivision} onChange={(e) => setForm((p) => ({ ...p, subdivision: e.target.value }))} />
+            <select className="input" value={form.employment_type} onChange={(e) => setForm((p) => ({ ...p, employment_type: e.target.value as any }))}>
+              <option value="">Трудоустройство</option>
+              <option value="primary">Основное место</option>
+              <option value="secondary">По совместительству</option>
+            </select>
+            <input className="input" placeholder="Расчётный счёт" value={form.bank_account} onChange={(e) => setForm((p) => ({ ...p, bank_account: e.target.value }))} />
+          </div>
+        )}
+
+        {wizardStep === 3 && (
+          <>
+            <div className="grid gap-3 md:grid-cols-2">
+              <select className="input md:col-span-2" value={form.id_document_type} onChange={(e) => setForm((p) => ({ ...p, id_document_type: e.target.value as any }))}>
+                <option value="">Документ (необязательно)</option>
+                <option value="passport">Паспорт</option>
+                <option value="residence_permit">Вид на жительство</option>
+                <option value="other">Иной</option>
+              </select>
+              {form.id_document_type ? (
+                <>
+                  <input className="input" placeholder="Серия" value={form.id_doc.series} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, series: e.target.value } }))} />
+                  <input className="input" placeholder="Номер *" value={form.id_doc.number} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, number: e.target.value } }))} />
+                  <input className="input md:col-span-2" placeholder="Кем выдан *" value={form.id_doc.issued_by} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, issued_by: e.target.value } }))} />
+                </>
+              ) : null}
+              <textarea className="input md:col-span-2 min-h-[56px]" placeholder="Паспортные данные" value={form.passport_data} onChange={(e) => setForm((p) => ({ ...p, passport_data: e.target.value }))} />
+            </div>
+            <input ref={passportRef} type="file" accept="image/*,.pdf" className="hidden" onChange={() => void scanPassport()} />
+            <button type="button" className="btn-secondary" onClick={() => passportRef.current?.click()}>
+              Скан паспорта
+            </button>
+          </>
+        )}
+
+        {wizardStep === 4 && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-outline/60 bg-surface-container-low/50 p-4 text-sm">
+              <p><span className="text-on-surface-variant">ФИО:</span> {form.full_name || '—'}</p>
+              <p><span className="text-on-surface-variant">Должность:</span> {form.position || '—'}</p>
+              <p><span className="text-on-surface-variant">Оклад:</span> {form.salary ? `${form.salary} BYN` : '—'}</p>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+              Согласие на обработку персональных данных
+            </label>
+            {err ? <p className="text-sm text-rose-500">{err}</p> : null}
+          </div>
+        )}
+
+        <div className="flex flex-wrap justify-between gap-2 pt-2">
+          <button type="button" className="btn-secondary" disabled={wizardStep === 1} onClick={() => setWizardStep((s) => s - 1)}>
+            Назад
+          </button>
+          {wizardStep < 4 ? (
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                if (wizardStep === 1 && !form.full_name.trim()) {
+                  alert('Укажите ФИО')
+                  return
+                }
+                if (wizardStep === 2 && (!form.position.trim() || Number(form.salary) <= 0)) {
+                  alert('Укажите должность и оклад')
+                  return
+                }
+                setWizardStep((s) => s + 1)
+              }}
+            >
+              Далее
+            </button>
+          ) : (
+            <button type="button" className="btn-primary" disabled={submitting} onClick={() => void handleCreate()}>
+              {submitting ? 'Сохранение…' : 'Принять сотрудника'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="card-elevated space-y-4 p-6">

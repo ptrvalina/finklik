@@ -4,7 +4,6 @@ import { saveBlob } from '../utils/fileDownload'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
-import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { PRIMARY_DOC_TYPE_OPTIONS } from '../lib/documentTypeLabels'
 import { calmActionError, calmError } from '../i18n/messages.ru'
@@ -77,6 +76,7 @@ export default function DocumentsPage() {
   const [vatYear, setVatYear] = useState(today.getFullYear())
   const [loading, setLoading] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [pageTab, setPageTab] = useState<'work' | 'archive' | 'export'>('work')
 
   useEffect(() => {
     if (!message) return
@@ -214,16 +214,16 @@ export default function DocumentsPage() {
     return dup
   }, [primaryDocsData])
 
-  const docStats = useMemo(() => {
+  const filteredPrimaryDocs = useMemo(() => {
     const rows = Array.isArray(primaryDocsData) ? primaryDocsData : []
-    return {
-      total: rows.length,
-      drafts: rows.filter((d: any) => d.status === 'draft').length,
-      unpaid: rows.filter(
-        (d: any) => d.doc_type === 'invoice' && d.status !== 'paid' && d.status !== 'cancelled',
-      ).length,
+    if (pageTab === 'work') {
+      return rows.filter((d: any) => d.status !== 'cancelled' && d.status !== 'paid')
     }
-  }, [primaryDocsData])
+    if (pageTab === 'archive') {
+      return rows.filter((d: any) => d.status === 'cancelled' || d.status === 'paid')
+    }
+    return rows
+  }, [primaryDocsData, pageTab])
 
   const { data: counterpartiesData } = useQuery({
     queryKey: orgQueryKey(['counterparties', 'short']),
@@ -483,183 +483,190 @@ export default function DocumentsPage() {
   return (
     <>
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/scan" className="btn-primary w-full sm:w-auto">
-          <Icon name="document_scanner" className="text-lg" /> В сканер
-        </Link>
-        <Link to="/reports" className="btn-secondary w-full sm:w-auto">
-          <Icon name="assignment_turned_in" className="text-lg" /> К отчётности
-        </Link>
+      <div className="mb-4">
+        <h1 className="page-heading">Документы</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Счета и акты для контрагентов — не архив файлов.
+        </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Документы</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{docStats.total}</p>
-          <p className="text-[11px] text-on-surface-variant">В реестре</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Черновики</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{docStats.drafts}</p>
-          <p className="text-[11px] text-on-surface-variant">Нужно выпустить</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Не оплачено</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">{docStats.unpaid}</p>
-          <p className="text-[11px] text-on-surface-variant">Счета</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Дубликаты</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-amber-600 sm:text-2xl">
-            {duplicatePrimaryDocIds.size}
-          </p>
-          <p className="text-[11px] text-on-surface-variant">На проверку</p>
-        </div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {([
+          { key: 'work' as const, label: 'Документы' },
+          { key: 'archive' as const, label: 'Архив' },
+          { key: 'export' as const, label: 'Экспорт' },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setPageTab(t.key)}
+            className={`min-h-10 rounded-xl px-4 text-sm font-bold transition ${
+              pageTab === t.key ? 'bg-primary text-on-primary shadow-sm' : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      <ExecutionTopActionBanner className="mb-4" />
+      {pageTab === 'work' && (
+        <div className="mb-4 flex justify-end">
+          <Link to="/scan" className="btn-primary w-full sm:w-auto">
+            <Icon name="document_scanner" className="text-lg" /> В сканер
+          </Link>
+        </div>
+      )}
 
       {message && (
-        <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
+        <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
           message.type === 'success' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-error/10 text-error border border-error/20'
         }`}>
           <Icon name={message.type === 'success' ? 'check_circle' : 'error'} className="text-lg" /> {message.text}
         </div>
       )}
 
-      {/* CSV Import */}
-      <div className="page-section p-4 sm:p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Icon name="upload_file" className="text-primary" />
+      {pageTab === 'export' && (
+        <div className="space-y-4">
+          <div className="page-section space-y-4 p-4 sm:p-6">
+            <h2 className="font-headline text-lg font-bold text-on-surface">Выгрузки</h2>
+            <p className="text-xs text-on-surface-variant">Скачайте отчёты и реестры за нужный период.</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-xs text-on-surface-variant">
+                Период с
+                <input type="date" className="input mt-1 min-h-11" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              </label>
+              <label className="text-xs text-on-surface-variant">
+                Период по
+                <input type="date" className="input mt-1 min-h-11" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              </label>
+              <label className="text-xs text-on-surface-variant">
+                Год (зарплата)
+                <input type="number" className="input mt-1 min-h-11" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+              </label>
+              <label className="text-xs text-on-surface-variant">
+                Месяц (зарплата)
+                <input type="number" className="input mt-1 min-h-11" min={1} max={12} value={month} onChange={(e) => setMonth(Number(e.target.value))} />
+              </label>
+              <label className="text-xs text-on-surface-variant">
+                Квартал (НДС / ФСЗН)
+                <select className="input mt-1 min-h-11" value={vatQuarter} onChange={(e) => setVatQuarter(Number(e.target.value))}>
+                  <option value={1}>Q1</option>
+                  <option value={2}>Q2</option>
+                  <option value={3}>Q3</option>
+                  <option value={4}>Q4</option>
+                </select>
+              </label>
+              <label className="text-xs text-on-surface-variant">
+                Год (НДС / ФСЗН)
+                <input type="number" className="input mt-1 min-h-11" value={vatYear} onChange={(e) => setVatYear(Number(e.target.value))} />
+              </label>
+            </div>
+            <div className="divide-y divide-outline/30">
+              {docs.map((doc) => (
+                <div key={doc.loadKey} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-bright">
+                      <Icon name={doc.icon} className="text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-on-surface">{doc.title}</p>
+                      <p className="text-[10px] text-on-surface-variant">{doc.subtitle} · {doc.format}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-primary min-h-10 w-full shrink-0 sm:w-auto"
+                    onClick={doc.action}
+                    disabled={loading !== null}
+                  >
+                    <Icon name="file_download" className="text-lg" />
+                    {loading === doc.loadKey ? 'Скачиваем…' : 'Скачать'}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-on-surface">Импорт транзакций из CSV</h3>
-            <p className="text-[10px] text-on-surface-variant">Поддерживаются форматы: банковские выписки, произвольный CSV</p>
-          </div>
+
+          <details className="page-section p-4 sm:p-6">
+            <summary className="cursor-pointer text-sm font-bold text-on-surface">Импорт транзакций из CSV</summary>
+            <p className="mt-2 text-[11px] text-on-surface-variant">Для бухгалтера: загрузка операций из банковской выписки.</p>
+            <div className="mt-4">
+              <input ref={fileRef} type="file" accept=".csv" className="hidden"
+                onChange={(e) => { if (e.target.files?.[0]) handleCsvPreview(e.target.files[0]) }} />
+
+              {!csvPreview && !csvResult && (
+                <div
+                  className="border-2 border-dashed border-outline-variant/30 rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files[0]) handleCsvPreview(e.dataTransfer.files[0]) }}
+                >
+                  <Icon name="cloud_upload" className="text-3xl text-on-surface-variant/30 mb-2" />
+                  <p className="text-sm text-on-surface-variant">Выберите CSV или перетащите файл</p>
+                </div>
+              )}
+
+              {csvPreview && (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-on-surface">
+                      <span className="font-bold">{csvPreview.total_parsed}</span> операций распознано
+                      {csvPreview.errors?.length > 0 && (
+                        <span className="text-error ml-2">({csvPreview.errors.length} ошибок)</span>
+                      )}
+                    </p>
+                    <div className="page-actions sm:gap-2">
+                      <button type="button" className="btn-ghost min-h-11 w-full sm:w-auto" onClick={() => { setCsvPreview(null); setCsvFile(null) }}>Отмена</button>
+                      <button type="button" className="btn-primary min-h-11 w-full sm:w-auto" disabled={csvImporting || csvPreview.total_parsed === 0} onClick={handleCsvImport}>
+                        {csvImporting ? 'Импортируем…' : `Импортировать ${csvPreview.total_parsed}`}
+                      </button>
+                    </div>
+                  </div>
+                  {csvPreview.preview?.length > 0 && (
+                    <div className="fc-premium-table fc-premium-table-scroll mt-2 max-h-48">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="bg-surface-container-high/50 text-[10px] text-on-surface-variant uppercase">
+                            <th className="px-3 py-2">Дата</th>
+                            <th className="px-3 py-2">Тип</th>
+                            <th className="px-3 py-2 text-right">Сумма</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-outline-variant/5">
+                          {csvPreview.preview.slice(0, 10).map((row: any, i: number) => (
+                            <tr key={i}>
+                              <td className="px-3 py-2">{row.transaction_date}</td>
+                              <td className="px-3 py-2">{row.type}</td>
+                              <td className="px-3 py-2 text-right font-bold">{Number(row.amount).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {csvResult && (
+                <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4 mt-4">
+                  <p className="text-sm text-secondary font-bold">Импортировано: {csvResult.imported}</p>
+                  <button className="btn-ghost mt-3 text-xs" onClick={() => { setCsvResult(null); setCsvFile(null) }}>
+                    Импортировать ещё
+                  </button>
+                </div>
+              )}
+            </div>
+          </details>
         </div>
+      )}
 
-        <input ref={fileRef} type="file" accept=".csv" className="hidden"
-          onChange={(e) => { if (e.target.files?.[0]) handleCsvPreview(e.target.files[0]) }} />
-
-        {!csvPreview && !csvResult && (
-          <div
-            className="border-2 border-dashed border-outline-variant/30 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
-            onClick={() => fileRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files[0]) handleCsvPreview(e.dataTransfer.files[0]) }}
-          >
-            <Icon name="cloud_upload" className="text-4xl text-on-surface-variant/30 mb-3" />
-            <p className="text-sm text-on-surface-variant font-medium">Перетащите CSV файл сюда или нажмите для выбора</p>
-            <p className="text-[10px] text-on-surface-variant/60 mt-1">Колонки: дата, тип, сумма, описание, категория</p>
-          </div>
-        )}
-
-        {csvPreview && (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-on-surface">
-                <span className="font-bold">{csvPreview.total_parsed}</span> операций распознано
-                {csvPreview.errors?.length > 0 && (
-                  <span className="text-error ml-2">({csvPreview.errors.length} ошибок)</span>
-                )}
-              </p>
-              <div className="page-actions sm:gap-2">
-                <button type="button" className="btn-ghost min-h-11 w-full sm:w-auto" onClick={() => { setCsvPreview(null); setCsvFile(null) }}>Отмена</button>
-                <button type="button" className="btn-primary min-h-11 w-full sm:w-auto" disabled={csvImporting || csvPreview.total_parsed === 0} onClick={handleCsvImport}>
-                  <Icon name="file_download" className="text-lg" />
-                  {csvImporting ? 'Импортируем...' : `Импортировать ${csvPreview.total_parsed}`}
-                </button>
-              </div>
-            </div>
-
-            <div className="text-[10px] text-on-surface-variant flex gap-3 flex-wrap">
-              <span>Колонки: {csvPreview.columns?.join(', ')}</span>
-            </div>
-
-            {csvPreview.preview?.length > 0 && (
-              <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky mt-2 max-h-64">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-surface-container-high/50 text-[10px] text-on-surface-variant uppercase tracking-wider">
-                      <th className="px-3 py-2">Дата</th>
-                      <th className="px-3 py-2">Тип</th>
-                      <th className="px-3 py-2 text-right">Сумма</th>
-                      <th className="px-3 py-2">Описание</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/5">
-                    {csvPreview.preview.slice(0, 20).map((row: any, i: number) => (
-                      <tr key={i} className="hover:bg-surface-container-high/30">
-                        <td className="px-3 py-2 text-on-surface">{row.transaction_date}</td>
-                        <td className="px-3 py-2">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            row.type === 'income' ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'
-                          }`}>{row.type}</span>
-                        </td>
-                        <td className="px-3 py-2 text-right font-bold text-on-surface">{Number(row.amount).toFixed(2)}</td>
-                        <td className="px-3 py-2 text-on-surface-variant truncate max-w-[200px]">{row.description || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {csvResult && (
-          <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-secondary font-bold text-sm mb-2">
-              <Icon name="check_circle" className="text-lg" /> Импорт завершён
-            </div>
-            <p className="text-xs text-on-surface-variant">
-              Импортировано: <span className="font-bold text-on-surface">{csvResult.imported}</span>
-              {csvResult.errors?.length > 0 && <span className="text-error ml-2">Ошибок: {csvResult.errors.length}</span>}
-            </p>
-            <button className="btn-ghost mt-3 text-xs" onClick={() => { setCsvResult(null); setCsvFile(null) }}>
-              Импортировать ещё
-            </button>
-          </div>
-        )}
-      </div>
-
-      <h2 className="font-headline text-lg font-bold text-on-surface sm:text-xl">Экспорт</h2>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-        {docs.map(doc => (
-          <div key={doc.loadKey} className="page-section group p-4 transition-colors hover:bg-surface-container sm:p-6">
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-surface-bright">
-                  <Icon name={doc.icon} className="text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface">{doc.title}</h3>
-                  <p className="text-[10px] text-on-surface-variant">{doc.subtitle}</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold rounded-md border border-outline-variant/20 bg-surface-variant px-2 py-0.5 text-on-surface-variant">{doc.format}</span>
-            </div>
-            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [&_.input]:min-h-11 [&_.input]:rounded-xl">{doc.fields}</div>
-            <button type="button" className="btn-primary min-h-12 w-full" onClick={doc.action} disabled={loading !== null}>
-              <Icon name="file_download" className="text-lg" />
-              {loading === doc.loadKey ? 'Скачиваем...' : 'Скачать'}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="font-headline text-lg font-bold text-on-surface sm:text-xl">Первичные документы</h2>
-      <p className="text-xs text-on-surface-variant max-w-3xl">
-        Сценарий: счёт (invoice) → оплата (статус подтягивается через webhook/polling) → акт или накладная с привязкой к счёту.
-        Печать — PDF с реквизитами ИП/ООО из организации.
-      </p>
-
-      <div className="page-section p-4 sm:p-6">
+      {(pageTab === 'work' || pageTab === 'archive') && (
+        <>
+      {pageTab === 'work' && (
+      <div id="doc-create-block" className="page-section p-4 sm:p-6">
         <h3 className="text-sm font-bold text-on-surface">Создать документ</h3>
         <p className="text-[10px] text-on-surface-variant mb-4">
-          Нумерация СЧ/АКТ/ТН по году; автонумерация или свой номер. Для акта и накладной можно выбрать счёт-основание.
+          Счёт → оплата → акт. Нумерация автоматическая или вручную.
         </p>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-xs text-on-surface-variant">
@@ -743,10 +750,13 @@ export default function DocumentsPage() {
           {createPrimaryDocMutation.isPending ? 'Создаём...' : 'Создать документ'}
         </button>
       </div>
+      )}
 
       <div className="page-section p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h3 className="text-sm font-bold text-on-surface">Список документов</h3>
+          <h3 className="text-sm font-bold text-on-surface">
+            {pageTab === 'archive' ? 'Архив' : 'Активные документы'}
+          </h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <select className="input" value={docTypeFilter} onChange={(e) => setDocTypeFilter(e.target.value)}>
               <option value="">Все типы</option>
@@ -778,22 +788,32 @@ export default function DocumentsPage() {
 
         {primaryDocsLoading ? (
           <TableSkeleton rows={7} cols={8} className="mt-4" />
-        ) : (primaryDocsData?.length ?? 0) === 0 ? (
+        ) : filteredPrimaryDocs.length === 0 ? (
           <div className="mt-6">
             <PremiumEmptyState
               variant="compact"
               icon="folder_off"
-              title="Первичных документов пока нет"
-              description="Создайте счёт из блока выше или добавьте операции через скан — так быстрее вырастет цепочка «счёт → оплата → акт»."
+              title={pageTab === 'archive' ? 'Архив пуст' : 'Первичных документов пока нет'}
+              description={
+                pageTab === 'archive'
+                  ? 'Здесь появятся оплаченные и отменённые документы.'
+                  : 'Создайте счёт или отсканируйте первичку — цепочка «счёт → оплата → акт».'
+              }
               actions={
-                <>
-                  <Link to="/scan" className="btn-primary min-h-11 px-6 text-sm">
-                    Скан и OCR
-                  </Link>
-                  <Link to="/accounting/journal" className="btn-secondary min-h-11 px-6 text-sm">
-                    Журнал учёта
-                  </Link>
-                </>
+                pageTab === 'work' ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn-primary min-h-11 px-6 text-sm"
+                      onClick={() => document.getElementById('doc-create-block')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
+                      Создать счёт
+                    </button>
+                    <Link to="/scan" className="btn-secondary min-h-11 px-6 text-sm">
+                      В сканер
+                    </Link>
+                  </>
+                ) : undefined
               }
             />
           </div>
@@ -813,7 +833,7 @@ export default function DocumentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/5">
-                {primaryDocsData.map((doc: any) => (
+                {filteredPrimaryDocs.map((doc: any) => (
                   <tr key={doc.id} className="hover:bg-surface-container-high/30">
                     <td className="px-3 py-2 text-on-surface">{doc.doc_type}</td>
                     <td className="px-3 py-2 text-on-surface">{doc.doc_number}</td>
@@ -911,6 +931,8 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
 
       {payQrModal && (

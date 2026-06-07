@@ -179,33 +179,9 @@ export default function SettingsPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/onboarding/business-profile" className="btn-secondary w-full sm:w-auto">
-          <Icon name="badge" className="text-lg" /> Профиль бизнеса
-        </Link>
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Аккаунт</p>
-          <p className="mt-1 line-clamp-1 font-headline text-sm font-extrabold text-on-surface sm:text-base">{user?.email ?? '—'}</p>
-          <p className="text-[11px] text-on-surface-variant">{user?.role ?? 'Роль'}</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Тема</p>
-          <p className="mt-1 font-headline text-base font-extrabold capitalize text-on-surface sm:text-lg">{theme}</p>
-          <p className="text-[11px] text-primary">Локально в браузере</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Разделы</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">5</p>
-          <p className="text-[11px] text-on-surface-variant">Профиль · интеграции · команда</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Организация</p>
-          <p className="mt-1 line-clamp-2 font-headline text-sm font-extrabold text-on-surface">{user?.org_name ?? '—'}</p>
-          <p className="text-[11px] text-on-surface-variant">Текущий контур</p>
-        </div>
+      <div className="mb-4">
+        <h1 className="page-heading">Настройки</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Профиль организации, команда и подключения.</p>
       </div>
 
       <div className="page-section p-4 dark:border-outline/45 sm:p-5">
@@ -555,6 +531,7 @@ function OrgRequisitesCard() {
 
 function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
   const qc = useQueryClient()
+  const [mode, setMode] = useState<'basic' | 'advanced'>('basic')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [endpoint, setEndpoint] = useState('')
   const [token, setToken] = useState('')
@@ -668,12 +645,38 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-on-surface-variant">
+          {mode === 'basic'
+            ? 'Базовые подключения для повседневной работы.'
+            : 'Технические параметры для администратора и интегратора.'}
+        </p>
+        <div className="inline-flex rounded-xl border border-outline/70 p-1">
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${mode === 'basic' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
+            onClick={() => setMode('basic')}
+          >
+            Базовые
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${mode === 'advanced' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
+            onClick={() => setMode('advanced')}
+          >
+            Расширенные
+          </button>
+        </div>
+      </div>
+
+      {mode === 'advanced' && (
       <DeploymentOverviewSection
         data={deployCaps}
         loading={capsLoading}
         error={capsError}
         onRetry={() => refetchCaps()}
       />
+      )}
       {message && (
         <div
           className={`rounded-xl px-4 py-3 text-sm font-bold ${
@@ -683,6 +686,19 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
           {message.text}
         </div>
       )}
+      {mode === 'basic' ? (
+        <div className="page-section p-5">
+          <p className="text-sm text-on-surface-variant">
+            Для повседневной работы достаточно профиля организации и команды. Подключение 1С, ключи ИИ и политики автоматизации — в «Расширенных».
+          </p>
+          {cfg?.configured ? (
+            <p className="mt-3 flex items-center gap-2 text-xs font-bold text-primary">
+              <Icon name="link" className="text-base" /> Внешний сервис подключён
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <>
       <div className="page-section p-5">
         <h3 className="mb-1 text-sm font-bold text-on-surface">Внешний HTTP-сервис</h3>
         <p className="mb-4 text-[11px] text-on-surface-variant">
@@ -856,6 +872,8 @@ function IntegrationsSection({ isOwner }: { isOwner: boolean }) {
       )}
 
       <p className="text-[11px] text-on-surface-variant">Интеграции можно временно отключить, оставив пустой endpoint.</p>
+        </>
+      )}
     </div>
   )
 }

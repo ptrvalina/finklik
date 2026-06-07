@@ -107,6 +107,7 @@ export default function Planner() {
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
 
   const [viewMode, setViewMode] = useState<'mine' | 'assigned'>('mine')
+  const [screenTab, setScreenTab] = useState<'calendar' | 'tasks'>('calendar')
   const [taskKind, setTaskKind] = useState<'task' | 'report_request'>('task')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -353,42 +354,53 @@ export default function Planner() {
   }
 
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
-  const eventCount = eventsQuery.data?.length ?? 0
-  const myTaskCount = myTasksQuery.data?.length ?? 0
-  const assignedTaskCount = assignedTasksQuery.data?.length ?? 0
-  const openTaskCount = (allTasksQuery.data ?? []).filter((t) => t.status !== 'closed').length
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <button type="button" className="btn-primary fc-btn-thumb shrink-0" onClick={() => openCreate()}>
-          + Событие
-        </button>
+      <div className="mb-4">
+        <h1 className="page-heading">Планер</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          {screenTab === 'calendar' ? 'События и сроки по календарю' : 'Задачи команды и личные поручения'}
+        </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">События</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{eventCount}</p>
-          <p className="text-[11px] capitalize text-on-surface-variant">{monthLabel}</p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setScreenTab('calendar')}
+            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
+              screenTab === 'calendar' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+            }`}
+          >
+            Календарь
+          </button>
+          <button
+            type="button"
+            onClick={() => setScreenTab('tasks')}
+            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
+              screenTab === 'tasks' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+            }`}
+          >
+            Задачи
+          </button>
         </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Мои задачи</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{myTaskCount}</p>
-          <p className="text-[11px] text-on-surface-variant">Активные</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ответственный</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{assignedTaskCount}</p>
-          <p className="text-[11px] text-on-surface-variant">Назначено мне</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Открытые</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{openTaskCount}</p>
-          <p className="text-[11px] text-on-surface-variant">Всего задач</p>
-        </div>
+        {screenTab === 'calendar' ? (
+          <button type="button" className="btn-primary fc-btn-thumb shrink-0 w-full sm:w-auto" onClick={() => openCreate()}>
+            + Событие
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn-primary fc-btn-thumb shrink-0 w-full sm:w-auto"
+            onClick={() => document.getElementById('planner-new-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          >
+            + Задача
+          </button>
+        )}
       </div>
 
+      {screenTab === 'calendar' && (
       <div className="card-elevated space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -497,16 +509,6 @@ export default function Planner() {
                           </span>
                         ))}
                         {evs.length > 3 ? <span className="text-[10px] text-on-surface-variant">+{evs.length - 3} событ.</span> : null}
-                        {tks.slice(0, 2).map((tk) => (
-                          <span
-                            key={tk.id}
-                            className="truncate rounded border border-emerald-600/40 bg-emerald-500/15 px-1 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200"
-                            title={tk.title}
-                          >
-                            ▢ {tk.title}
-                          </span>
-                        ))}
-                        {tks.length > 2 ? <span className="text-[10px] text-on-surface-variant">+{tks.length - 2} задач</span> : null}
                       </div>
                     </div>
                   )
@@ -516,54 +518,7 @@ export default function Planner() {
           </div>
         )}
       </div>
-
-      <div className="card-elevated space-y-3 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-lg font-semibold">Продуктивность</h3>
-          <div className="inline-flex rounded-xl border border-outline/70 p-1">
-            <button
-              type="button"
-              className={`rounded-lg px-3 py-1 text-sm font-medium ${prodTab === 'week' ? 'bg-primary text-on-primary' : ''}`}
-              onClick={() => setProdTab('week')}
-            >
-              Неделя
-            </button>
-            <button
-              type="button"
-              className={`rounded-lg px-3 py-1 text-sm font-medium ${prodTab === 'month' ? 'bg-primary text-on-primary' : ''}`}
-              onClick={() => setProdTab('month')}
-            >
-              Месяц (на экране)
-            </button>
-          </div>
-        </div>
-        {productivityQuery.isLoading ? (
-          <p className="text-sm text-on-surface-variant">Считаем…</p>
-        ) : productivityQuery.data ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-outline/60 p-3">
-              <p className="text-xs text-on-surface-variant">Завершено событий</p>
-              <p className="text-2xl font-semibold">{productivityQuery.data.completed_calendar_events}</p>
-            </div>
-            <div className="rounded-xl border border-outline/60 p-3">
-              <p className="text-xs text-on-surface-variant">Закрыто задач планера</p>
-              <p className="text-2xl font-semibold">{productivityQuery.data.completed_planner_tasks}</p>
-            </div>
-            <div className="rounded-xl border border-outline/60 p-3">
-              <p className="text-xs text-on-surface-variant">Событий в периоде</p>
-              <p className="text-2xl font-semibold">{productivityQuery.data.total_calendar_events_in_period}</p>
-            </div>
-            <div className="rounded-xl border border-outline/60 p-3">
-              <p className="text-xs text-on-surface-variant">Индекс ({prodTab === 'week' ? 'неделя' : 'месяц'})</p>
-              <p className="text-2xl font-semibold">{Math.round((productivityQuery.data.productivity_ratio || 0) * 100)}%</p>
-            </div>
-          </div>
-        ) : null}
-        <p className="text-xs text-on-surface-variant">
-          Период: {prodRange.period_start} — {prodRange.period_end}. Индекс = (завершённые события + закрытые задачи) / (события в периоде +
-          новые задачи в периоде).
-        </p>
-      </div>
+      )}
 
       {modalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog">
@@ -603,8 +558,7 @@ export default function Planner() {
             <textarea className="input min-h-[72px]" placeholder="Описание" value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
             {!user?.organization_id ? (
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                Нет привязки к организации — события календаря недоступны. Выполните вход под пользователем с организацией или обновите БД (
-                <code className="font-mono text-[10px]">alembic upgrade head</code>).
+                Нет привязки к организации — события календаря недоступны.
               </p>
             ) : null}
             {calendarSaveError ? (
@@ -612,11 +566,11 @@ export default function Planner() {
             ) : null}
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={formRemindEmail} onChange={(e) => setFormRemindEmail(e.target.checked)} />
-              Напоминание на e-mail (при сохранении отправится тестовое уведомление, если почта настроена на сервере)
+              Напоминание на e-mail
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={formRemindTg} onChange={(e) => setFormRemindTg(e.target.checked)} />
-              Уведомление в Telegram (нужен TELEGRAM_BOT_TOKEN и chat id на сервере)
+              Уведомление в Telegram
             </label>
             {editing?.id ? (
               <label className="flex items-center gap-2 text-sm">
@@ -662,6 +616,8 @@ export default function Planner() {
         </div>
       ) : null}
 
+      {screenTab === 'tasks' && (
+      <>
       <form id="planner-new-task" onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2 scroll-mt-24">
         <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Новая задача планера</h2>
@@ -753,6 +709,8 @@ export default function Planner() {
           onComment={(taskId, content) => commentMutation.mutate({ taskId, content })}
         />
       </div>
+      </>
+      )}
     </div>
   )
 }

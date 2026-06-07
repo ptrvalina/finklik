@@ -188,8 +188,6 @@ export default function CounterpartiesPage() {
     return hot.slice(0, 5)
   }, [items])
 
-  const pinnedCount = items.filter((c) => c.is_pinned).length
-  const activeWeekCount = items.filter((c) => (c.week_tx_count || 0) > 0).length
 
   function openRecon(cp: CpRow) {
     const t = new Date()
@@ -220,6 +218,7 @@ export default function CounterpartiesPage() {
   }
 
   function RowActions({ cp }: { cp: CpRow }) {
+    const [menuOpen, setMenuOpen] = useState(false)
     const qIncome = new URLSearchParams({
       counterparty_id: cp.id,
       counterparty_name: cp.name,
@@ -230,81 +229,74 @@ export default function CounterpartiesPage() {
       counterparty_name: cp.name,
       preset: 'expense',
     }).toString()
+    const qJournal = new URLSearchParams({
+      counterparty_id: cp.id,
+      counterparty_name: cp.name,
+    }).toString()
     return (
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="relative flex flex-wrap items-center gap-1">
         <Link to={`/accounting/journal?${qIncome}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Доход">
           Доход
         </Link>
         <Link to={`/accounting/journal?${qExpense}`} className="btn-ghost !px-2 !py-1 !text-[10px]" title="Расход">
           Расход
         </Link>
-        <Link
-          to={`/accounting/journal?${new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()}`}
-          className="btn-ghost !px-2 !py-1 !text-[10px]"
-        >
+        <Link to={`/accounting/journal?${qJournal}`} className="btn-ghost !px-2 !py-1 !text-[10px]">
           Учёт
         </Link>
-        <button type="button" className="btn-ghost !px-2 !py-1 !text-[10px]" onClick={() => openRecon(cp)}>
-          Акт сверки
-        </button>
         <button
           type="button"
           className="btn-ghost !px-2 !py-1 !text-[10px]"
-          onClick={() => pinMutation.mutate({ id: cp.id, pinned: !cp.is_pinned })}
+          aria-expanded={menuOpen}
+          aria-label="Ещё действия"
+          onClick={() => setMenuOpen((v) => !v)}
         >
-          {cp.is_pinned ? 'Открепить' : 'Закрепить'}
+          <Icon name="more_vert" className="text-sm" />
         </button>
-        <button type="button" className="btn-ghost !px-2 !py-1 !text-[10px]" onClick={() => openEdit(cp)}>
-          Карточка
-        </button>
-        <button
-          type="button"
-          className="btn-ghost !px-2 !py-1 !text-[10px] text-error"
-          onClick={() => {
-            if (confirm('Удалить контрагента из справочника?')) removeMutation.mutate(cp.id)
-          }}
-        >
-          Удалить
-        </button>
+        {menuOpen ? (
+          <>
+            <button type="button" className="fixed inset-0 z-10 cursor-default" aria-label="Закрыть меню" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-xl border border-outline/60 bg-surface p-1 shadow-lift">
+              <button type="button" className="block w-full rounded-lg px-3 py-2 text-left text-[11px] hover:bg-surface-container-high" onClick={() => { openRecon(cp); setMenuOpen(false) }}>
+                Акт сверки
+              </button>
+              <button type="button" className="block w-full rounded-lg px-3 py-2 text-left text-[11px] hover:bg-surface-container-high" onClick={() => { pinMutation.mutate({ id: cp.id, pinned: !cp.is_pinned }); setMenuOpen(false) }}>
+                {cp.is_pinned ? 'Открепить' : 'Закрепить'}
+              </button>
+              <button type="button" className="block w-full rounded-lg px-3 py-2 text-left text-[11px] hover:bg-surface-container-high" onClick={() => { openEdit(cp); setMenuOpen(false) }}>
+                Карточка
+              </button>
+              <button
+                type="button"
+                className="block w-full rounded-lg px-3 py-2 text-left text-[11px] text-error hover:bg-error/10"
+                onClick={() => {
+                  setMenuOpen(false)
+                  if (confirm('Удалить контрагента из справочника?')) removeMutation.mutate(cp.id)
+                }}
+              >
+                Удалить
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     )
   }
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4">
+        <h1 className="page-heading">Контрагенты</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Справочник партнёров и быстрый переход в журнал.</p>
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/accounting/journal" className="btn-secondary w-full sm:w-auto">
-          <Icon name="description" className="text-lg" /> Журнал
-        </Link>
+        <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
+          <Icon name="add" className="text-lg" /> Добавить
+        </button>
         <button type="button" className="btn-secondary fc-btn-thumb w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
           <Icon name="bolt" className="text-lg" /> По УНП
         </button>
-        <button type="button" className="btn-primary fc-btn-thumb w-full sm:w-auto" onClick={openCreate}>
-          <Icon name="add" className="text-lg" /> Вручную
-        </button>
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Всего</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{items.length}</p>
-          <p className="text-[11px] text-on-surface-variant">Контрагентов</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Закреплено</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{pinnedCount}</p>
-          <p className="text-[11px] text-on-surface-variant">Быстрый доступ</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Активные</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{activeWeekCount}</p>
-          <p className="text-[11px] text-on-surface-variant">За неделю</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Топ недели</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{frequent.length}</p>
-          <p className="text-[11px] text-primary">Частые операции</p>
-        </div>
       </div>
 
       {message && (
@@ -320,19 +312,22 @@ export default function CounterpartiesPage() {
       )}
 
       {frequent.length > 0 && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Часто за последнюю неделю</h2>
+        <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Часто за неделю</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {frequent.map((cp) => (
-              <div
-                key={cp.id}
-                className="flex min-w-[200px] flex-1 flex-col rounded-xl border border-outline/60 bg-surface-container-low p-3"
-              >
-                <p className="text-sm font-bold text-on-surface">{cp.name}</p>
-                <p className="font-mono text-[10px] text-on-surface-variant">УНП {cp.unp}</p>
-                <RowActions cp={cp} />
-              </div>
-            ))}
+            {frequent.map((cp) => {
+              const q = new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()
+              return (
+                <Link
+                  key={cp.id}
+                  to={`/accounting/journal?${q}`}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-outline/60 bg-surface px-3 py-2 text-sm font-medium text-on-surface hover:border-primary/40"
+                >
+                  <span className="truncate max-w-[160px]">{cp.name}</span>
+                  <span className="text-[10px] text-on-surface-variant">→ учёт</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}

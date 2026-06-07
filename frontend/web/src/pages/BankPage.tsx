@@ -5,7 +5,6 @@ import { bankApi, reportsApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { FocusStrip } from '../components/shell/FocusStrip'
-import { ExecutionTopActionBanner } from '../components/execution/ExecutionTopActionBanner'
 import { orgQueryKey } from '../lib/queryKeys'
 import { calmError } from '../i18n/messages.ru'
 import { useThemeStore } from '../store/themeStore'
@@ -214,13 +213,24 @@ export default function BankPage() {
   return (
     <>
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
+      <div className="mb-4">
+        <h1 className="page-heading">Банк</h1>
+        <p className="mt-1 text-sm text-on-surface-variant">Движение денег: баланс, выписка и сверка с журналом.</p>
+      </div>
+
       <div className="mb-4 flex flex-wrap justify-end gap-2">
-        <button type="button" className="btn-primary text-sm" onClick={() => setShowAddAccount(true)}>
-          <Icon name="add" className="text-lg" /> Добавить счёт
-        </button>
-        <button type="button" className="btn-secondary text-sm" onClick={() => setShowPayment(true)}>
+        <button type="button" className="btn-primary text-sm w-full sm:w-auto" onClick={() => setShowPayment(true)}>
           <Icon name="send" className="text-lg" /> Новый платёж
         </button>
+        {accounts.length > 0 ? (
+          <button type="button" className="btn-secondary text-sm w-full sm:w-auto" onClick={() => setTab('reconciliation')}>
+            <Icon name="upload_file" className="text-lg" /> Импорт выписки
+          </button>
+        ) : (
+          <button type="button" className="btn-secondary text-sm w-full sm:w-auto" onClick={() => setShowAddAccount(true)}>
+            <Icon name="add" className="text-lg" /> Добавить счёт
+          </button>
+        )}
       </div>
 
       {accounts.length === 0 && (
@@ -233,39 +243,6 @@ export default function BankPage() {
           />
         </div>
       )}
-
-      <ExecutionTopActionBanner pathPrefix="/bank" className="mb-4" />
-
-      {tab === 'overview' && accounts.length > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Баланс</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{fmt(balanceData?.balance)}</p>
-            <p className="text-[11px] text-on-surface-variant">BYN</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Счета</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{accounts.length}</p>
-            <p className="text-[11px] text-on-surface-variant">{accounts.filter((a) => a.is_active).length} активных</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Операции</p>
-            <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{statementsData?.total ?? statements.length}</p>
-            <p className="text-[11px] text-on-surface-variant">В выписке</p>
-          </div>
-          <div className="glass-card rounded-2xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Сверка</p>
-            <p className="mt-1 text-sm font-semibold text-on-surface">Журнал</p>
-            <Link to="/accounting/journal" className="text-[11px] font-bold text-primary hover:underline">
-              Открыть
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <p className="rounded-xl border border-outline/40 bg-surface-container-low/60 px-4 py-3 text-xs text-on-surface-variant">
-        Импорт выписки и сверка связывают банк с журналом — так снижаются расхождения перед отчётностью.
-      </p>
 
       {message && (
         <div className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${
@@ -307,15 +284,15 @@ export default function BankPage() {
               Сверка выписки с журналом снижает расхождения перед отчётностью.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/accounting/journal" className="btn-secondary min-h-10 px-4 text-sm font-bold">
-                Журнал
-              </Link>
               <button type="button" className="btn-primary min-h-10 px-4 text-sm font-bold" onClick={() => setShowPayment(true)}>
-                Перевод
+                Новый платёж
               </button>
               <button type="button" className="btn-secondary min-h-10 px-4 text-sm font-bold" onClick={() => setTab('reconciliation')}>
                 Импорт выписки
               </button>
+              <Link to="/accounting/journal" className="btn-secondary min-h-10 px-4 text-sm font-bold">
+                Журнал
+              </Link>
             </div>
           </div>
 
@@ -336,27 +313,6 @@ export default function BankPage() {
               ))}
             </div>
           )}
-
-          {chartData.length > 0 && (
-            <Suspense fallback={<div className="h-52 rounded-2xl bg-surface-container-low animate-pulse" aria-hidden />}>
-              <CashflowPulse chartData={chartData} theme={theme} tipStyle={tipStyle} axisMuted={axisMuted} />
-            </Suspense>
-          )}
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setShowPayment(true)}>
-              <Icon name="swap_horiz" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Перевод</p>
-            </button>
-            <Link to="/reports" className="glass-card rounded-2xl p-4 transition hover:-translate-y-0.5">
-              <Icon name="receipt_long" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Налог</p>
-            </Link>
-            <button type="button" className="glass-card rounded-2xl p-4 text-left transition hover:-translate-y-0.5" onClick={() => setTab('reconciliation')}>
-              <Icon name="upload_file" className="text-primary text-2xl" />
-              <p className="mt-2 font-semibold text-on-surface">Импорт выписки</p>
-            </button>
-          </div>
 
           {/* Statements */}
           <div className="glass-card overflow-hidden rounded-2xl">
