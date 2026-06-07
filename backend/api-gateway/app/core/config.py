@@ -94,9 +94,9 @@ class Settings(BaseSettings):
     BANK_OAUTH_TOKEN_URL: str = ""
     BANK_OAUTH_CALLBACK_URL: str = ""
     #: White-label: единственный банк-партнёр (пустой BIC = список всех банков РБ для демо).
-    PARTNER_BANK_NAME: str = "Приорбанк"
-    PARTNER_BANK_BIC: str = "PJCBBY2X"
-    PARTNER_BANK_COLOR: str = "#DC2626"
+    PARTNER_BANK_NAME: str = "Банк ВТБ (ПАО)"
+    PARTNER_BANK_BIC: str = "SLANBY22"
+    PARTNER_BANK_COLOR: str = "#0066B3"
 
     # AI assistant (OpenAI-compatible Chat Completions). Пустой ключ = демо, если у организации нет своего BYOK-ключа.
     # Ключ организации (приоритетнее) хранится в БД в зашифрованном виде — см. /assistant/organization-key.

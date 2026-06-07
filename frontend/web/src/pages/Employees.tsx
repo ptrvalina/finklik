@@ -1,25 +1,23 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
 export default function Employees() {
-  const loc = useLocation()
-  const subpage = /\/employees\/.+/.test(loc.pathname)
+  const { pathname } = useLocation()
+  const isHub = pathname === '/employees' || pathname === '/employees/'
+  const isListArea = pathname.startsWith('/employees/list') || pathname.startsWith('/employees/dossier')
+
+  if (isHub) {
+    return <Outlet />
+  }
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        {!subpage ? (
-          <p className="text-sm text-on-surface-variant">
-            Приём, увольнение, табель, планер и штатное расписание.
-          </p>
-        ) : (
-          <Link className="btn-secondary text-sm" to="/employees">
-            ← Все разделы кадров
+    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+      {!isListArea && (
+        <div className="mb-3">
+          <Link to="/employees" className="btn-ghost !px-2 text-sm text-on-surface-variant">
+            <span className="material-symbols-outlined align-middle text-base">arrow_back</span> Команда
           </Link>
-        )}
-        <Link to="/employees" className="btn-primary text-sm">
-          Хаб кадров
-        </Link>
-      </div>
+        </div>
+      )}
       <Outlet />
     </div>
   )

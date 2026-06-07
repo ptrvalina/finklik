@@ -64,7 +64,8 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'team',
     label: 'Команда',
     items: [
-      { to: '/employees', label: 'Сотрудники', icon: 'badge', end: true, description: 'Кадры, найм и ведомость зарплаты' },
+      { to: '/employees', label: 'Команда', icon: 'groups', end: true, description: 'Приём, табель и кадровые процессы' },
+      { to: '/employees/list', label: 'Сотрудники', icon: 'badge', end: true, description: 'Список и личные дела' },
       { to: '/planner', label: 'Планёр', icon: 'event_note', end: true, description: 'Задачи команде и календарь' },
     ],
   },

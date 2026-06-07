@@ -13,7 +13,8 @@ import EmployeesHire from './pages/employees/Hire'
 import EmployeesDismiss from './pages/employees/Dismiss'
 import EmployeesTimesheet from './pages/employees/Timesheet'
 import EmployeesStaffing from './pages/employees/Staffing'
-import EmployeesHrPlanner from './pages/employees/HrPlanner'
+import EmployeesListPage from './pages/EmployeesPage'
+import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
 import Accounting from './pages/Accounting'
 import Counterparties from './pages/Counterparties'
 import Websites from './pages/Websites'
@@ -157,11 +158,12 @@ function AppRoutes() {
           <Route path="reports" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
           <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>}>
             <Route index element={<EmployeesHub />} />
+            <Route path="list" element={<EmployeesListPage />} />
+            <Route path="dossier/:id" element={<EmployeeDossierPage />} />
             <Route path="hire" element={<EmployeesHire />} />
             <Route path="dismiss" element={<EmployeesDismiss />} />
             <Route path="timesheet" element={<EmployeesTimesheet />} />
             <Route path="staffing" element={<EmployeesStaffing />} />
-            <Route path="planner" element={<EmployeesHrPlanner />} />
           </Route>
           <Route path="accounting/hub" element={<Navigate to="/accounting/journal" replace />} />
           <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />

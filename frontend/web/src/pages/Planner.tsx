@@ -367,7 +367,7 @@ export default function Planner() {
               : 'Задачи сотрудникам и запросы отчётов — кто за что отвечает.'}
           </p>
         </div>
-        <Link to="/employees" className="btn-secondary shrink-0 text-sm">
+        <Link to="/employees/list" className="btn-secondary shrink-0 text-sm">
           Сотрудники
         </Link>
       </div>
