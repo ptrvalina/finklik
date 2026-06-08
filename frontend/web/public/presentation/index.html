@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФинКлик — презентация продукта</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #030712;
+      --surface: #0f172a;
+      --card: #111c33;
+      --border: rgba(148, 163, 184, 0.14);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --teal: #14b8a6;
+      --cyan: #22d3ee;
+      --accent-line: linear-gradient(90deg, var(--teal), var(--cyan));
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background:
+        radial-gradient(1100px 520px at 8% -8%, rgba(20, 184, 166, 0.14), transparent 55%),
+        radial-gradient(800px 420px at 92% 0%, rgba(34, 211, 238, 0.1), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .deck { height: 100vh; position: relative; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 3vw, 2.5rem);
+      padding-bottom: 5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .eyebrow {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.45rem;
+    }
+    h1 {
+      font-size: clamp(1.55rem, 4.2vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      max-width: 56rem;
+    }
+    h1 .grad {
+      background: linear-gradient(120deg, #5eead4, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 {
+      font-size: clamp(1.05rem, 2.4vw, 1.55rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+      max-width: 52rem;
+    }
+    .lead {
+      font-size: clamp(0.86rem, 1.45vw, 1.05rem);
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 48rem;
+      margin-top: 0.35rem;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.5rem;
+      margin-top: 1rem;
+      max-width: 900px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .flow .step {
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+    .flow .arrow { color: var(--teal); font-weight: 700; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.85rem;
+      max-width: 1100px;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      max-width: 1100px;
+    }
+    @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+    }
+    .card h3 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .card p, .card li {
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .card ul { margin: 0.3rem 0 0 1rem; }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+      max-width: 920px;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      text-align: center;
+    }
+    .kpi .v {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 800;
+      background: var(--accent-line);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .kpi .l { font-size: 0.65rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.35; }
+    .tbl-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: 0.75rem;
+      max-width: 980px;
+    }
+    table.tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+    }
+    .tbl th, .tbl td {
+      text-align: left;
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .tbl th {
+      color: var(--teal);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.58rem;
+    }
+    .tbl td:first-child { color: #e2e8f0; font-weight: 500; white-space: nowrap; }
+    .tbl td:last-child { color: var(--muted); }
+    .shot {
+      margin-top: 0.65rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+    .shot img {
+      width: 100%;
+      max-height: min(48vh, 420px);
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+    .shot.cap {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.65rem;
+      color: #64748b;
+      border-top: 1px solid var(--border);
+    }
+    .shot-row .shot img { max-height: min(40vh, 340px); }
+    .quote {
+      margin-top: 0.85rem;
+      padding: 0.9rem 1rem;
+      border-left: 3px solid var(--teal);
+      background: rgba(20, 184, 166, 0.1);
+      border-radius: 0 10px 10px 0;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+      max-width: 48rem;
+    }
+    .bullets { margin-top: 0.75rem; max-width: 52rem; }
+    .bullets li {
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin: 0.35rem 0 0 1.15rem;
+    }
+    .footer-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.65rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(transparent, rgba(3, 7, 18, 0.96));
+      z-index: 50;
+    }
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .nav-btn:hover { border-color: rgba(20, 184, 166, 0.4); }
+    .progress {
+      flex: 1;
+      max-width: 220px;
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 0 0.75rem;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--accent-line);
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+    .slide-num { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .hint { font-size: 0.68rem; color: #64748b; margin-top: 1rem; }
+    @media print {
+      html, body { height: auto; overflow: visible; background: #fff; color: #111; }
+      .footer-nav { display: none !important; }
+      .deck { height: auto; }
+      .slide {
+        position: relative;
+        opacity: 1 !important;
+        transform: none !important;
+        page-break-after: always;
+        padding: 1cm;
+      }
+      .slide:last-child { page-break-after: auto; }
+      .lead, .card p { color: #334155 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+
+    <section class="slide active" data-slide>
+      <p class="eyebrow">Республика Беларусь · ИП и малый бизнес</p>
+      <h1><span class="grad">ФинКлик</span> — учёт, налоги и отчётность в одном сервисе</h1>
+      <p class="lead">Цифровой рабочий стол предпринимателя: деньги на счёте, первичные документы, кадры, сроки и подача в ИМНС и ФСЗН — без Excel и вечерней «бумажной работы».</p>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v">1</div><div class="l">платформа вместо десятка таблиц и порталов</div></div>
+        <div class="kpi"><div class="v">РБ</div><div class="l">УСН, НДС, НБ РБ, формы ИМНС и ФСЗН</div></div>
+        <div class="kpi"><div class="v">AI</div><div class="l">сканер документов и консультант</div></div>
+        <div class="kpi"><div class="v">4–8</div><div class="l">недель white-label для банка</div></div>
+      </div>
+      <p class="hint">← → · Пробел · Home / End · свайп · Ctrl+P для PDF</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Проблема</p>
+      <h2>4 из 5 предпринимателей ведут учёт в Excel или на бумаге</h2>
+      <p class="lead">Разрозненные инструменты создают ошибки, штрафы и потерю времени — особенно когда банк, первичка, зарплата и отчётность не связаны между собой.</p>
+      <div class="grid">
+        <div class="card"><h3>Ручной ввод</h3><p>Чеки и выписки переносятся вручную — часы каждую неделю.</p></div>
+        <div class="card"><h3>Нет ясности по налогам</h3><p>Неочевидно, сколько платить УСН и ФСЗН и когда.</p></div>
+        <div class="card"><h3>Риск просрочек</h3><p>Сроки сдачи и уплаты легко пропустить без единого календаря.</p></div>
+        <div class="card"><h3>Нет связи банк ↔ учёт</h3><p>Деньги на счёте живут отдельно от отчётности.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Решение</p>
+      <h2>Единая цепочка от документа до отчёта в орган</h2>
+      <p class="lead">ФинКлик связывает банк, сканер, журнал операций, книгу доходов и расходов, налоги и подачу в государственные органы.</p>
+      <div class="flow">
+        <span class="step">Банк / сканер</span><span class="arrow">→</span>
+        <span class="step">Журнал операций</span><span class="arrow">→</span>
+        <span class="step">КУДиР</span><span class="arrow">→</span>
+        <span class="step">Налоги</span><span class="arrow">→</span>
+        <span class="step">Отчёты в органы</span>
+      </div>
+      <ul class="bullets">
+        <li>Данные вводятся один раз — дальше система ведёт по шагам.</li>
+        <li>Термины и формы под законодательство РБ: УСН, ИМНС, ФСЗН, УНП, BYN.</li>
+        <li>Понятный интерфейс без бухгалтерского жаргона.</li>
+      </ul>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Продукт</p>
+      <h2>Модули платформы</h2>
+      <div class="grid">
+        <div class="card"><h3>Банк</h3><ul><li>Счёт, выписка, платежи</li><li>Курсы НБ РБ</li></ul></div>
+        <div class="card"><h3>Учёт</h3><ul><li>Журнал, КУДиР, налоги</li><li>Отчёты в органы</li></ul></div>
+        <div class="card"><h3>Сканер</h3><ul><li>OCR чеков и актов</li><li>Автозаполнение полей</li></ul></div>
+        <div class="card"><h3>Документы</h3><ul><li>Счета, акты, экспорт</li><li>Импорт CSV</li></ul></div>
+        <div class="card"><h3>Календарь</h3><ul><li>Налоги и зарплата</li><li>Дедлайны отчётности</li></ul></div>
+        <div class="card"><h3>Команда</h3><ul><li>Кадры и зарплата</li><li>ПУ-2 / ПУ-3 в ФСЗН</li></ul></div>
+        <div class="card"><h3>Контрагенты</h3><ul><li>УНП, сальдо</li><li>История операций</li></ul></div>
+        <div class="card"><h3>Аналитика + AI</h3><ul><li>Выручка и расходы</li><li>Консультант по УСН</li></ul></div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Главная — деньги, сроки и готовность отчётности</h2>
+      <p class="lead">Баланс на счетах, календарь, блокеры отчётности и чек-лист первых шагов — всё на одном экране.</p>
+      <div class="shot">
+        <img src="media/dashboard.png" alt="Главная страница ФинКлик" loading="lazy" />
+        <div class="shot cap">Главная · обзор бизнеса и ближайшие действия</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Банк — деньги и курсы Национального банка РБ</h2>
+      <p class="lead">Счёт, выписка и платежи рядом с официальными курсами НБ РБ для расчётов и отчётности в BYN.</p>
+      <div class="shot">
+        <img src="media/bank.png" alt="Раздел банка и курсов валют" loading="lazy" />
+        <div class="shot cap">Банк · конвертер и справочник курсов НБ РБ</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Сканер — AI распознаёт первичку за секунды</h2>
+      <p class="lead">Чеки, ТТН, акты и счета: загрузка, OCR, подстановка сумм и контрагентов в операцию.</p>
+      <div class="shot">
+        <img src="media/scanner.png" alt="Сканер документов" loading="lazy" />
+        <div class="shot cap">Сканер · загрузка → распознавание → операция</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Документы — импорт и экспорт</h2>
+      <p class="lead">CSV из банка, финансовые отчёты в PDF, выгрузка транзакций. Связка со сканером и отчётностью.</p>
+      <div class="shot">
+        <img src="media/documents.png" alt="Раздел документов" loading="lazy" />
+        <div class="shot cap">Документы · импорт CSV и экспорт отчётов</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Календарь — не пропустить срок</h2>
+      <p class="lead">Налоги, зарплата, отчёты и встречи в одном календаре с цветовой легендой типов событий.</p>
+      <div class="shot">
+        <img src="media/calendar.png" alt="Календарь сроков" loading="lazy" />
+        <div class="shot cap">Календарь · налоги, зарплата, дедлайны</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Отчётность — ИМНС, ФСЗН, Белгосстрах, Белстат</h2>
+      <p class="lead">Пошаговый сценарий: подготовка → проверка → подача → статус. Автоматическое формирование пакетов.</p>
+      <div class="shot">
+        <img src="media/reports.png" alt="Сдача отчётности" loading="lazy" />
+        <div class="shot cap">Отчётность · органы РБ и статусы подачи</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Команда — кадры, зарплата, ФСЗН</h2>
+      <p class="lead">Реестр сотрудников, начисления, ведомости и формы для Фонда социальной защиты населения.</p>
+      <div class="shot">
+        <img src="media/employees.png" alt="Раздел сотрудников" loading="lazy" />
+        <div class="shot cap">Команда · кадры, зарплаты, ведомость</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>Контрагенты и настройки организации</h2>
+      <p class="lead">Справочник с УНП, профиль компании, режим УСН, интеграции и законодательство РБ.</p>
+      <div class="grid2 shot-row">
+        <div class="shot">
+          <img src="media/counterparties.png" alt="Контрагенты" loading="lazy" />
+          <div class="shot cap">Контрагенты · УНП и реквизиты</div>
+        </div>
+        <div class="shot">
+          <img src="media/settings.png" alt="Настройки" loading="lazy" />
+          <div class="shot cap">Настройки · профиль и режим налогообложения</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Интерфейс</p>
+      <h2>AI-консультант по учёту в РБ</h2>
+      <p class="lead">Ответы с опорой на правила учёта и порталы ИМНС, ФСЗН, Белстат. Подсказки по разделам платформы.</p>
+      <div class="shot">
+        <img src="media/assistant.png" alt="AI консультант" loading="lazy" />
+        <div class="shot cap">Консультант · вопросы по УСН и работе с платформой</div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Польза для клиента</p>
+      <h2>Чем ФинКлик помогает на практике</h2>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Было</th><th>Стало с ФинКлик</th></tr></thead>
+          <tbody>
+            <tr><td>Чеки в Excel</td><td>Сканер и банк заполняют данные автоматически</td></tr>
+            <tr><td>«Сколько платить УСН?»</td><td>Расчёт по фактическим операциям журнала</td></tr>
+            <tr><td>Страх просрочки</td><td>Календарь и контроль готовности отчётности</td></tr>
+            <tr><td>Зарплата в файлах</td><td>Кадры, начисления и ФСЗН в одной системе</td></tr>
+            <tr><td>Нет обзора бизнеса</td><td>Аналитика, банк и сроки на одном экране</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="lead" style="margin-top:0.75rem">Особенно полезно: <strong style="color:#e2e8f0">ИП на УСН</strong>, малый бизнес с сотрудниками, торговля с большим потоком первички, клиенты банка.</p>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Ценность</p>
+      <h2>Зачем выбирать ФинКлик</h2>
+      <div class="grid">
+        <div class="card"><h3>Экономия времени</h3><p>Минуты на проверку вместо часов на ручной ввод — предприниматель занимается бизнесом.</p></div>
+        <div class="card"><h3>Меньше штрафов</h3><p>Сроки, готовность данных и прозрачная цепочка до отчёта снижают риск ошибок.</p></div>
+        <div class="card"><h3>Понятность</h3><p>Русский интерфейс, термины РБ, пошаговые сценарии без бухгалтерского жаргона.</p></div>
+        <div class="card"><h3>Всё в одном</h3><p>Банк, учёт, налоги, кадры, документы — одна платформа, одна история.</p></div>
+        <div class="card"><h3>Под Беларусь</h3><p>УСН, НДС, ИМНС, ФСЗН, план счетов, курсы НБ РБ — не «адаптированный» зарубежный сервис.</p></div>
+        <div class="card"><h3>White-label</h3><p>Для банка: ваш бренд, домен, интеграция с АБС — запуск за 4–8 недель.</p></div>
+      </div>
+      <div class="quote">ФинКлик помогает вести учёт, считать налоги и готовить отчёты без Excel. Клиент видит реальные цифры и реже ошибается в сроках — банк получает готовый модуль экосистемы под свой бренд.</div>
+    </section>
+
+    <section class="slide" data-slide>
+      <p class="eyebrow">Следующий шаг</p>
+      <h2>Демо, пилот или white-label</h2>
+      <p class="lead">Готовы показать платформу на демо-организации, запустить пилот с реальными операциями или обсудить встраивание в экосистему банка.</p>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v">Демо</div><div class="l">живой прогон за 15–30 минут</div></div>
+        <div class="kpi"><div class="v">Пилот</div><div class="l">1–3 месяца с метриками вовлечённости</div></div>
+        <div class="kpi"><div class="v">WL</div><div class="l">бренд банка + API АБС</div></div>
+      </div>
+      <p class="hint" style="margin-top:1.25rem">finklik.by · demo@finklik.by · GitHub: ptrvalina/finklik</p>
+    </section>
+
+  </div>
+
+  <div class="footer-nav">
+    <button type="button" class="nav-btn" id="prev" aria-label="Предыдущий слайд">←</button>
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+    <span class="slide-num" id="num">1 / 16</span>
+    <button type="button" class="nav-btn" id="next" aria-label="Следующий слайд">→</button>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('[data-slide]'));
+      let i = 0;
+      const bar = document.getElementById('bar');
+      const num = document.getElementById('num');
+      function show(n) {
+        i = Math.max(0, Math.min(slides.length - 1, n));
+        slides.forEach((s, j) => s.classList.toggle('active', j === i));
+        bar.style.width = ((i + 1) / slides.length * 100) + '%';
+        num.textContent = (i + 1) + ' / ' + slides.length;
+      }
+      document.getElementById('prev').onclick = () => show(i - 1);
+      document.getElementById('next').onclick = () => show(i + 1);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+        if (e.key === 'Home') show(0);
+        if (e.key === 'End') show(slides.length - 1);
+      });
+      let tx = 0;
+      document.addEventListener('touchstart', (e) => { tx = e.changedTouches[0].screenX; }, { passive: true });
+      document.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].screenX - tx;
+        if (Math.abs(dx) > 48) show(i + (dx < 0 ? 1 : -1));
+      }, { passive: true });
+      show(0);
+    })();
+  </script>
+</body>
+</html>
