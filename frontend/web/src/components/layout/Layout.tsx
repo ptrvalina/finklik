@@ -81,8 +81,9 @@ export default function Layout() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
   const { panelOpen, setPanelOpen, hasAnchors, session: opSession } = useOperational()
+  /** Правая панель — только в сканере; на учёте/отчётах даёт пустую колонку справа. */
   const showWorkflowRail =
-    onWorkflowRoute && (hasAnchors || Boolean(opSession.nextStep))
+    location.pathname.startsWith('/scan') && (hasAnchors || Boolean(opSession.nextStep))
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
