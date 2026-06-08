@@ -5,6 +5,7 @@ import { accountingApi, teamApi } from '../api/client'
 import OnboardingShell from '../components/onboarding/OnboardingShell'
 import OkedSelector, { hydrateOkedFromProfile, type OkedItem } from '../components/onboarding/OkedSelector'
 import { guidanceForLegalForm } from '../lib/businessProfileGuidance'
+import { taxModesForLegalForm } from '../lib/productContour'
 import { activeOrgId, orgQueryKey } from '../lib/queryKeys'
 import { useFormDraft } from '../lib/useFormDraft'
 import { terminology } from '../i18n'
@@ -12,16 +13,11 @@ import { calmError } from '../i18n/messages.ru'
 
 const LEGAL_FORMS = [
   { id: 'ip', label: 'ИП' },
-  { id: 'ooo', label: 'ООО' },
-  { id: 'odo', label: 'ОДО' },
   { id: 'chup', label: 'ЧУП' },
+  { id: 'ooo', label: 'ООО' },
+  { id: 'kfh', label: 'КФХ' },
+  { id: 'odo', label: 'ОДО' },
   { id: 'self_employed', label: 'Самозанятый' },
-]
-
-const TAX_MODES = [
-  { id: 'usn_no_vat', label: 'УСН без НДС' },
-  { id: 'usn_vat', label: 'УСН с НДС' },
-  { id: 'osn_vat', label: 'Общая система' },
 ]
 
 const EMP_BANDS = [
@@ -55,7 +51,7 @@ export default function BusinessProfilePage() {
   const [draftSaveState, setDraftSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
 
   const { value: draft, setValue: setDraft, clearDraft } = useFormDraft<DraftShape>(
-    { legalForm: 'ip', taxRegime: 'usn_no_vat', empBand: 'none', step: 0 },
+    { legalForm: 'ip', taxRegime: 'single_tax', empBand: 'none', step: 0 },
     { key: `finklik_bp_draft_${activeOrgId()}`, debounceMs: 450 },
   )
 
@@ -94,7 +90,8 @@ export default function BusinessProfilePage() {
     setStep(draft.step)
   }, [draft.step])
 
-  const guidance = useMemo(() => guidanceForLegalForm(legalForm), [legalForm])
+  const guidance = useMemo(() => guidanceForLegalForm(legalForm, taxRegime), [legalForm, taxRegime])
+  const taxModes = useMemo(() => taxModesForLegalForm(legalForm), [legalForm])
 
   const autosaveMutation = useMutation({
     mutationFn: (partial: { mark_completed?: boolean }) =>
@@ -233,7 +230,7 @@ export default function BusinessProfilePage() {
             <p className="font-medium text-on-surface">{guidance.hint}</p>
             <p className="mt-2 text-xs">{guidance.workflowHint}</p>
             <p className="mt-2 text-[11px] uppercase tracking-wide text-emerald-700/90 dark:text-emerald-300/90">
-              Режим учёта: {guidance.accountingMode === 'lightweight' ? 'лёгкий' : guidance.accountingMode === 'simple' ? 'упрощённый' : 'расширенный'}
+              Контур: {guidance.contourLabel}
             </p>
           </div>
         </section>
@@ -255,7 +252,7 @@ export default function BusinessProfilePage() {
           <section className="fc-onboarding-card space-y-3">
             <p className="label">{terminology.onboarding.taxMode}</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {TAX_MODES.map((t) => (
+              {taxModes.map((t) => (
                 <button
                   key={t.id}
                   type="button"

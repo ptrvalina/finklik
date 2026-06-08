@@ -9,7 +9,7 @@ class RegisterRequest(BaseModel):
     org_name: str = Field(min_length=2, max_length=255)
     org_unp: str = Field(min_length=9, max_length=9)
     legal_form: str = Field(default="ip", pattern=r"^(ip|ooo)$")
-    tax_regime: str = Field(default="usn_no_vat", pattern=r"^(usn_no_vat|usn_vat|osn_vat)$")
+    tax_regime: str = Field(default="usn_no_vat", pattern=r"^(usn_no_vat|usn_vat|osn_vat|single_tax)$")
 
     @field_validator("org_unp")
     @classmethod

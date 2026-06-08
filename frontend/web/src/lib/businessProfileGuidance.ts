@@ -1,47 +1,58 @@
-/** Подсказки и пресеты по типу бизнеса (без смены визуального дизайна). */
+/** Подсказки и пресеты по типу бизнеса — MVP без общей системы. */
 
-export type LegalFormId = 'ip' | 'ooo' | 'odo' | 'chup' | 'self_employed'
+import {
+  normalizeLegalForm,
+  resolveProductContour,
+  taxModesForLegalForm,
+  type LegalFormId,
+} from './productContour'
 
 export type BusinessGuidance = {
   accountingMode: 'simple' | 'advanced' | 'lightweight'
   hint: string
   suggestedTax?: string
   workflowHint: string
+  contourLabel: string
 }
 
-const GUIDANCE: Record<LegalFormId, BusinessGuidance> = {
+const HINTS: Record<LegalFormId, { hint: string; workflowHint: string }> = {
   ip: {
-    accountingMode: 'simple',
-    hint: 'ИП: упрощённый учёт, фокус на доходах и расходах, минимум проводок.',
-    suggestedTax: 'usn_no_vat',
-    workflowHint: 'Рекомендуем УСН без НДС, если нет обязанности по НДС.',
+    hint: 'ИП: единый налог — упрощённый учёт без КУДиР.',
+    workflowHint: 'Фиксируйте доходы и сдавайте отчётность по срокам.',
   },
   ooo: {
-    accountingMode: 'advanced',
-    hint: 'ООО: полный бухучёт, план счетов, закрытие периода, отчётность.',
-    suggestedTax: 'osn_vat',
-    workflowHint: 'Обычно общая система или УСН с НДС — уточните у бухгалтера.',
+    hint: 'ООО: УСН и ведение КУДиР — журнал доходов и расходов, налоги и отчёты.',
+    workflowHint: 'ОКЭД влияет на подсказки OCR и шаблоны операций.',
   },
   odo: {
-    accountingMode: 'advanced',
-    hint: 'ОДО: как ООО — структурированный учёт и контроль оборотов.',
-    suggestedTax: 'usn_vat',
-    workflowHint: 'Проверьте лимиты для выбранного режима налогообложения.',
+    hint: 'ОДО: УСН и КУДиР, как у коммерческой организации.',
+    workflowHint: 'Проверьте лимиты УСН для выбранного года.',
   },
   chup: {
-    accountingMode: 'advanced',
-    hint: 'ЧУП: учёт как у коммерческой организации с отчётностью.',
-    suggestedTax: 'usn_vat',
-    workflowHint: 'ОКЭД влияет на отраслевые проводки и шаблоны OCR.',
+    hint: 'ЧУП: УСН и КУДиР — учёт доходов и расходов с отчётностью.',
+    workflowHint: 'ОКЭД влияет на отраслевые подсказки.',
+  },
+  kfh: {
+    hint: 'КФХ: УСН и КУДиР для учёта деятельности.',
+    workflowHint: 'Учёт доходов и сроки отчётности в одном месте.',
   },
   self_employed: {
-    accountingMode: 'lightweight',
-    hint: 'Самозанятый: лёгкий режим — учёт доходов и чеков, без полного плана счетов.',
-    suggestedTax: 'usn_no_vat',
-    workflowHint: 'Сканируйте чеки и фиксируйте операции — отчётность упрощена.',
+    hint: 'Самозанятый: лёгкий режим — учёт доходов и чеков.',
+    workflowHint: 'Сканируйте чеки и фиксируйте операции.',
   },
 }
 
-export function guidanceForLegalForm(form: string): BusinessGuidance {
-  return GUIDANCE[(form as LegalFormId) in GUIDANCE ? (form as LegalFormId) : 'ip']
+export function guidanceForLegalForm(form: string, taxRegime?: string): BusinessGuidance {
+  const legalForm = normalizeLegalForm(form)
+  const modes = taxModesForLegalForm(legalForm)
+  const contour = resolveProductContour(legalForm, taxRegime ?? modes[0]?.id)
+  const copy = HINTS[legalForm]
+
+  return {
+    accountingMode: contour.accountingMode === 'advanced' ? 'advanced' : contour.id === 'lightweight' ? 'lightweight' : 'simple',
+    hint: copy.hint,
+    suggestedTax: modes[0]?.id,
+    workflowHint: copy.workflowHint,
+    contourLabel: contour.label,
+  }
 }

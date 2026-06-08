@@ -33,7 +33,8 @@ const LEGAL_FORM_LABELS: Record<string, string> = { ip: 'ИП', ooo: 'ООО' }
 const TAX_REGIME_LABELS: Record<string, string> = {
   usn_no_vat: 'УСН без НДС',
   usn_vat: 'УСН с НДС',
-  osn_vat: 'Общая с НДС',
+  osn_vat: 'УСН (ранее общая система)',
+  single_tax: 'Единый налог',
   usn_6: 'УСН (6%)',
 }
 

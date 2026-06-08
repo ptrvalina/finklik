@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 
 const cards = [
+  { to: 'documents', title: 'Документы', desc: 'Приказы о приёме, увольнении и отпусках', icon: 'description' },
+  { to: 'labor-book', title: 'Книга учёта движения трудовых книжек', desc: 'Записи о приёме, переводе и увольнении', icon: 'menu_book' },
+  { to: 'timesheet', title: 'Табель', desc: 'Учёт рабочего времени, связь с приказами об отпуске', icon: 'calendar_month' },
   { to: 'hire', title: 'Приём сотрудников', desc: 'Анкета, приказ, ПУ-2, карточка', icon: 'person_add' },
   { to: 'dismiss', title: 'Увольнение', desc: 'Приказ и основание по ТК РБ', icon: 'person_remove' },
-  { to: 'timesheet', title: 'Табель', desc: 'Учёт рабочего времени за месяц', icon: 'calendar_month' },
   { to: 'staffing', title: 'Штатное расписание', desc: 'Должности, оклады, подразделения', icon: 'account_tree' },
 ] as const
 
@@ -16,7 +18,7 @@ export default function EmployeesHub() {
         <div>
           <h1 className="page-heading">Команда</h1>
           <p className="mt-1 max-w-xl text-sm text-on-surface-variant">
-            Кадровые процессы: приём, табель, штатное расписание и задачи.
+            Кадровые процессы: документы, трудовые книжки, табель и штатное расписание.
           </p>
         </div>
         <Link to="/employees/list" className="btn-primary text-sm w-full sm:w-auto">

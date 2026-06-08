@@ -561,6 +561,13 @@
   .fc-owner-dashboard-grid {
     @apply mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2;
   }
+  /* Business Control Center — 5 блоков по ТЗ */
+  .fc-bcc-grid {
+    @apply mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2;
+  }
+  .fc-bcc .fc-business-hero {
+    @apply sm:p-7;
+  }
   .fc-dashboard-card {
     @apply min-h-[210px] rounded-xl border border-outline/30 bg-surface p-4 shadow-[var(--fc-shadow-calm)];
   }

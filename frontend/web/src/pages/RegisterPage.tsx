@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { taxModesForLegalForm } from '../lib/productContour'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { AuthSplitLayout, AuthBrandMark } from '../components/layout/AuthLayout'
@@ -17,8 +18,10 @@ export default function RegisterPage() {
     org_name: '',
     org_unp: '',
     legal_form: 'ip',
-    tax_regime: 'usn_no_vat',
+    tax_regime: 'single_tax',
   })
+
+  const taxModes = useMemo(() => taxModesForLegalForm(form.legal_form), [form.legal_form])
 
   function set(field: string) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +101,14 @@ export default function RegisterPage() {
                           ? 'border-primary bg-primary/12 text-primary ring-1 ring-primary/25'
                           : 'border-outline-variant/40 text-on-surface-variant hover:border-primary/30'
                       }`}
-                      onClick={() => setForm((f) => ({ ...f, legal_form: val }))}
+                      onClick={() => {
+                        const modes = taxModesForLegalForm(val)
+                        setForm((f) => ({
+                          ...f,
+                          legal_form: val,
+                          tax_regime: modes[0]?.id || f.tax_regime,
+                        }))
+                      }}
                     >
                       {label}
                     </button>
@@ -108,9 +118,11 @@ export default function RegisterPage() {
               <div className="space-y-1.5">
                 <label className="label">Режим налогообложения</label>
                 <select className="input min-h-11 rounded-[1rem]" value={form.tax_regime} onChange={(e) => setForm((f) => ({ ...f, tax_regime: e.target.value }))}>
-                  <option value="usn_no_vat">УСН без НДС</option>
-                  <option value="usn_vat">УСН с НДС</option>
-                  <option value="osn_vat">Общая с НДС</option>
+                  {taxModes.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-1.5">

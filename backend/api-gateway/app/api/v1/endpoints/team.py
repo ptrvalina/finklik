@@ -21,6 +21,14 @@ from app.events.emit import (
     emit_oked_selected,
     emit_tax_mode_selected,
 )
+from app.services.product_contour import (
+    LEGAL_FORM_LABELS,
+    TAX_REGIME_LABELS,
+    is_tax_regime_valid,
+    normalize_legal_form,
+    resolve_product_contour,
+    suggested_accounting_mode,
+)
 
 router = APIRouter(
     prefix="/team",
@@ -68,6 +76,12 @@ class OrganizationRequisitesPatch(BaseModel):
     ceo_name: str | None = None
 
 
+class ProductContourOut(BaseModel):
+    id: str
+    accounting_mode: str
+    features: dict
+
+
 class BusinessProfileOut(BaseModel):
     legal_form: str
     tax_regime: str
@@ -75,6 +89,7 @@ class BusinessProfileOut(BaseModel):
     oked_secondary: list[str] = Field(default_factory=list)
     employee_count_band: str | None = None
     business_profile_completed: bool = False
+    product_contour: ProductContourOut
 
 
 class BusinessProfilePatch(BaseModel):
@@ -90,24 +105,28 @@ class BusinessProfilePatch(BaseModel):
 
 
 def _tax_regime_label(code: str) -> str:
-    m = {
-        "usn_no_vat": "УСН без НДС",
-        "usn_vat": "УСН с НДС",
-        "osn_vat": "ОСН с НДС",
-    }
-    return m.get((code or "").strip().lower(), code or "—")
+    return TAX_REGIME_LABELS.get((code or "").strip().lower(), code or "—")
 
 
 def _legal_form_label(v: str) -> str:
-    x = (v or "").strip().lower()
-    labels = {
-        "ip": "ИП",
-        "ooo": "ООО",
-        "odo": "ОДО",
-        "chup": "ЧУП",
-        "self_employed": "Самозанятый",
-    }
-    return labels.get(x, v or "—")
+    return LEGAL_FORM_LABELS.get(normalize_legal_form(v), v or "—")
+
+
+def _business_profile_out(org: Organization) -> BusinessProfileOut:
+    contour = resolve_product_contour(org.legal_form, org.tax_regime)
+    return BusinessProfileOut(
+        legal_form=org.legal_form,
+        tax_regime=org.tax_regime,
+        oked_primary=org.oked_primary,
+        oked_secondary=_parse_oked_secondary(org.oked_secondary_json),
+        employee_count_band=org.employee_count_band,
+        business_profile_completed=org.business_profile_completed_at is not None,
+        product_contour=ProductContourOut(
+            id=contour["id"],
+            accounting_mode=contour["accounting_mode"],
+            features=contour["features"],
+        ),
+    )
 
 
 def _parse_oked_secondary(raw: str | None) -> list[str]:
@@ -131,14 +150,7 @@ async def get_business_profile(
     org = (await db.execute(select(Organization).where(Organization.id == oid))).scalar_one_or_none()
     if not org:
         raise HTTPException(404, "Организация не найдена")
-    return BusinessProfileOut(
-        legal_form=org.legal_form,
-        tax_regime=org.tax_regime,
-        oked_primary=org.oked_primary,
-        oked_secondary=_parse_oked_secondary(org.oked_secondary_json),
-        employee_count_band=org.employee_count_band,
-        business_profile_completed=org.business_profile_completed_at is not None,
-    )
+    return _business_profile_out(org)
 
 
 @router.patch("/organization/business-profile", response_model=BusinessProfileOut)
@@ -155,12 +167,20 @@ async def patch_business_profile(
         raise HTTPException(404, "Организация не найдена")
 
     if body.legal_form is not None:
-        org.legal_form = body.legal_form.strip().lower()
+        org.legal_form = normalize_legal_form(body.legal_form)
     if body.tax_regime is not None:
-        org.tax_regime = body.tax_regime.strip().lower()
+        tax = body.tax_regime.strip().lower()
+        if not is_tax_regime_valid(org.legal_form, tax):
+            raise HTTPException(
+                422,
+                f"Режим «{tax}» недоступен для ОПФ «{_legal_form_label(org.legal_form)}»",
+            )
+        org.tax_regime = tax
         await emit_tax_mode_selected(
             db, oid, tax_regime=org.tax_regime, legal_form=org.legal_form, actor=str(current_user.id)
         )
+    if body.legal_form is not None or body.tax_regime is not None:
+        org.accounting_mode = suggested_accounting_mode(org.legal_form, org.tax_regime)
     if body.oked_primary is not None:
         org.oked_primary = body.oked_primary.strip()
         secondary = body.oked_secondary if body.oked_secondary is not None else _parse_oked_secondary(org.oked_secondary_json)
@@ -176,14 +196,7 @@ async def patch_business_profile(
 
     await db.commit()
     await db.refresh(org)
-    return BusinessProfileOut(
-        legal_form=org.legal_form,
-        tax_regime=org.tax_regime,
-        oked_primary=org.oked_primary,
-        oked_secondary=_parse_oked_secondary(org.oked_secondary_json),
-        employee_count_band=org.employee_count_band,
-        business_profile_completed=org.business_profile_completed_at is not None,
-    )
+    return _business_profile_out(org)
 
 
 def _build_requisites_text(org: Organization, banks: list[BankAccount], director_fallback: str | None) -> bytes:

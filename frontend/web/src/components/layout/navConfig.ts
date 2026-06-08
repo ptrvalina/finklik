@@ -1,5 +1,7 @@
 /** Business-first IA — Главная / Банк / Учёт / Календарь / Команда / Контрагенты / Настройки. */
 
+import { filterRoutes, hiddenRoutesForContour, type ProductContour } from '../../lib/productContour'
+
 export type ZoneId = 'today' | 'money' | 'reporting' | 'calendar' | 'team' | 'clients' | 'settings'
 
 export type ZoneMeta = {
@@ -118,7 +120,15 @@ function augmentClientsNav(groups: NavGroup[]): NavGroup[] {
   return groups.map((g, i) => (i === idx ? { ...g, items: [...wsItems, ...clients.items] } : g))
 }
 
-export function getNavGroupsForRole(role?: string | null): NavGroup[] {
+function applyContourToNavGroups(groups: NavGroup[], contour?: ProductContour | null): NavGroup[] {
+  if (!contour) return groups
+  const hidden = hiddenRoutesForContour(contour)
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !hidden.has(i.to)) }))
+    .filter((g) => g.items.length > 0)
+}
+
+export function getNavGroupsForRole(role?: string | null, contour?: ProductContour | null): NavGroup[] {
   const r = (role || '').toLowerCase()
   if (r === 'manager') return filterNavGroups(NAV_GROUPS, MANAGER_ALLOWED)
   let groups = r === 'accountant' || r === 'owner' ? augmentClientsNav(NAV_GROUPS) : NAV_GROUPS
@@ -127,7 +137,7 @@ export function getNavGroupsForRole(role?: string | null): NavGroup[] {
       .map((g) => ({ ...g, items: g.items.filter((i) => i.to !== '/operations') }))
       .filter((g) => g.items.length > 0)
   }
-  return groups
+  return applyContourToNavGroups(groups, contour)
 }
 
 export function flattenNavForSheet(items: NavItem[]) {
@@ -164,24 +174,24 @@ export const MOBILE_BAR_ITEMS = [
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
 ]
 
-export function getMobileBarItemsForRole(role?: string | null) {
+export function getMobileBarItemsForRole(role?: string | null, contour?: ProductContour | null) {
   const r = (role || '').toLowerCase()
+  let items = MOBILE_BAR_ITEMS
   if (r === 'accountant') {
-    return [
+    items = [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/workspace/queues', label: 'Очереди', icon: 'all_inbox', end: true },
       { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true },
       { to: '/calendar', label: 'Календарь', icon: 'event', end: true },
     ]
-  }
-  if (r === 'manager') {
-    return [
+  } else if (r === 'manager') {
+    items = [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/scan', label: 'Скан', icon: 'document_scanner', end: true },
       { to: '/planner', label: 'Задачи', icon: 'task_alt' },
     ]
   }
-  return MOBILE_BAR_ITEMS
+  return contour ? filterRoutes(items, contour) : items
 }
 
 function pathInZone(pathname: string, zoneId: ZoneId): boolean {
@@ -230,21 +240,25 @@ export function getActiveZone(pathname: string): ZoneId {
 
 export type ZoneTab = { to: string; label: string; end?: boolean }
 
-export function getZoneTabs(pathname: string, role?: string | null): ZoneTab[] {
+export function getZoneTabs(pathname: string, role?: string | null, contour?: ProductContour | null): ZoneTab[] {
   const zone = getActiveZone(pathname)
-  const group = getNavGroupsForRole(role).find((g) => g.id === zone)
+  const group = getNavGroupsForRole(role, contour).find((g) => g.id === zone)
   if (!group) return []
   return group.items.map((item) => ({ to: item.to, label: item.label, end: item.end ?? true }))
 }
 
-export function getZonesForRole(role?: string | null): ZoneMeta[] {
-  const allowed = new Set(getNavGroupsForRole(role).map((g) => g.id))
+export function getZonesForRole(role?: string | null, contour?: ProductContour | null): ZoneMeta[] {
+  const allowed = new Set(getNavGroupsForRole(role, contour).map((g) => g.id))
   return ZONES.filter((z) => allowed.has(z.id))
 }
 
-export function getActiveZoneGroup(role?: string | null, pathname?: string): NavGroup | undefined {
+export function getActiveZoneGroup(
+  role?: string | null,
+  pathname?: string,
+  contour?: ProductContour | null,
+): NavGroup | undefined {
   if (!pathname) return undefined
-  return getNavGroupsForRole(role).find((g) => g.id === getActiveZone(pathname))
+  return getNavGroupsForRole(role, contour).find((g) => g.id === getActiveZone(pathname))
 }
 
 /** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */

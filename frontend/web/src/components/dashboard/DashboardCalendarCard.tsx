@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, plannerApi, reportingCalmApi, taxApi } from '../../api/client'
@@ -6,28 +6,43 @@ import { orgQueryKey } from '../../lib/queryKeys'
 import { formatRelativeWhen, mergeUpcomingBusinessEvents, type BusinessCalendarEvent } from '../../lib/businessCalendar'
 import { CALENDAR_BUCKET_LABEL, calendarBucket, type CalendarBucket } from '../../lib/dashboardOwnerMetrics'
 
+type HorizonMode = 7 | 30 | 90
+
+const HORIZON_OPTIONS: { id: HorizonMode; label: string }[] = [
+  { id: 7, label: '7 дней' },
+  { id: 30, label: '30 дней' },
+  { id: 90, label: 'Квартал' },
+]
+
+const MAX_CALENDAR_DAYS = 140
+
 const BUCKET_ORDER: CalendarBucket[] = ['today', 'week', 'month']
 
-function groupEvents(events: BusinessCalendarEvent[]) {
+function groupEvents(events: BusinessCalendarEvent[], horizon: HorizonMode) {
   const groups: Record<CalendarBucket, BusinessCalendarEvent[]> = { today: [], week: [], month: [] }
   for (const ev of events) {
+    const days = Math.round(
+      (new Date(ev.date.slice(0, 10)).getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000,
+    )
+    if (days > horizon || days > MAX_CALENDAR_DAYS) continue
     const b = calendarBucket(ev.date)
     if (b) groups[b].push(ev)
   }
   return BUCKET_ORDER.filter((k) => groups[k].length > 0).map((k) => ({
     key: k,
     label: CALENDAR_BUCKET_LABEL[k],
-    items: groups[k].slice(0, 3),
+    items: groups[k].slice(0, horizon === 7 ? 2 : 3),
   }))
 }
 
 export default function DashboardCalendarCard() {
+  const [horizon, setHorizon] = useState<HorizonMode>(30)
   const year = new Date().getFullYear()
   const today = new Date()
   const dateFrom = today.toISOString().slice(0, 10)
-  const horizon = new Date(today)
-  horizon.setDate(horizon.getDate() + 30)
-  const dateTo = horizon.toISOString().slice(0, 10)
+  const horizonDate = new Date(today)
+  horizonDate.setDate(horizonDate.getDate() + Math.min(horizon, MAX_CALENDAR_DAYS))
+  const dateTo = horizonDate.toISOString().slice(0, 10)
 
   const { data: taxData, isLoading: taxLoading } = useQuery({
     queryKey: orgQueryKey(['tax-calendar-home', year]),
@@ -61,18 +76,36 @@ export default function DashboardCalendarCard() {
         timeline: reporting?.timeline,
         obligations: reporting?.obligations_preview,
         tasks: plannerTasks,
-        maxDaysAhead: 30,
-        limit: 12,
+        maxDaysAhead: Math.min(horizon, MAX_CALENDAR_DAYS),
+        limit: 16,
       }),
-    [taxData, userEvents, reporting, plannerTasks],
+    [taxData, userEvents, reporting, plannerTasks, horizon],
   )
 
-  const groups = useMemo(() => groupEvents(events), [events])
+  const groups = useMemo(() => groupEvents(events, horizon), [events, horizon])
   const isLoading = taxLoading || calLoading || repLoading || tasksLoading
 
   return (
     <article className="fc-dashboard-card flex flex-col">
-      <h2 className="fc-dashboard-card-title">Календарь</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="fc-dashboard-card-title">Календарь бизнеса</h2>
+        <div className="flex gap-1 rounded-lg border border-outline/30 p-0.5">
+          {HORIZON_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={`rounded-md px-2 py-1 text-[11px] font-semibold transition ${
+                horizon === opt.id
+                  ? 'bg-primary text-primary-on'
+                  : 'text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+              onClick={() => setHorizon(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="fc-skeleton-pulse mt-2 min-h-[100px] flex-1 rounded-lg" />

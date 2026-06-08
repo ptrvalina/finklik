@@ -1,15 +1,19 @@
 import { NavLink } from 'react-router-dom'
-import { ACCOUNTING_NAV } from '../../pages/accounting/accountingNav'
+import { getAccountingNav } from '../../pages/accounting/accountingNav'
+import { useProductContour } from '../../hooks/useProductContour'
 
 /** Единые вкладки раздела «Учёт» — пользователь всегда видит, где он и куда перейти. */
 export default function AccountingNavTabs() {
+  const { contour } = useProductContour()
+  const tabs = getAccountingNav(contour)
+
   return (
     <nav
       className="mb-5 -mx-1 overflow-x-auto pb-1"
       aria-label="Раздел учёта"
     >
       <div className="flex min-w-max gap-1 rounded-2xl border border-outline/35 bg-surface/90 p-1">
-        {ACCOUNTING_NAV.map((item) => (
+        {tabs.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

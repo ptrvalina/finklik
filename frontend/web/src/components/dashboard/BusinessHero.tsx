@@ -1,15 +1,10 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
-import { dashboardApi, reportsApi } from '../../api/client'
+import { reportsApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
 import MoneyAmount from '../ui/MoneyAmount'
-import {
-  buildSparkline,
-  computeMonthOverMonth,
-  dateDaysAgo,
-  sumNetFromTransactions,
-} from '../../lib/dashboardOwnerMetrics'
+import { buildSparkline, computeMonthOverMonth } from '../../lib/dashboardOwnerMetrics'
 
 function DeltaLine({ label, value, pct }: { label: string; value: number | null; pct?: number | null }) {
   if (value == null || !Number.isFinite(value)) {
@@ -35,36 +30,19 @@ function DeltaLine({ label, value, pct }: { label: string; value: number | null;
 export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null }) {
   const year = new Date().getFullYear()
 
-  const { data: metrics } = useQuery({
-    queryKey: orgQueryKey('dashboard'),
-    queryFn: () => dashboardApi.getMetrics().then((r) => r.data),
-    staleTime: 45_000,
-  })
-
   const { data: summary } = useQuery({
     queryKey: orgQueryKey(['monthly-summary-dashboard', year]),
     queryFn: () => reportsApi.monthlySummary(year).then((r) => r.data),
     staleTime: 120_000,
   })
 
-  const { data: tx30 } = useQuery({
-    queryKey: orgQueryKey(['transactions-30d']),
-    queryFn: () =>
-      dashboardApi
-        .getTransactions({ per_page: 100, date_from: dateDaysAgo(30) })
-        .then((r) => r.data),
-    staleTime: 60_000,
-  })
-
   const sparkData = useMemo(() => buildSparkline(summary?.months), [summary])
   const mom = useMemo(() => computeMonthOverMonth(summary?.months), [summary])
 
-  const net30 = useMemo(() => {
-    const fromTx = sumNetFromTransactions(tx30?.items)
-    if (fromTx !== 0 || (tx30?.items?.length ?? 0) > 0) return fromTx
-    const fallback = Number(metrics?.balance_current_month)
-    return Number.isFinite(fallback) ? fallback : null
-  }, [tx30, metrics])
+  const currentMonth = useMemo(() => {
+    const cm = new Date().getMonth() + 1
+    return summary?.months?.find((m) => m.month === cm) ?? null
+  }, [summary])
 
   const hasChart = sparkData.length >= 2
 
@@ -73,15 +51,45 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
       <div className="fc-business-hero-glow" aria-hidden />
       <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/75">Деньги на счетах</p>
+          <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/75">Деньги</p>
+          <p className="mt-0.5 text-xs text-white/60">Остаток на счетах</p>
           <MoneyAmount
             value={cashOnHand ?? 0}
             emptyAsZero
             className="mt-1 font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl"
             symbolClassName="h-[0.55em] w-[0.48em] text-white"
           />
-          <div className="mt-3 space-y-1">
-            <DeltaLine label="Изменение за 30 дней" value={net30} />
+          <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-white/55">Поступления</p>
+              <MoneyAmount
+                value={currentMonth?.income ?? 0}
+                emptyAsZero
+                className="mt-0.5 text-sm font-bold text-emerald-100"
+                symbolClassName="h-[0.7em] w-[0.6em] text-emerald-100"
+              />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-white/55">Расходы</p>
+              <MoneyAmount
+                value={currentMonth?.expense ?? 0}
+                emptyAsZero
+                className="mt-0.5 text-sm font-bold text-red-100"
+                symbolClassName="h-[0.7em] w-[0.6em] text-red-100"
+              />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-white/55">Поток</p>
+              <MoneyAmount
+                value={mom?.currentNet ?? 0}
+                emptyAsZero
+                signed
+                className="mt-0.5 text-sm font-bold text-white"
+                symbolClassName="h-[0.7em] w-[0.6em] text-white"
+              />
+            </div>
+          </div>
+          <div className="mt-2 space-y-0.5">
             <DeltaLine
               label="К прошлому месяцу"
               value={mom?.delta ?? null}

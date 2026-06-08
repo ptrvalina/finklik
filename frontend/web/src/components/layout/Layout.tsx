@@ -23,6 +23,7 @@ import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
 import NetworkStatusBanner from './NetworkStatusBanner'
 import { useOperational } from '../../context/OperationalContext'
 import OperationalContinuityPanel from '../operations/OperationalContinuityPanel'
+import { useProductContour } from '../../hooks/useProductContour'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -56,11 +57,12 @@ export default function Layout() {
   const notifMenuRef = useRef<HTMLDivElement>(null)
   const role = (user?.role || '').toLowerCase()
   const isManager = role === 'manager'
-  const navGroups = getNavGroupsForRole(role)
-  const mobileBarItems = getMobileBarItemsForRole(role)
+  const { contour } = useProductContour(!isManager)
+  const navGroups = getNavGroupsForRole(role, contour)
+  const mobileBarItems = getMobileBarItemsForRole(role, contour)
   const activeZone = getActiveZone(location.pathname)
-  const activeZoneGroup = getActiveZoneGroup(role, location.pathname)
-  const zonesForRole = getZonesForRole(role)
+  const activeZoneGroup = getActiveZoneGroup(role, location.pathname, contour)
+  const zonesForRole = getZonesForRole(role, contour)
   const onWorkflowRoute =
     location.pathname.startsWith('/scan') ||
     location.pathname.startsWith('/accounting') ||

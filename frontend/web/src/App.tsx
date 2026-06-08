@@ -12,6 +12,8 @@ import EmployeesHub from './pages/employees/Hub'
 import EmployeesHire from './pages/employees/Hire'
 import EmployeesDismiss from './pages/employees/Dismiss'
 import EmployeesTimesheet from './pages/employees/Timesheet'
+import HrDocuments from './pages/employees/HrDocuments'
+import LaborBook from './pages/employees/LaborBook'
 import EmployeesStaffing from './pages/employees/Staffing'
 import EmployeesListPage from './pages/EmployeesPage'
 import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
@@ -41,6 +43,7 @@ import OpsDiagnosticsPage from './pages/OpsDiagnosticsPage'
 import InboxQueuesPage from './pages/InboxQueuesPage'
 import WorkspaceQueuesPage from './pages/WorkspaceQueuesPage'
 import Layout from './components/layout/Layout'
+import ContourRoute from './components/routing/ContourRoute'
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary'
 import { OperationalProvider } from './context/OperationalContext'
 
@@ -166,22 +169,24 @@ function AppRoutes() {
           <Route path="bank/oauth/callback" element={<RoleRoute allow={['admin', 'accountant']}><BankOAuthCallbackPage /></RoleRoute>} />
           <Route path="reports/:authority" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
           <Route path="reports" element={<RoleRoute allow={['admin', 'accountant']}><Reports /></RoleRoute>} />
-          <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><Employees /></RoleRoute>}>
+          <Route path="employees" element={<RoleRoute allow={['admin', 'accountant']}><ContourRoute path="/employees"><Employees /></ContourRoute></RoleRoute>}>
             <Route index element={<EmployeesHub />} />
             <Route path="list" element={<EmployeesListPage />} />
             <Route path="dossier/:id" element={<EmployeeDossierPage />} />
             <Route path="hire" element={<EmployeesHire />} />
             <Route path="dismiss" element={<EmployeesDismiss />} />
             <Route path="timesheet" element={<EmployeesTimesheet />} />
+            <Route path="documents" element={<HrDocuments />} />
+            <Route path="labor-book" element={<LaborBook />} />
             <Route path="staffing" element={<EmployeesStaffing />} />
           </Route>
           <Route path="accounting/journal" element={<RoleRoute allow={['admin', 'accountant']}><Accounting /></RoleRoute>} />
-          <Route path="accounting/kudir" element={<RoleRoute allow={['admin', 'accountant']}><KudirPage /></RoleRoute>} />
+          <Route path="accounting/kudir" element={<RoleRoute allow={['admin', 'accountant']}><ContourRoute path="/accounting/kudir"><KudirPage /></ContourRoute></RoleRoute>} />
           <Route path="accounting/taxes" element={<RoleRoute allow={['admin', 'accountant']}><TaxesPage /></RoleRoute>} />
-          <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ChartOfAccountsPage /></RoleRoute>} />
-          <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><FixedAssetsPage /></RoleRoute>} />
+          <Route path="accounting/chart" element={<RoleRoute allow={['admin', 'accountant']}><ContourRoute path="/accounting/chart"><ChartOfAccountsPage /></ContourRoute></RoleRoute>} />
+          <Route path="accounting/fixed-assets" element={<RoleRoute allow={['admin', 'accountant']}><ContourRoute path="/accounting/fixed-assets"><FixedAssetsPage /></ContourRoute></RoleRoute>} />
           <Route path="accounting" element={<AccountingEntry />} />
-          <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><Counterparties /></RoleRoute>} />
+          <Route path="counterparties" element={<RoleRoute allow={['admin', 'accountant']}><ContourRoute path="/counterparties" fallback="/"><Counterparties /></ContourRoute></RoleRoute>} />
           <Route path="websites" element={<Navigate to="/settings" replace />} />
           <Route path="notes" element={<Navigate to="/planner" replace />} />
           <Route path="scan" element={<RoleRoute allow={['admin', 'accountant', 'manager']}><ScannerPage /></RoleRoute>} />

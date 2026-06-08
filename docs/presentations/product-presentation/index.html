@@ -194,9 +194,71 @@
     .progress-bar { height: 100%; background: var(--vtb-light); border-radius: 99px; transition: width .3s; }
     .slide-num { font-size: .72rem; color: var(--muted); }
     .hint { font-size: .65rem; color: #64748b; margin-top: 1.5rem; }
+    /* Экспорт в PDF (Playwright добавляет .print-all на body) */
+    body.print-all,
+    body.print-all html {
+      height: auto !important;
+      overflow: visible !important;
+    }
+    body.print-all .deck {
+      height: auto !important;
+      position: static !important;
+    }
+    body.print-all .footer-nav,
+    body.print-all .hint { display: none !important; }
+    body.print-all .slide {
+      position: relative !important;
+      inset: auto !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      transform: none !important;
+      transition: none !important;
+      display: flex !important;
+      width: 100%;
+      min-height: 100vh;
+      height: 100vh;
+      page-break-after: always;
+      break-after: page;
+      break-inside: avoid;
+    }
+    body.print-all .slide:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
     @media print {
-      .footer-nav { display: none; }
-      .slide { position: relative; opacity: 1 !important; page-break-after: always; }
+      html, body {
+        height: auto !important;
+        overflow: visible !important;
+      }
+      .deck {
+        height: auto !important;
+        position: static !important;
+      }
+      .footer-nav,
+      .hint { display: none !important; }
+      .slide {
+        position: relative !important;
+        inset: auto !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        transition: none !important;
+        display: flex !important;
+        width: 100%;
+        min-height: 100vh;
+        height: 100vh;
+        page-break-after: always;
+        break-after: page;
+        break-inside: avoid;
+      }
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+    @page {
+      size: landscape;
+      margin: 0;
     }
   </style>
 </head>

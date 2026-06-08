@@ -6,7 +6,7 @@ import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import BusinessHero from '../components/dashboard/BusinessHero'
 import DashboardCalendarCard from '../components/dashboard/DashboardCalendarCard'
 import DashboardAttentionCard from '../components/dashboard/DashboardAttentionCard'
-import DashboardReportingCard from '../components/dashboard/DashboardReportingCard'
+import DashboardObligationsCard from '../components/dashboard/DashboardObligationsCard'
 import DashboardActivityCard from '../components/dashboard/DashboardActivityCard'
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
@@ -97,14 +97,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="fc-owner-dashboard fc-scroll-region pb-20 lg:pb-6">
+    <div className="fc-owner-dashboard fc-bcc fc-scroll-region pb-20 lg:pb-6">
       <BusinessHero cashOnHand={cashOnHand} />
 
-      <div className="fc-owner-dashboard-grid">
+      <div className="fc-bcc-grid">
+        <DashboardObligationsCard />
         <DashboardCalendarCard />
-        <DashboardAttentionCard />
-        <DashboardReportingCard />
         <DashboardActivityCard />
+        <DashboardAttentionCard />
       </div>
 
       {profileIncomplete && (

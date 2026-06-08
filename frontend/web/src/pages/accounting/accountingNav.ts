@@ -1,5 +1,7 @@
 /** Горизонтальная навигация зоны «Учёт» — одинаковая на всех экранах. */
 
+import { filterRoutes, type ProductContour } from '../../lib/productContour'
+
 export type AccountingNavItem = {
   to: string
   label: string
@@ -15,6 +17,11 @@ export const ACCOUNTING_NAV: AccountingNavItem[] = [
   { to: '/accounting/taxes', label: 'Налоги', icon: 'calculate', description: 'УСН, ФСЗН и сроки уплаты' },
   { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', description: 'Подача в ИМНС, ФСЗН и другие органы' },
 ]
+
+export function getAccountingNav(contour?: ProductContour | null): AccountingNavItem[] {
+  if (!contour) return ACCOUNTING_NAV
+  return filterRoutes(ACCOUNTING_NAV, contour)
+}
 
 export const ACCOUNTING_WORKFLOW = [
   {

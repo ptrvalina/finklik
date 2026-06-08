@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { employeesApi } from '../../api/client'
+import { mergeLeaveOrdersIntoTimesheet } from '../../lib/hrStorage'
 
 const KEYS = 'ЯРВБОНПРДКУОТСХОЧ'
 
@@ -28,11 +30,12 @@ export default function EmployeesTimesheet() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey)
-      if (raw) setCells(JSON.parse(raw))
+      const base = raw ? (JSON.parse(raw) as Record<string, Record<number, string>>) : {}
+      setCells(mergeLeaveOrdersIntoTimesheet(year, month, base))
     } catch {
-      setCells({})
+      setCells(mergeLeaveOrdersIntoTimesheet(year, month, {}))
     }
-  }, [storageKey])
+  }, [storageKey, year, month])
 
   function persist(next: Record<string, Record<number, string>>) {
     setCells(next)
@@ -51,7 +54,13 @@ export default function EmployeesTimesheet() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-on-surface-variant">{KEYS.split('').join(' — коды можно подставлять в ячейки; правила маркировки уточняйте по локальным актам.')}</p>
+      <p className="text-sm text-on-surface-variant">
+        {KEYS.split('').join(' — коды в ячейках. О — трудовой отпуск, С — социальный (из ')}
+        <Link to="/employees/documents" className="text-primary hover:underline">
+          кадровых приказов
+        </Link>
+        ).
+      </p>
       <div className="flex flex-wrap gap-2 items-center">
         <label className="text-sm">
           Год
