@@ -525,13 +525,13 @@
     @apply bg-surface-container-high/40 py-2.5 text-[10px] font-label font-semibold uppercase leading-none tracking-widest text-on-surface-variant backdrop-blur-sm;
   }
   .fc-page-shell {
-    @apply mx-auto max-w-7xl space-y-6 sm:space-y-8 lg:space-y-9;
+    @apply w-full max-w-none space-y-6 sm:space-y-8 lg:space-y-9;
   }
-  /* Асимметрия премиум-сетки: чуть больше воздуха слева на широких экранах */
+  /* legacy alias — без дополнительных отступов */
   @media (min-width: 1024px) {
     .fc-page-shell-asymmetric {
-      padding-left: 0.25rem;
-      padding-right: 0.5rem;
+      padding-left: 0;
+      padding-right: 0;
     }
   }
   .fc-hero {

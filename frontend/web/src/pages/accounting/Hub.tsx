@@ -59,7 +59,7 @@ export default function AccountingHub() {
   const taxMode = profile?.tax_regime ? TAX_MODE_LABEL[profile.tax_regime] || profile.tax_regime : null
 
   return (
-    <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
+    <div className="fc-page-shell pb-20 lg:pb-8">
       <AccountingNavTabs />
 
       <div className="mb-6">

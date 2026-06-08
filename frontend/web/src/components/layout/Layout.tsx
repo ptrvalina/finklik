@@ -80,7 +80,9 @@ export default function Layout() {
     mutationFn: () => notificationsApi.markAllRead(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
-  const { panelOpen, setPanelOpen } = useOperational()
+  const { panelOpen, setPanelOpen, hasAnchors, session: opSession } = useOperational()
+  const showWorkflowRail =
+    onWorkflowRoute && (hasAnchors || Boolean(opSession.nextStep))
 
   useEffect(() => {
     if (!moreOpen && !searchOpen) return
@@ -408,17 +410,17 @@ export default function Layout() {
 
         <div className="flex min-h-0 flex-1">
           <main className="fc-workspace">
-            <div className="relative z-[1] mx-auto max-w-[1440px] px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-8 lg:py-8 lg:pb-10">
+            <div className="relative z-[1] w-full px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-6 lg:py-8 lg:pb-10">
               <NetworkStatusBanner />
               <BusinessProfileBanner />
               <Outlet />
             </div>
           </main>
-          {onWorkflowRoute && <OperationalContinuityPanel variant="rail" />}
+          {showWorkflowRail && <OperationalContinuityPanel variant="rail" />}
         </div>
       </div>
 
-      {panelOpen && onWorkflowRoute && (
+      {panelOpen && showWorkflowRail && (
         <>
           <button
             type="button"
