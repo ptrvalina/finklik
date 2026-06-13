@@ -7,6 +7,7 @@ import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissi
 import ReportingGuidedFlow from './ReportingGuidedFlow'
 import { buildReportingPeriodNarrative } from './reportingFlowModel'
 import AccountingNavTabs from '../../components/accounting/AccountingNavTabs'
+import { GlassCard, HeroGradient, StatusChip } from '../../components/stitch'
 
 const VALID_AUTHORITIES: ReportingAuthority[] = ['imns', 'fsszn', 'belgosstrakh', 'belstat']
 
@@ -46,6 +47,7 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
 
   const periodNarrative = useMemo(() => buildReportingPeriodNarrative(calmOverview), [calmOverview])
   const blockerCount = calmOverview?.readiness?.blockers?.length ?? 0
+  const readinessScore = calmOverview?.readiness?.score ?? null
 
   if (authority !== undefined && !isReportingAuthority(authority)) {
     return <Navigate to={base} replace />
@@ -81,48 +83,71 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
       <AccountingNavTabs />
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="page-heading">Отчёты</h1>
-          <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-            Подача в органы после проведения операций в журнале. {periodNarrative.headline}
-          </p>
-          {blockerCount > 0 && (
-            <p className="mt-1 text-sm font-medium text-amber-800 dark:text-amber-300">
-              Не хватает данных: {blockerCount} {blockerCount === 1 ? 'шаг' : blockerCount < 5 ? 'шага' : 'шагов'}
+
+      <HeroGradient className="relative mb-section-sm overflow-hidden shadow-2xl">
+        <div className="relative z-10 flex flex-col items-center justify-between gap-8 md:flex-row">
+          <div className="space-y-4">
+            <StatusChip variant="ready" className="bg-tertiary-container text-tertiary-fixed normal-case tracking-normal">
+              <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-tertiary-fixed" aria-hidden />
+              {periodNarrative.headline || 'Отчётность'}
+            </StatusChip>
+            <h2 className="font-display-lg text-display-lg text-white">Отчёты в органы</h2>
+            <p className="max-w-md text-primary-fixed/90">
+              Подача в ИМНС, ФСЗН, Белгосстрах и Белстат после проведения операций в журнале.
+              {blockerCount > 0
+                ? ` Не хватает данных: ${blockerCount} ${blockerCount === 1 ? 'шаг' : blockerCount < 5 ? 'шага' : 'шагов'}.`
+                : ' Можно подавать отчётность.'}
             </p>
-          )}
-          {blockerCount === 0 && (
-            <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">Можно подавать отчётность</p>
-          )}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link
+                to={focusCta.to}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-sm font-bold text-primary shadow-lg transition hover:shadow-primary-container/20 active:scale-95"
+              >
+                {focusCta.label}
+              </Link>
+              <Link
+                to="/calendar"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95"
+              >
+                Календарь
+              </Link>
+            </div>
+          </div>
+          <GlassCard hover={false} className="mt-4 w-full border-white/10 bg-white/5 p-6 backdrop-blur-xl md:mt-0 md:w-80">
+            <p className="mb-4 font-label text-label-caps uppercase tracking-widest text-primary-fixed/70">Готовность пакета</p>
+            <div className="flex h-20 items-end gap-1">
+              {[40, 65, 45, 90, 70, 85, Math.min(readinessScore ?? 60, 100)].map((h, i) => (
+                <div
+                  key={i}
+                  className={`w-full rounded-t-sm ${i === 6 ? 'bg-tertiary-fixed-dim' : 'bg-primary-fixed-dim'}`}
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="font-mono-data text-display-lg text-white">{readinessScore != null ? `${readinessScore}%` : '—'}</span>
+              <span className="text-xs font-bold text-tertiary-fixed">
+                {blockerCount === 0 ? 'Готово к подаче' : `${blockerCount} замеч.`}
+              </span>
+            </div>
+          </GlassCard>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to={focusCta.to} className="btn-primary text-sm">
-            {focusCta.label}
-          </Link>
-          <Link to="/calendar" className="btn-secondary text-sm">
-            Календарь
-          </Link>
-        </div>
-      </div>
+      </HeroGradient>
 
       <ReportingGuidedFlow basePath={base} />
 
-      <div
-        id="fc-report-authorities"
-        className="glass-card mt-6 flex flex-wrap gap-2 rounded-2xl p-3 sm:gap-3 sm:p-4"
-      >
-        <span className="w-full text-[10px] font-bold uppercase tracking-widest text-primary/80">Органы</span>
+      <GlassCard hover={false} className="mt-6 flex flex-wrap gap-2 p-3 sm:gap-3 sm:p-4" id="fc-report-authorities">
+        <span className="w-full font-label text-label-caps uppercase tracking-widest text-primary/80">Органы</span>
         {hubLinks.map((l) => (
           <Link
             key={l.to}
             to={l.to}
-            className="tap-highlight-none rounded-xl border border-outline/70 bg-surface px-4 py-2.5 text-xs font-bold text-on-surface shadow-xs transition hover:border-primary/40 hover:bg-primary/[0.07] hover:text-primary"
+            className="tap-highlight-none rounded-xl border border-outline-variant/40 bg-surface px-4 py-2.5 text-xs font-bold text-on-surface shadow-xs transition hover:border-primary/40 hover:bg-primary/[0.07] hover:text-primary"
           >
             {l.label}
           </Link>
         ))}
-      </div>
+      </GlassCard>
     </div>
   )
 }

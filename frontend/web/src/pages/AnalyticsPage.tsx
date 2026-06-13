@@ -13,13 +13,10 @@ import { LineSkeleton, PremiumEmptyState, TableSkeleton } from '../components/pr
 import { InsightCard, RecommendationCard, WarningCard } from '../components/premium-os'
 import MoneyAmount from '../components/ui/MoneyAmount'
 import { formatMoneyAmount } from '../lib/formatMoney'
+import { GlassCard, HeroGradient, PageHeader, StatCard, StatusChip, StitchIcon, StitchTable, StitchTableShell } from '../components/stitch'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return (
-    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-      {name}
-    </span>
-  )
+  return <StitchIcon name={name} filled={filled} className={className} />
 }
 
 const CAT_COLORS: Record<string, string> = {
@@ -83,54 +80,77 @@ export default function AnalyticsPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/reports" className="btn-primary text-sm">
-          <Icon name="assignment_turned_in" className="text-lg" /> Отчётность
-        </Link>
-        <div className="flex rounded-full border border-outline/75 bg-surface-container-high p-1 shadow-soft">
-          <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
-            <Icon name="chevron_left" className="text-sm" />
-          </button>
-          <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface">{year}</span>
-          <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
-            <Icon name="chevron_right" className="text-sm" />
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Аналитика"
+        subtitle="Доходы, расходы, маржа и автоматизация за выбранный год."
+        badge={<StatusChip variant="neutral">{year}</StatusChip>}
+        actions={
+          <>
+            <div className="flex rounded-full border border-outline-variant/40 bg-surface-container-low p-1">
+              <button type="button" onClick={() => setYear((y) => y - 1)} className="tap-highlight-none rounded-full px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
+                <Icon name="chevron_left" className="text-sm" />
+              </button>
+              <span className="flex min-w-[3.5rem] items-center justify-center px-3 py-2 text-xs font-bold text-on-surface">{year}</span>
+              <button type="button" onClick={() => setYear((y) => y + 1)} className="tap-highlight-none rounded-full px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">
+                <Icon name="chevron_right" className="text-sm" />
+              </button>
+            </div>
+            <Link to="/reports" className="btn-primary rounded-full text-sm">
+              <Icon name="assignment_turned_in" className="text-lg" /> Отчётность
+            </Link>
+          </>
+        }
+      />
 
       <ExecutionTopActionBanner className="mb-2" />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Выручка</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-            <MoneyAmount value={totalIncome} className="text-inherit" />
-          </p>
-          <p className="text-[11px] text-primary">{year}</p>
+      <HeroGradient className="relative mb-section-sm overflow-hidden shadow-lg">
+        <div className="absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-tertiary-fixed-dim/10 blur-[80px]" aria-hidden />
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <StatusChip variant="neutral" className="mb-2 bg-on-primary-container/20 text-primary-fixed normal-case tracking-normal">
+              Финансовый обзор
+            </StatusChip>
+            <h2 className="font-display-lg text-display-lg text-white">Аналитика бизнеса</h2>
+            <p className="mt-2 max-w-lg text-primary-fixed">
+              Выручка, расходы и прибыль по месяцам. Индекс здоровья учитывает маржу и уровень автоматизации.
+            </p>
+          </div>
+          <div className="flex h-fit items-center gap-6 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-md sm:gap-8">
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-white">{healthScore}/100</div>
+              <div className="font-label text-[9px] uppercase text-white/60">Индекс</div>
+            </div>
+            <div className="h-8 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-tertiary-fixed">{margin}%</div>
+              <div className="font-label text-[9px] uppercase text-white/60">Маржа</div>
+            </div>
+          </div>
         </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Расходы</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">
-            <MoneyAmount value={totalExpense} className="text-inherit" />
-          </p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Прибыль</p>
-          <p className={`mt-1 font-headline text-xl font-extrabold tabular-nums sm:text-2xl ${totalProfit >= 0 ? 'text-primary' : 'text-error'}`}>
-            <MoneyAmount value={totalProfit} className="text-inherit" />
-          </p>
-          <p className="text-[11px] text-on-surface-variant">Маржа {margin}%</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Индекс</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{healthScore}/100</p>
-          <p className="text-[11px] text-primary">{healthScore >= 80 ? 'Отлично' : healthScore >= 60 ? 'Стабильно' : 'Внимание'}</p>
-        </div>
+      </HeroGradient>
+
+      <div className="mb-6 grid grid-cols-2 gap-gutter sm:grid-cols-4">
+        <StatCard icon="trending_up" label="Выручка" value={<MoneyAmount value={totalIncome} className="text-inherit" />} hint={String(year)} />
+        <StatCard icon="trending_down" iconTint="error" label="Расходы" value={<MoneyAmount value={totalExpense} className="text-inherit" />} />
+        <StatCard
+          icon="account_balance_wallet"
+          iconTint={totalProfit >= 0 ? 'tertiary' : 'error'}
+          label="Прибыль"
+          value={<MoneyAmount value={totalProfit} className="text-inherit" />}
+          hint={`Маржа ${margin}%`}
+        />
+        <StatCard
+          icon="monitoring"
+          label="Индекс"
+          value={`${healthScore}/100`}
+          hint={healthScore >= 80 ? 'Отлично' : healthScore >= 60 ? 'Стабильно' : 'Внимание'}
+        />
       </div>
 
       {automationKpi && (
-        <div className="glass-card rounded-2xl p-4 sm:p-6">
-          <h3 className="mb-4 font-headline text-base font-bold text-on-surface sm:text-lg">Автоматизация: KPI</h3>
+        <GlassCard hover={false} className="mb-6 p-4 sm:p-6">
+          <h3 className="mb-4 font-headline text-headline-sm text-on-surface sm:text-headline-md">Автоматизация: KPI</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { key: 'operations_auto_rate', label: 'Операции без ручного %' },
@@ -144,7 +164,7 @@ export default function AnalyticsPage() {
               return (
                 <div
                   key={m.key}
-                  className="rounded-2xl border border-outline/50 bg-surface/80 p-3 shadow-xs backdrop-blur-md transition hover:border-primary/30 dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]"
+                  className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-3"
                 >
                   <p className="text-xs text-on-surface-variant">{m.label}</p>
                   <p className={`mt-1 text-lg font-extrabold ${ok ? 'text-secondary' : 'text-amber-500'}`}>{value.toFixed(1)}%</p>
@@ -154,13 +174,13 @@ export default function AnalyticsPage() {
             })}
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4">
               <p className="text-xs text-on-surface-variant">Цикл operation → report ready</p>
               <p className="mt-1 text-lg font-extrabold text-on-surface">
                 {Number(automationKpi?.cycle_hours_operation_to_report_ready ?? 0).toFixed(1)}ч
               </p>
             </div>
-            <div className="rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4">
               <p className="text-xs text-on-surface-variant">Сокращение цикла</p>
               <p className={`mt-1 text-lg font-extrabold ${
                 Number(automationKpi?.cycle_reduction_progress_x ?? 0) >= Number(automationKpi?.targets?.cycle_reduction_target_x ?? 3)
@@ -175,7 +195,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
           {dataQuality && (
-            <div className="mt-4 rounded-2xl border border-outline/50 bg-surface/80 p-4 shadow-xs backdrop-blur-md dark:border-white/[0.07] dark:bg-[rgb(var(--color-surface)/0.45)]">
+            <div className="mt-4 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4">
               <p className="text-xs text-on-surface-variant">Контроль качества данных</p>
               <p className={`mt-1 text-sm font-bold ${dataQuality.status === 'ok' ? 'text-secondary' : 'text-amber-500'}`}>
                 {dataQuality.status === 'ok' ? 'Данные консистентны' : 'Нужна проверка данных'}
@@ -185,11 +205,11 @@ export default function AnalyticsPage() {
               </p>
             </div>
           )}
-        </div>
+        </GlassCard>
       )}
 
-      <div className="grid grid-cols-12 gap-4 sm:gap-6">
-        <div className="glass-card col-span-12 rounded-2xl p-4 sm:p-6 lg:col-span-8 lg:p-8">
+      <div className="grid grid-cols-12 gap-gutter">
+        <GlassCard hover={false} className="col-span-12 p-4 sm:p-6 lg:col-span-8 lg:p-8">
           <div className="mb-6 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Доходы и расходы по месяцам</h3>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
@@ -243,10 +263,10 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </GlassCard>
 
-        <div className="col-span-12 flex flex-col gap-4 sm:gap-6 lg:col-span-4">
-          <div className="glass-card flex-1 rounded-2xl border-primary/15 p-4 sm:p-6">
+        <div className="col-span-12 flex flex-col gap-gutter lg:col-span-4">
+          <GlassCard hover={false} className="flex-1 border-primary/15 p-4 sm:p-6">
             <h3 className="label mb-6">Структура расходов</h3>
             {categories.length === 0 ? (
               <PremiumEmptyState
@@ -275,7 +295,7 @@ export default function AnalyticsPage() {
                 ))}
               </div>
             )}
-          </div>
+          </GlassCard>
 
           {totalIncome > 0 && totalProfit > 0 ? (
             <InsightCard
@@ -313,11 +333,11 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        <div className="glass-card col-span-12 overflow-hidden rounded-2xl p-0">
+        <GlassCard hover={false} className="col-span-12 overflow-hidden p-0">
           <CounterpartyTurnover />
-        </div>
+        </GlassCard>
 
-        <div className="glass-card col-span-12 rounded-2xl p-4 sm:p-6 lg:p-8">
+        <GlassCard hover={false} className="col-span-12 p-4 sm:p-6 lg:p-8">
           <h3 className="mb-6 font-headline text-base font-bold text-on-surface sm:mb-8 sm:text-lg">Прибыль по месяцам</h3>
           {loadingSummary ? (
             <div
@@ -354,7 +374,7 @@ export default function AnalyticsPage() {
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </GlassCard>
       </div>
     </div>
   )
@@ -371,67 +391,68 @@ function CounterpartyTurnover() {
 
   return (
     <>
-      <div className="flex flex-col gap-2 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6 lg:px-8">
-        <h3 className="font-headline text-base font-bold text-on-surface sm:text-lg">Обороты по контрагентам</h3>
-        <Link to="/accounting/journal" className="text-left text-sm font-bold text-primary hover:underline sm:text-right">
-          Журнал операций
-        </Link>
-      </div>
-      {isLoading ? (
-        <TableSkeleton rows={6} cols={5} />
-      ) : items.length === 0 ? (
-        <div className="p-4 sm:p-6">
-          <PremiumEmptyState
-            variant="compact"
-            icon="handshake"
-            title="Контрагенты не связаны с операциями"
-            description="Укажите контрагента в журнале или при импорте — здесь появятся обороты и сальдо."
-            actions={
-              <>
-                <Link to="/accounting/journal" className="btn-primary min-h-10 px-5 text-sm">
-                  Журнал
-                </Link>
-                <Link to="/scan" className="btn-secondary min-h-10 px-5 text-sm">
-                  Сканер
-                </Link>
-              </>
-            }
-          />
-        </div>
-      ) : (
-        <div className="fc-premium-table overflow-x-auto [-webkit-overflow-scrolling:touch]">
-          <table className="w-full min-w-[640px] text-left">
+      <StitchTableShell
+        title="Обороты по контрагентам"
+        toolbar={
+          <Link to="/accounting/journal" className="text-sm font-bold text-primary hover:underline">
+            Журнал операций
+          </Link>
+        }
+      >
+        {isLoading ? (
+          <TableSkeleton rows={6} cols={5} />
+        ) : items.length === 0 ? (
+          <div className="p-4 sm:p-6">
+            <PremiumEmptyState
+              variant="compact"
+              icon="handshake"
+              title="Контрагенты не связаны с операциями"
+              description="Укажите контрагента в журнале или при импорте — здесь появятся обороты и сальдо."
+              actions={
+                <>
+                  <Link to="/accounting/journal" className="btn-primary min-h-10 px-5 text-sm">
+                    Журнал
+                  </Link>
+                  <Link to="/scan" className="btn-secondary min-h-10 px-5 text-sm">
+                    Сканер
+                  </Link>
+                </>
+              }
+            />
+          </div>
+        ) : (
+          <StitchTable>
             <thead>
-              <tr className="table-head-row">
-                <th className="px-4 py-3 text-left sm:px-6 sm:py-4 lg:px-8">Контрагент</th>
-                <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Доходы</th>
-                <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Расходы</th>
-                <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Сальдо</th>
-                <th className="px-4 py-3 text-right sm:px-6 sm:py-4 lg:px-8">Операций</th>
+              <tr>
+                <th>Контрагент</th>
+                <th className="text-right">Доходы</th>
+                <th className="text-right">Расходы</th>
+                <th className="text-right">Сальдо</th>
+                <th className="text-right">Операций</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/5">
+            <tbody>
               {items.map((row: any) => (
-                <tr key={row.counterparty_id} className="transition-colors hover:bg-surface-container-high">
-                  <td className="px-4 py-3 text-sm font-bold text-on-surface sm:px-6 sm:py-4 lg:px-8">{row.name}</td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-secondary sm:px-6 sm:py-4 lg:px-8">
+                <tr key={row.counterparty_id}>
+                  <td className="text-sm font-bold text-on-surface">{row.name}</td>
+                  <td className="text-right text-sm font-bold text-secondary">
                     <MoneyAmount value={row.income} signed className="inline-flex justify-end text-inherit" />
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-error sm:px-6 sm:py-4 lg:px-8">
+                  <td className="text-right text-sm font-bold text-error">
                     <span className="inline-flex items-baseline justify-end gap-1 tabular-nums">
                       −<MoneyAmount value={row.expense} className="inline-flex text-inherit" symbolClassName="h-[0.78em] w-[0.68em] shrink-0" />
                     </span>
                   </td>
-                  <td className={`px-4 py-3 text-right font-headline text-sm font-extrabold sm:px-6 sm:py-4 lg:px-8 ${row.income - row.expense >= 0 ? 'text-secondary' : 'text-error'}`}>
+                  <td className={`text-right font-headline text-sm font-extrabold ${row.income - row.expense >= 0 ? 'text-secondary' : 'text-error'}`}>
                     <MoneyAmount value={row.income - row.expense} className="inline-flex justify-end text-inherit" />
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-on-surface-variant sm:px-6 sm:py-4 lg:px-8">{row.count}</td>
+                  <td className="text-right text-sm text-on-surface-variant">{row.count}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      )}
+          </StitchTable>
+        )}
+      </StitchTableShell>
     </>
   )
 }

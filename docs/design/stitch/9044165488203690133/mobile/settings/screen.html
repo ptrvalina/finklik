@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-container": "#77ebb6",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary": "#565e74",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-primary-container": "#c4d5ff",
+                    "on-tertiary-fixed": "#002114",
+                    "on-secondary-fixed": "#131b2e",
+                    "tertiary-fixed": "#84f9c3",
+                    "primary-container": "#0058be",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#085ac0",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c2c6d5",
+                    "on-background": "#191c1e",
+                    "inverse-primary": "#adc6ff",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e1e2e5",
+                    "surface-bright": "#f8f9fc",
+                    "outline": "#727784",
+                    "on-primary-fixed-variant": "#004395",
+                    "background": "#f8f9fc",
+                    "primary": "#004191",
+                    "on-surface-variant": "#424753",
+                    "surface-dim": "#d8dadd",
+                    "secondary-container": "#d8dff9",
+                    "on-secondary-container": "#5a6278",
+                    "secondary-fixed": "#dae2fc",
+                    "on-error": "#ffffff",
+                    "surface": "#f8f9fc",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#adc6ff",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "on-primary-fixed": "#001a42",
+                    "inverse-surface": "#2e3133",
+                    "tertiary-container": "#006a48",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e1e2e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "table-y": "0.625rem",
+                    "section-sm": "1.5rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "gutter": "1rem",
+                    "table-x": "0.875rem",
+                    "margin-desktop": "2.25rem",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .toggle-checkbox:checked + .toggle-slot {
+            background-color: #004191;
+        }
+        .toggle-checkbox:checked + .toggle-slot .toggle-dot {
+            transform: translateX(1.25rem);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-base min-h-screen pb-32">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 duration-200">arrow_back</button>
+<h1 class="font-headline-sm text-headline-sm text-primary">Настройки</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio headshot of a corporate executive for a financial application profile. The lighting is soft and directional, creating a clean, high-end fintech aesthetic. The background is a minimalist, slightly blurred office environment with cool blue and white tones. The subject is wearing a modern, tailored business outfit, conveying reliability and expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfFTUDQ41lagPf8lPbuafg7iFKkQDk1pNMREduQ_Sq3n_KWfgKm66zspUQTjddC4ZGUhdbeRNSM1PDjgtYYDSjgrvpcujL2zb-cIp9SOzXRiJmabzYE9s1TtOXUXl1ITnzgUXDm9RTgcFVkewoboENso-JU5MpQjkGdabvlMcvc4zW8e-MZKQFSu4xrToRL7cErSO9-8IOVjrkApIY52BwbVvKU_oLaPaLUSs-q8Xw5og-6HUUDCgyC8-y1qsgQEZtue99XyjPfUM"/>
+</div>
+</header>
+<main class="mt-16 max-w-2xl mx-auto px-margin-mobile py-section-sm space-y-gutter">
+<!-- User Profile Section -->
+<section class="glass-card rounded-xl p-6 flex items-center justify-between group cursor-pointer hover:border-primary transition-colors">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="John Doe" class="w-16 h-16 rounded-full border-2 border-primary-container" data-alt="Close-up portrait of a successful financial professional in a bright, modern corporate setting. The lighting is crisp and natural, highlighting a friendly yet authoritative expression. The color palette consists of pristine whites and deep navy blues, typical of a luxury digital financial service. The image style is sharp, clean, and minimalist, emphasizing high-quality digital craftsmanship." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxYCH-SkT9j4GqNLPZ-VYvo3QER0BQq5Gw_qhOuTwIAEs-h7PN1R7_TU9BWlQjkLoV20Pvl8ji0Jt9dsRmiocajc7m0w9LHFMAy2o4F-LUJmrxy17WQFJci__W4v-oRpWZvqN3dUAb8sBztzmCYWdAIvg-Aw4w2rdpe7u3dAkqr-cSLR4Mh9iNvCsH4yB-ZY1WWRIMtA940Uhe_L7H85f4F-zA28KRHl_YcCqU0JZJrrgEF_2BGKcECZTMDdilAwcVSrB-4rJhvvM"/>
+<div class="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full border-2 border-white">
+<span class="material-symbols-outlined text-sm leading-none">edit</span>
+</div>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm">Александр Иванов</h2>
+<p class="text-on-surface-variant text-sm">alexander@finklik.ru</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</section>
+<!-- Subscription Management -->
+<section class="space-y-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-2 uppercase tracking-widest">Подписка и План</h3>
+<div class="glass-card rounded-xl overflow-hidden divide-y divide-outline-variant/20">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div>
+<p class="font-medium">FinKlik Premium</p>
+<p class="text-xs text-on-surface-variant">Активен до 12.10.2024</p>
+</div>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter">Premium</span>
+</div>
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<span class="text-sm font-medium">Управление подпиской</span>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Notification Toggles -->
+<section class="space-y-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-2 uppercase tracking-widest">Уведомления</h3>
+<div class="glass-card rounded-xl overflow-hidden divide-y divide-outline-variant/20">
+<label class="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">notifications_active</span>
+<span class="text-sm">Push-уведомления</span>
+</div>
+<div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" id="push" name="push" type="checkbox"/>
+<span class="toggle-slot block overflow-hidden h-5 rounded-full bg-outline-variant cursor-pointer">
+<span class="toggle-dot absolute left-0 w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out border-2 border-outline-variant/30"></span>
+</span>
+</div>
+</label>
+<label class="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">mail</span>
+<span class="text-sm">Email рассылки</span>
+</div>
+<div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" id="email" name="email" type="checkbox"/>
+<span class="toggle-slot block overflow-hidden h-5 rounded-full bg-outline-variant cursor-pointer">
+<span class="toggle-dot absolute left-0 w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out border-2 border-outline-variant/30"></span>
+</span>
+</div>
+</label>
+<label class="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">account_balance_wallet</span>
+<span class="text-sm">Транзакционные отчеты</span>
+</div>
+<div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" id="reports" name="reports" type="checkbox"/>
+<span class="toggle-slot block overflow-hidden h-5 rounded-full bg-outline-variant cursor-pointer">
+<span class="toggle-dot absolute left-0 w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out border-2 border-outline-variant/30"></span>
+</span>
+</div>
+</label>
+</div>
+</section>
+<!-- Security & Legal -->
+<section class="space-y-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant px-2 uppercase tracking-widest">Безопасность и Право</h3>
+<div class="glass-card rounded-xl overflow-hidden divide-y divide-outline-variant/20">
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-on-surface-variant">security</span>
+<span class="text-sm">Безопасность и пароли</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+<span class="text-sm">Политика конфиденциальности</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-on-surface-variant">gavel</span>
+<span class="text-sm">Условия использования</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="pt-4">
+<button class="w-full py-4 px-6 border border-error/30 text-error rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-error/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined">logout</span>
+                Выйти из аккаунта
+            </button>
+<p class="text-center text-[10px] text-outline mt-6 font-mono-data tracking-widest">VERSION 2.4.0 (BUILD 882)</p>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Hidden on Desktop) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-lg">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">Главная</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">Сотрудники</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">Сканер</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">Задачи</span>
+</button>
+</nav>
+<script>
+        // Toggle logic for visual interaction
+        document.querySelectorAll('.toggle-checkbox').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const dot = this.nextElementSibling.querySelector('.toggle-dot');
+                if (this.checked) {
+                    dot.style.transform = 'translateX(1.25rem)';
+                    this.nextElementSibling.style.backgroundColor = '#004191';
+                } else {
+                    dot.style.transform = 'translateX(0)';
+                    this.nextElementSibling.style.backgroundColor = '#c2c6d5';
+                }
+            });
+            
+            // Set initial state
+            if (toggle.checked) {
+                const dot = toggle.nextElementSibling.querySelector('.toggle-dot');
+                dot.style.transform = 'translateX(1.25rem)';
+                toggle.nextElementSibling.style.backgroundColor = '#004191';
+            }
+        });
+    </script>
+</body></html>

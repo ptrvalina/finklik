@@ -149,7 +149,7 @@ export default function Layout() {
   return (
     <div className="app-safe-x flex h-[100dvh] bg-canvas text-on-surface font-body antialiased" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Stitch zone sidebar */}
-      <aside className="fc-sidebar-glass relative hidden h-full w-[240px] flex-shrink-0 flex-col overflow-hidden lg:flex">
+      <aside className="fc-sidebar-glass relative hidden h-full w-64 flex-shrink-0 flex-col overflow-hidden lg:flex">
         <div className="relative z-[1] border-b border-outline/40 px-5 pb-5 pt-7">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0058be] via-[#2170e4] to-[#131b2e] shadow-md ring-1 ring-white/10">
@@ -205,10 +205,10 @@ export default function Layout() {
         <div className="relative z-[1] mt-auto space-y-2 border-t border-outline/40 px-3 py-4">
           <NavLink
             to="/scan"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#131b2e] px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#0f1524] dark:bg-on-surface dark:text-canvas dark:hover:bg-on-surface/90"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md transition hover:bg-primary-dim active:scale-[0.98]"
           >
-            <Icon name="add" className="text-lg" />
-            Быстрое действие
+            <Icon name="add_circle" className="text-lg" />
+            Новая запись
           </NavLink>
           {!isManager && (
             <NavLink
@@ -253,12 +253,12 @@ export default function Layout() {
           <button
             type="button"
             onClick={() => setSearchOpen((v) => !v)}
-            className="group hidden max-w-[220px] flex-1 items-center gap-1.5 rounded-lg border border-outline/40 bg-transparent px-2.5 py-1.5 text-left text-xs text-on-surface-variant transition hover:border-outline/60 lg:flex"
+            className="group hidden max-w-xs flex-1 items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-low px-4 py-2 text-left text-sm text-on-surface-variant transition hover:border-primary/30 lg:flex"
             aria-label="Поиск"
           >
-            <Icon name="search" className="text-base text-on-surface-variant/70" />
-            <span className="truncate">Поиск…</span>
-            <span className="ml-auto rounded bg-surface-container-high px-1.5 py-0.5 text-[9px] text-on-surface-variant/60">⌘K</span>
+            <Icon name="search" className="text-lg text-outline" />
+            <span className="truncate">Поиск по операциям…</span>
+            <span className="ml-auto rounded-md bg-surface-container-high px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant/70">⌘K</span>
           </button>
 
           <div className="flex flex-shrink-0 items-center gap-1 sm:gap-1.5">

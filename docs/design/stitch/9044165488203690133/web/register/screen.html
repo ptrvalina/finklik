@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinKlik - Secure Registration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f8f9fc",
+                        "secondary": "#565e74",
+                        "surface-container-highest": "#e1e2e5",
+                        "primary-container": "#0058be",
+                        "surface-bright": "#f8f9fc",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#5a6278",
+                        "on-primary-container": "#c4d5ff",
+                        "primary-fixed": "#d8e2ff",
+                        "primary": "#004191",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e1e2e5",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#d8dff9",
+                        "tertiary-container": "#006a48",
+                        "on-primary-fixed-variant": "#004395",
+                        "tertiary-fixed": "#84f9c3",
+                        "tertiary": "#004f35",
+                        "on-surface-variant": "#424753",
+                        "surface-tint": "#085ac0",
+                        "surface-container-low": "#f2f4f6",
+                        "on-tertiary-fixed": "#002114",
+                        "on-tertiary-container": "#77ebb6",
+                        "outline": "#727784",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed": "#dae2fc",
+                        "on-background": "#191c1e",
+                        "surface-dim": "#d8dadd",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "outline-variant": "#c2c6d5",
+                        "surface-container-high": "#e7e8eb",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface": "#f8f9fc",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001a42",
+                        "inverse-primary": "#adc6ff",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "inverse-surface": "#2e3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-min": "44px",
+                        "table-y": "0.625rem",
+                        "section-md": "2rem",
+                        "margin-mobile": "1.25rem",
+                        "margin-desktop": "2.25rem",
+                        "section-sm": "1.5rem",
+                        "table-x": "0.875rem",
+                        "gutter": "1rem",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-base": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 65, 145, 0.08);
+        }
+        .step-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .active-ring {
+            box-shadow: 0 0 0 4px rgba(0, 88, 190, 0.15);
+        }
+        .business-card-active {
+            border: 2px solid #004191;
+            background: #d8e2ff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-base min-h-screen flex items-center justify-center p-4 md:p-0 overflow-x-hidden">
+<!-- Auth Layout Wrapper -->
+<main class="w-full max-w-[1152px] h-[720px] bg-white rounded-[32px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative">
+<!-- Left Side: Brand Value Proposition -->
+<section class="hidden md:flex md:w-[420px] bg-primary relative p-12 flex-col justify-between overflow-hidden">
+<!-- Animated Background Background (Simulated) -->
+<div class="absolute inset-0 opacity-20 pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-tertiary-fixed rounded-full blur-[100px] animate-pulse"></div>
+<div class="absolute bottom-[-5%] left-[-5%] w-[300px] h-[300px] bg-primary-fixed rounded-full blur-[80px]"></div>
+</div>
+<!-- Content -->
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-16">
+<div class="w-10 h-10 bg-on-primary rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-primary">FinKlik</h1>
+</div>
+<div class="space-y-10">
+<div class="flex gap-5 group">
+<div class="w-12 h-12 rounded-2xl bg-on-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-primary mb-1">Uncompromising Security</h3>
+<p class="text-on-primary-container/80 font-body-base">Bank-grade encryption and multi-factor authentication protect your business assets 24/7.</p>
+</div>
+</div>
+<div class="flex gap-5 group">
+<div class="w-12 h-12 rounded-2xl bg-on-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-primary mb-1">Crystal Accuracy</h3>
+<p class="text-on-primary-container/80 font-body-base">AI-driven reconciliation ensures your financial statements are flawless and audit-ready.</p>
+</div>
+</div>
+<div class="flex gap-5 group">
+<div class="w-12 h-12 rounded-2xl bg-on-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">auto_mode</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-primary mb-1">Seamless Automation</h3>
+<p class="text-on-primary-container/80 font-body-base">Automate payroll, taxes, and invoicing so you can focus on scaling your enterprise.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Image -->
+<div class="relative z-10 mt-auto pt-10">
+<div class="rounded-2xl overflow-hidden border border-on-primary/20 shadow-xl">
+<img alt="Financial Dashboard" class="w-full h-32 object-cover grayscale opacity-70 hover:grayscale-0 transition-all duration-500" data-alt="A macro shot of a sleek, modern financial dashboard displayed on a high-resolution laptop screen in a professional executive office. The UI features elegant line charts in primary blue and emerald green, reflecting a sophisticated and data-driven fintech environment. Soft evening sunlight filters through a large window, creating subtle lens flares and a premium atmosphere. The style is pristine, corporate, and technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBenTeq-wrYRJEOxpKppKfcb8EQsHm_vkbqCFwITZFx6wlR7-pxD4IDWiPpoAGrkIu3H1E_8QmiYmWY1ZFEQ9Z_prCivVX6VexC9tfkesT489Y_AO1_duWqUHHuGFR3A8hBmbGdhMbuA61zHrqimZLK7Y80vn-QKv6YDGAwyLb9f0WWBEsmugvB-W25gj8Z11_WesR11pWYhzQVvbOu9pyuRD97gZSYu2lX6GqVEWZV3sNkfDZXLGgUjFvzrRiQhzYlsAtT3HaUB-g"/>
+</div>
+</div>
+</section>
+<!-- Right Side: Registration Form -->
+<section class="flex-1 bg-surface-container-lowest p-8 md:p-16 flex flex-col justify-center">
+<div class="max-w-[480px] mx-auto w-full">
+<!-- Progress Header -->
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-2">
+<div class="w-8 h-2 rounded-full bg-primary transition-all duration-300" id="step-dot-1"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300" id="step-dot-2"></div>
+</div>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Step <span id="step-number">1</span> of 2</span>
+</div>
+<div id="registration-form-container">
+<!-- Step 1: Business Type Selection -->
+<div class="step-transition" id="step-1">
+<header class="mb-8">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">Join FinKlik</h2>
+<p class="text-on-surface-variant font-body-base">Select the legal structure of your enterprise to get started.</p>
+</header>
+<div class="space-y-4">
+<!-- Card IE -->
+<button class="w-full flex items-center p-5 border-2 border-outline-variant rounded-2xl hover:border-primary/40 hover:bg-surface transition-all duration-200 text-left" id="type-ie" onclick="selectBusinessType('ie')">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">IE</h4>
+<p class="text-body-base text-on-surface-variant text-sm">Individual Entrepreneur</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline-variant check-icon hidden">check_circle</span>
+</button>
+<!-- Card Organization -->
+<button class="w-full flex items-center p-5 border-2 border-outline-variant rounded-2xl hover:border-primary/40 hover:bg-surface transition-all duration-200 text-left" id="type-org" onclick="selectBusinessType('org')">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary">corporate_fare</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Organization</h4>
+<p class="text-body-base text-on-surface-variant text-sm">LLC, Corporation, or Partnership</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline-variant check-icon hidden">check_circle</span>
+</button>
+<!-- Card Self-Employed -->
+<button class="w-full flex items-center p-5 border-2 border-outline-variant rounded-2xl hover:border-primary/40 hover:bg-surface transition-all duration-200 text-left" id="type-self" onclick="selectBusinessType('self')">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center mr-4">
+<span class="material-symbols-outlined text-primary">work</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Self-employed</h4>
+<p class="text-body-base text-on-surface-variant text-sm">Freelancers and Independent Contractors</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline-variant check-icon hidden">check_circle</span>
+</button>
+</div>
+<button class="w-full mt-8 py-4 px-6 bg-primary text-on-primary rounded-full font-bold opacity-50 cursor-not-allowed hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2" disabled="" id="next-btn" onclick="nextStep()">
+                            Continue
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Step 2: Personal Details (Hidden by Default) -->
+<div class="step-transition hidden opacity-0 translate-x-8" id="step-2">
+<header class="mb-8">
+<button class="flex items-center gap-1 text-primary font-bold mb-4 hover:opacity-80 transition-opacity" onclick="prevStep()">
+<span class="material-symbols-outlined">arrow_back</span>
+                                Back
+                            </button>
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">Your Profile</h2>
+<p class="text-on-surface-variant font-body-base">Fill in your contact information to finalize account creation.</p>
+</header>
+<form class="space-y-5" onsubmit="handleFinalSubmit(event)">
+<div class="space-y-1">
+<label class="text-xs font-bold text-outline uppercase tracking-wider ml-1">Full Name</label>
+<input class="w-full h-[52px] px-4 rounded-xl border-outline-variant focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="Enter your full name" required="" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-outline uppercase tracking-wider ml-1">Work Email</label>
+<input class="w-full h-[52px] px-4 rounded-xl border-outline-variant focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="name@company.com" required="" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-outline uppercase tracking-wider ml-1">Phone Number</label>
+<div class="flex gap-2">
+<div class="w-20 h-[52px] flex items-center justify-center bg-surface-container-low border border-outline-variant rounded-xl text-on-surface-variant font-mono-data">+1</div>
+<input class="flex-1 h-[52px] px-4 rounded-xl border-outline-variant focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="(555) 000-0000" required="" type="tel"/>
+</div>
+</div>
+<div class="pt-2">
+<label class="flex items-start gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 transition-all" required="" type="checkbox"/>
+</div>
+<span class="text-sm text-on-surface-variant leading-tight">
+                                        I agree to the <a class="text-primary font-semibold hover:underline" href="#">Terms of Service</a> and <a class="text-primary font-semibold hover:underline" href="#">Privacy Policy</a>.
+                                    </span>
+</label>
+</div>
+<button class="w-full mt-6 py-4 px-6 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center gap-2" type="submit">
+                                Create Account
+                                <span class="material-symbols-outlined">rocket_launch</span>
+</button>
+</form>
+</div>
+</div>
+<footer class="mt-8 pt-8 border-t border-outline-variant/30 text-center">
+<p class="text-on-surface-variant font-body-base text-sm">
+                        Already have an account? 
+                        <a class="text-primary font-bold hover:underline" href="#">Log In</a>
+</p>
+</footer>
+</div>
+</section>
+</main>
+<!-- Success Feedback Overlay -->
+<div class="fixed inset-0 bg-primary/95 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-500" id="success-overlay">
+<div class="text-center p-8 max-w-md">
+<div class="w-24 h-24 bg-on-primary rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+<span class="material-symbols-outlined text-primary text-5xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-primary mb-4">Registration Complete</h2>
+<p class="text-on-primary-container font-body-base text-lg mb-8">Redirecting you to your new financial dashboard...</p>
+<div class="w-full h-1 bg-on-primary/20 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed-dim w-0 animate-[progress_2s_ease-in-out_forwards]"></div>
+</div>
+</div>
+</div>
+<script>
+        let selectedType = null;
+
+        function selectBusinessType(type) {
+            // Reset all
+            ['ie', 'org', 'self'].forEach(t => {
+                const card = document.getElementById(`type-${t}`);
+                card.classList.remove('business-card-active');
+                card.querySelector('.check-icon').classList.add('hidden');
+            });
+
+            // Set selected
+            selectedType = type;
+            const selectedCard = document.getElementById(`type-${type}`);
+            selectedCard.classList.add('business-card-active');
+            selectedCard.querySelector('.check-icon').classList.remove('hidden');
+
+            // Enable button
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function nextStep() {
+            const step1 = document.getElementById('step-1');
+            const step2 = document.getElementById('step-2');
+            const dot1 = document.getElementById('step-dot-1');
+            const dot2 = document.getElementById('step-dot-2');
+            const stepNum = document.getElementById('step-number');
+
+            step1.classList.add('opacity-0', '-translate-x-8');
+            setTimeout(() => {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                // Trigger animation
+                setTimeout(() => {
+                    step2.classList.remove('opacity-0', 'translate-x-8');
+                    step2.classList.add('opacity-100', 'translate-x-0');
+                }, 10);
+            }, 400);
+
+            // Update UI Indicators
+            dot1.classList.replace('w-8', 'w-2');
+            dot1.classList.replace('bg-primary', 'bg-outline-variant');
+            dot2.classList.replace('w-2', 'w-8');
+            dot2.classList.replace('bg-outline-variant', 'bg-primary');
+            stepNum.innerText = '2';
+        }
+
+        function prevStep() {
+            const step1 = document.getElementById('step-1');
+            const step2 = document.getElementById('step-2');
+            const dot1 = document.getElementById('step-dot-1');
+            const dot2 = document.getElementById('step-dot-2');
+            const stepNum = document.getElementById('step-number');
+
+            step2.classList.add('opacity-0', 'translate-x-8');
+            setTimeout(() => {
+                step2.classList.add('hidden');
+                step1.classList.remove('hidden');
+                setTimeout(() => {
+                    step1.classList.remove('opacity-0', '-translate-x-8');
+                    step1.classList.add('opacity-100', 'translate-x-0');
+                }, 10);
+            }, 400);
+
+            // Update UI Indicators
+            dot2.classList.replace('w-8', 'w-2');
+            dot2.classList.replace('bg-primary', 'bg-outline-variant');
+            dot1.classList.replace('w-2', 'w-8');
+            dot1.classList.replace('bg-outline-variant', 'bg-primary');
+            stepNum.innerText = '1';
+        }
+
+        function handleFinalSubmit(event) {
+            event.preventDefault();
+            const overlay = document.getElementById('success-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+            }, 10);
+            
+            // Redirect simulation
+            setTimeout(() => {
+                window.location.reload(); 
+            }, 3000);
+        }
+    </script>
+<style>
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+    </style>
+</body></html>

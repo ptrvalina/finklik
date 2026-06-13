@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore'
 import ThemeHydration from './components/ThemeHydration'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import PasswordResetPage from './pages/PasswordResetPage'
 import DashboardPage from './pages/DashboardPage'
 import Bank from './pages/Bank'
 import Reports from './pages/Reports'
@@ -126,6 +127,7 @@ function AppRoutes() {
     <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/password-reset" element={<PublicRoute><PasswordResetPage /></PublicRoute>} />
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/onboarding/business-profile" element={<PrivateRoute><BusinessProfilePage /></PrivateRoute>} />
         <Route path="/" element={<PrivateRoute><OperationalProvider><Layout /></OperationalProvider></PrivateRoute>}>

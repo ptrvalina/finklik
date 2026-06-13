@@ -51,12 +51,12 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
       <div className="fc-business-hero-glow" aria-hidden />
       <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/75">Деньги</p>
-          <p className="mt-0.5 text-xs text-white/60">Остаток на счетах</p>
+          <p className="font-label text-label-caps uppercase text-primary-fixed/80">Сводный остаток</p>
+          <p className="mt-0.5 text-xs text-white/60">Деньги на счетах</p>
           <MoneyAmount
             value={cashOnHand ?? 0}
             emptyAsZero
-            className="mt-1 font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl"
+            className="mt-1 font-headline text-display-lg text-white"
             symbolClassName="h-[0.55em] w-[0.48em] text-white"
           />
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-3">

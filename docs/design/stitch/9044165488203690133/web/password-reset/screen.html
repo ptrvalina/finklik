@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Password Recovery | Abyssal Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface-container-high": "#e7e8eb",
+                        "outline": "#727784",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "outline-variant": "#c2c6d5",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e1e2e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#001a42",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#004f35",
+                        "surface": "#f8f9fc",
+                        "surface-bright": "#f8f9fc",
+                        "on-secondary-fixed": "#131b2e",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary": "#565e74",
+                        "primary-fixed": "#d8e2ff",
+                        "primary": "#004191",
+                        "on-tertiary-container": "#77ebb6",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "primary-fixed-dim": "#adc6ff",
+                        "tertiary-fixed": "#84f9c3",
+                        "tertiary-container": "#006a48",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d8dadd",
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "on-tertiary-fixed": "#002114",
+                        "surface-container": "#eceef0",
+                        "inverse-primary": "#adc6ff",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-secondary-container": "#5a6278",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-container": "#d8dff9",
+                        "on-surface-variant": "#424753",
+                        "surface-tint": "#085ac0",
+                        "on-background": "#191c1e",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#c4d5ff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dae2fc",
+                        "primary-container": "#0058be"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "margin-mobile": "1.25rem",
+                        "section-sm": "1.5rem",
+                        "table-x": "0.875rem",
+                        "unit": "4px",
+                        "table-y": "0.625rem",
+                        "margin-desktop": "2.25rem",
+                        "section-md": "2rem",
+                        "touch-min": "44px"
+                    },
+                    "fontFamily": {
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+
+        .primary-gradient-btn {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #002114 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .primary-gradient-btn:hover {
+            box-shadow: 0 4px 12px rgba(8, 90, 192, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .radial-glow {
+            background: radial-gradient(circle at top right, rgba(132, 249, 195, 0.15) 0%, transparent 50%);
+        }
+
+        .abyssal-mesh {
+            background-color: #f8f9fc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(216, 226, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(132, 249, 195, 0.1) 0px, transparent 50%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface abyssal-mesh min-h-screen flex items-center justify-center font-body-base antialiased">
+<!-- Transactional Screen: Navigation Shell Suppressed per "Semantic Shell Mandate" -->
+<main class="w-full max-w-6xl mx-auto px-margin-desktop flex items-center justify-center min-h-screen py-section-md">
+<div class="w-full max-w-[480px] relative z-10">
+<!-- Branding Header -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center mb-6">
+<div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">lock_reset</span>
+</div>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2 tracking-tight">Recover Access</h1>
+<p class="font-body-base text-on-surface-variant max-w-[320px] mx-auto">Enter your credentials to receive a secure restoration link for your FinKlik account.</p>
+</div>
+<!-- Recovery Card -->
+<div class="glass-card rounded-[24px] p-10 shadow-2xl shadow-primary/5 relative overflow-hidden group">
+<div class="radial-glow absolute inset-0 opacity-50 pointer-events-none"></div>
+<form class="relative z-10 space-y-8" id="recovery-form">
+<!-- Input Group -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant block ml-1" for="email">
+                            Corporate Email Address
+                        </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</div>
+<input class="w-full h-touch-min pl-11 pr-4 bg-surface-container-low border border-outline-variant rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-body-base outline-none text-on-surface placeholder:text-outline/50" id="email" name="email" placeholder="name@company.com" required="" type="email"/>
+</div>
+<p class="text-[12px] text-on-surface-variant/70 mt-2 px-1">
+                            We'll verify this email against our enterprise records.
+                        </p>
+</div>
+<!-- Action Button -->
+<button class="primary-gradient-btn w-full h-touch-min rounded-full text-on-primary font-headline-sm flex items-center justify-center gap-2 active:scale-95 group" type="submit">
+<span>Send Reset Link</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<!-- Feedback Area (Hidden by default) -->
+<div class="hidden animate-in fade-in slide-in-from-top-4 duration-500" id="success-state">
+<div class="bg-tertiary/10 border border-tertiary-container/20 rounded-xl p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="text-tertiary font-bold text-[14px]">Link Dispatched</p>
+<p class="text-on-surface-variant text-[13px]">If an account exists for that email, you will receive instructions shortly.</p>
+</div>
+</div>
+</div>
+</form>
+<!-- Footer Navigation -->
+<div class="mt-10 pt-8 border-t border-outline-variant/30 text-center">
+<a class="inline-flex items-center gap-2 text-primary font-headline-sm hover:text-primary-container transition-colors group" href="#">
+<span class="material-symbols-outlined text-[18px] group-hover:-translate-x-1 transition-transform">chevron_left</span>
+                        Back to Login
+                    </a>
+</div>
+</div>
+<!-- Security Trust Signifiers -->
+<div class="mt-8 flex justify-center items-center gap-8 opacity-40 grayscale hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-caps text-label-caps">SOC2 Type II</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">encrypted</span>
+<span class="font-label-caps text-label-caps">AES-256</span>
+</div>
+</div>
+</div>
+<!-- Decorative Side Element (Wide Screens Only) -->
+<div class="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 w-72 pointer-events-none select-none">
+<div class="space-y-6">
+<div class="glass-card p-6 rounded-2xl border-l-4 border-tertiary shadow-xl opacity-20">
+<div class="w-8 h-8 rounded-full bg-tertiary/20 mb-4"></div>
+<div class="h-2 w-32 bg-outline-variant/30 rounded-full mb-2"></div>
+<div class="h-2 w-24 bg-outline-variant/30 rounded-full"></div>
+</div>
+<div class="glass-card p-6 rounded-2xl border-l-4 border-primary shadow-xl opacity-40 translate-x-12">
+<div class="w-8 h-8 rounded-full bg-primary/20 mb-4"></div>
+<div class="h-2 w-40 bg-outline-variant/30 rounded-full mb-2"></div>
+<div class="h-2 w-16 bg-outline-variant/30 rounded-full"></div>
+</div>
+<div class="glass-card p-6 rounded-2xl border-l-4 border-secondary shadow-xl opacity-10">
+<div class="w-8 h-8 rounded-full bg-secondary/20 mb-4"></div>
+<div class="h-2 w-28 bg-outline-variant/30 rounded-full mb-2"></div>
+<div class="h-2 w-36 bg-outline-variant/30 rounded-full"></div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        document.getElementById('recovery-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button');
+            const success = document.getElementById('success-state');
+            const emailInput = document.getElementById('email');
+            
+            // Loading state
+            btn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Processing...</span>
+            `;
+            btn.disabled = true;
+
+            // Simulate API delay
+            setTimeout(() => {
+                btn.style.display = 'none';
+                success.classList.remove('hidden');
+                emailInput.disabled = true;
+                emailInput.classList.add('bg-surface-container', 'opacity-50');
+            }, 1500);
+        });
+
+        // Background subtle parallax effect
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            document.body.style.backgroundPosition = `${moveX}px ${moveY}px`;
+        });
+    </script>
+</body></html>

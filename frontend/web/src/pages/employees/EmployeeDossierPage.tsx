@@ -6,6 +6,14 @@ import { PremiumEmptyState } from '../../components/premium'
 import MoneyAmount from '../../components/ui/MoneyAmount'
 import { CurrencyFieldLabel } from '../../components/ui/CurrencyFieldLabel'
 import {
+  BentoGrid,
+  FilterBar,
+  GlassCard,
+  HeroGradient,
+  StatusChip,
+  StitchIcon,
+} from '../../components/stitch'
+import {
   EMPLOYMENT_LABEL,
   type HrMeta,
   type PersonnelDocument,
@@ -13,10 +21,6 @@ import {
   workHoursPerWeek,
 } from '../../lib/employeeListUtils'
 import { calmError } from '../../i18n/messages.ru'
-
-function Icon({ name, className = '' }: { name: string; className?: string }) {
-  return <span className={`material-symbols-outlined ${className}`}>{name}</span>
-}
 
 const DOC_TYPES = [
   { id: 'passport', label: 'Паспорт / удостоверение' },
@@ -71,6 +75,15 @@ function formFromEmployee(emp: Record<string, any>): EditForm {
     disability_group: dg === 1 || dg === 2 || dg === 3 ? String(dg) as '1' | '2' | '3' : '',
     is_pensioner: !!emp.is_pensioner,
   }
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
 }
 
 export default function EmployeeDossierPage() {
@@ -199,28 +212,48 @@ export default function EmployeeDossierPage() {
     )
   }
 
+  const displayName = editing ? form.full_name || emp.full_name : emp.full_name
+
   return (
-    <div className="pb-8">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <Link to="/employees/list" className="btn-ghost !px-0 !text-xs text-on-surface-variant">
-            <Icon name="arrow_back" className="text-sm" /> Список сотрудников
-          </Link>
-          <h1 className="page-heading mt-2">{editing ? form.full_name || emp.full_name : emp.full_name}</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {emp.position} · {EMPLOYMENT_LABEL[employment]} ·{' '}
-            {emp.is_active ? `работает с ${emp.hire_date}` : `уволен ${emp.fire_date || '—'}`}
-          </p>
+    <div className="space-y-section-sm pb-8">
+      <Link to="/employees/list" className="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant transition hover:text-primary">
+        <StitchIcon name="arrow_back" className="text-sm" />
+        Список сотрудников
+      </Link>
+
+      <HeroGradient className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="relative shrink-0">
+            <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white/20 bg-white/10 text-2xl font-bold shadow-2xl sm:h-32 sm:w-32">
+              {initials(displayName)}
+            </div>
+            <div className="absolute -bottom-2 -right-2">
+              <StatusChip variant={emp.is_active ? 'ready' : 'error'}>
+                {emp.is_active ? 'Работает' : 'Уволен'}
+              </StatusChip>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-headline text-headline-md">{displayName}</h1>
+            <p className="mt-1 text-primary-fixed-dim">
+              {emp.position} · {EMPLOYMENT_LABEL[employment]}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-4">
+              <MetaItem label="ИД номер" value={emp.identification_number || '—'} />
+              <MetaItem label="Принят" value={emp.hire_date} />
+              {hr.subdivision && <MetaItem label="Подразделение" value={hr.subdivision} />}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="relative z-10 flex flex-wrap gap-2">
           {editing ? (
             <>
-              <button type="button" className="btn-secondary text-sm" onClick={cancelEdit}>
+              <button type="button" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20" onClick={cancelEdit}>
                 Отмена
               </button>
               <button
                 type="button"
-                className="btn-primary text-sm"
+                className="btn-primary rounded-full text-sm"
                 disabled={updateMutation.isPending || !form.full_name.trim() || !form.position.trim()}
                 onClick={saveEdits}
               >
@@ -229,26 +262,24 @@ export default function EmployeeDossierPage() {
             </>
           ) : (
             <>
-              <button type="button" className="btn-primary text-sm" onClick={() => setEditing(true)}>
-                <Icon name="edit" className="text-lg" /> Редактировать
+              <button type="button" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20" onClick={() => setEditing(true)}>
+                <StitchIcon name="edit" className="mr-1 text-lg" />
+                Редактировать
               </button>
-              {!emp.is_active ? (
-                <span className="rounded-lg border border-error/30 bg-error/10 px-3 py-1.5 text-xs font-bold text-error">
-                  Уволен
-                </span>
-              ) : (
-                <Link to="/employees/dismiss" className="btn-secondary text-sm">
+              {!emp.is_active ? null : (
+                <Link to="/employees/dismiss" className="rounded-full bg-error px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110">
                   Увольнение
                 </Link>
               )}
             </>
           )}
         </div>
-      </div>
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-tertiary-fixed opacity-10 blur-[80px]" />
+      </HeroGradient>
 
       {message && (
         <div
-          className={`mb-4 rounded-xl border px-4 py-3 text-sm font-semibold ${
+          className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
             message.type === 'success' ? 'border-secondary/20 bg-secondary/10 text-secondary' : 'border-error/20 bg-error/10 text-error'
           }`}
         >
@@ -256,7 +287,7 @@ export default function EmployeeDossierPage() {
         </div>
       )}
 
-      <div className="mb-4 flex gap-1 rounded-xl border border-outline/75 bg-surface-container-high p-1">
+      <FilterBar>
         {(
           [
             { key: 'profile' as Tab, label: 'Личные данные', icon: 'badge' },
@@ -268,19 +299,20 @@ export default function EmployeeDossierPage() {
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ${
-              tab === t.key ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+            className={`flex min-h-touch-min items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+              tab === t.key ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
-            <Icon name={t.icon} className="text-base" /> {t.label}
+            <StitchIcon name={t.icon} className="text-base" />
+            {t.label}
           </button>
         ))}
-      </div>
+      </FilterBar>
 
       {tab === 'profile' && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="glass-card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-on-surface">Идентификация</h2>
+        <BentoGrid>
+          <GlassCard className="col-span-12 p-5 lg:col-span-6" hover={false}>
+            <SectionTitle icon="badge" title="Идентификация" />
             {editing ? (
               <div className="mt-4 space-y-3">
                 <Field label="ФИО" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
@@ -299,9 +331,9 @@ export default function EmployeeDossierPage() {
                 <Row label="Адрес" value={emp.address || '—'} />
               </dl>
             )}
-          </section>
-          <section className="glass-card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-on-surface">Документ личности</h2>
+          </GlassCard>
+          <GlassCard className="col-span-12 p-5 lg:col-span-6" hover={false}>
+            <SectionTitle icon="id_card" title="Документ личности" />
             {emp.id_document ? (
               <dl className="mt-4 space-y-3 text-sm">
                 <Row label="Тип" value={emp.id_document_type || '—'} />
@@ -312,14 +344,14 @@ export default function EmployeeDossierPage() {
             ) : (
               <p className="mt-4 text-sm text-on-surface-variant">Реквизиты не заполнены.</p>
             )}
-          </section>
-        </div>
+          </GlassCard>
+        </BentoGrid>
       )}
 
       {tab === 'payroll' && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="glass-card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-on-surface">Трудовые условия</h2>
+        <BentoGrid>
+          <GlassCard className="col-span-12 p-5 lg:col-span-8" hover={false}>
+            <SectionTitle icon="work" title="Трудовые условия" />
             {editing ? (
               <div className="mt-4 space-y-3">
                 <Field label="Должность" value={form.position} onChange={(v) => setForm({ ...form, position: v })} />
@@ -327,7 +359,7 @@ export default function EmployeeDossierPage() {
                 <div>
                   <label className="label">Вид занятости</label>
                   <select
-                    className="input min-h-11 w-full"
+                    className="input min-h-touch-min w-full"
                     value={form.employment_type}
                     onChange={(e) => setForm({ ...form, employment_type: e.target.value as 'primary' | 'secondary' })}
                   >
@@ -340,7 +372,7 @@ export default function EmployeeDossierPage() {
                   <input
                     type="number"
                     step="0.01"
-                    className="input min-h-11 w-full"
+                    className="input min-h-touch-min w-full"
                     value={form.salary}
                     onChange={(e) => setForm({ ...form, salary: e.target.value })}
                   />
@@ -362,9 +394,9 @@ export default function EmployeeDossierPage() {
                 {!emp.is_active && <Row label="Дата увольнения" value={emp.fire_date || '—'} />}
               </dl>
             )}
-          </section>
-          <section className="glass-card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-on-surface">Для расчёта налогов и ФСЗН</h2>
+          </GlassCard>
+          <GlassCard className="col-span-12 p-5 lg:col-span-4" hover={false}>
+            <SectionTitle icon="account_balance" title="Налоги и ФСЗН" />
             {editing ? (
               <div className="mt-4 space-y-3">
                 <Field
@@ -375,7 +407,7 @@ export default function EmployeeDossierPage() {
                 <div>
                   <label className="label">Инвалидность</label>
                   <select
-                    className="input min-h-11 w-full"
+                    className="input min-h-touch-min w-full"
                     value={form.disability_group}
                     onChange={(e) => setForm({ ...form, disability_group: e.target.value as EditForm['disability_group'] })}
                   >
@@ -401,21 +433,34 @@ export default function EmployeeDossierPage() {
                 <Row label="Пенсионер" value={emp.is_pensioner ? 'да' : 'нет'} />
               </dl>
             )}
-          </section>
-        </div>
+          </GlassCard>
+          {!editing && (
+            <GlassCard className="col-span-12 flex items-center gap-4 p-5 lg:col-span-4" hover={false}>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <StitchIcon name="payments" filled />
+              </div>
+              <div>
+                <p className="font-label text-label-caps uppercase text-secondary">Текущий оклад</p>
+                <p className="mt-1 font-headline text-headline-sm">
+                  <MoneyAmount value={emp.salary} className="inline-flex" />
+                </p>
+              </div>
+            </GlassCard>
+          )}
+        </BentoGrid>
       )}
 
       {tab === 'documents' && (
-        <div className="space-y-4">
-          <section className="glass-card rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-on-surface">Загрузить скан</h2>
+        <BentoGrid>
+          <GlassCard className="col-span-12 p-5 lg:col-span-8" hover={false}>
+            <SectionTitle icon="upload_file" title="Загрузить скан" />
             <p className="mt-1 text-xs text-on-surface-variant">
               Копии свидетельств о браке, рождении детей, справок и других документов.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="label">Тип документа</label>
-                <select className="input min-h-11 w-full" value={docType} onChange={(e) => setDocType(e.target.value)}>
+                <select className="input min-h-touch-min w-full" value={docType} onChange={(e) => setDocType(e.target.value)}>
                   {DOC_TYPES.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.label}
@@ -426,7 +471,7 @@ export default function EmployeeDossierPage() {
               <div>
                 <label className="label">Название (необязательно)</label>
                 <input
-                  className="input min-h-11 w-full"
+                  className="input min-h-touch-min w-full"
                   placeholder="Например: свидетельство о браке"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
@@ -435,50 +480,77 @@ export default function EmployeeDossierPage() {
             </div>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onFilePick} />
             <button type="button" className="btn-primary mt-4 text-sm" onClick={() => fileRef.current?.click()}>
-              <Icon name="upload_file" className="text-lg" /> Выбрать файл
+              <StitchIcon name="upload_file" className="text-lg" />
+              Выбрать файл
             </button>
-          </section>
-
+          </GlassCard>
+          <GlassCard className="col-span-12 p-5 lg:col-span-4" hover={false}>
+            <SectionTitle icon="folder" title="Архив" />
+            <p className="mt-4 font-headline text-headline-sm text-on-surface">{docs.length}</p>
+            <p className="text-sm text-on-surface-variant">
+              {docs.length === 1 ? 'документ в личном деле' : 'документов в личном деле'}
+            </p>
+          </GlassCard>
           {docs.length === 0 ? (
-            <PremiumEmptyState
-              variant="compact"
-              icon="folder_open"
-              title="Документов пока нет"
-              description="Загрузите сканы — они сохранятся в личном деле."
-            />
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {docs.map((doc) => (
-                <div key={doc.id} className="glass-card rounded-2xl p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-on-surface">{doc.title}</p>
-                      <p className="text-[10px] text-on-surface-variant">
-                        {DOC_TYPES.find((d) => d.id === doc.doc_type)?.label || doc.doc_type} ·{' '}
-                        {doc.uploaded_at.slice(0, 10)}
-                      </p>
-                    </div>
-                    <button type="button" className="btn-ghost !p-1 text-error" aria-label="Удалить" onClick={() => removeDoc(doc.id)}>
-                      <Icon name="delete" className="text-lg" />
-                    </button>
-                  </div>
-                  {doc.data_url?.startsWith('data:image') ? (
-                    <img
-                      src={doc.data_url}
-                      alt={doc.title}
-                      className="mt-3 max-h-40 w-full rounded-lg border border-outline/30 object-contain bg-surface-container-low"
-                    />
-                  ) : (
-                    <a href={doc.data_url} download={doc.file_name} className="btn-secondary mt-3 w-full text-xs">
-                      Скачать {doc.file_name}
-                    </a>
-                  )}
-                </div>
-              ))}
+            <div className="col-span-12">
+              <PremiumEmptyState
+                variant="compact"
+                icon="folder_open"
+                title="Документов пока нет"
+                description="Загрузите сканы — они сохранятся в личном деле."
+              />
             </div>
+          ) : (
+            docs.map((doc) => (
+              <GlassCard key={doc.id} className="col-span-12 p-4 sm:col-span-6 lg:col-span-4" hover={false}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-on-surface">{doc.title}</p>
+                    <p className="text-[10px] text-on-surface-variant">
+                      {DOC_TYPES.find((d) => d.id === doc.doc_type)?.label || doc.doc_type} ·{' '}
+                      {doc.uploaded_at.slice(0, 10)}
+                    </p>
+                  </div>
+                  <button type="button" className="btn-ghost !p-1 text-error" aria-label="Удалить" onClick={() => removeDoc(doc.id)}>
+                    <StitchIcon name="delete" className="text-lg" />
+                  </button>
+                </div>
+                {doc.data_url?.startsWith('data:image') ? (
+                  <img
+                    src={doc.data_url}
+                    alt={doc.title}
+                    className="mt-3 max-h-40 w-full rounded-lg border border-outline-variant/30 bg-surface-container-low object-contain"
+                  />
+                ) : (
+                  <a href={doc.data_url} download={doc.file_name} className="btn-secondary mt-3 w-full text-xs">
+                    Скачать {doc.file_name}
+                  </a>
+                )}
+              </GlassCard>
+            ))
           )}
-        </div>
+        </BentoGrid>
       )}
+    </div>
+  )
+}
+
+function MetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="font-label text-label-caps uppercase opacity-60">{label}</span>
+      <span className="font-mono text-sm">{value}</span>
+    </div>
+  )
+}
+
+function SectionTitle({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <StitchIcon name={icon} className="text-xl" />
+      </div>
+      <h2 className="font-headline text-headline-sm text-on-surface">{title}</h2>
     </div>
   )
 }
@@ -506,7 +578,7 @@ function Field({
   return (
     <div>
       <label className="label">{label}</label>
-      <input className={`input min-h-11 w-full ${mono ? 'font-mono' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} />
+      <input className={`input min-h-touch-min w-full ${mono ? 'font-mono' : ''}`} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   )
 }

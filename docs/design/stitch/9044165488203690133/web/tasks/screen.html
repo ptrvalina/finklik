@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tasks &amp; Calendar | Abyssal Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#191c1e",
+                        "background": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "secondary": "#565e74",
+                        "primary-fixed-dim": "#adc6ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2e3133",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-secondary-container": "#5a6278",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#77ebb6",
+                        "tertiary-fixed": "#84f9c3",
+                        "primary-container": "#0058be",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c2c6d5",
+                        "surface": "#f8f9fc",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#131b2e",
+                        "tertiary": "#004f35",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#006a48",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-dim": "#d8dadd",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "primary": "#004191",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-container": "#d8dff9",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e8eb",
+                        "outline": "#727784",
+                        "on-surface-variant": "#424753",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#dae2fc",
+                        "surface-bright": "#f8f9fc",
+                        "on-tertiary-fixed": "#002114",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#c4d5ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#adc6ff",
+                        "surface-variant": "#e1e2e5",
+                        "surface-tint": "#085ac0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "touch-min": "44px",
+                        "section-md": "2rem",
+                        "gutter": "1rem",
+                        "table-x": "0.875rem",
+                        "table-y": "0.625rem",
+                        "margin-desktop": "2.25rem",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fc;
+            color: #191c1e;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(225, 226, 229, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: #004191;
+            box-shadow: 0 10px 25px -5px rgba(0, 65, 145, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c2c6d5;
+            border-radius: 10px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e1e2e5;
+        }
+        .calendar-cell {
+            background-color: #ffffff;
+            aspect-ratio: 1/1;
+            padding: 8px;
+            transition: background-color 0.2s;
+        }
+        .calendar-cell:hover {
+            background-color: #f2f4f6;
+        }
+    </style>
+</head>
+<body class="font-body-base text-body-base overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant bg-surface-container-low flex flex-col p-4 z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Abyssal Precision</h1>
+<p class="text-[12px] text-on-surface-variant font-medium tracking-wide">Enterprise Management</p>
+</div>
+<nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+<!-- Navigation Items Mapping from JSON -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Employees</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span>Scanner</span>
+</a>
+<!-- Active Tab: Tasks -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-xl font-semibold active:scale-95 duration-200 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span>Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span>Accounting</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span>Bank</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span>Counteragents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant mt-4 space-y-1">
+<button class="w-full flex items-center gap-3 px-4 py-3 mb-4 bg-primary text-on-primary rounded-full font-bold shadow-md hover:brightness-110 transition-all active:scale-95">
+<span class="material-symbols-outlined">add</span>
+<span>New Entry</span>
+</button>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 pl-72 pr-margin-desktop w-full z-40 fixed top-0 bg-surface/90 backdrop-blur-md border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-sm text-headline-sm text-primary">Financial Suite</h2>
+<div class="relative w-96 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full h-10 pl-10 pr-4 bg-surface-container-low border-none rounded-full text-body-base focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search tasks, transactions, or dates..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a high-end corporate setting. The man has a focused, calm expression, wearing a tailored navy suit. The lighting is crisp and sophisticated with soft bokeh from high-tech office lights in the background, creating an elite fintech atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm8mlluhx2z8x_WMt-blaoN4ZlGEOVt4oT5y_dNu-GBrO0G4Fxr6Jek0dir8ubsMqk9hs1SFhnixFm8GiVkY7aYBn8osuDlppj-BV5u6_HGhgO1ODg_-3cKxhkBPrkAI5aGkasUxZxTYgGG5LkmkgV1TyrWG54MGwknV5MNMDnzGFzJMM94UoLXFlkI4x-MDiTE8-MP_jP-JV04q8mEDk4y7DRgfVJNIgzINQVMDkviiZV8ytuZm-hAtgAXwE7hWCd6KUAO0n90T0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 h-screen overflow-y-auto bg-background">
+<div class="max-w-[1152px] mx-auto p-margin-desktop space-y-8">
+<!-- Hero Header Section -->
+<div class="relative overflow-hidden rounded-[24px] p-8 bg-primary min-h-[180px] flex items-center shadow-lg group">
+<!-- Background Decoration -->
+<div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-tertiary/20 to-transparent"></div>
+<div class="absolute top-[-20%] right-[-10%] w-64 h-64 bg-tertiary-fixed-dim/10 blur-[80px] rounded-full"></div>
+<div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between w-full gap-6">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-0.5 rounded bg-on-primary-container text-primary font-label-caps text-label-caps">OCTOBER 2024</span>
+<span class="text-on-primary-container/80 font-medium">| Quarter 4 Fiscal Cycle</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-primary mb-2">Operations Master Schedule</h1>
+<p class="text-on-primary-container max-w-lg">Manage your tax deadlines, employee payroll tasks, and enterprise auditing schedules from one unified visual workspace.</p>
+</div>
+<div class="bg-surface-container-lowest/10 backdrop-blur-md p-4 rounded-xl border border-white/10 flex gap-8 items-center h-fit">
+<div class="text-center">
+<div class="text-on-primary font-mono-data text-headline-sm">12</div>
+<div class="text-on-primary/60 font-label-caps text-[9px]">PENDING</div>
+</div>
+<div class="h-8 w-[1px] bg-white/20"></div>
+<div class="text-center">
+<div class="text-tertiary-fixed font-mono-data text-headline-sm">03</div>
+<div class="text-on-primary/60 font-label-caps text-[9px]">CRITICAL</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dashboard Content Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Calendar Engine -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+<section class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<h3 class="font-headline-sm text-headline-sm">Fiscal Calendar</h3>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-1 rounded-lg">
+<button class="p-1 hover:bg-surface-container-highest rounded-md transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<span class="font-bold text-sm px-2">October</span>
+<button class="p-1 hover:bg-surface-container-highest rounded-md transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-error"></span> Tax
+                                </span>
+<span class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant ml-3">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Ops
+                                </span>
+<button class="ml-4 text-primary font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                                    Today
+                                </button>
+</div>
+</div>
+<div class="flex-1 overflow-hidden p-6">
+<!-- Weekdays Header -->
+<div class="grid grid-cols-7 mb-2 text-center text-label-caps text-on-surface-variant">
+<div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div class="text-error/60">SAT</div><div class="text-error/60">SUN</div>
+</div>
+<!-- Simple Mock Calendar Grid -->
+<div class="calendar-grid border border-outline-variant rounded-xl overflow-hidden">
+<!-- Calendar Cells (Simplified generation) -->
+<div class="calendar-cell text-outline/40">29</div>
+<div class="calendar-cell text-outline/40">30</div>
+<div class="calendar-cell">1</div>
+<div class="calendar-cell">2</div>
+<div class="calendar-cell">3</div>
+<div class="calendar-cell bg-surface-container-low">4</div>
+<div class="calendar-cell bg-surface-container-low">5</div>
+<div class="calendar-cell relative group">
+<span class="font-mono-data text-xs">6</span>
+<div class="mt-1 flex flex-col gap-1">
+<div class="h-1.5 w-full rounded-full bg-primary/20"></div>
+</div>
+</div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">7</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">8</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">9</span></div>
+<div class="calendar-cell relative">
+<span class="font-mono-data text-xs font-bold text-primary">10</span>
+<div class="mt-1 flex flex-col gap-1">
+<div class="px-1 text-[8px] leading-none bg-error/10 text-error font-bold rounded py-0.5">VAT RETURN</div>
+<div class="px-1 text-[8px] leading-none bg-primary/10 text-primary font-bold rounded py-0.5">BOARD MTG</div>
+</div>
+<div class="absolute inset-0 border-2 border-primary/20 pointer-events-none"></div>
+</div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">11</span></div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">12</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">13</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">14</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">15</span></div>
+<div class="calendar-cell relative">
+<span class="font-mono-data text-xs">16</span>
+<div class="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-tertiary animate-pulse"></div>
+</div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">17</span></div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">18</span></div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">19</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">20</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">21</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs text-primary font-bold">22</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">23</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">24</span></div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">25</span></div>
+<div class="calendar-cell bg-surface-container-low"><span class="font-mono-data text-xs">26</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">27</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">28</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">29</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">30</span></div>
+<div class="calendar-cell"><span class="font-mono-data text-xs">31</span></div>
+<div class="calendar-cell text-outline/40">1</div>
+<div class="calendar-cell text-outline/40">2</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Priority Tasks Feed -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<section class="glass-card rounded-[24px] flex-1 flex flex-col h-full max-h-[calc(100vh-320px)] overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm">Active Tasks</h3>
+<button class="text-primary hover:bg-primary/5 p-1 rounded transition-colors"><span class="material-symbols-outlined">filter_list</span></button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+<!-- Task Card 1 (Critical) -->
+<div class="group relative bg-white border border-outline-variant p-4 rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-error-container text-on-error-container">CRITICAL</span>
+<span class="text-xs font-mono-data text-outline">#TASK-442</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">Quarterly VAT Reconciliation</h4>
+<p class="text-sm text-on-surface-variant line-clamp-2">Complete the reconciliation for Q3 export transactions and prepare final submission docs for tax authorities.</p>
+<div class="mt-4 flex items-center justify-between border-t border-outline-variant pt-3">
+<div class="flex -space-x-2">
+<div class="h-6 w-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="Team Member" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional man with a friendly smile, clean-shaven, wearing office attire. Neutral background, soft studio lighting for a clean and corporate look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOCJ9z1WIJKXZcU3YxD7Q-vrN3H7WTZ-S28fkhOW4z5AeSzqNS2lepwTKHfKjtgNvEmQNT6omY7f2Mo29W1jx-Sza_UF6xspIqNyDsx94WI-DWPgiQuuGStb0JuLRICJqfBiqS7hIqJpefb4EVPlFCaBSDLGW9a1LaXKac6MWQ2S6GxUC744KwFSreLUzP6bFYW4io8gOHNQm9oP4Fcl0otxnrX8vyByfG5l9NKvsABvWiUpjvaVUyuWNutV8ARUKoPmpWTWIYV0o"/>
+</div>
+<div class="h-6 w-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold">+2</div>
+</div>
+<div class="flex items-center gap-1 text-error text-xs font-bold">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                        Today, 4:00 PM
+                                    </div>
+</div>
+</div>
+<!-- Task Card 2 (Normal) -->
+<div class="group relative bg-white border border-outline-variant p-4 rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">OPERATIONS</span>
+<span class="text-xs font-mono-data text-outline">#TASK-489</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">Employee Payroll Audit</h4>
+<p class="text-sm text-on-surface-variant">Review payroll disbursements for the new engineering hires in the EMEA region.</p>
+<div class="mt-4 flex items-center justify-between border-t border-outline-variant pt-3">
+<div class="flex items-center gap-2">
+<div class="h-6 w-6 rounded-full border border-outline-variant bg-surface-container-high overflow-hidden">
+<img alt="Team Member" class="w-full h-full object-cover" data-alt="A portrait of a confident female professional in a modern office, wearing a stylish blazer and glasses. Bright morning sunlight streaming through glass windows in the background, creating high-key elegant lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6XkwWqYmZdmvT-0FjYoYpkJLVksF-zqTcfnE63m7z-0MJYQelub4FrT5WUxCmlYP70lFYKXrlkrdJmb9LQ1MvOVHztVDY7WmB1sgeKYpBEx3yBuXpz26P035Qn-kY6VrvNBRtY6MtKJs5Zar1c4QrRn34F2KlzpQmxlRqHG1BMOWZChJjBVD1hUvfnuMfVaFTz05VzYX4P5vsZor8pHil7iLxnwYlUd8sBGPMKLa7DXfQgKsGkSaN2Kz37HzkrpHcrJ_sk0cswr0"/>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">Elena K.</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                                        Oct 24
+                                    </div>
+</div>
+</div>
+<!-- Task Card 3 (Ready) -->
+<div class="group relative bg-white border border-outline-variant p-4 rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-tertiary-container/20 text-tertiary">READY</span>
+<span class="text-xs font-mono-data text-outline">#TASK-501</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">Annual Compliance Check</h4>
+<p class="text-sm text-on-surface-variant">Standard audit of internal data security protocols and employee access logs.</p>
+<div class="mt-4 flex items-center justify-between border-t border-outline-variant pt-3">
+<div class="flex items-center gap-2">
+<div class="h-6 w-6 rounded-full border border-outline-variant bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">person</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">Unassigned</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-[16px]">event</span>
+                                        Oct 28
+                                    </div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant">
+<button class="w-full py-2 flex items-center justify-center gap-2 text-primary font-bold hover:bg-surface-container-highest transition-colors rounded-lg">
+<span class="material-symbols-outlined">add_task</span>
+                                Quick Add Task
+                            </button>
+</div>
+</section>
+</div>
+</div>
+<!-- Contextual Insights Section (Bento Grid Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-card p-6 rounded-[24px] relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<h5 class="font-bold">Workload Density</h5>
+</div>
+<p class="text-sm text-on-surface-variant mb-4">Your peak task volume is expected on Oct 24th with 8 high-priority items.</p>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 75%"></div>
+</div>
+</div>
+<div class="glass-card p-6 rounded-[24px] relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<div class="h-10 w-10 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">emergency</span>
+</div>
+<h5 class="font-bold">Next Deadline</h5>
+</div>
+<p class="text-sm text-on-surface-variant mb-1">Corporate Tax Filings</p>
+<p class="text-xl font-mono-data font-bold text-on-background">02d : 14h : 22m</p>
+</div>
+<div class="glass-card p-6 rounded-[24px] relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<div class="h-10 w-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<h5 class="font-bold">AI Suggestion</h5>
+</div>
+<p class="text-sm text-on-surface-variant">Batch 'Scanner Review' tasks to tomorrow morning for optimal workflow.</p>
+<button class="mt-4 text-xs font-bold text-primary underline">Reschedule 4 Items</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.querySelectorAll('.calendar-cell').forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                if (!cell.classList.contains('text-outline/40')) {
+                    cell.style.zIndex = '10';
+                    cell.style.transform = 'scale(1.02)';
+                    cell.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
+                }
+            });
+            cell.addEventListener('mouseleave', () => {
+                cell.style.transform = 'scale(1)';
+                cell.style.boxShadow = 'none';
+            });
+        });
+
+        // Toggle search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-offset-2');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-offset-2');
+        });
+    </script>
+</body></html>

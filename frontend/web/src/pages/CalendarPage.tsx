@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, plannerApi, taxApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
 import { Link } from 'react-router-dom'
+import { GlassCard, HeroGradient, PageHeader, StatCard, StatusChip, StitchIcon } from '../components/stitch'
 
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -20,7 +21,7 @@ const EVENT_LABELS: Record<string, string> = {
 }
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
-  return <span className={`material-symbols-outlined ${className}`}>{name}</span>
+  return <StitchIcon name={name} className={className} />
 }
 
 interface CalEvent { id: string; title: string; event_date: string; event_type: string; color: string; is_auto: boolean }
@@ -118,56 +119,71 @@ export default function CalendarPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Календарь</h1>
-        <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-          Сроки налогов, зарплаты и обязательной отчётности. Учёт операций — в журнале и КУДиР.
-        </p>
-      </div>
+      <PageHeader
+        title="Календарь"
+        subtitle="Сроки налогов, зарплаты и обязательной отчётности. Учёт операций — в журнале и КУДиР."
+        actions={
+          <>
+            {monthNav}
+            <button
+              type="button"
+              className="btn-primary fc-btn-thumb w-full rounded-full sm:w-auto"
+              onClick={() => {
+                setSelectedDate(today.toISOString().slice(0, 10))
+                setShowAddModal(true)
+              }}
+            >
+              <Icon name="add" className="text-lg" /> Событие
+            </button>
+          </>
+        }
+      />
 
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        {monthNav}
-        <button
-          type="button"
-          className="btn-primary fc-btn-thumb w-full sm:w-auto"
-          onClick={() => {
-            setSelectedDate(today.toISOString().slice(0, 10))
-            setShowAddModal(true)
-          }}
-        >
-          <Icon name="add" className="text-lg" /> Событие
-        </button>
-      </div>
+      <HeroGradient className="relative mb-section-sm min-h-[160px] overflow-hidden shadow-lg">
+        <div className="absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-tertiary-fixed-dim/10 blur-[80px]" aria-hidden />
+        <div className="relative z-10 flex w-full flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <StatusChip variant="neutral" className="bg-on-primary-container/20 text-primary-fixed normal-case tracking-normal">
+                {MONTHS[month]} {year}
+              </StatusChip>
+              <span className="text-sm font-medium text-white/80">| Налоги и сроки</span>
+            </div>
+            <h2 className="font-display-lg text-display-lg text-white">Календарь учёта</h2>
+            <p className="mt-2 max-w-lg text-primary-fixed">
+              Следите за дедлайнами налогов, зарплаты и отчётности. Добавляйте рабочие события в один календарь.
+            </p>
+          </div>
+          <div className="flex h-fit items-center gap-6 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-md sm:gap-8">
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-white">{allEvents.length}</div>
+              <div className="font-label text-[9px] uppercase text-white/60">События</div>
+            </div>
+            <div className="h-8 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-tertiary-fixed">{upcoming.length}</div>
+              <div className="font-label text-[9px] uppercase text-white/60">Ближайшие</div>
+            </div>
+            <div className="h-8 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-error-container">{taxDeadlines}</div>
+              <div className="font-label text-[9px] uppercase text-white/60">Дедлайны</div>
+            </div>
+          </div>
+        </div>
+      </HeroGradient>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Месяц</p>
-          <p className="mt-1 font-headline text-base font-extrabold text-on-surface sm:text-lg">
-            {MONTHS[month]} {year}
-          </p>
-          <p className="text-[11px] text-on-surface-variant">Текущий период</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">События</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-on-surface sm:text-2xl">{allEvents.length}</p>
-          <p className="text-[11px] text-on-surface-variant">В месяце</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Ближайшие</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-primary sm:text-2xl">{upcoming.length}</p>
-          <p className="text-[11px] text-on-surface-variant">С сегодня</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Налоги / отчёты</p>
-          <p className="mt-1 font-headline text-xl font-extrabold tabular-nums text-error sm:text-2xl">{taxDeadlines}</p>
-          <p className="text-[11px] text-on-surface-variant">Дедлайны</p>
-        </div>
+      <div className="mb-6 grid grid-cols-2 gap-gutter sm:grid-cols-4">
+        <StatCard icon="calendar_month" label="Месяц" value={`${MONTHS[month]} ${year}`} hint="Текущий период" />
+        <StatCard icon="event" label="События" value={allEvents.length} hint="В месяце" />
+        <StatCard icon="schedule" iconTint="tertiary" label="Ближайшие" value={upcoming.length} hint="С сегодня" />
+        <StatCard icon="gavel" iconTint="error" label="Налоги / отчёты" value={taxDeadlines} hint="Дедлайны" />
       </div>
 
       <div className="grid min-h-0 gap-4 lg:grid-cols-[1fr_280px] lg:gap-6">
         <div className="flex min-h-0 flex-col gap-4">
       {/* Calendar grid */}
-      <div className="glass-card flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-2xl p-0 lg:min-h-[520px]">
+      <GlassCard hover={false} className="flex min-h-[420px] flex-1 flex-col overflow-hidden p-0 lg:min-h-[520px]">
         {/* Days header */}
         <div className="grid grid-cols-7 bg-surface-container-high">
           {DAYS.map(d => (
@@ -211,7 +227,7 @@ export default function CalendarPage() {
             )
           })}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4">
@@ -224,8 +240,10 @@ export default function CalendarPage() {
       </div>
         </div>
 
-        <aside className="glass-card flex flex-col rounded-2xl p-4 lg:max-h-[620px]">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Ближайшие сроки</p>
+        <GlassCard hover={false} className="flex flex-col p-4 lg:max-h-[620px]">
+          <StatusChip variant="ready" className="mb-3 self-start">
+            Ближайшие сроки
+          </StatusChip>
           <ul className="mt-3 flex-1 space-y-2 overflow-y-auto">
             {upcoming.length === 0 ? (
               <li className="text-sm text-on-surface-variant">Нет предстоящих событий в этом месяце.</li>
@@ -272,7 +290,7 @@ export default function CalendarPage() {
               </Link>
             </div>
           ) : null}
-        </aside>
+        </GlassCard>
       </div>
 
       {showAddModal && (

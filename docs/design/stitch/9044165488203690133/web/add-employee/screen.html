@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed": "#dae2fc",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed": "#84f9c3",
+                        "surface-variant": "#e1e2e5",
+                        "on-primary-container": "#c4d5ff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "error-container": "#ffdad6",
+                        "outline": "#727784",
+                        "primary-container": "#0058be",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#006a48",
+                        "surface-container": "#eceef0",
+                        "on-secondary": "#ffffff",
+                        "primary": "#004191",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary-container": "#77ebb6",
+                        "secondary-container": "#d8dff9",
+                        "secondary": "#565e74",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#085ac0",
+                        "on-secondary-container": "#5a6278",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#adc6ff",
+                        "tertiary": "#004f35",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-secondary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-container-high": "#e7e8eb",
+                        "primary-fixed": "#d8e2ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "outline-variant": "#c2c6d5",
+                        "on-surface-variant": "#424753",
+                        "surface-dim": "#d8dadd",
+                        "surface": "#f8f9fc",
+                        "on-surface": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "2.25rem",
+                        "unit": "4px",
+                        "gutter": "1rem",
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "table-x": "0.875rem",
+                        "touch-min": "44px",
+                        "table-y": "0.625rem",
+                        "section-md": "2rem"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .form-input-focus:focus {
+            box-shadow: 0 0 0 4px rgba(0, 65, 145, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline flex flex-col h-full py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">corporate_fare</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed leading-tight">FinHR Pro</h1>
+<p class="text-[10px] font-label-caps uppercase tracking-wider text-outline">Enterprise Suite</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-base text-body-base">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary bg-primary/5 transition-colors group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-body-base text-body-base">Employees</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-body-base text-body-base">Scanner</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">task_alt</span>
+<span class="font-body-base text-body-base">Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-body-base text-body-base">Accounting</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-body-base text-body-base">Bank</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="font-body-base text-body-base">Counteragents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container transition-colors group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-base text-body-base">Settings</span>
+</a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="p-4 rounded-2xl bg-surface-container-high/50 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-outline-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIkajKi-AgVzcxykcdeJMRN3T39x0ZRvsyoqKLOLjG3gDhYpatCLihlrvnjLgjkBbdyHC-Hc_NKvb6t0zioIapaORRS30gD5eZSZrV6AVdwOp-4R8LNdR9mWCEjZJLXHyxBKHbwv1ytbE95xkxvoSS-l3CwoiO5lZfr16MMT12N3_qwSwiwFpr4HQ42iGsaKYOmfFL7fDv11bBas5-grLAdE7c2_kAE9tDdOs7Tiwv8CEe6D_6wbL2m1Kp1llTRTFUYidh3jQCSa4"/>
+</div>
+<div class="overflow-hidden">
+<p class="font-body-base text-on-surface font-bold truncate">Alex Rossi</p>
+<p class="text-xs text-outline truncate">HR Manager</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="bg-surface/90 dark:bg-inverse-surface/90 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-16rem)] h-16 border-b border-outline-variant dark:border-outline shadow-sm flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-2 focus:ring-primary/20 text-body-base font-body-base" placeholder="Search system..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<span class="text-label-caps uppercase text-outline tracking-widest">Version 2.4.0</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-12 px-margin-desktop max-w-[1152px] mx-auto">
+<!-- Form Header Area -->
+<div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-8">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+<span class="text-label-caps uppercase">Personnel Management</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-surface">Add New Employee</h2>
+<p class="text-on-surface-variant font-body-base max-w-lg">Enter the foundational details to register a new employee into the Enterprise Suite and FSZN compliance engine.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2.5 rounded-full border border-outline-variant text-on-surface font-body-base font-bold hover:bg-surface-container transition-all active:scale-95">
+                    Cancel
+                </button>
+<button class="px-8 py-2.5 rounded-full bg-gradient-to-r from-primary to-[#0058be] text-on-primary font-body-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                    Save Records
+                </button>
+</div>
+</div>
+<!-- Multi-Section Form -->
+<form class="space-y-8">
+<!-- Section 1: Personal Information -->
+<section class="glass-panel rounded-3xl p-8">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">badge</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Personal Information</h3>
+<p class="text-xs text-outline font-label-caps uppercase">Legal Identity &amp; Identification</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">First Name</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" placeholder="Enter first name" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Last Name</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" placeholder="Enter last name" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Middle Name (Optional)</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" placeholder="Enter middle name" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Date of Birth</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" type="date"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">National ID / Passport</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" placeholder="ID Number" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Gender Identity</label>
+<select class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base">
+<option>Select</option>
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Section 2: Employment Details -->
+<section class="glass-panel rounded-3xl p-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+<div class="flex items-center gap-4 mb-8 relative z-10">
+<div class="w-12 h-12 rounded-2xl bg-tertiary-fixed-dim/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Employment Details</h3>
+<p class="text-xs text-outline font-label-caps uppercase">Professional Placement &amp; Compensation</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+<div class="lg:col-span-2 space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Job Position</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" placeholder="e.g. Senior Backend Engineer" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Department</label>
+<select class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base">
+<option>Engineering</option>
+<option>Finance</option>
+<option>Marketing</option>
+<option>Operations</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Hire Date</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base" type="date"/>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Gross Monthly Salary</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono-data text-outline">$</span>
+<input class="w-full pl-8 pr-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-mono-data" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Currency</label>
+<select class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base">
+<option>USD ($)</option>
+<option>EUR (€)</option>
+<option>GBP (£)</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Probation Period</label>
+<select class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base">
+<option>None</option>
+<option>3 Months</option>
+<option>6 Months</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Work Location</label>
+<select class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-base">
+<option>Headquarters</option>
+<option>Remote</option>
+<option>Regional Hub</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Section 3: FSZN Compliance Data -->
+<section class="glass-panel rounded-3xl p-8 bg-surface-container-low/30">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-2xl bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">FSZN Compliance</h3>
+<p class="text-xs text-outline font-label-caps uppercase">Social Security &amp; Regulatory Mandates</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+<div class="space-y-4">
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Insurance Number (UNP/SSN)</label>
+<input class="w-full px-4 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-mono-data" placeholder="000-000-000" type="text"/>
+</div>
+<div class="flex items-center gap-2 px-1 py-2">
+<input class="w-5 h-5 rounded text-primary border-outline-variant focus:ring-primary" id="insured" type="checkbox"/>
+<label class="font-body-base text-on-surface-variant" for="insured">Active health insurance coverage verified</label>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Contract Type</label>
+<div class="space-y-2">
+<label class="flex items-center justify-between p-3 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-primary cursor-pointer group transition-all">
+<span class="font-body-base text-on-surface">Indefinite Duration</span>
+<input class="text-primary focus:ring-primary" name="contract" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-3 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-primary cursor-pointer transition-all">
+<span class="font-body-base text-on-surface">Fixed Term</span>
+<input class="text-primary focus:ring-primary" name="contract" type="radio"/>
+</label>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-label-caps uppercase text-outline px-1">Compliance Status</label>
+<div class="p-4 rounded-2xl bg-secondary-container/30 border border-secondary-container flex flex-col items-center justify-center gap-3 text-center">
+<div class="w-10 h-10 rounded-full bg-on-tertiary-container/20 flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<span class="font-label-caps text-on-secondary-fixed-variant uppercase">Standard Risk Profile</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Floating Action Bar -->
+<div class="sticky bottom-8 z-30 flex justify-center">
+<div class="glass-panel py-4 px-8 rounded-full shadow-2xl border border-white/20 flex items-center gap-6">
+<p class="font-body-base text-on-surface-variant text-sm whitespace-nowrap">Review and finalize the employee dossier</p>
+<div class="w-px h-6 bg-outline-variant/30"></div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2 rounded-full font-body-base text-on-surface-variant hover:bg-surface-container transition-all" type="reset">Reset Form</button>
+<button class="px-8 py-2 rounded-full bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95" type="submit">Complete Enrollment</button>
+</div>
+</div>
+</div>
+</form>
+</main>
+<!-- Visual Enhancements: Background Sparkles -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10">
+<div class="absolute top-[10%] left-[20%] w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[10%] right-[5%] w-[300px] h-[300px] bg-tertiary-container/5 rounded-full blur-[100px]"></div>
+</div>
+<script>
+        // Micro-interaction for form focus
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('scale-[1.01]');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+
+        // Form submission prevention (demo only)
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Form processing initiated. Records are being encrypted and synced with FSZN compliance gateway.');
+        });
+    </script>
+</body></html>

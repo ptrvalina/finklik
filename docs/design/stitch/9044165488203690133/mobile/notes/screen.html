@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-dim": "#d8dadd",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary-container": "#c4d5ff",
+                    "surface-tint": "#085ac0",
+                    "secondary": "#565e74",
+                    "on-tertiary-container": "#77ebb6",
+                    "secondary-fixed": "#dae2fc",
+                    "on-primary-fixed-variant": "#004395",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-variant": "#e1e2e5",
+                    "background": "#f8f9fc",
+                    "on-surface": "#191c1e",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary-container": "#d8dff9",
+                    "on-background": "#191c1e",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "surface-container": "#eceef0",
+                    "primary": "#004191",
+                    "inverse-surface": "#2e3133",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "primary-container": "#0058be",
+                    "on-error-container": "#93000a",
+                    "on-surface-variant": "#424753",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e1e2e5",
+                    "inverse-primary": "#adc6ff",
+                    "outline-variant": "#c2c6d5",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "tertiary-container": "#006a48",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#f8f9fc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "unit": "4px",
+                    "table-x": "0.875rem",
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "table-y": "0.625rem",
+                    "section-sm": "1.5rem",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(194, 198, 213, 0.3);
+        }
+        .active-tab-indicator {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9fc;
+        }
+        .aurora-bg {
+            background: radial-gradient(circle at top right, rgba(132, 249, 195, 0.15), transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(8, 90, 192, 0.05), transparent 40%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-base text-on-surface aurora-bg min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<span class="font-headline-md text-headline-md font-bold text-primary-container">Финклик</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">notifications</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden border border-outline-variant">
+<img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABFRe4VLQRd_4XuIi3hNIzMgomVbt7wmaHYTOBQuJxR9JX9u-4DK9VZ3NvE17fdjD9ph3r8snExC1prFGht9DqlFqCUuV5uIIf1DCl5U5mjjW3eRTdPAyB5DGA1t62O5k4XkAaDdImjE9mqXXBH7pU_qPkieXIVrvO2z7E2wTnfT1zrTeAuf2--TF2xLAWHU73JF3Bsp2yDjIMcng0ilP18lI8mgNF5mQpXPAHqYbco5myvw4rEpXmUbpEel1HYUzKSezaPyiz5wc"/>
+</div>
+</div>
+</header>
+<main class="max-w-6xl mx-auto px-margin-mobile pt-24">
+<!-- Tab Navigation -->
+<div class="flex items-center p-1 bg-surface-container-low rounded-xl mb-6 w-fit mx-auto md:mx-0">
+<button class="px-6 py-2 rounded-lg font-headline-sm text-headline-sm transition-all duration-300 bg-white shadow-sm text-primary" id="tab-notes" onclick="switchTab('notes')">
+                Заметки
+            </button>
+<button class="px-6 py-2 rounded-lg font-headline-sm text-headline-sm transition-all duration-300 text-on-surface-variant hover:text-on-surface" id="tab-links" onclick="switchTab('links')">
+                Полезные ссылки
+            </button>
+</div>
+<!-- Notes Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter" id="content-notes">
+<!-- Add Note Trigger -->
+<div class="glass-card rounded-2xl p-6 border-dashed border-2 border-outline-variant/50 flex flex-col items-center justify-center text-on-surface-variant hover:border-primary/50 transition-colors cursor-pointer group h-48">
+<span class="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform mb-2">add_circle</span>
+<span class="font-headline-sm text-headline-sm">Новая заметка</span>
+</div>
+<!-- Note Card 1 -->
+<div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:border-primary transition-all duration-300 group shadow-sm hover:shadow-md h-48">
+<div>
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps rounded-full">Бизнес</span>
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</div>
+<p class="text-on-surface font-body-base line-clamp-3">Подготовить документы для квартального отчета по НДС до следующей пятницы. Уточнить статус по счету 402.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<span class="font-mono-data text-mono-data text-on-surface-variant">12 Окт, 2023</span>
+<span class="material-symbols-outlined text-primary text-sm">push_pin</span>
+</div>
+</div>
+<!-- Note Card 2 -->
+<div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:border-primary transition-all duration-300 group shadow-sm hover:shadow-md h-48">
+<div>
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-1 bg-secondary-fixed text-on-secondary-fixed font-label-caps text-label-caps rounded-full">Идеи</span>
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</div>
+<p class="text-on-surface font-body-base line-clamp-3">Рассмотреть возможность интеграции с API налоговой службы для автоматизации выгрузки реестров.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<span class="font-mono-data text-mono-data text-on-surface-variant">10 Окт, 2023</span>
+</div>
+</div>
+<!-- Note Card 3 -->
+<div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:border-primary transition-all duration-300 group shadow-sm hover:shadow-md h-48">
+<div>
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-full">Личное</span>
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</div>
+<p class="text-on-surface font-body-base line-clamp-3">Встреча с партнерами в коворкинге "Точка" в 14:00. Обсуждение условий франшизы.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<span class="font-mono-data text-mono-data text-on-surface-variant">08 Окт, 2023</span>
+</div>
+</div>
+</section>
+<!-- Links Section (Hidden by default) -->
+<section class="hidden grid grid-cols-1 md:grid-cols-2 gap-gutter" id="content-links">
+<!-- Link Card 1 -->
+<a class="glass-card rounded-2xl p-5 flex items-start gap-4 hover:border-primary transition-all duration-300 hover:shadow-lg group" href="#">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-2xl">account_balance</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Госуслуги для бизнеса</h3>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">open_in_new</span>
+</div>
+<p class="text-on-surface-variant font-body-base">Единый портал государственных услуг. Регистрация ИП, получение лицензий и справок.</p>
+</div>
+</a>
+<!-- Link Card 2 -->
+<a class="glass-card rounded-2xl p-5 flex items-start gap-4 hover:border-primary transition-all duration-300 hover:shadow-lg group" href="#">
+<div class="w-12 h-12 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined text-2xl">description</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Личный кабинет ФНС</h3>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">open_in_new</span>
+</div>
+<p class="text-on-surface-variant font-body-base">Управление налогами, подача деклараций и контроль задолженностей в режиме онлайн.</p>
+</div>
+</a>
+<!-- Link Card 3 -->
+<a class="glass-card rounded-2xl p-5 flex items-start gap-4 hover:border-primary transition-all duration-300 hover:shadow-lg group" href="#">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-2xl">gavel</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Мой Арбитр</h3>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">open_in_new</span>
+</div>
+<p class="text-on-surface-variant font-body-base">Система подачи документов в арбитражные суды. Мониторинг судебных дел.</p>
+</div>
+</a>
+<!-- Link Card 4 -->
+<a class="glass-card rounded-2xl p-5 flex items-start gap-4 hover:border-primary transition-all duration-300 hover:shadow-lg group" href="#">
+<div class="w-12 h-12 rounded-xl bg-error-container flex items-center justify-center text-error shrink-0">
+<span class="material-symbols-outlined text-2xl">policy</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Реестр проверок</h3>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">open_in_new</span>
+</div>
+<p class="text-on-surface-variant font-body-base">Проверка плановых и внеплановых визитов контролирующих органов.</p>
+</div>
+</a>
+</section>
+</main>
+<!-- FAB for adding content (Mobile) -->
+<button class="md:hidden fixed right-6 bottom-24 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center z-50 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-2xl">edit_note</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-lg md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Главная</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps mt-1">Сотрудники</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps mt-1">Сканер</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps mt-1">Задачи</span>
+</div>
+</nav>
+<script>
+        function switchTab(tab) {
+            const notesBtn = document.getElementById('tab-notes');
+            const linksBtn = document.getElementById('tab-links');
+            const notesContent = document.getElementById('content-notes');
+            const linksContent = document.getElementById('content-links');
+
+            if (tab === 'notes') {
+                notesBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+                notesBtn.classList.remove('text-on-surface-variant');
+                linksBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                linksBtn.classList.add('text-on-surface-variant');
+                
+                notesContent.classList.remove('hidden');
+                linksContent.classList.add('hidden');
+            } else {
+                linksBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+                linksBtn.classList.remove('text-on-surface-variant');
+                notesBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                notesBtn.classList.add('text-on-surface-variant');
+                
+                linksContent.classList.remove('hidden');
+                notesContent.classList.add('hidden');
+            }
+        }
+    </script>
+</body></html>

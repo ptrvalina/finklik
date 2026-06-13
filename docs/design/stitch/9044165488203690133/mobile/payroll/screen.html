@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик - Расчет зарплат</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-dim": "#d8dadd",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary-container": "#c4d5ff",
+                    "surface-tint": "#085ac0",
+                    "secondary": "#565e74",
+                    "on-tertiary-container": "#77ebb6",
+                    "secondary-fixed": "#dae2fc",
+                    "on-primary-fixed-variant": "#004395",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-variant": "#e1e2e5",
+                    "background": "#f8f9fc",
+                    "on-surface": "#191c1e",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary-container": "#d8dff9",
+                    "on-background": "#191c1e",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "surface-container": "#eceef0",
+                    "primary": "#004191",
+                    "inverse-surface": "#2e3133",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "primary-container": "#0058be",
+                    "on-error-container": "#93000a",
+                    "on-secondary-container": "#5a6278",
+                    "surface": "#f8f9fc",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#84f9c3",
+                    "outline": "#727784",
+                    "on-surface-variant": "#424753",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e1e2e5",
+                    "inverse-primary": "#adc6ff",
+                    "outline-variant": "#c2c6d5",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "tertiary-container": "#006a48",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#f8f9fc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "unit": "4px",
+                    "table-x": "0.875rem",
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "table-y": "0.625rem",
+                    "section-sm": "1.5rem",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #004191 0%, #0058be 50%, #002114 100%);
+            box-shadow: 0 4px 15px -3px rgba(0, 65, 145, 0.4);
+        }
+        .emerald-glow {
+            box-shadow: 0 0 20px -5px rgba(103, 220, 168, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-base min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md dark:bg-surface-dim/90 border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<span class="font-headline-md text-headline-md font-bold text-primary-container dark:text-primary-fixed">Финклик</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity">notifications</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="User" data-alt="A professional studio portrait of a modern financial executive with a friendly yet authoritative expression. The lighting is soft and high-key, emphasizing a clean light-mode aesthetic. The background is a minimalist corporate office with subtle glass reflections and a palette of cool blues and pristine whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzWotQHfOG__62Et_z4k2ikhgga_qcWuJrz1ZG9QNG6Kb-jz18OI0FIyUCbG9_m7Wp8MhKLUjWJwx8F8qHsa4xfNbsfZsKGR_OrIDZrLopUB7WkH7GeINEYJUznfUjLQ6WP63nDRgcbD2jdbUmOvb2UrIbddqvZvFNqwetT9mCRcUMVHraPade1WreI3emVPWVzSfXoYJ5MO8t3LocLFiXl3foQs8nKYudhYiVGVO7IvZ5SU0hBckFUlqMhhzXr-6W9pjndAUPVeo"/>
+</div>
+</div>
+</header>
+<main class="pt-20 px-margin-mobile max-w-6xl mx-auto space-y-6">
+<!-- Business Hero Section -->
+<section class="relative overflow-hidden rounded-xl p-6 text-on-primary bg-[#001a42] emerald-glow">
+<div class="absolute top-0 right-0 w-64 h-64 bg-tertiary-fixed/20 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+<div>
+<h1 class="font-headline-md text-headline-md mb-1">Зарплатный модуль</h1>
+<p class="text-on-primary-container/80 text-body-base">Автоматизированный расчет налогов и выплат</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2 rounded-full font-label-caps text-label-caps bg-surface-container-lowest text-primary hover:bg-primary-fixed transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                        Calculate
+                    </button>
+<button class="px-6 py-2 rounded-full font-label-caps text-label-caps btn-gradient text-white flex items-center gap-2 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+                        Pay all
+                    </button>
+</div>
+</div>
+</section>
+<!-- Filters & Period -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="glass-card p-4 rounded-xl flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">ОТЧЕТНЫЙ ПЕРИОД</span>
+<span class="font-headline-sm text-headline-sm">Октябрь 2023</span>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">group</span>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant block">СОТРУДНИКИ</span>
+<span class="font-headline-sm text-headline-sm">12 активных</span>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary-fixed">account_balance_wallet</span>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant block">ИТОГО К ОПЛАТЕ</span>
+<span class="font-headline-sm text-headline-sm font-mono-data">1,240,500 ₽</span>
+</div>
+</div>
+</section>
+<!-- Salary Table -->
+<section class="glass-card rounded-xl overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/30">
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant">СОТРУДНИК</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant">ОКЛАД</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant">НДФЛ (13%)</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant">СТРАХОВЫЕ</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant text-right">К ВЫПЛАТЕ</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant text-center">СТАТУС</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Employee Row -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<img alt="Employee" data-alt="A professional headshot of a diverse team member in a clean, brightly lit modern office setting. The style is crisp and corporate, using a palette of soft greys and deep blues to maintain a high-end fintech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXqW8YhwdPOAMA1D6i7Xf4uyTOjCD2BsRCKCPj5CbvSKtHWyeVA-ehlQHEOUyk-iaVzaYQ6ezVKpp_1ZE-OS0qa-9YXvsyeYx3pS56NLI0Mw9a_VlzMmE1wNygFQ2gzsFUQVJ9zyN-akvfJenz03fhVnErLU_Ue2eiQdA1caUYyLxrkJd8Evcr-Ua1mt-__u5gbKPklEYTN6t4rC4epOlZfAYoh0JvOTni8aKYV2LkgBxR6FTJtddTJP72Ks3eAVJ1eQfic_pdCHQ"/>
+</div>
+<div>
+<div class="font-headline-sm text-[15px] text-on-surface">Александр Морозов</div>
+<div class="text-[12px] text-on-surface-variant">Lead Developer</div>
+</div>
+</div>
+</td>
+<td class="px-table-x py-4 font-mono-data">250,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−32,500.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−75,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-right font-bold text-primary">142,500.00</td>
+<td class="px-table-x py-4 text-center">
+<span class="inline-block px-2 py-0.5 rounded-full bg-tertiary-fixed/20 text-tertiary font-label-caps text-[10px]">READY</span>
+</td>
+</tr>
+<!-- Employee Row -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed-dim border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<img alt="Employee" data-alt="A professional studio portrait of a female financial specialist with a confident expression. High-key lighting highlights the clean, sophisticated office background. The color palette emphasizes corporate professionalism with hints of royal blue and soft white tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf24ye_9mMfuWuvfU1QBj_iK-hbgxIe_w9yEbaaNtf-3BkjgKw1FWfyJmUIefRStJtUplPY6W5RYBKQojxWzcRqJlZ_HyjcigH0_q0WTaFX8kke6shMdgLXvbX9yPXG_1VdLTZYsQFxbWb3FgPUtGpIeFLPMwPhR3HV8OODrIuYnsNGwzvVvQNw0-HYUegZQYvCWHiFbVnDdswxVNulDf_j4rtEr378Ab92qzY1Nged7juZHgG3y424o2QwFN2XUAcd24mtV24s_s"/>
+</div>
+<div>
+<div class="font-headline-sm text-[15px] text-on-surface">Елена Котова</div>
+<div class="text-[12px] text-on-surface-variant">Product Manager</div>
+</div>
+</div>
+</td>
+<td class="px-table-x py-4 font-mono-data">180,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−23,400.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−54,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-right font-bold text-primary">102,600.00</td>
+<td class="px-table-x py-4 text-center">
+<span class="inline-block px-2 py-0.5 rounded-full bg-tertiary-fixed/20 text-tertiary font-label-caps text-[10px]">READY</span>
+</td>
+</tr>
+<!-- Employee Row -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<img alt="Employee" data-alt="A portrait of a male designer in a creative office space. The lighting is soft and natural, emphasizing a professional yet modern vibe. The scene uses a clean, light-mode palette with sophisticated blue and teal accents, typical of a high-end fintech brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeGiAwfqXa9oVx0xzD1hpzNV4EaoayQ74k5r6w65K-SUvEaQ4pUHOl5tEtrZL5EoJ1MrKXZhowsDom1hbLA5sQD5Sw2JQi0NLaouM4nafhLovCJ-hi5rmvmrABkchQ-MUIAqtGM1XFVrSzYQTr0t_ty-6Rs2D2mVcv4k-fJSiEvGxropxdOtfO-wkBNBhh9O2f30ABM2W0kIf1PRBBfh73mJ3tNSxsVnyV2Bc8VQZ0NDCiAsQHBl0mLwSNmp0rOtpqM7k3OWCR0Ps"/>
+</div>
+<div>
+<div class="font-headline-sm text-[15px] text-on-surface">Дмитрий Волков</div>
+<div class="text-[12px] text-on-surface-variant">UI/UX Designer</div>
+</div>
+</div>
+</td>
+<td class="px-table-x py-4 font-mono-data">150,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−19,500.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−45,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-right font-bold text-primary">85,500.00</td>
+<td class="px-table-x py-4 text-center">
+<span class="inline-block px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-caps text-[10px]">PAID</span>
+</td>
+</tr>
+<!-- Employee Row -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed-dim border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<img alt="Employee" data-alt="A professional headshot of a marketing specialist in a brightly lit, contemporary coworking area. High-quality lighting creates a pristine, authoritative look. The color theme features clean whites, cool greys, and vibrant fintech blue highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4gI04OxymBeu8KWYi5cEhwmYEAhiRbJkmeK4Vk4AuOQmTO6roqldsjoCYn0wh7I87H5gWDhMMyPH-rp14P2wL7WiL2jNy5Ctr7Po_h5NIdf3Szp6Ha3l1ytSoemzG-B8dMerj3DXaErq0Kr0ljgG91zwi5WCeqY8VZZEP4qbAdAMSvHXQi7BgOgFiru_GzipRgT-adbvMaPD8oBdjTpvWFNQ_t6-1NmRLa9i0lPXJUapkbGC8CDjz3bt9oRFLGSzFOfxb6vJ19cg"/>
+</div>
+<div>
+<div class="font-headline-sm text-[15px] text-on-surface">Мария Соколова</div>
+<div class="text-[12px] text-on-surface-variant">Marketing Lead</div>
+</div>
+</div>
+</td>
+<td class="px-table-x py-4 font-mono-data">165,000.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−21,450.00</td>
+<td class="px-table-x py-4 font-mono-data text-error">−49,500.00</td>
+<td class="px-table-x py-4 font-mono-data text-right font-bold text-primary">94,050.00</td>
+<td class="px-table-x py-4 text-center">
+<span class="inline-block px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-caps text-[10px]">PENDING</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant/30 flex justify-between items-center">
+<div class="text-body-base text-on-surface-variant">Показано 4 из 12 сотрудников</div>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors">Предыдущая</button>
+<button class="px-4 py-1.5 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors">Следующая</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg dark:bg-surface-dim/90 border-t border-outline-variant/20 shadow-lg md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Главная</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps">Сотрудники</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps">Сканер</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full px-4 py-1 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps">Задачи</span>
+</a>
+</nav>
+<!-- Desktop Navigation Side Anchors (Visual Only) -->
+<div class="hidden md:flex fixed left-0 top-0 h-full w-20 flex-col items-center py-20 gap-8 bg-surface-container-lowest border-r border-outline-variant/20 z-40">
+<button class="p-3 rounded-xl bg-primary/10 text-primary transition-all hover:bg-primary/20">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="p-3 rounded-xl text-on-surface-variant transition-all hover:bg-surface-container">
+<span class="material-symbols-outlined">group</span>
+</button>
+<button class="p-3 rounded-xl text-on-surface-variant transition-all hover:bg-surface-container">
+<span class="material-symbols-outlined">account_balance</span>
+</button>
+<button class="p-3 rounded-xl text-on-surface-variant transition-all hover:bg-surface-container">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<script>
+        // Simple Interaction Logic
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.95)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = '';
+            });
+        });
+
+        // Add subtle parallax effect to the hero glow
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.querySelector('.absolute.top-0.right-0');
+            if (glow) {
+                const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+                const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+                glow.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }
+        });
+    </script>
+</body></html>

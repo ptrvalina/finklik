@@ -12,11 +12,11 @@ export type ZoneMeta = {
 }
 
 export const ZONES: ZoneMeta[] = [
-  { id: 'today', label: 'Главная', icon: 'hub', defaultTo: '/' },
+  { id: 'today', label: 'Главная', icon: 'dashboard', defaultTo: '/' },
   { id: 'money', label: 'Банк', icon: 'account_balance', defaultTo: '/bank' },
-  { id: 'reporting', label: 'Учёт', icon: 'menu_book', defaultTo: '/accounting' },
-  { id: 'calendar', label: 'Календарь', icon: 'event', defaultTo: '/calendar' },
-  { id: 'team', label: 'Команда', icon: 'groups', defaultTo: '/employees' },
+  { id: 'reporting', label: 'Учёт', icon: 'account_balance_wallet', defaultTo: '/accounting' },
+  { id: 'calendar', label: 'Календарь', icon: 'calendar_month', defaultTo: '/calendar' },
+  { id: 'team', label: 'Сотрудники', icon: 'groups', defaultTo: '/employees' },
   { id: 'clients', label: 'Контрагенты', icon: 'handshake', defaultTo: '/counterparties' },
   { id: 'settings', label: 'Настройки', icon: 'settings', defaultTo: '/settings' },
 ]

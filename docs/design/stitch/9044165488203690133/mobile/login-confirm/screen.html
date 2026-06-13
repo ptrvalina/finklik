@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик | Двухфакторная аутентификация</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#727784",
+                    "inverse-surface": "#2e3133",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#424753",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#085ac0",
+                    "secondary": "#565e74",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "surface-dim": "#d8dadd",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "surface-bright": "#f8f9fc",
+                    "secondary-fixed": "#dae2fc",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "inverse-primary": "#adc6ff",
+                    "tertiary": "#004f35",
+                    "outline-variant": "#c2c6d5",
+                    "on-primary-container": "#c4d5ff",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-container": "#d8dff9",
+                    "primary": "#004191",
+                    "surface-variant": "#e1e2e5",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "primary-container": "#0058be",
+                    "surface-container": "#eceef0",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#001a42",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-surface": "#191c1e",
+                    "tertiary-container": "#006a48",
+                    "error-container": "#ffdad6",
+                    "surface": "#f8f9fc",
+                    "on-primary-fixed-variant": "#004395",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary-fixed": "#84f9c3",
+                    "background": "#f8f9fc",
+                    "surface-container-highest": "#e1e2e5",
+                    "primary-fixed-dim": "#adc6ff",
+                    "on-background": "#191c1e",
+                    "surface-container-high": "#e7e8eb",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#5a6278",
+                    "on-tertiary-container": "#77ebb6",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "2.25rem",
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "table-x": "0.875rem",
+                    "unit": "4px",
+                    "touch-min": "44px",
+                    "section-sm": "1.5rem",
+                    "margin-mobile": "1.25rem",
+                    "table-y": "0.625rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .primary-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #002114 100%);
+        }
+
+        .otp-input:focus {
+            box-shadow: 0 0 0 4px rgba(8, 90, 192, 0.15);
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-base min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Atmospheric Background Layers -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+
+<div class="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-tertiary-fixed/10 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary-fixed/20 blur-[100px]"></div>
+</div>
+<!-- Main Auth Container -->
+<main class="w-full max-w-[480px] px-margin-mobile md:px-0 z-10">
+<div class="glass-panel border border-outline-variant/30 rounded-[24px] p-8 md:p-10 shadow-2xl shadow-primary/5">
+<!-- Branding / Logo -->
+<div class="flex flex-col items-center mb-10">
+<div class="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary-container text-[32px]" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2 tracking-tight">Подтверждение входа</h1>
+<p class="text-on-surface-variant text-center px-4">
+                    Мы отправили 6-значный код на ваш привязанный номер <span class="font-semibold text-primary">•••• 4291</span>
+</p>
+</div>
+<!-- OTP Input Fields -->
+<form class="space-y-8" id="otp-form">
+<div class="flex justify-between gap-2 md:gap-3" id="otp-inputs">
+<input autocomplete="one-time-code" class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+<input class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+<input class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+<input class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+<input class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+<input class="otp-input w-full aspect-square text-center font-mono-data text-headline-md border-2 border-outline-variant/40 rounded-xl bg-surface-container-lowest focus:border-primary focus:outline-none transition-all duration-200" inputmode="numeric" maxlength="1" pattern="\d*" required="" type="text"/>
+</div>
+<!-- Timer and Status -->
+<div class="flex flex-col items-center justify-center space-y-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-medium" id="timer-container">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span>Код действителен: <span class="font-mono-data text-primary" id="timer">02:00</span></span>
+</div>
+<button class="text-label-caps font-label-caps uppercase text-outline cursor-not-allowed transition-colors hover:text-primary disabled:opacity-50" disabled="" id="resend-btn" type="button">
+                        Отправить код повторно
+                    </button>
+</div>
+<!-- Action Button -->
+<button class="primary-gradient w-full py-4 rounded-full text-on-primary font-semibold text-headline-sm shadow-xl shadow-primary/20 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group" type="submit">
+<span>Подтвердить</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</form>
+<!-- Footer Help -->
+<div class="mt-8 pt-8 border-t border-outline-variant/30 text-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-2 text-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+                    Возникли проблемы? Свяжитесь с поддержкой
+                </a>
+</div>
+</div>
+<!-- Security Badge -->
+<div class="mt-8 flex items-center justify-center gap-6 opacity-60">
+<div class="flex items-center gap-1.5 grayscale">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-caps text-label-caps">AES-256 ENCRYPTED</span>
+</div>
+<div class="flex items-center gap-1.5 grayscale">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span class="font-label-caps text-label-caps">SECURE SESSION</span>
+</div>
+</div>
+</main>
+<script>
+        // OTP Logic
+        const inputs = document.querySelectorAll('.otp-input');
+        const form = document.getElementById('otp-form');
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').slice(0, inputs.length);
+                pasteData.split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                if (inputs[pasteData.length]) inputs[pasteData.length].focus();
+            });
+        });
+
+        // Timer Logic
+        let timeLeft = 120; // 2 minutes
+        const timerElement = document.getElementById('timer');
+        const resendBtn = document.getElementById('resend-btn');
+
+        const updateTimer = () => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft === 0) {
+                clearInterval(timerInterval);
+                resendBtn.disabled = false;
+                resendBtn.classList.remove('text-outline', 'cursor-not-allowed');
+                resendBtn.classList.add('text-primary', 'cursor-pointer');
+                document.getElementById('timer-container').classList.add('opacity-40');
+            } else {
+                timeLeft--;
+            }
+        };
+
+        const timerInterval = setInterval(updateTimer, 1000);
+
+        // Form Submit Simulation
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <div class="w-6 h-6 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></div>
+                <span>Проверка...</span>
+            `;
+
+            // Mock verification delay
+            setTimeout(() => {
+                submitBtn.classList.remove('primary-gradient');
+                submitBtn.classList.add('bg-tertiary-container', 'text-on-tertiary-container');
+                submitBtn.innerHTML = `
+                    <span class="material-symbols-outlined">check_circle</span>
+                    <span>Успешно</span>
+                `;
+                
+                // Trigger success visual feedback on inputs
+                inputs.forEach(input => {
+                    input.classList.remove('border-outline-variant/40');
+                    input.classList.add('border-tertiary-fixed-dim', 'bg-tertiary/5');
+                });
+            }, 1500);
+        });
+
+        // Resend Simulation
+        resendBtn.addEventListener('click', () => {
+            if (resendBtn.disabled) return;
+            
+            // Reset timer
+            timeLeft = 120;
+            resendBtn.disabled = true;
+            resendBtn.classList.add('text-outline', 'cursor-not-allowed');
+            resendBtn.classList.remove('text-primary', 'cursor-pointer');
+            document.getElementById('timer-container').classList.remove('opacity-40');
+            
+            // Notification mock
+            console.log("New code sent...");
+        });
+    </script>
+</body></html>

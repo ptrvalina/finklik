@@ -4,6 +4,14 @@ import { saveBlob } from '../../utils/fileDownload'
 import { calmActionError } from '../../i18n/messages.ru'
 import { formatApiDetail } from '../../utils/apiError'
 import MoneyAmount from '../../components/ui/MoneyAmount'
+import {
+  GlassCard,
+  PageHeader,
+  StatusChip,
+  StitchIcon,
+  StitchTable,
+  StitchTableShell,
+} from '../../components/stitch'
 
 type Row = {
   id: string
@@ -26,6 +34,13 @@ function toCsv(rows: Record<string, string | number>[]) {
 }
 
 const emptyIdDoc = { series: '', number: '', issued_by: '', issued_date: '', expiry_date: '' }
+
+const WIZARD_META = [
+  { icon: 'badge', title: 'Личные данные', subtitle: 'Идентификация и контакты' },
+  { icon: 'work', title: 'Должность и оклад', subtitle: 'Трудоустройство и оплата' },
+  { icon: 'description', title: 'Документы', subtitle: 'Удостоверение личности' },
+  { icon: 'verified_user', title: 'Подтверждение', subtitle: 'Проверка и согласие' },
+] as const
 
 export default function EmployeesHire() {
   const passportRef = useRef<HTMLInputElement>(null)
@@ -317,15 +332,29 @@ export default function EmployeesHire() {
     }
   }
 
+  const stepMeta = WIZARD_META[wizardStep - 1]
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-section-sm pb-28">
+      <PageHeader
+        backTo="/employees"
+        backLabel="Команда"
+        title="Приём сотрудника"
+        subtitle="Заполните анкету по шагам — минимум: ФИО, должность и оклад."
+        badge={
+          <StatusChip variant="pending">
+            Шаг {wizardStep}/{wizardSteps.length}
+          </StatusChip>
+        }
+      />
+
       {rows.length === 0 && !loading && (
-        <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5">
-          <h2 className="text-lg font-semibold text-on-surface">Первый сотрудник</h2>
+        <GlassCard className="border-primary/20 bg-primary/5 p-5" hover={false}>
+          <h2 className="font-headline text-headline-sm text-on-surface">Первый сотрудник</h2>
           <p className="mt-1 text-sm text-on-surface-variant">
             Заполните анкету по шагам — минимум: ФИО, должность и оклад.
           </p>
-        </div>
+        </GlassCard>
       )}
 
       {seqInfo?.hire_next_label ? (
@@ -335,62 +364,112 @@ export default function EmployeesHire() {
         </p>
       ) : null}
 
-      <div className="card-elevated space-y-4 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-on-surface">Приём сотрудника</h2>
-          <span className="text-xs font-bold text-on-surface-variant">
-            Шаг {wizardStep} из {wizardSteps.length}: {wizardSteps[wizardStep - 1]}
-          </span>
+      <GlassCard className="relative overflow-hidden p-6 sm:p-8" hover={false}>
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary-container text-primary">
+            <StitchIcon name={stepMeta.icon} filled className="text-2xl" />
+          </div>
+          <div>
+            <h2 className="font-headline text-headline-sm text-on-surface">{stepMeta.title}</h2>
+            <p className="font-label text-label-caps uppercase text-secondary">{stepMeta.subtitle}</p>
+          </div>
         </div>
-        <div className="flex gap-1">
+
+        <div className="mb-6 flex gap-1">
           {wizardSteps.map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded-full ${i + 1 <= wizardStep ? 'bg-primary' : 'bg-outline/30'}`} />
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-colors ${i + 1 <= wizardStep ? 'bg-primary' : 'bg-outline-variant/30'}`}
+            />
           ))}
         </div>
 
         {wizardStep === 1 && (
-          <div className="grid gap-3 md:grid-cols-2">
-            <input className="input md:col-span-2" placeholder="ФИО *" value={form.full_name} onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))} />
-            <input className="input" placeholder="Телефон" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
-            <input className="input" placeholder="Идентификационный номер" value={form.identification_number} onChange={(e) => setForm((p) => ({ ...p, identification_number: e.target.value }))} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="label">ФИО *</label>
+              <input className="input min-h-touch-min w-full" placeholder="ФИО *" value={form.full_name} onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Телефон</label>
+              <input className="input min-h-touch-min w-full" placeholder="Телефон" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Идентификационный номер</label>
+              <input className="input min-h-touch-min w-full" placeholder="Идентификационный номер" value={form.identification_number} onChange={(e) => setForm((p) => ({ ...p, identification_number: e.target.value }))} />
+            </div>
           </div>
         )}
 
         {wizardStep === 2 && (
-          <div className="grid gap-3 md:grid-cols-2">
-            <input className="input" placeholder="Должность (кратко) *" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
-            <input className="input" type="number" step="0.01" placeholder="Оклад *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
-            <input className="input" type="date" value={form.hire_date} onChange={(e) => setForm((p) => ({ ...p, hire_date: e.target.value }))} />
-            <input className="input" placeholder="Подразделение" value={form.subdivision} onChange={(e) => setForm((p) => ({ ...p, subdivision: e.target.value }))} />
-            <select className="input" value={form.employment_type} onChange={(e) => setForm((p) => ({ ...p, employment_type: e.target.value as any }))}>
-              <option value="">Трудоустройство</option>
-              <option value="primary">Основное место</option>
-              <option value="secondary">По совместительству</option>
-            </select>
-            <input className="input" placeholder="Расчётный счёт" value={form.bank_account} onChange={(e) => setForm((p) => ({ ...p, bank_account: e.target.value }))} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="label">Должность *</label>
+              <input className="input min-h-touch-min w-full" placeholder="Должность (кратко) *" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Оклад *</label>
+              <input className="input min-h-touch-min w-full" type="number" step="0.01" placeholder="Оклад *" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Дата приёма</label>
+              <input className="input min-h-touch-min w-full" type="date" value={form.hire_date} onChange={(e) => setForm((p) => ({ ...p, hire_date: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Подразделение</label>
+              <input className="input min-h-touch-min w-full" placeholder="Подразделение" value={form.subdivision} onChange={(e) => setForm((p) => ({ ...p, subdivision: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Трудоустройство</label>
+              <select className="input min-h-touch-min w-full" value={form.employment_type} onChange={(e) => setForm((p) => ({ ...p, employment_type: e.target.value as any }))}>
+                <option value="">Трудоустройство</option>
+                <option value="primary">Основное место</option>
+                <option value="secondary">По совместительству</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Расчётный счёт</label>
+              <input className="input min-h-touch-min w-full" placeholder="Расчётный счёт" value={form.bank_account} onChange={(e) => setForm((p) => ({ ...p, bank_account: e.target.value }))} />
+            </div>
           </div>
         )}
 
         {wizardStep === 3 && (
           <>
-            <div className="grid gap-3 md:grid-cols-2">
-              <select className="input md:col-span-2" value={form.id_document_type} onChange={(e) => setForm((p) => ({ ...p, id_document_type: e.target.value as any }))}>
-                <option value="">Документ (необязательно)</option>
-                <option value="passport">Паспорт</option>
-                <option value="residence_permit">Вид на жительство</option>
-                <option value="other">Иной</option>
-              </select>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="label">Тип документа</label>
+                <select className="input min-h-touch-min w-full" value={form.id_document_type} onChange={(e) => setForm((p) => ({ ...p, id_document_type: e.target.value as any }))}>
+                  <option value="">Документ (необязательно)</option>
+                  <option value="passport">Паспорт</option>
+                  <option value="residence_permit">Вид на жительство</option>
+                  <option value="other">Иной</option>
+                </select>
+              </div>
               {form.id_document_type ? (
                 <>
-                  <input className="input" placeholder="Серия" value={form.id_doc.series} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, series: e.target.value } }))} />
-                  <input className="input" placeholder="Номер *" value={form.id_doc.number} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, number: e.target.value } }))} />
-                  <input className="input md:col-span-2" placeholder="Кем выдан *" value={form.id_doc.issued_by} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, issued_by: e.target.value } }))} />
+                  <div>
+                    <label className="label">Серия</label>
+                    <input className="input min-h-touch-min w-full" placeholder="Серия" value={form.id_doc.series} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, series: e.target.value } }))} />
+                  </div>
+                  <div>
+                    <label className="label">Номер *</label>
+                    <input className="input min-h-touch-min w-full" placeholder="Номер *" value={form.id_doc.number} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, number: e.target.value } }))} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Кем выдан *</label>
+                    <input className="input min-h-touch-min w-full" placeholder="Кем выдан *" value={form.id_doc.issued_by} onChange={(e) => setForm((p) => ({ ...p, id_doc: { ...p.id_doc, issued_by: e.target.value } }))} />
+                  </div>
                 </>
               ) : null}
-              <textarea className="input md:col-span-2 min-h-[56px]" placeholder="Паспортные данные" value={form.passport_data} onChange={(e) => setForm((p) => ({ ...p, passport_data: e.target.value }))} />
+              <div className="md:col-span-2">
+                <label className="label">Паспортные данные</label>
+                <textarea className="input min-h-[56px] w-full" placeholder="Паспортные данные" value={form.passport_data} onChange={(e) => setForm((p) => ({ ...p, passport_data: e.target.value }))} />
+              </div>
             </div>
             <input ref={passportRef} type="file" accept="image/*,.pdf" className="hidden" onChange={() => void scanPassport()} />
-            <button type="button" className="btn-secondary" onClick={() => passportRef.current?.click()}>
+            <button type="button" className="btn-secondary mt-4" onClick={() => passportRef.current?.click()}>
+              <StitchIcon name="document_scanner" className="mr-1 text-lg" />
               Скан паспорта
             </button>
           </>
@@ -398,128 +477,149 @@ export default function EmployeesHire() {
 
         {wizardStep === 4 && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-outline/60 bg-surface-container-low/50 p-4 text-sm">
+            <GlassCard className="p-4" hover={false}>
               <p><span className="text-on-surface-variant">ФИО:</span> {form.full_name || '—'}</p>
-              <p><span className="text-on-surface-variant">Должность:</span> {form.position || '—'}</p>
-              <p><span className="text-on-surface-variant">Оклад:</span> {form.salary ? <MoneyAmount value={form.salary} className="inline-flex" /> : '—'}</p>
-            </div>
+              <p className="mt-1"><span className="text-on-surface-variant">Должность:</span> {form.position || '—'}</p>
+              <p className="mt-1"><span className="text-on-surface-variant">Оклад:</span> {form.salary ? <MoneyAmount value={form.salary} className="inline-flex" /> : '—'}</p>
+            </GlassCard>
             <label className="flex items-center gap-2 text-sm text-on-surface-variant">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
               Согласие на обработку персональных данных
             </label>
-            {err ? <p className="text-sm text-rose-500">{err}</p> : null}
+            {err ? <p className="text-sm text-error">{err}</p> : null}
           </div>
         )}
+      </GlassCard>
 
-        <div className="flex flex-wrap justify-between gap-2 pt-2">
-          <button type="button" className="btn-secondary" disabled={wizardStep === 1} onClick={() => setWizardStep((s) => s - 1)}>
-            Назад
-          </button>
-          {wizardStep < 4 ? (
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => {
-                if (wizardStep === 1 && !form.full_name.trim()) {
-                  alert('Укажите ФИО')
-                  return
-                }
-                if (wizardStep === 2 && (!form.position.trim() || Number(form.salary) <= 0)) {
-                  alert('Укажите должность и оклад')
-                  return
-                }
-                setWizardStep((s) => s + 1)
-              }}
-            >
-              Далее
+      <div className="sticky bottom-4 z-30 flex justify-center">
+        <GlassCard className="flex flex-wrap items-center justify-center gap-4 rounded-full px-6 py-4 shadow-2xl sm:gap-6 sm:px-8" hover={false}>
+          <p className="hidden text-sm text-on-surface-variant sm:block">
+            {wizardSteps[wizardStep - 1]} · шаг {wizardStep} из {wizardSteps.length}
+          </p>
+          <div className="hidden h-6 w-px bg-outline-variant/30 sm:block" />
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn-secondary rounded-full px-5" disabled={wizardStep === 1} onClick={() => setWizardStep((s) => s - 1)}>
+              Назад
             </button>
-          ) : (
-            <button type="button" className="btn-primary" disabled={submitting} onClick={() => void handleCreate()}>
-              {submitting ? 'Сохранение…' : 'Принять сотрудника'}
-            </button>
-          )}
-        </div>
+            {wizardStep < 4 ? (
+              <button
+                type="button"
+                className="btn-primary rounded-full px-6"
+                onClick={() => {
+                  if (wizardStep === 1 && !form.full_name.trim()) {
+                    alert('Укажите ФИО')
+                    return
+                  }
+                  if (wizardStep === 2 && (!form.position.trim() || Number(form.salary) <= 0)) {
+                    alert('Укажите должность и оклад')
+                    return
+                  }
+                  setWizardStep((s) => s + 1)
+                }}
+              >
+                Далее
+              </button>
+            ) : (
+              <button type="button" className="btn-primary rounded-full px-6" disabled={submitting} onClick={() => void handleCreate()}>
+                {submitting ? 'Сохранение…' : 'Принять сотрудника'}
+              </button>
+            )}
+          </div>
+        </GlassCard>
       </div>
 
-      <div className="card-elevated space-y-4 p-6">
-        <div className="flex flex-wrap items-end gap-3">
-          <h2 className="text-lg font-semibold text-on-surface">Принятые сотрудники</h2>
-          <button type="button" className="btn-secondary text-sm" disabled={loading} onClick={() => void load()}>
-            Обновить
-          </button>
-          <button type="button" className="btn-primary text-sm" onClick={() => void pu2Selected()}>
-            ПУ-2 по выбранным
-          </button>
-        </div>
-        <div className="overflow-x-auto rounded-xl border border-outline/60">
-          <table className="min-w-full text-sm">
-            <thead className="bg-surface-container-low text-left">
-              <tr>
-                <th className="px-2 py-2 w-10" />
-                <th className="px-3 py-2">ФИО</th>
-                <th className="px-3 py-2">Должность</th>
-                <th className="px-3 py-2">Статус</th>
-                <th className="px-3 py-2">ПУ-2</th>
-                <th className="px-3 py-2">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-outline/60">
-                  <td className="px-2 py-2">
-                    <input type="checkbox" checked={!!selected[r.id]} onChange={(e) => setSelected((s) => ({ ...s, [r.id]: e.target.checked }))} />
-                  </td>
-                  <td className="px-3 py-2">{r.full_name}</td>
-                  <td className="px-3 py-2">{r.position}</td>
-                  <td className="px-3 py-2">{r.is_active ? 'Активен' : 'Уволен'}</td>
-                  <td className="px-3 py-2 text-xs">{pu2Map[r.id] || '—'}</td>
-                  <td className="px-3 py-2 flex flex-wrap gap-1">
+      <StitchTableShell
+        title="Принятые сотрудники"
+        toolbar={
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary text-sm" disabled={loading} onClick={() => void load()}>
+              Обновить
+            </button>
+            <button type="button" className="btn-primary text-sm" onClick={() => void pu2Selected()}>
+              ПУ-2 по выбранным
+            </button>
+          </div>
+        }
+      >
+        <StitchTable>
+          <thead>
+            <tr>
+              <th className="w-10" />
+              <th>ФИО</th>
+              <th>Должность</th>
+              <th>Статус</th>
+              <th>ПУ-2</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <input type="checkbox" checked={!!selected[r.id]} onChange={(e) => setSelected((s) => ({ ...s, [r.id]: e.target.checked }))} />
+                </td>
+                <td className="font-semibold">{r.full_name}</td>
+                <td className="text-on-surface-variant">{r.position}</td>
+                <td>
+                  <StatusChip variant={r.is_active ? 'ready' : 'error'}>
+                    {r.is_active ? 'Активен' : 'Уволен'}
+                  </StatusChip>
+                </td>
+                <td className="text-xs">
+                  {pu2Map[r.id] ? (
+                    <StatusChip variant={pu2Map[r.id] === 'error' ? 'error' : 'ready'}>{pu2Map[r.id]}</StatusChip>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+                <td>
+                  <div className="flex flex-wrap gap-1">
                     <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => void openEdit(r.id)}>
                       Карточка
                     </button>
                     <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => void downloadOrderDocx(r.id)}>
                       Приказ DOCX
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </StitchTable>
+      </StitchTableShell>
 
-        <div className="rounded-xl border border-outline/60 p-4 space-y-2">
-          <p className="text-sm font-medium text-on-surface">Выписка из расчётной ведомости (CSV)</p>
-          <div className="flex flex-wrap gap-2 items-end">
-            <select className="input w-56" value={exportRange.employeeId} onChange={(e) => setExportRange((x) => ({ ...x, employeeId: e.target.value }))}>
-              <option value="">Сотрудник</option>
-              {rows.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.full_name}
-                </option>
-              ))}
-            </select>
-            <input className="input w-24" type="number" value={exportRange.yf} onChange={(e) => setExportRange((x) => ({ ...x, yf: Number(e.target.value) }))} />
-            <input className="input w-20" type="number" min={1} max={12} value={exportRange.mf} onChange={(e) => setExportRange((x) => ({ ...x, mf: Number(e.target.value) }))} />
-            <span className="text-on-surface-variant">—</span>
-            <input className="input w-24" type="number" value={exportRange.yt} onChange={(e) => setExportRange((x) => ({ ...x, yt: Number(e.target.value) }))} />
-            <input className="input w-20" type="number" min={1} max={12} value={exportRange.mt} onChange={(e) => setExportRange((x) => ({ ...x, mt: Number(e.target.value) }))} />
-            <button type="button" className="btn-secondary" onClick={() => void exportPayroll()}>
-              Скачать CSV
-            </button>
-          </div>
+      <GlassCard className="space-y-3 p-5" hover={false}>
+        <p className="font-headline text-headline-sm text-on-surface">Выписка из расчётной ведомости (CSV)</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <select className="input w-56" value={exportRange.employeeId} onChange={(e) => setExportRange((x) => ({ ...x, employeeId: e.target.value }))}>
+            <option value="">Сотрудник</option>
+            {rows.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.full_name}
+              </option>
+            ))}
+          </select>
+          <input className="input w-24" type="number" value={exportRange.yf} onChange={(e) => setExportRange((x) => ({ ...x, yf: Number(e.target.value) }))} />
+          <input className="input w-20" type="number" min={1} max={12} value={exportRange.mf} onChange={(e) => setExportRange((x) => ({ ...x, mf: Number(e.target.value) }))} />
+          <span className="text-on-surface-variant">—</span>
+          <input className="input w-24" type="number" value={exportRange.yt} onChange={(e) => setExportRange((x) => ({ ...x, yt: Number(e.target.value) }))} />
+          <input className="input w-20" type="number" min={1} max={12} value={exportRange.mt} onChange={(e) => setExportRange((x) => ({ ...x, mt: Number(e.target.value) }))} />
+          <button type="button" className="btn-secondary" onClick={() => void exportPayroll()}>
+            Скачать CSV
+          </button>
         </div>
-      </div>
+      </GlassCard>
 
       {editId ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog">
-          <div className="card-elevated max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 space-y-3">
-            <h3 className="text-lg font-semibold">Карточка сотрудника</h3>
-            <div className="grid gap-2 md:grid-cols-2">
+          <GlassCard className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6" hover={false}>
+            <h3 className="font-headline text-headline-sm text-on-surface">Карточка сотрудника</h3>
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
               {(['full_name', 'phone', 'passport_data', 'position', 'position_code', 'position_name'] as const).map((k) => (
                 <label key={k} className="text-xs text-on-surface-variant">
                   {k}
                   <input
-                    className="input mt-1"
+                    className="input mt-1 min-h-touch-min w-full"
                     value={String((editBody as any)[k] ?? '')}
                     onChange={(e) => setEditBody((b) => ({ ...b, [k]: e.target.value }))}
                   />
@@ -528,7 +628,7 @@ export default function EmployeesHire() {
               <label className="text-xs text-on-surface-variant md:col-span-2">
                 hr_meta (JSON)
                 <textarea
-                  className="input mt-1 font-mono text-xs min-h-[120px]"
+                  className="input mt-1 min-h-[120px] w-full font-mono text-xs"
                   value={JSON.stringify((editBody as any).hr_meta || {}, null, 2)}
                   onChange={(e) => {
                     try {
@@ -541,7 +641,7 @@ export default function EmployeesHire() {
                 />
               </label>
             </div>
-            <div className="flex gap-2">
+            <div className="mt-4 flex gap-2">
               <button type="button" className="btn-primary" onClick={() => void saveEdit()}>
                 Сохранить
               </button>
@@ -549,7 +649,7 @@ export default function EmployeesHire() {
                 Закрыть
               </button>
             </div>
-          </div>
+          </GlassCard>
         </div>
       ) : null}
     </div>

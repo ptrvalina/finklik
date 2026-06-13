@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#727784",
+                    "inverse-surface": "#2e3133",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#424753",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#085ac0",
+                    "secondary": "#565e74",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "surface-dim": "#d8dadd",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "surface-bright": "#f8f9fc",
+                    "secondary-fixed": "#dae2fc",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "inverse-primary": "#adc6ff",
+                    "tertiary": "#004f35",
+                    "outline-variant": "#c2c6d5",
+                    "on-primary-container": "#c4d5ff",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-container": "#d8dff9",
+                    "primary": "#004191",
+                    "surface-variant": "#e1e2e5",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "primary-container": "#0058be",
+                    "surface-container": "#eceef0",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#001a42",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-surface": "#191c1e",
+                    "tertiary-container": "#006a48",
+                    "error-container": "#ffdad6",
+                    "surface": "#f8f9fc",
+                    "on-primary-fixed-variant": "#004395",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary-fixed": "#84f9c3",
+                    "background": "#f8f9fc",
+                    "surface-container-highest": "#e1e2e5",
+                    "primary-fixed-dim": "#adc6ff",
+                    "on-background": "#191c1e",
+                    "surface-container-high": "#e7e8eb",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#5a6278",
+                    "on-tertiary-container": "#77ebb6",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "2.25rem",
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "table-x": "0.875rem",
+                    "unit": "4px",
+                    "touch-min": "44px",
+                    "section-sm": "1.5rem",
+                    "margin-mobile": "1.25rem",
+                    "table-y": "0.625rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanner-viewport {
+            aspect-ratio: 3/4;
+            position: relative;
+            overflow: hidden;
+        }
+        .scan-overlay {
+            position: absolute;
+            inset: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+        .corner-marker {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border: 4px solid white;
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #84f9c3, transparent);
+            box-shadow: 0 0 15px #84f9c3;
+            animation: scan 3s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .glass-blur {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-base antialiased">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md dark:bg-surface-dim/90 border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<button class="active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-primary">close</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary">Сканер</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform duration-200 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high" id="flashToggle">
+<span class="material-symbols-outlined text-on-surface-variant">flash_off</span>
+</button>
+<button class="active:scale-95 transition-transform duration-200 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high">
+<span class="material-symbols-outlined text-on-surface-variant">help_outline</span>
+</button>
+</div>
+</header>
+<main class="pt-[64px] pb-24 min-h-screen flex flex-col items-center">
+<!-- Camera Viewfinder -->
+<div class="w-full max-w-md px-margin-mobile mt-4 relative">
+<div class="scanner-viewport rounded-3xl bg-neutral-900 shadow-2xl relative overflow-hidden">
+<!-- Background Image Placeholder for Viewfinder -->
+<img alt="Financial document viewfinder" class="w-full h-full object-cover opacity-60" data-alt="A POV high-angle shot through a smartphone camera lens focusing on a modern invoice placed on a sleek dark walnut desk. The composition shows the viewfinder interface of a fintech app with digital scanning elements overlaying the paper. The lighting is crisp and professional with a cool blue and emerald green color palette characteristic of high-end financial technology. Cinematic depth of field with the edges of the desk slightly blurred." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARKtLBxD7HFLqB7XcNvcJ0i_T_bzxJlm4z5Av0msucoqVB0pq2ZgPHEHRwU0zerjHseI_hrmHKDV5Yo-IRuYq6cuLyeY1xJwvMMa26F0J89oFTBx2J0gOa-apPuWz0DXCP7iZmPu1KmouKO_2sqLUGI4VclO8eF9HjSzWt6c37-Y_PgrZOdDsI5NHdEkLqbWC2Horiw_V6zIfkI8hF_36_mnixoW3BFPMLGElDtm35Ony7HIA0heS8nhchsDMt0R-xIzAuOVitAVI"/>
+<!-- Scanning UI Overlays -->
+<div class="scan-overlay">
+<div class="corner-marker top-0 left-0 border-r-0 border-b-0 rounded-tl-xl"></div>
+<div class="corner-marker top-0 right-0 border-l-0 border-b-0 rounded-tr-xl"></div>
+<div class="corner-marker bottom-0 left-0 border-r-0 border-top-0 rounded-bl-xl"></div>
+<div class="corner-marker bottom-0 right-0 border-l-0 border-top-0 rounded-br-xl"></div>
+<div class="scan-line"></div>
+</div>
+<!-- Hints -->
+<div class="absolute inset-x-0 bottom-8 flex justify-center px-6">
+<div class="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
+<span class="text-white text-label-caps font-label-caps tracking-widest">ДЕРЖИТЕ ПРЯМО</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Mode Selector -->
+<div class="mt-8 flex gap-2 px-margin-mobile overflow-x-auto no-scrollbar w-full justify-center">
+<button class="px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps shadow-lg active:scale-95 transition-all">
+                ИНВОЙС
+            </button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-variant active:scale-95 transition-all">
+                ЧЕК
+            </button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-variant active:scale-95 transition-all">
+                КОНТРАКТ
+            </button>
+</div>
+<!-- Gallery Preview -->
+<section class="mt-8 w-full">
+<div class="px-margin-mobile flex justify-between items-end mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Недавние</h2>
+<button class="text-primary font-label-caps text-label-caps flex items-center gap-1">
+                    СМОТРЕТЬ ВСЕ <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+<div class="flex gap-4 overflow-x-auto px-margin-mobile no-scrollbar">
+<!-- Gallery Item -->
+<div class="flex-shrink-0 w-24 group relative">
+<div class="aspect-[3/4] rounded-xl overflow-hidden border border-outline-variant/30 active:scale-95 transition-transform duration-200">
+<img alt="Scanned invoice thumbnail" class="w-full h-full object-cover" data-alt="A sharp, clear digital scan of a corporate invoice showing clean typography and numerical data. The background is a crisp white paper texture, while the lighting is bright and even. The aesthetic is clean and professional, representing a successful document digitization in a high-end fintech context. The image focus is on the document's header and overall layout." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDo9lLVQa6v4L9KBKNC7i67BCH0vLQ8rOBj0ZdFypaGgz7PKn2wxmAuW51wyppo_JFMFMi_zKHqD2UKE7be3J2NKGPOVO3YIv8yCltl9OzpvxwQzlrc8H8C314LtM5VPMsIrnWlU9hrmAc-hTJgvbE_htviBe1Lw4wug2ZQPoLbrS7GfbsCKEv2TvoHzBjxtRBAEiSTJX0glxQZmeF7R-sEW9p_3-CdXA7ijcE1kwOcR94rSsuzz1CGsHtoXc4ZZxo1OYBdIPMgYnM"/>
+</div>
+<p class="mt-2 text-center text-on-surface-variant text-[10px] font-medium truncate">Инвойс #441</p>
+</div>
+<!-- Gallery Item -->
+<div class="flex-shrink-0 w-24 group relative">
+<div class="aspect-[3/4] rounded-xl overflow-hidden border border-outline-variant/30 active:scale-95 transition-transform duration-200">
+<img alt="Scanned receipt thumbnail" class="w-full h-full object-cover" data-alt="A close-up high-resolution scan of a retail receipt on thermal paper. The details are crisp, showing clear text and line items. The presentation is organized and suggests high-accuracy OCR technology. Soft, neutral lighting enhances the clarity of the document against a minimal surface background. Professional and clinical fintech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQExHe-sNYnigUq_KTCY8cCYUKkBhSFzDGFxrBfISfDsJFFAgmtp6NMaCYKR6yI3HE8G14PVq6xQ6WMneFIyULg5twDKWSyDB_seRfH1pRl5Gf4ai-ZhxbyvYfNeXp1vQwV8It22cQsj-QeVomYj6hiVJsvCUdf6K9MArA12zVtQWlVIiiohhTvka6ftEPzlCpX-wh1K7TpJUgvKc61lOBedCqd2O8QGyk-UM7-pNkO0heL-bfNNV3i-D_zfhuACMCUNcbAF3JzJM"/>
+</div>
+<p class="mt-2 text-center text-on-surface-variant text-[10px] font-medium truncate">Чек Starbucks</p>
+</div>
+<!-- Manual Upload Button -->
+<div class="flex-shrink-0 w-24">
+<button class="w-full aspect-[3/4] rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low active:scale-95 transition-all">
+<span class="material-symbols-outlined text-primary text-[32px]">upload_file</span>
+<span class="text-[10px] font-bold text-primary font-label-caps text-center px-1">ЗАГРУЗИТЬ</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Main Action Button -->
+<div class="fixed bottom-10 inset-x-0 flex justify-center pointer-events-none">
+<button class="pointer-events-auto w-20 h-20 bg-gradient-to-tr from-primary via-primary-container to-[#002114] rounded-full shadow-[0_8px_32px_rgba(0,65,145,0.4)] border-4 border-white flex items-center justify-center active:scale-90 transition-transform duration-300">
+<div class="w-16 h-16 rounded-full border-2 border-white/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[36px]" style="font-variation-settings: 'FILL' 1;">document_scanner</span>
+</div>
+</button>
+</div>
+<!-- Persistent Bottom Bar Navigation -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg dark:bg-surface-dim/90 border-t border-outline-variant/20 shadow-lg dark:shadow-none rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high/50 transition-all active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Главная</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high/50 transition-all active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps mt-1">Сотрудники</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">document_scanner</span>
+<span class="font-label-caps text-label-caps">Сканер</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high/50 transition-all active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps mt-1">Задачи</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction Scripts
+        const flashBtn = document.getElementById('flashToggle');
+        let flashOn = false;
+
+        flashBtn.addEventListener('click', () => {
+            flashOn = !flashOn;
+            const icon = flashBtn.querySelector('span');
+            if (flashOn) {
+                icon.textContent = 'flash_on';
+                flashBtn.classList.remove('bg-surface-container-high');
+                flashBtn.classList.add('bg-tertiary-fixed', 'text-on-tertiary-fixed');
+            } else {
+                icon.textContent = 'flash_off';
+                flashBtn.classList.add('bg-surface-container-high');
+                flashBtn.classList.remove('bg-tertiary-fixed', 'text-on-tertiary-fixed');
+            }
+        });
+
+        // Simulating some focus logic on the viewfinder
+        const viewport = document.querySelector('.scanner-viewport');
+        viewport.addEventListener('click', (e) => {
+            const circle = document.createElement('div');
+            circle.style.position = 'absolute';
+            circle.style.width = '60px';
+            circle.style.height = '60px';
+            circle.style.border = '2px solid #84f9c3';
+            circle.style.borderRadius = '50%';
+            circle.style.left = `${e.offsetX - 30}px`;
+            circle.style.top = `${e.offsetY - 30}px`;
+            circle.style.pointerEvents = 'none';
+            circle.style.transition = 'all 0.4s ease-out';
+            circle.style.transform = 'scale(1.5)';
+            circle.style.opacity = '1';
+            
+            viewport.appendChild(circle);
+
+            requestAnimationFrame(() => {
+                circle.style.transform = 'scale(1)';
+                circle.style.opacity = '0';
+            });
+
+            setTimeout(() => circle.remove(), 400);
+        });
+    </script>
+</body></html>

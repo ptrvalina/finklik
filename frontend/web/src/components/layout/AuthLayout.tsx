@@ -23,7 +23,9 @@ type AuthLayoutProps = {
 
 export default function AuthLayout({ children, maxWidthClass = 'max-w-sm' }: AuthLayoutProps) {
   return (
-    <div className="fc-auth-shell relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+    <div className="fc-auth-shell relative flex min-h-screen items-center justify-center overflow-hidden p-margin-mobile md:p-margin-desktop">
+      <div className="pointer-events-none absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-tertiary-fixed/10 blur-[120px]" aria-hidden />
+      <div className="pointer-events-none absolute -bottom-32 -left-32 h-[600px] w-[600px] rounded-full bg-primary-fixed/20 blur-[140px]" aria-hidden />
       <div className={`relative z-10 mx-auto w-full ${maxWidthClass}`}>{children}</div>
     </div>
   )

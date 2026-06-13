@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f8f9fc",
+                        "secondary": "#565e74",
+                        "surface-container-highest": "#e1e2e5",
+                        "primary-container": "#0058be",
+                        "surface-bright": "#f8f9fc",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#5a6278",
+                        "on-primary-container": "#c4d5ff",
+                        "primary-fixed": "#d8e2ff",
+                        "primary": "#004191",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e1e2e5",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#d8dff9",
+                        "tertiary-container": "#006a48",
+                        "on-primary-fixed-variant": "#004395",
+                        "tertiary-fixed": "#84f9c3",
+                        "tertiary": "#004f35",
+                        "on-surface-variant": "#424753",
+                        "surface-tint": "#085ac0",
+                        "surface-container-low": "#f2f4f6",
+                        "on-tertiary-fixed": "#002114",
+                        "on-tertiary-container": "#77ebb6",
+                        "outline": "#727784",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed": "#dae2fc",
+                        "on-background": "#191c1e",
+                        "surface-dim": "#d8dadd",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "outline-variant": "#c2c6d5",
+                        "surface-container-high": "#e7e8eb",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface": "#f8f9fc",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001a42",
+                        "inverse-primary": "#adc6ff",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "inverse-surface": "#2e3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-min": "44px",
+                        "table-y": "0.625rem",
+                        "section-md": "2rem",
+                        "margin-mobile": "1.25rem",
+                        "margin-desktop": "2.25rem",
+                        "section-sm": "1.5rem",
+                        "table-x": "0.875rem",
+                        "gutter": "1rem",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-base": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 65, 145, 0.08);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #001a42 100%);
+        }
+        .input-focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(0, 88, 190, 0.15);
+            border-color: #0058be;
+        }
+        .active-spring:active {
+            transform: scale(0.96);
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center font-body-base text-on-surface p-margin-mobile md:p-margin-desktop relative overflow-hidden">
+<!-- Atmospheric Ambient Glows -->
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-tertiary-fixed/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-primary-fixed/20 rounded-full blur-[140px] -z-10 pointer-events-none"></div>
+<div class="w-full max-w-[440px] flex flex-col items-center">
+<!-- Branding Header -->
+<header class="mb-section-md text-center">
+<div class="flex items-center justify-center gap-3 mb-2">
+<div class="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">Abyssal Precision</h1>
+</div>
+<p class="text-secondary font-body-base opacity-80">Enterprise Management Suite</p>
+</header>
+<!-- Main Login Card -->
+<main class="w-full glass-card rounded-[24px] p-8 md:p-10 border border-outline-variant/30">
+<div class="mb-8">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-1">Welcome back</h2>
+<p class="text-on-surface-variant font-body-base">Access your financial dashboard</p>
+</div>
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-secondary-fixed-variant block" for="email">EMAIL ADDRESS</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">alternate_email</span>
+<input class="w-full h-touch-min pl-12 pr-4 bg-surface-container-low border border-outline-variant rounded-xl font-body-base text-on-surface placeholder:text-outline/60 input-focus-ring transition-all" id="email" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-secondary-fixed-variant block" for="password">PASSWORD</label>
+<a class="text-[13px] font-semibold text-primary hover:underline transition-all" href="#">Forgot?</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full h-touch-min pl-12 pr-12 bg-surface-container-low border border-outline-variant rounded-xl font-body-base text-on-surface placeholder:text-outline/60 input-focus-ring transition-all" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary active-spring" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full h-touch-min primary-gradient text-white font-headline-sm text-headline-sm rounded-full shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 transition-all active-spring flex items-center justify-center gap-2" type="submit">
+                    Sign in
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="my-8 flex items-center gap-4">
+<div class="h-[1px] flex-1 bg-outline-variant/50"></div>
+<span class="font-label-caps text-label-caps text-outline whitespace-nowrap">OR CONTINUE WITH</span>
+<div class="h-[1px] flex-1 bg-outline-variant/50"></div>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-4">
+<button class="h-touch-min flex items-center justify-center gap-3 border border-outline-variant rounded-xl bg-surface-container-lowest hover:bg-surface-container transition-colors active-spring group">
+<img alt="Google" class="w-5 h-5" data-alt="Official Google logo with its four characteristic colors G icon used for third party authentication services in modern web design applications." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9P014YqZtKo8vLZbtt7KsQ1avAP1gasMIwbMfo-Z-8X-u7_aVwSvxt9h8Hp1DUrzLZRWv3Zzh97yKN2CapjknOEUCsfW42BfpqOoPqaoMsI8Ozk4A9R73cEZduHDfvHA9X_JSJL6pi7TejfDuvDH6eL3zQ33iDndeRZKfbVP-YhmDhS7LMeJlXlnwlx8ufVUm8bR8LTCeWlXzU3kadUdQjgTwLpKAuWgPoxgwMbF5RwFukwfoyeWjugDQkH_Qnmw1GGwhiSyFD9U"/>
+<span class="font-body-base font-semibold text-on-surface-variant group-hover:text-on-surface">Google</span>
+</button>
+<button class="h-touch-min flex items-center justify-center gap-3 border border-outline-variant rounded-xl bg-surface-container-lowest hover:bg-surface-container transition-colors active-spring group">
+<span class="material-symbols-outlined text-on-surface text-[22px]" style="font-variation-settings: 'FILL' 1;">apps</span>
+<span class="font-body-base font-semibold text-on-surface-variant group-hover:text-on-surface">Apple</span>
+</button>
+</div>
+</main>
+<!-- Footer Links -->
+<footer class="mt-8 text-center">
+<p class="text-secondary font-body-base">
+                Don't have an account? 
+                <a class="text-primary font-bold hover:underline" href="#">Request Access</a>
+</p>
+<div class="mt-6 flex items-center justify-center gap-6 opacity-60">
+<a class="font-label-caps text-label-caps hover:text-primary transition-colors" href="#">PRIVACY POLICY</a>
+<a class="font-label-caps text-label-caps hover:text-primary transition-colors" href="#">TERMS OF SERVICE</a>
+</div>
+</footer>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.parentElement.classList.add('scale-[1.01]');
+                input.parentElement.parentElement.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+
+        // Simple button shadow movement effect
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.querySelector('.primary-gradient');
+            if (glow) {
+                const rect = glow.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                glow.style.setProperty('--x', `${x}px`);
+                glow.style.setProperty('--y', `${y}px`);
+            }
+        });
+    </script>
+</body></html>

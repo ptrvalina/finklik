@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .camera-overlay {
+            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.4) 100%);
+        }
+        .scan-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0058be, transparent);
+            animation: scan 3s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .shutter-press {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .shutter-press:active {
+            transform: scale(0.85);
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#002114",
+                    "surface-container": "#eceef0",
+                    "background": "#f8f9fc",
+                    "surface-container-low": "#f2f4f6",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#0058be",
+                    "secondary-container": "#d8dff9",
+                    "surface": "#f8f9fc",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#001a42",
+                    "outline": "#727784",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "surface-bright": "#f8f9fc",
+                    "secondary-fixed": "#dae2fc",
+                    "primary-fixed-dim": "#adc6ff",
+                    "surface-container-high": "#e7e8eb",
+                    "on-primary-container": "#c4d5ff",
+                    "surface-dim": "#d8dadd",
+                    "secondary": "#565e74",
+                    "tertiary": "#004f35",
+                    "surface-container-highest": "#e1e2e5",
+                    "inverse-primary": "#adc6ff",
+                    "inverse-surface": "#2e3133",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "outline-variant": "#c2c6d5",
+                    "tertiary-container": "#006a48",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-tertiary-container": "#77ebb6",
+                    "surface-tint": "#085ac0",
+                    "on-background": "#191c1e",
+                    "on-secondary-container": "#5a6278",
+                    "surface-variant": "#e1e2e5",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#424753",
+                    "inverse-on-surface": "#eff1f3",
+                    "primary": "#004191",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#84f9c3",
+                    "on-surface": "#191c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "unit": "4px",
+                    "table-x": "0.875rem",
+                    "touch-min": "44px",
+                    "section-sm": "1.5rem",
+                    "table-y": "0.625rem",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-base antialiased min-h-screen pb-24">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-bold text-primary-container">Финклик</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 duration-200" data-icon="flash_on"></button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/20">
+<img alt="User" data-alt="A professional close-up avatar of a corporate executive with a modern, high-end fintech aesthetic. The lighting is soft and directional, typical of a high-end business portrait. The color palette is composed of clean whites and professional blues, reflecting an atmosphere of financial superiority and trustworthiness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAp9RAi7LhOGWuRy5fek9TVAzmF6CGYUCAuHp6dLBXYXU0LqpIF52ipVUqx2NHT7jBKDh31qyRbt_BmnP9ISHvamglbwipwB0hr6IBbNewUZAT1r552DFc25_GpweOvI3a4eRzmve9MXfE7BoHFByCSHyPyfUBSOP2TodJwTAzUhRP94I8SAPI0ScWDTa-hLMd-i2KEpO2WqhOEJ97LeDm8o5-RQlbe8vk15ER7e2RSgZsTPWPq2bIFkr0xozbj8khMW548CTWlesY"/>
+</div>
+</div>
+</header>
+<main class="pt-16 max-w-6xl mx-auto px-margin-mobile md:px-margin-desktop space-y-gutter">
+<!-- Camera Preview Section -->
+<section class="relative mt-4 aspect-[3/4] md:aspect-video rounded-3xl overflow-hidden bg-on-surface shadow-xl group">
+<div class="absolute inset-0 camera-overlay z-10"></div>
+<!-- Simulated Camera Feed -->
+<div class="absolute inset-0 bg-neutral-900 overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-80" data-alt="A sharp, clear top-down view of a financial expense receipt resting on a dark, minimalist wooden desk. The document is perfectly framed for a mobile scanning application. Soft atmospheric lighting illuminates the crisp paper and black ink, while a subtle digital blue glow indicates the active scanning focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJw_wozwnRlQFYhGsQGrQe69IjpcBfg1Sv_frUhu4PmMi2ZqXerLVoGzQLHA1qCcjFXtZZPQXSzFgOUplUqyOWW9ScsBCkCuLp-mU3ZzIygtLvPRuoGKjOGcpO3UHTerm9FMC7Cb6o2kd_hcJAAjEYOaCJ4t_N04-DkKHpwKBoUpDcR0-mjj0aKWa-YXDW6C2YHyyYerHMwgGLtPCrJSpHJqa9Amap3R7GcgYXKWJGHCormeblsALWRfsX9qkJv7KzSUJ-Vn5iDt4"/>
+<!-- Scan Animation Overlay -->
+<div class="absolute inset-x-0 w-full scan-line z-20"></div>
+<!-- Corner Guides -->
+<div class="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-primary-fixed rounded-tl-xl z-20"></div>
+<div class="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-primary-fixed rounded-tr-xl z-20"></div>
+<div class="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-primary-fixed rounded-bl-xl z-20"></div>
+<div class="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-primary-fixed rounded-br-xl z-20"></div>
+</div>
+<!-- Floating Controls -->
+<div class="absolute inset-x-0 bottom-0 p-8 z-30 flex justify-between items-center bg-gradient-to-t from-black/60 to-transparent">
+<button class="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all">
+<span class="material-symbols-outlined block" data-icon="image"></span>
+</button>
+<button class="w-20 h-20 bg-white rounded-full flex items-center justify-center border-[6px] border-white/20 shutter-press">
+<div class="w-16 h-16 rounded-full border-2 border-on-surface/10 bg-white shadow-inner"></div>
+</button>
+<button class="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all">
+<span class="material-symbols-outlined block" data-icon="settings"></span>
+</button>
+</div>
+<div class="absolute top-8 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-full glass-panel border border-white/20">
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-widest flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+                    Авто-захват включен
+                </span>
+</div>
+</section>
+<!-- Gallery & Status -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-gutter pb-8">
+<!-- Recent Scans Bento -->
+<div class="md:col-span-8 space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Недавние сканы</h2>
+<button class="text-primary font-label-caps text-label-caps hover:underline">Смотреть все</button>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<!-- Scan Item 1 -->
+<div class="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container hover:shadow-lg transition-all duration-300">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A scanned image of a professional business document with financial tables and signatures. The image is presented as a thumbnail in a high-end fintech app, showing crisp details and clean margins. The aesthetic is professional and organized, with a focus on document clarity and data integrity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwK3ItLWmgtgiFmbQA7hrbWtOjf5AOFtTRSGlYrjsW8GkUk-XJPnzL9avuL1ZdzKv7lec4k9F2CrhobL9SIfsgTHwN7nJ4O6j5V3-8vP3sasUuCUHoTaVCBIHTwFkYr3qWz5Azgc-sBl9VTtWOrbINsbCBaDxpF2xQxzxiP-hBWlduica_uaksvJqZUHXPODHue-qnx7F88TuGSb7ioGmk57qzGTEPn06v7_34pv3YffpgrPJWDUcGeUiZYTpChhrx6JaoPcmJAOw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+<span class="text-white text-[10px] font-mono-data">24.05.2024</span>
+<p class="text-white font-bold text-xs">Счет-фактура #422</p>
+</div>
+<div class="absolute top-2 right-2 px-2 py-1 bg-tertiary/90 backdrop-blur-md rounded-lg flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="check_circle" data-weight="fill"></span>
+<span class="text-[10px] font-label-caps text-on-tertiary-container">В КУДиР</span>
+</div>
+</div>
+<!-- Scan Item 2 -->
+<div class="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container hover:shadow-lg transition-all duration-300">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A close-up of a printed receipt being processed digitally. The image highlights the text extraction capability of the software, with faint digital outlines appearing over the numbers. The lighting is bright and clean, typical of a modern office environment, maintaining the high-end fintech brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGgoPK4Mhi6c94409VsSjPCdAb1gaEFkphakndhb9kPkjWB3iDVIeZOiXLjFdIxCdz0g74pd_82sGiTxASjFXnwGu4ZGxhuQNLGgSaV3rEhUEYTiX4AmFx9B_YB97GVMTQuR-vF5lWiQgyIIc-7lsYAdz14Bvwn0cuYUnLyTJ95ZKaerKHkp5Yr78mhUsNCOx9tDcDqAjWaf4_TpaxRZptTcpsU3TDegt4LyYIVsYn-OZ6EjG42Tw1bfz1cWFqLRw-1XL46RWZcAE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+<span class="text-white text-[10px] font-mono-data">23.05.2024</span>
+<p class="text-white font-bold text-xs">Чек: Ресторан "Вега"</p>
+</div>
+<div class="absolute top-2 right-2 px-2 py-1 bg-secondary-container/90 backdrop-blur-md rounded-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-on-secondary-container" data-icon="sync" data-weight="fill"></span>
+<span class="text-[10px] font-label-caps text-on-secondary-container">Обработка</span>
+</div>
+</div>
+<!-- Upload Placeholder -->
+<label class="cursor-pointer aspect-[3/4] rounded-2xl border-2 border-dashed border-outline-variant/50 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-high transition-colors text-outline hover:text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="add_circle"></span>
+<span class="font-label-caps text-label-caps uppercase text-center px-2">Загрузить файл</span>
+<input class="hidden" type="file"/>
+</label>
+</div>
+</div>
+<!-- Quick Stats & Actions -->
+<div class="md:col-span-4 space-y-gutter">
+<div class="p-6 rounded-3xl bg-primary text-on-primary-container shadow-lg shadow-primary/20 space-y-4">
+<div class="flex items-center gap-3">
+<div class="p-3 bg-on-primary-container/20 rounded-2xl">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet"></span>
+</div>
+<div>
+<p class="text-on-primary-container opacity-80 font-label-caps text-label-caps uppercase">Налоги за Май</p>
+<h3 class="font-display-lg text-display-lg">₽ 142 800</h3>
+</div>
+</div>
+<div class="pt-4 border-t border-on-primary-container/10">
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm opacity-90">Загружено документов</span>
+<span class="font-mono-data text-sm">28 / 30</span>
+</div>
+<div class="h-1.5 bg-on-primary-container/10 rounded-full overflow-hidden">
+<div class="h-full bg-on-primary-container w-[92%]"></div>
+</div>
+</div>
+</div>
+<div class="p-6 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-4">
+<h3 class="font-headline-sm text-headline-sm">Статус КУДиР</h3>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-highest/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-container" data-icon="fact_check"></span>
+<span class="text-sm font-medium">Готово к отправке</span>
+</div>
+<span class="font-mono-data text-sm text-tertiary-container">12</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-highest/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error" data-icon="error_outline"></span>
+<span class="text-sm font-medium">Требует внимания</span>
+</div>
+<span class="font-mono-data text-sm text-error">2</span>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-white rounded-full font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                        Отправить все в КУДиР
+                        <span class="material-symbols-outlined text-lg" data-icon="send"></span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-lg dark:shadow-none rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 transition-all rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard"></span>
+<span class="font-label-caps text-label-caps mt-1">Главная</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 transition-all rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="group"></span>
+<span class="font-label-caps text-label-caps mt-1">Сотрудники</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="document_scanner" data-weight="fill"></span>
+<span class="font-label-caps text-label-caps mt-1">Сканер</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 transition-all rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="event_upcoming"></span>
+<span class="font-label-caps text-label-caps mt-1">Задачи</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction Logic
+        document.querySelector('.shutter-press').addEventListener('click', function() {
+            const scanLine = document.querySelector('.scan-line');
+            scanLine.style.animation = 'none';
+            void scanLine.offsetWidth; // Trigger reflow
+            scanLine.style.animation = 'scan 0.5s ease-in-out';
+            
+            // Add haptic feedback simulation
+            this.style.backgroundColor = '#e1e2e5';
+            setTimeout(() => {
+                this.style.backgroundColor = 'white';
+            }, 100);
+        });
+
+        // Toggle Dark Mode (Optional Micro-interaction)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (e.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+</body></html>

@@ -15,7 +15,7 @@
     --fc-forest: 19 27 46;
     --fc-deep-teal: 19 27 46;
     /* Stitch cool light surfaces (#f7f9fb canvas, white cards) */
-    --color-canvas: 252 253 254;
+    --color-canvas: 248 249 252;
     --color-surface: 255 255 255;
     --color-surface-dim: 216 218 220;
     --color-surface-bright: 247 249 251;
@@ -337,6 +337,42 @@
   .dark .glass-card:hover {
     border-color: rgba(255, 255, 255, 0.14);
   }
+  /** Stitch redesign primitives */
+  .stitch-glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgb(194 198 213 / 0.35);
+    box-shadow: 0 8px 32px 0 rgba(0, 65, 145, 0.08);
+    transition: border-color var(--fc-duration-fast) ease, box-shadow var(--fc-duration-fast) ease;
+  }
+  .stitch-glass-card--hover:hover {
+    border-color: rgb(0 88 190 / 0.45);
+    box-shadow: 0 12px 40px -8px rgba(0, 65, 145, 0.12);
+  }
+  .stitch-hero-gradient {
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    background: linear-gradient(135deg, #001a42 0%, #004191 100%);
+    box-shadow: 0 20px 56px -24px rgba(0, 65, 145, 0.35);
+  }
+  .stitch-auth-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px 0 rgba(0, 65, 145, 0.08);
+  }
+  .stitch-table thead {
+    background: rgb(var(--color-surface-container-low));
+  }
+  .stitch-table thead th {
+    @apply px-table-x py-table-y font-label text-label-caps uppercase text-secondary;
+  }
+  .stitch-table tbody tr {
+    @apply border-t border-outline-variant/10 transition-colors hover:bg-primary/[0.04];
+  }
+  .stitch-table tbody td {
+    @apply px-table-x py-table-y;
+  }
   /** Статус-чипы Stitch (готово / в работе / требует действия). */
   .fc-status {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide;
@@ -547,9 +583,9 @@
     @apply mx-auto w-full max-w-6xl px-1 sm:px-2;
   }
   .fc-business-hero {
-    @apply relative overflow-hidden rounded-2xl p-5 sm:p-6;
-    background: linear-gradient(135deg, #2170e4 0%, #0058be 48%, #131b2e 100%);
-    box-shadow: 0 20px 56px -24px rgba(0, 88, 190, 0.45);
+    @apply relative overflow-hidden rounded-3xl p-5 sm:p-8;
+    background: linear-gradient(135deg, #001a42 0%, #004191 100%);
+    box-shadow: 0 20px 56px -24px rgba(0, 65, 145, 0.35);
   }
   .fc-business-hero-glow {
     @apply pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-50;
@@ -569,10 +605,10 @@
     @apply sm:p-7;
   }
   .fc-dashboard-card {
-    @apply min-h-[210px] rounded-xl border border-outline/30 bg-surface p-4 shadow-[var(--fc-shadow-calm)];
+    @apply stitch-glass-card stitch-glass-card--hover min-h-[210px] p-5 sm:p-6;
   }
   .fc-dashboard-card-title {
-    @apply font-headline text-base font-bold tracking-tight text-on-surface sm:text-lg;
+    @apply font-headline text-headline-sm text-on-surface;
   }
   .fc-dashboard-card--short {
     @apply min-h-0 py-3.5;
@@ -619,32 +655,25 @@
   box-shadow: 4px 0 48px -12px rgb(0 0 0 / 0.55);
 }
 
-/* Zone sidebar — active: left bar + contrast bg + filled icon. */
+/* Zone sidebar — Stitch active: filled blue pill. */
 .fc-zone-nav-item {
-  @apply relative flex items-center gap-3 rounded-lg px-3 py-2 font-headline text-[13px] font-semibold transition-all duration-200;
+  @apply relative flex items-center gap-3 rounded-xl px-4 py-3 font-headline text-headline-sm transition-all duration-200 active:scale-[0.98];
   color: rgb(var(--color-on-surface-variant));
 }
 .fc-zone-nav-item:hover {
   @apply bg-surface-container-high text-on-surface;
 }
 .fc-zone-nav-item--active {
-  background: rgb(var(--color-primary) / 0.12);
-  color: rgb(var(--color-primary));
-  box-shadow: none;
+  background: #0058be;
+  color: #c4d5ff;
+  box-shadow: 0 4px 16px -6px rgba(0, 88, 190, 0.45);
 }
 .fc-zone-nav-item--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.375rem;
-  bottom: 0.375rem;
-  width: 3px;
-  border-radius: 999px;
-  background: rgb(var(--color-primary));
+  display: none;
 }
 .fc-zone-nav-item--active:hover {
-  background: rgb(var(--color-primary) / 0.16);
-  color: rgb(var(--color-primary));
+  background: #004191;
+  color: #d8e2ff;
 }
 
 .fc-zone-sub-item {
@@ -660,9 +689,9 @@
   font-weight: 600;
 }
 
-/* Stitch flat shell header — без floating glass на desktop. */
+/* Stitch flat shell header */
 .fc-shell-header {
-  @apply sticky top-0 z-40 flex h-12 flex-shrink-0 items-center justify-end gap-2 border-b border-outline/50 bg-surface px-3 sm:h-12 sm:px-4;
+  @apply sticky top-0 z-40 flex h-16 flex-shrink-0 items-center justify-end gap-2 border-b border-outline-variant/40 bg-surface/90 px-4 backdrop-blur-md sm:px-margin-desktop;
 }
 .dark .fc-shell-header {
   @apply border-white/[0.06] bg-surface/95;

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик - Планировщик</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#002114",
+                    "surface-container": "#eceef0",
+                    "background": "#f8f9fc",
+                    "surface-container-low": "#f2f4f6",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#0058be",
+                    "secondary-container": "#d8dff9",
+                    "surface": "#f8f9fc",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#001a42",
+                    "outline": "#727784",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "surface-bright": "#f8f9fc",
+                    "secondary-fixed": "#dae2fc",
+                    "primary-fixed-dim": "#adc6ff",
+                    "surface-container-high": "#e7e8eb",
+                    "on-primary-container": "#c4d5ff",
+                    "surface-dim": "#d8dadd",
+                    "secondary": "#565e74",
+                    "tertiary": "#004f35",
+                    "surface-container-highest": "#e1e2e5",
+                    "inverse-primary": "#adc6ff",
+                    "inverse-surface": "#2e3133",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "outline-variant": "#c2c6d5",
+                    "tertiary-container": "#006a48",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-tertiary-container": "#77ebb6",
+                    "surface-tint": "#085ac0",
+                    "on-background": "#191c1e",
+                    "on-secondary-container": "#5a6278",
+                    "surface-variant": "#e1e2e5",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#424753",
+                    "inverse-on-surface": "#eff1f3",
+                    "primary": "#004191",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#84f9c3",
+                    "on-surface": "#191c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "unit": "4px",
+                    "table-x": "0.875rem",
+                    "touch-min": "44px",
+                    "section-sm": "1.5rem",
+                    "table-y": "0.625rem",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9fc;
+            color: #191c1e;
+        }
+        .bg-gradient-blue {
+            background: linear-gradient(135deg, #004191 0%, #0058be 50%, #001a42 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-base text-body-base pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a modern financial executive with a confident smile, set against a blurred high-end office background with soft blue lighting. The style is clean, corporate, and sophisticated, reflecting a high-end fintech persona. The lighting is crisp and clear, emphasizing a pristine white-paper aesthetic consistent with a luxury digital dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCueHlQTzH05XQEYAG8UJ2mSKzJ4kNor7jG_uARRzGqDJ6-OyhJ0H6NbjRwXT79DFzNK3SpgSXqazO5Bv7M0KX34j60ewtQvtdtfK0IPNUOc2Si39Rrc73DKMh26f7CSOrMHdJJwzrg1iUzKp3XShwkRKdmGOIKS1nR2Rl2ieL-WPA2-3sOjNepg63VDla7xf6OCtNwwKUYQPvWoqHQ_ZmfpDujI0xFwFZ5vBrTFjyRdjqdBw5tpSUir8gdHAkWFgicfcX6w2ltR4I"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary-container">Финклик</h1>
+</div>
+<button class="text-primary hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="max-w-6xl mx-auto px-margin-mobile mt-20">
+<!-- Business Hero Section -->
+<section class="relative bg-gradient-blue rounded-3xl p-6 mb-8 overflow-hidden shadow-lg">
+<div class="absolute top-0 right-0 w-64 h-64 bg-tertiary-fixed/20 blur-[80px] rounded-full -mr-20 -mt-20"></div>
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center">
+<div>
+<h2 class="font-display-lg text-display-lg text-white mb-2">Октябрь 2023</h2>
+<p class="text-primary-fixed opacity-90">У вас 4 важных дедлайна на этой неделе</p>
+</div>
+<div class="mt-4 md:mt-0 flex gap-2">
+<button class="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full font-label-caps text-label-caps hover:bg-white/20 transition-all active:scale-95">
+                        ЭКСПОРТ
+                    </button>
+<button class="bg-tertiary-fixed text-on-tertiary-fixed px-4 py-2 rounded-full font-label-caps text-label-caps hover:opacity-90 transition-all active:scale-95">
+                        НОВАЯ ЗАДАЧА
+                    </button>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Calendar Section -->
+<div class="lg:col-span-8 space-y-6">
+<div class="glass-card rounded-3xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-headline-sm">Календарь налогов</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="p-2 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="calendar-grid text-center font-label-caps text-label-caps text-on-surface-variant mb-4">
+<div>ПН</div><div>ВТ</div><div>СР</div><div>ЧТ</div><div>ПТ</div><div class="text-error">СБ</div><div class="text-error">ВС</div>
+</div>
+<div class="calendar-grid gap-1">
+<!-- Day Placeholders (Simplified for October 2023 starting Sunday) -->
+<div class="h-24 md:h-32 border border-outline-variant/20 rounded-xl p-2 opacity-30 text-right">30</div>
+<script>
+                            const days = Array.from({length: 31}, (_, i) => i + 1);
+                            const deadLines = {
+                                15: { type: 'tax', label: 'НДС' },
+                                20: { type: 'report', label: 'Отчет ФСС' },
+                                25: { type: 'tax', label: 'Налог на прибыль' },
+                                28: { type: 'payment', label: 'Зарплата' }
+                            };
+                            
+                            days.forEach(day => {
+                                let content = `<div class="h-24 md:h-32 border border-outline-variant/20 rounded-xl p-2 text-right relative group hover:border-primary transition-colors cursor-pointer bg-white">
+                                    <span class="font-mono-data text-mono-data ${[6, 7, 13, 14, 20, 21, 27, 28].includes(day+1) ? 'text-error' : ''}">${day}</span>`;
+                                
+                                if (deadLines[day]) {
+                                    const dl = deadLines[day];
+                                    const bgColor = dl.type === 'tax' ? 'bg-error-container text-on-error-container' : 'bg-primary-container text-white';
+                                    content += `<div class="mt-2 text-left">
+                                        <div class="${bgColor} rounded-md px-1.5 py-0.5 text-[10px] font-bold truncate">${dl.label}</div>
+                                    </div>`;
+                                }
+                                
+                                content += `</div>`;
+                                document.write(content);
+                            });
+                        </script>
+</div>
+</div>
+</div>
+<!-- Tasks Sidebar -->
+<div class="lg:col-span-4 space-y-6">
+<div class="glass-card rounded-3xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-headline-sm">Ближайшие задачи</h3>
+<span class="material-symbols-outlined text-outline">filter_list</span>
+</div>
+<div class="space-y-4">
+<!-- Task 1 -->
+<div class="p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer border-l-4 border-error">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-error-container text-on-error-container font-label-caps text-[10px] px-2 py-0.5 rounded-full">СРОЧНО</span>
+<span class="font-mono-data text-[12px] text-outline">15 Окт</span>
+</div>
+<h4 class="font-headline-sm text-[16px] mb-1">Подача декларации НДС</h4>
+<p class="text-[13px] text-on-surface-variant line-clamp-2">Подготовить и отправить отчет за 3 квартал 2023 года.</p>
+<div class="mt-3 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] font-bold">АН</div>
+<span class="text-[12px] text-outline">Ответственный: А. Новиков</span>
+</div>
+</div>
+<!-- Task 2 -->
+<div class="p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer border-l-4 border-tertiary-container">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-[10px] px-2 py-0.5 rounded-full">В ПРОЦЕССЕ</span>
+<span class="font-mono-data text-[12px] text-outline">20 Окт</span>
+</div>
+<h4 class="font-headline-sm text-[16px] mb-1">Сверка с ПФР</h4>
+<p class="text-[13px] text-on-surface-variant">Проверить остатки по страховым взносам сотрудников.</p>
+</div>
+<!-- Task 3 -->
+<div class="p-4 rounded-2xl bg-surface-container-low opacity-60 grayscale border-l-4 border-outline">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant text-on-surface-variant font-label-caps text-[10px] px-2 py-0.5 rounded-full">ГОТОВО</span>
+<span class="font-mono-data text-[12px] text-outline">10 Окт</span>
+</div>
+<h4 class="font-headline-sm text-[16px] mb-1">Авансовый отчет</h4>
+<p class="text-[13px] text-on-surface-variant">Отчет по командировочным расходам отдела продаж.</p>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border-2 border-dashed border-outline-variant rounded-2xl text-outline font-label-caps hover:bg-surface-container-lowest transition-all">
+                        + ДОБАВИТЬ ЗАДАЧУ
+                    </button>
+</div>
+<!-- Info Card -->
+<div class="bg-primary-container text-white rounded-3xl p-6 relative overflow-hidden">
+
+<div class="relative z-10">
+<span class="material-symbols-outlined mb-2">info</span>
+<h4 class="font-headline-sm text-headline-sm mb-2">Налоговый аудит</h4>
+<p class="text-sm opacity-80 mb-4">Автоматическая проверка выявила 2 расхождения в отчетах. Рекомендуем исправить до 25 числа.</p>
+<a class="inline-flex items-center gap-2 text-tertiary-fixed font-bold hover:underline" href="#">
+                            Смотреть детали <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-lg md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Главная</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps mt-1">Сотрудники</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps mt-1">Сканер</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps mt-1">Задачи</span>
+</div>
+</nav>
+<!-- Desktop Sidebar/Nav (Integrated layout for modern Feel) -->
+<div class="hidden md:flex fixed left-0 top-0 h-full w-20 flex-col items-center py-8 bg-surface border-r border-outline-variant/20 z-40">
+<div class="text-primary-container mb-12">
+<span class="material-symbols-outlined text-[32px] font-bold">account_balance_wallet</span>
+</div>
+<div class="flex flex-col gap-8">
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">dashboard</span>
+</div>
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">group</span>
+</div>
+<div class="text-primary-container bg-primary-fixed p-3 rounded-2xl shadow-inner">
+<span class="material-symbols-outlined text-[28px]">event_upcoming</span>
+</div>
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">document_scanner</span>
+</div>
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer mt-auto">
+<span class="material-symbols-outlined text-[28px]">settings</span>
+</div>
+</div>
+</div>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-blue rounded-2xl text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform md:bottom-8 md:right-8 group">
+<span class="material-symbols-outlined text-[28px]">add</span>
+<span class="absolute right-full mr-4 bg-inverse-surface text-inverse-on-surface px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Новая запись</span>
+</button>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = 'rgba(0, 65, 145, 0.3)';
+                card.style.boxShadow = '0 10px 25px -5px rgba(0, 65, 145, 0.1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = 'rgba(114, 119, 132, 0.1)';
+                card.style.boxShadow = 'none';
+            });
+        });
+    </script>
+</body></html>

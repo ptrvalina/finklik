@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#191c1e",
+                    "background": "#f8f9fc",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "secondary": "#565e74",
+                    "primary-fixed-dim": "#adc6ff",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2e3133",
+                    "surface-container-highest": "#e1e2e5",
+                    "on-secondary-container": "#5a6278",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#77ebb6",
+                    "tertiary-fixed": "#84f9c3",
+                    "primary-container": "#0058be",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c2c6d5",
+                    "surface": "#f8f9fc",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "on-surface": "#191c1e",
+                    "on-secondary-fixed": "#131b2e",
+                    "tertiary": "#004f35",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#006a48",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "on-primary-fixed-variant": "#004395",
+                    "surface-dim": "#d8dadd",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "primary": "#004191",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "secondary-container": "#d8dff9",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e7e8eb",
+                    "outline": "#727784",
+                    "on-surface-variant": "#424753",
+                    "surface-container": "#eceef0",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#dae2fc",
+                    "surface-bright": "#f8f9fc",
+                    "on-tertiary-fixed": "#002114",
+                    "surface-container-low": "#f2f4f6",
+                    "on-primary-container": "#c4d5ff",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#adc6ff",
+                    "surface-variant": "#e1e2e5",
+                    "surface-tint": "#085ac0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-sm": "1.5rem",
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "section-md": "2rem",
+                    "gutter": "1rem",
+                    "table-x": "0.875rem",
+                    "table-y": "0.625rem",
+                    "margin-desktop": "2.25rem",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "headline-sm": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(194, 198, 213, 0.3);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(132, 249, 195, 0.15) 0%, transparent 40%),
+                        linear-gradient(135deg, #001a42 0%, #004191 100%);
+        }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-base min-h-screen flex">
+<!-- Persistent Side Navigation -->
+<aside class="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-surface-container-low border-r border-outline-variant/20 z-50">
+<div class="px-6 py-8">
+<span class="font-headline-md text-headline-md font-bold text-primary">FinKlik</span>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-container text-on-primary-container transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-secondary hover:bg-surface-container-high transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-medium">KUDiR Ledger</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-secondary hover:bg-surface-container-high transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-medium">Invoices</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-secondary hover:bg-surface-container-high transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">Tax Reports</span>
+</a>
+<div class="pt-8 pb-4 px-4">
+<span class="text-label-caps font-label-caps text-outline uppercase">Settings</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-secondary hover:bg-surface-container-high transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Preferences</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="bg-surface-container-highest/50 rounded-2xl p-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">JD</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-bold truncate">John Doe Consulting</p>
+<p class="text-xs text-secondary truncate">Professional Plan</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 max-w-6xl mx-auto px-margin-desktop py-8 space-y-8">
+<!-- Top App Bar Content (Center Aligned Logic) -->
+<header class="flex justify-between items-center w-full h-14">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">KUDiR Accounting</h1>
+<div class="flex items-center gap-2 px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-label-caps text-label-caps uppercase">Ready</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest transition-colors rounded-full font-medium text-sm">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+                    Export Ledger
+                </button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full font-medium flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Entry
+                </button>
+</div>
+</header>
+<!-- Business Hero Summary -->
+<section class="hero-gradient rounded-[24px] p-8 text-white relative overflow-hidden shadow-xl">
+<div class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="space-y-2">
+<p class="text-white/70 font-label-caps text-label-caps uppercase tracking-widest">Quarterly Tax Estimate</p>
+<h2 class="text-display-lg font-display-lg">₽ 142,500.00</h2>
+<div class="flex items-center gap-2 text-tertiary-fixed">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-xs font-medium">+12.4% vs last Q</span>
+</div>
+</div>
+<div class="space-y-2">
+<p class="text-white/70 font-label-caps text-label-caps uppercase tracking-widest">Gross Income (Q3)</p>
+<h2 class="text-display-lg font-display-lg">₽ 2,450,000.00</h2>
+</div>
+<div class="space-y-2">
+<p class="text-white/70 font-label-caps text-label-caps uppercase tracking-widest">Deductible Expenses</p>
+<h2 class="text-display-lg font-display-lg">₽ 890,400.00</h2>
+</div>
+</div>
+<!-- Sparkline Decorative Pattern -->
+<div class="absolute right-0 bottom-0 opacity-20 pointer-events-none">
+<svg fill="none" height="100" viewbox="0 0 400 100" width="400">
+<path d="M0 80C50 70 80 20 120 40C160 60 200 10 250 30C300 50 350 20 400 50" fill="none" stroke="white" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+</div>
+</section>
+<!-- Filters & Controls -->
+<section class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl">
+<button class="px-4 py-2 bg-white shadow-sm rounded-lg text-sm font-medium">Monthly</button>
+<button class="px-4 py-2 text-secondary hover:text-primary transition-colors text-sm font-medium">Quarterly</button>
+<button class="px-4 py-2 text-secondary hover:text-primary transition-colors text-sm font-medium">Annual</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">calendar_today</span>
+<select class="pl-10 pr-8 py-2 bg-white border border-outline-variant/30 rounded-xl text-sm focus:ring-primary/20 appearance-none">
+<option>September 2023</option>
+<option>August 2023</option>
+<option>July 2023</option>
+</select>
+</div>
+<button class="p-2 border border-outline-variant/30 rounded-xl hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</section>
+<!-- Data Table (High Density) -->
+<section class="glass-panel rounded-[24px] overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/20">
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase">Date</th>
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase">Document #</th>
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase">Operation Description</th>
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase text-right">Income</th>
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase text-right">Expense</th>
+<th class="px-table-x py-table-y text-label-caps font-label-caps text-secondary uppercase text-center">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Entry 1 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-table-x py-4 font-mono-data text-mono-data text-on-surface">14.09.2023</td>
+<td class="px-table-x py-4 text-sm text-secondary">INV-2023-089</td>
+<td class="px-table-x py-4 text-sm font-medium">Payment for software consultancy services (Aug)</td>
+<td class="px-table-x py-4 text-right font-mono-data text-primary">₽ 250,000.00</td>
+<td class="px-table-x py-4 text-right font-mono-data text-secondary">—</td>
+<td class="px-table-x py-4 text-center">
+<span class="bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</td>
+</tr>
+<!-- Entry 2 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-table-x py-4 font-mono-data text-mono-data text-on-surface">12.09.2023</td>
+<td class="px-table-x py-4 text-sm text-secondary">RCP-9942</td>
+<td class="px-table-x py-4 text-sm font-medium">Server infrastructure &amp; hosting (AWS)</td>
+<td class="px-table-x py-4 text-right font-mono-data text-secondary">—</td>
+<td class="px-table-x py-4 text-right font-mono-data text-error">₽ 14,200.50</td>
+<td class="px-table-x py-4 text-center">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Pending</span>
+</td>
+</tr>
+<!-- Entry 3 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-table-x py-4 font-mono-data text-mono-data text-on-surface">10.09.2023</td>
+<td class="px-table-x py-4 text-sm text-secondary">INV-2023-088</td>
+<td class="px-table-x py-4 text-sm font-medium">UI/UX Design Contract - Phase 2</td>
+<td class="px-table-x py-4 text-right font-mono-data text-primary">₽ 180,000.00</td>
+<td class="px-table-x py-4 text-right font-mono-data text-secondary">—</td>
+<td class="px-table-x py-4 text-center">
+<span class="bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</td>
+</tr>
+<!-- Entry 4 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-table-x py-4 font-mono-data text-mono-data text-on-surface">08.09.2023</td>
+<td class="px-table-x py-4 text-sm text-secondary">OFF-002</td>
+<td class="px-table-x py-4 text-sm font-medium">Office space co-working rental</td>
+<td class="px-table-x py-4 text-right font-mono-data text-secondary">—</td>
+<td class="px-table-x py-4 text-right font-mono-data text-error">₽ 45,000.00</td>
+<td class="px-table-x py-4 text-center">
+<span class="bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</td>
+</tr>
+<!-- Entry 5 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-table-x py-4 font-mono-data text-mono-data text-on-surface">05.09.2023</td>
+<td class="px-table-x py-4 text-sm text-secondary">INV-2023-087</td>
+<td class="px-table-x py-4 text-sm font-medium">App maintenance retainer</td>
+<td class="px-table-x py-4 text-right font-mono-data text-primary">₽ 95,000.00</td>
+<td class="px-table-x py-4 text-right font-mono-data text-secondary">—</td>
+<td class="px-table-x py-4 text-center">
+<span class="bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</td>
+</tr>
+</tbody>
+<tfoot class="bg-surface-container-low/30 font-bold border-t border-outline-variant/20">
+<tr>
+<td class="px-table-x py-6 text-right font-label-caps text-label-caps uppercase text-secondary" colspan="3">Monthly Totals</td>
+<td class="px-table-x py-6 text-right font-mono-data text-primary text-lg">₽ 525,000.00</td>
+<td class="px-table-x py-6 text-right font-mono-data text-error text-lg">₽ 59,200.50</td>
+<td></td>
+</tr>
+</tfoot>
+</table>
+</div>
+</section>
+<!-- Bento Grid Insights -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 pb-24">
+<div class="md:col-span-2 glass-panel p-6 rounded-[24px] flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm mb-2">Upcoming Tax Payment</h3>
+<p class="text-secondary text-sm">Next USN (Simplified Tax) deadline is Oct 25, 2023.</p>
+</div>
+<div class="mt-8 flex items-end justify-between">
+<div>
+<span class="text-display-lg font-display-lg">22 Days</span>
+<p class="text-xs text-outline font-medium">Until next reporting period</p>
+</div>
+<button class="bg-on-background text-background px-4 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform">Schedule</button>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-[24px] relative overflow-hidden group">
+<h3 class="font-headline-sm text-headline-sm mb-1">Audit Risk</h3>
+<div class="flex items-center gap-2 text-emerald-600 mb-4">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-xs font-bold uppercase tracking-tight">Very Low</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-tertiary w-[8%] h-full"></div>
+</div>
+<p class="text-[10px] text-secondary mt-3">Based on documentation completeness and categorization accuracy.</p>
+</div>
+<div class="glass-panel p-6 rounded-[24px] flex flex-col justify-center items-center text-center gap-2 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+</div>
+<span class="font-bold text-sm">Bulk Upload Documents</span>
+<p class="text-xs text-secondary">Sync bank feeds or upload PDFs</p>
+</div>
+</section>
+</main>
+<!-- Bottom Nav for Mobile (Using Predicted Components JSON) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface-container-low/90 backdrop-blur-lg border-t border-outline-variant/30 shadow-md rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 duration-200 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+<span class="font-label-caps text-[10px] uppercase mt-0.5">Secure</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="font-label-caps text-[10px] uppercase mt-0.5">Professional</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">language</span>
+<span class="font-label-caps text-[10px] uppercase mt-0.5">Global</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for hover effects on table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.boxShadow = 'inset 4px 0 0 0 #004191';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.boxShadow = 'none';
+            });
+        });
+
+        // Simple feedback for action buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const originalText = this.innerHTML;
+                if(this.textContent.includes('Export')) {
+                    this.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Generating...';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
+        });
+    </script>
+</body></html>

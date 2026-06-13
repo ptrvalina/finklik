@@ -2,20 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { counterpartiesApi } from '../api/client'
 import AppModal from '../components/ui/AppModal'
-import { DataTableShell, useDataTableSelection } from '../components/datatable'
+import { useDataTableSelection } from '../components/datatable'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
 import { Link } from 'react-router-dom'
 import { formatApiDetail } from '../utils/apiError'
 import { calmActionError } from '../i18n/messages.ru'
 import MoneyAmount from '../components/ui/MoneyAmount'
-
-function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return (
-    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-      {name}
-    </span>
-  )
-}
+import {
+  FilterBar,
+  GlassCard,
+  HeroGradient,
+  PageHeader,
+  StatCard,
+  StatusChip,
+  StitchIcon,
+  StitchTable,
+  StitchTableShell,
+} from '../components/stitch'
 
 const CP_KIND_LABEL: Record<string, string> = {
   supplier: 'Поставщик',
@@ -252,7 +255,7 @@ export default function CounterpartiesPage() {
           aria-label="Ещё действия"
           onClick={() => setMenuOpen((v) => !v)}
         >
-          <Icon name="more_vert" className="text-sm" />
+          <StitchIcon name="more_vert" className="text-sm" />
         </button>
         {menuOpen ? (
           <>
@@ -284,88 +287,129 @@ export default function CounterpartiesPage() {
     )
   }
 
+  const activeWeekCount = useMemo(() => items.filter((c) => (c.week_tx_count || 0) > 0).length, [items])
+  const pinnedCount = useMemo(() => items.filter((c) => c.is_pinned).length, [items])
+
+  function cpStatusVariant(cp: CpRow): 'ready' | 'pending' | 'neutral' {
+    if ((cp.week_tx_count || 0) > 0) return 'ready'
+    if (cp.is_pinned) return 'pending'
+    return 'neutral'
+  }
+
+  function cpStatusLabel(cp: CpRow): string {
+    if ((cp.week_tx_count || 0) > 0) return 'Активен'
+    if (cp.is_pinned) return 'Закреплён'
+    return 'Без операций'
+  }
+
+  function cpInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+    return name.slice(0, 2).toUpperCase()
+  }
+
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="page-heading">Контрагенты</h1>
-          <p className="mt-1 text-sm text-on-surface-variant">Партнёры, сальдо и быстрый переход в журнал.</p>
-        </div>
-        <div className="rounded-xl border border-outline/60 bg-surface-container-low px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">В справочнике</p>
-          <p className="mt-1 font-headline text-2xl font-extrabold text-on-surface">{items.length}</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Контрагенты"
+        subtitle="Партнёры, сальдо и быстрый переход в журнал."
+        actions={
+          <>
+            <button type="button" className="btn-primary text-sm" onClick={openCreate}>
+              <StitchIcon name="add" className="text-lg" /> Добавить
+            </button>
+            <button type="button" className="btn-secondary text-sm" onClick={() => setShowQuickUnp(true)}>
+              <StitchIcon name="bolt" className="text-lg" /> По УНП
+            </button>
+          </>
+        }
+      />
 
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-        <button type="button" className="btn-primary text-sm w-full sm:w-auto" onClick={openCreate}>
-          <Icon name="add" className="text-lg" /> Добавить
-        </button>
-        <button type="button" className="btn-secondary text-sm w-full sm:w-auto" onClick={() => setShowQuickUnp(true)}>
-          <Icon name="bolt" className="text-lg" /> По УНП
-        </button>
+      <HeroGradient className="mb-6">
+        <div className="absolute right-0 top-0 h-full w-1/2 rounded-full bg-gradient-to-l from-tertiary-container/20 to-transparent blur-3xl" />
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="font-headline text-display-lg text-on-primary">Справочник контрагентов</h2>
+            <p className="mt-2 max-w-lg text-sm text-on-primary/80">
+              Партнёры, сальдо и быстрый переход в журнал учёта.
+            </p>
+          </div>
+          <GlassCard hover={false} className="hidden w-48 border-white/20 bg-white/10 p-4 text-on-primary backdrop-blur-md lg:block">
+            <p className="font-label text-label-caps uppercase text-on-primary/60">В справочнике</p>
+            <p className="mt-1 font-headline text-3xl font-bold">{items.length}</p>
+            {activeWeekCount > 0 ? (
+              <div className="mt-2 flex items-center gap-1">
+                <StitchIcon name="trending_up" className="text-xs text-tertiary-fixed" />
+                <span className="text-[10px] font-bold text-tertiary-fixed">{activeWeekCount} за неделю</span>
+              </div>
+            ) : null}
+          </GlassCard>
+        </div>
+      </HeroGradient>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon="handshake" label="Всего" value={items.length} hint="записей в справочнике" />
+        <StatCard icon="receipt_long" iconTint="tertiary" label="С операциями" value={activeWeekCount} hint="за последние 7 дней" />
+        <StatCard icon="push_pin" label="Закреплённые" value={pinnedCount} hint="избранные партнёры" />
       </div>
 
       {message && (
         <div
-          className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold ${
+          className={`mb-4 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold ${
             message.type === 'success'
               ? 'border-secondary/20 bg-secondary/10 text-secondary'
               : 'border-error/20 bg-error/10 text-error'
           }`}
         >
-          <Icon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" /> {message.text}
+          <StitchIcon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" /> {message.text}
         </div>
       )}
 
-      {frequent.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Частые:</span>
-          {frequent.map((cp) => {
-            const q = new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()
-            return (
-              <Link
-                key={cp.id}
-                to={`/accounting/journal?${q}`}
-                className="inline-flex max-w-[180px] items-center gap-1 rounded-lg border border-outline/50 bg-surface px-2.5 py-1.5 text-xs font-medium text-on-surface hover:border-primary/40"
-              >
-                <span className="truncate">{cp.name}</span>
-                <Icon name="arrow_forward" className="text-sm text-on-surface-variant" />
-              </Link>
-            )
-          })}
+      <FilterBar className="mb-4">
+        <div className="relative min-w-0 flex-1">
+          <StitchIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
+          <input
+            ref={searchRef}
+            className="input min-h-11 w-full rounded-xl border-none bg-transparent pl-10"
+            placeholder="Название или УНП…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Поиск контрагентов"
+          />
         </div>
-      )}
-
-      <DataTableShell
-        toolbar={
-          <div className="relative flex-1 min-w-0">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant" />
-            <input
-              ref={searchRef}
-              className="input min-h-11 w-full rounded-xl pl-10"
-              placeholder="Название или УНП…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Поиск контрагентов"
-            />
-          </div>
-        }
-        bulkBar={
+        {frequent.length > 0 ? (
           <>
-            <span className="text-xs font-semibold text-emerald-100">
-              Выбрано: {selection.selectedCount}
-            </span>
-            <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
-              Снять выбор
-            </button>
-            <button type="button" className="btn-secondary min-h-9 px-4 text-xs" onClick={() => copySelectedUnps()}>
-              Копировать УНП
-            </button>
+            <span className="hidden text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:inline">Частые:</span>
+            {frequent.map((cp) => {
+              const q = new URLSearchParams({ counterparty_id: cp.id, counterparty_name: cp.name }).toString()
+              return (
+                <Link
+                  key={cp.id}
+                  to={`/accounting/journal?${q}`}
+                  className="inline-flex max-w-[180px] items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-high px-3 py-1.5 text-xs font-semibold text-on-surface transition hover:border-primary/40"
+                >
+                  <span className="truncate">{cp.name}</span>
+                  <StitchIcon name="arrow_forward" className="text-sm text-on-surface-variant" />
+                </Link>
+              )
+            })}
           </>
-        }
-        selectedCount={selection.selectedCount}
-      >
+        ) : null}
+      </FilterBar>
+
+      {selection.selectedCount > 0 ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
+          <span className="text-xs font-semibold text-on-surface">Выбрано: {selection.selectedCount}</span>
+          <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => selection.clear()}>
+            Снять выбор
+          </button>
+          <button type="button" className="btn-secondary min-h-9 px-4 text-xs" onClick={() => copySelectedUnps()}>
+            Копировать УНП
+          </button>
+        </div>
+      ) : null}
+
+      <StitchTableShell title="Контрагенты" toolbar={<span className="text-xs text-on-surface-variant">{items.length} записей</span>}>
         {isLoading ? (
           <TableSkeleton rows={10} cols={5} />
         ) : items.length === 0 ? (
@@ -399,7 +443,7 @@ export default function CounterpartiesPage() {
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-white/[0.05] md:hidden">
+            <ul className="divide-y divide-outline-variant/10 md:hidden">
               {items.map((cp) => (
                 <li key={cp.id} className="p-4">
                   <div className="flex gap-3">
@@ -410,14 +454,14 @@ export default function CounterpartiesPage() {
                       onChange={() => selection.toggle(cp.id)}
                       aria-label={`Выбрать ${cp.name}`}
                     />
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline/75 bg-surface-container-high">
-                      <Icon name="corporate_fare" className="text-xl text-primary" />
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container font-bold text-primary">
+                      {cpInitials(cp.name)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-headline text-sm font-bold text-on-surface">
-                        {cp.is_pinned ? <Icon name="push_pin" className="mr-1 align-middle text-xs text-amber-600" /> : null}
-                        {cp.name}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-headline text-sm font-bold text-on-surface">{cp.name}</p>
+                        <StatusChip variant={cpStatusVariant(cp)}>{cpStatusLabel(cp)}</StatusChip>
+                      </div>
                       <p className="font-mono text-xs text-on-surface-variant">
                         УНП {cp.unp} · {CP_KIND_LABEL[cp.cp_kind || 'both'] || cp.cp_kind}
                       </p>
@@ -458,11 +502,11 @@ export default function CounterpartiesPage() {
               ))}
             </ul>
 
-            <div className="fc-premium-table fc-premium-table-scroll fc-premium-table--sticky hidden max-h-[min(72vh,620px)] overflow-x-auto md:block">
-              <table className="w-full min-w-[920px] text-left">
+            <div className="hidden md:block">
+              <StitchTable>
                 <thead>
-                  <tr className="table-head-row">
-                    <th className="w-12 px-3 py-3 sm:px-4 sm:py-4">
+                  <tr>
+                    <th className="w-12">
                       <input
                         type="checkbox"
                         className="tap-highlight-none h-4 w-4 rounded border-outline/60 accent-primary"
@@ -471,17 +515,18 @@ export default function CounterpartiesPage() {
                         aria-label="Выбрать все на странице"
                       />
                     </th>
-                    <th className="px-4 py-3 sm:px-6 sm:py-4">Название / тип</th>
-                    <th className="px-4 py-3 sm:px-6 sm:py-4">УНП</th>
-                    <th className="px-4 py-3 sm:px-6 sm:py-4">Сальдо</th>
-                    <th className="px-4 py-3 sm:px-6 sm:py-4">Последняя операция</th>
-                    <th className="px-4 py-3 text-right sm:px-6 sm:py-4">Действия</th>
+                    <th>Название / тип</th>
+                    <th>УНП</th>
+                    <th>Статус</th>
+                    <th>Сальдо</th>
+                    <th>Последняя операция</th>
+                    <th className="text-right">Действия</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((cp) => (
                     <tr key={cp.id} className="group">
-                      <td className="px-3 py-3 sm:px-4 sm:py-4">
+                      <td>
                         <input
                           type="checkbox"
                           className="tap-highlight-none h-4 w-4 rounded border-outline/60 accent-primary"
@@ -490,18 +535,28 @@ export default function CounterpartiesPage() {
                           aria-label={`Выбрать ${cp.name}`}
                         />
                       </td>
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
-                        <p className="text-sm font-bold text-on-surface">
-                          {cp.is_pinned ? <Icon name="push_pin" className="mr-1 align-middle text-xs text-amber-600" /> : null}
-                          {cp.name}
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant">{CP_KIND_LABEL[cp.cp_kind || 'both']}</p>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container text-sm font-bold text-primary">
+                            {cpInitials(cp.name)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-on-surface">
+                              {cp.is_pinned ? <StitchIcon name="push_pin" className="mr-1 align-middle text-xs text-amber-600" /> : null}
+                              {cp.name}
+                            </p>
+                            <p className="text-[10px] text-on-surface-variant">{CP_KIND_LABEL[cp.cp_kind || 'both']}</p>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-sm text-on-surface-variant sm:px-6 sm:py-4">{cp.unp}</td>
-                      <td className="px-4 py-3 text-sm sm:px-6 sm:py-4">
+                      <td className="font-mono text-sm text-on-surface-variant">{cp.unp}</td>
+                      <td>
+                        <StatusChip variant={cpStatusVariant(cp)}>{cpStatusLabel(cp)}</StatusChip>
+                      </td>
+                      <td className="text-sm">
                         <MoneyAmount value={cp.balance_net} emptyAsZero className="font-semibold text-on-surface" />
                       </td>
-                      <td className="px-4 py-3 text-sm text-on-surface-variant sm:px-6 sm:py-4">
+                      <td className="text-sm text-on-surface-variant">
                         {cp.last_transaction_date || '—'}
                         {cp.last_transaction_amount != null ? (
                           <>
@@ -510,7 +565,7 @@ export default function CounterpartiesPage() {
                           </>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <td>
                         <div className="flex justify-end">
                           <RowActions cp={cp} />
                         </div>
@@ -518,11 +573,11 @@ export default function CounterpartiesPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </StitchTable>
             </div>
           </>
         )}
-      </DataTableShell>
+      </StitchTableShell>
 
       {showQuickUnp && (
         <AppModal

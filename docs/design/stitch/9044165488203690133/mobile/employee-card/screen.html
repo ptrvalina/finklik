@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Профиль сотрудника | Финклик</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#727784",
+                    "surface-variant": "#e1e2e5",
+                    "surface-bright": "#f8f9fc",
+                    "primary": "#004191",
+                    "on-surface-variant": "#424753",
+                    "on-primary-fixed-variant": "#004395",
+                    "background": "#f8f9fc",
+                    "on-secondary-container": "#5a6278",
+                    "surface-dim": "#d8dadd",
+                    "secondary-container": "#d8dff9",
+                    "surface": "#f8f9fc",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dae2fc",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#adc6ff",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2e3133",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container-highest": "#e1e2e5",
+                    "tertiary-container": "#006a48",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary": "#565e74",
+                    "on-tertiary-container": "#77ebb6",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary-container": "#c4d5ff",
+                    "tertiary-fixed": "#84f9c3",
+                    "surface-tint": "#085ac0",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#0058be",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "on-background": "#191c1e",
+                    "outline-variant": "#c2c6d5",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#adc6ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-sm": "1.5rem",
+                    "table-y": "0.625rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "gutter": "1rem",
+                    "table-x": "0.875rem",
+                    "unit": "4px",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(194, 198, 213, 0.3);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, #77ebb622 0%, transparent 50%),
+                        linear-gradient(135deg, #004191 0%, #001a42 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-nav-bg {
+            background-color: #d8dff9;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-base pb-32">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<button class="active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<span class="font-headline-sm text-headline-sm text-primary">Карточка сотрудника</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity cursor-pointer">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary-container">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy_7fhojuhemJmodk8i0W97vXW_bBcbPKFozbt4SiInhN3XgyDKIfxfiTNdbL12pyOG4wkftfQgl36zkM6niFp6ZnaCQZEE0uM2A5DeDTcAXrcknmlKzlEgemqzuEh7t-vQR9z5sfGHnS9RWCICtd0nZCAbuAyw5_LNpjZGnpszQ0Zku4GkNfbnv9kOcXg1Br3gpcbPDmhWNq2Ifl2_PrsDULPoXaMlJSZOLGsAn_tQ8EjQ8jO1r1otjgTqdh-WIvDbX97SdBgkm0"/>
+</div>
+</div>
+</header>
+<main class="max-w-[1152px] mx-auto px-margin-mobile md:px-margin-desktop pt-20">
+<!-- Employee Hero Section -->
+<section class="hero-gradient rounded-xl p-8 mb-gutter relative overflow-hidden text-white flex flex-col md:flex-row items-center gap-8 shadow-lg">
+<div class="relative z-10 w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white/20 overflow-hidden shadow-2xl">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a mid-30s male senior developer with a confident smile. He is wearing a minimalist dark navy sweater against a clean, light grey studio background. The lighting is soft and cinematic, highlighting a sophisticated and high-end fintech aesthetic with pristine clarity and modern elegance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_Wbgpj-2WVz2tar3fRFQiw7vvlVwq-2k-voVF_TDdCWJry7y0qOdtlmeRJbcH9OlsBYZjwZDyryOkdoY6XDmnS6ovtmRBfLjmWrDyptQEN3PYL13F7pqioyZloEwky4y3KewNcdHcOuza4mhVweNDAdmJHpCWlUEMRj2a594ykkklC64-TItpHUbpHOFwYgjoM0sPqUyH9lY1jktx--2TAuo3cr9_12hEHFhRzLHFBhQpWRKP9tLF9VFTRvVMSGRGGnLmugVIc1Y"/>
+</div>
+<div class="relative z-10 flex-1 text-center md:text-left">
+<h1 class="font-headline-md text-headline-md mb-1">Александр Волков</h1>
+<p class="text-on-primary-container opacity-90 font-medium mb-4">Senior Python Developer</p>
+<div class="flex flex-wrap justify-center md:justify-start gap-3">
+<span class="px-3 py-1 bg-tertiary-container/30 text-on-tertiary-container rounded-full text-label-caps font-label-caps backdrop-blur-sm border border-tertiary-fixed/20">ШТАТНЫЙ</span>
+<span class="px-3 py-1 bg-white/10 text-white rounded-full text-label-caps font-label-caps backdrop-blur-sm border border-white/20">ID: 4829-WF</span>
+</div>
+</div>
+<div class="relative z-10 flex flex-col gap-2 w-full md:w-auto">
+<button class="w-full bg-white text-primary px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+                    Редактировать
+                </button>
+<button class="w-full bg-error/10 border border-error/30 text-error-container hover:bg-error/20 px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">person_remove</span>
+                    Уволить
+                </button>
+</div>
+<!-- Decorative Light Leak -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-tertiary/20 rounded-full blur-[80px]"></div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Financial Info & Docs -->
+<div class="md:col-span-8 flex flex-col gap-gutter">
+<!-- Financial Stats Bento -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+<div class="glass-card p-6 rounded-xl flex flex-col gap-2">
+<span class="text-on-surface-variant font-label-caps text-label-caps">ОКЛАД (NET)</span>
+<div class="flex items-end gap-2">
+<span class="text-headline-md font-mono-data text-primary">485 000 ₽</span>
+<span class="text-on-surface-variant text-[12px] mb-1">/ мес</span>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">Следующая выплата:</span>
+<span class="font-mono-data text-primary">15 Окт</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-2">
+<span class="text-on-surface-variant font-label-caps text-label-caps">БОНУСЫ Q3</span>
+<div class="flex items-end gap-2">
+<span class="text-headline-md font-mono-data text-tertiary-container">124 000 ₽</span>
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">trending_up</span>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">KPI достигнут:</span>
+<span class="font-mono-data text-tertiary-container">92%</span>
+</div>
+</div>
+</div>
+<!-- Document Status FSZN -->
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Документы ФСЗН</h3>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:rotate-180 transition-transform duration-500">sync</span>
+</div>
+<div class="p-0 overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="text-left text-on-surface-variant text-label-caps border-b border-outline-variant/20">
+<th class="px-6 py-4 font-bold">Тип документа</th>
+<th class="px-6 py-4 font-bold">Период</th>
+<th class="px-6 py-4 font-bold">Статус</th>
+<th class="px-6 py-4 font-bold text-right">Действие</th>
+</tr>
+</thead>
+<tbody class="text-[14px]">
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors">
+<td class="px-6 py-table-y font-medium">ПУ-2 (Прием/Увольнение)</td>
+<td class="px-6 py-table-y font-mono-data">Q3 2023</td>
+<td class="px-6 py-table-y">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary-container text-[11px] font-bold uppercase tracking-wider border border-tertiary-container/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span> Принят
+                                        </div>
+</td>
+<td class="px-6 py-table-y text-right">
+<button class="text-primary hover:bg-primary/5 p-1 rounded-lg"><span class="material-symbols-outlined">download</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors">
+<td class="px-6 py-table-y font-medium">ПУ-3 (Индивидуальные сведения)</td>
+<td class="px-6 py-table-y font-mono-data">2023</td>
+<td class="px-6 py-table-y">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/30 text-on-secondary-container text-[11px] font-bold uppercase tracking-wider border border-secondary-container/50">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> В работе
+                                        </div>
+</td>
+<td class="px-6 py-table-y text-right">
+<button class="text-primary hover:bg-primary/5 p-1 rounded-lg"><span class="material-symbols-outlined">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Active Tasks Sidebar -->
+<div class="md:col-span-4 flex flex-col gap-gutter">
+<div class="glass-card rounded-xl flex-1 flex flex-col">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm">Активные задачи</h3>
+<span class="bg-primary-container text-white text-[12px] px-2 py-0.5 rounded-full">3</span>
+</div>
+<div class="p-6 flex flex-col gap-4">
+<div class="p-4 rounded-xl border border-outline-variant/20 hover:border-primary/30 transition-all bg-surface-container-lowest group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[12px] font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded">DEV-420</span>
+<span class="text-[11px] text-on-surface-variant font-mono-data">Срок: 12.10</span>
+</div>
+<p class="text-[14px] font-semibold text-on-surface group-hover:text-primary transition-colors">Рефакторинг API авторизации</p>
+<div class="mt-3 w-full bg-surface-container rounded-full h-1">
+<div class="bg-primary w-3/4 h-1 rounded-full"></div>
+</div>
+</div>
+<div class="p-4 rounded-xl border border-outline-variant/20 hover:border-primary/30 transition-all bg-surface-container-lowest group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[12px] font-bold text-tertiary-container bg-tertiary-fixed px-2 py-0.5 rounded">OPS-11</span>
+<span class="text-[11px] text-on-surface-variant font-mono-data">Срок: 15.10</span>
+</div>
+<p class="text-[14px] font-semibold text-on-surface group-hover:text-primary transition-colors">Настройка CI/CD для модуля Payroll</p>
+<div class="mt-3 w-full bg-surface-container rounded-full h-1">
+<div class="bg-tertiary-container w-1/4 h-1 rounded-full"></div>
+</div>
+</div>
+<div class="p-4 rounded-xl border border-outline-variant/20 hover:border-primary/30 transition-all bg-surface-container-lowest group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[12px] font-bold text-secondary bg-secondary-fixed px-2 py-0.5 rounded">DOCS-09</span>
+<span class="text-[11px] text-on-surface-variant font-mono-data">Вчера</span>
+</div>
+<p class="text-[14px] font-semibold text-on-surface group-hover:text-primary transition-colors">Обновление документации FSZN</p>
+<div class="mt-3 w-full bg-surface-container rounded-full h-1">
+<div class="bg-secondary w-full h-1 rounded-full"></div>
+</div>
+</div>
+</div>
+<button class="mt-auto m-6 py-3 border border-dashed border-outline-variant rounded-xl text-on-surface-variant text-[14px] font-medium hover:bg-surface-container-high transition-colors">
+                        + Назначить задачу
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile Viewport Sync) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Главная</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-caps text-label-caps mt-1">Сотрудники</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps mt-1">Сканер</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps mt-1">Задачи</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction for documents sync button
+        document.querySelector('.material-symbols-outlined.cursor-pointer').addEventListener('click', function() {
+            this.classList.add('animate-spin');
+            setTimeout(() => {
+                this.classList.remove('animate-spin');
+            }, 1000);
+        });
+
+        // Add subtle hover effect for task cards
+        const taskCards = document.querySelectorAll('.group.cursor-pointer');
+        taskCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body></html>

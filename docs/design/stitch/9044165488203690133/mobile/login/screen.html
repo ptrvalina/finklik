@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinKlik - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e7e8eb",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-bright": "#f8f9fc",
+                        "on-tertiary-container": "#77ebb6",
+                        "surface-tint": "#085ac0",
+                        "on-secondary-fixed": "#131b2e",
+                        "inverse-surface": "#2e3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d8dadd",
+                        "on-tertiary-fixed": "#002114",
+                        "on-surface-variant": "#424753",
+                        "secondary-container": "#d8dff9",
+                        "inverse-primary": "#adc6ff",
+                        "on-primary-fixed": "#001a42",
+                        "tertiary-container": "#006a48",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e2e5",
+                        "outline": "#727784",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#565e74",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-container": "#c4d5ff",
+                        "tertiary": "#004f35",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "tertiary-fixed": "#84f9c3",
+                        "primary-container": "#0058be",
+                        "primary": "#004191",
+                        "on-secondary-container": "#5a6278",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "surface-container": "#eceef0",
+                        "surface-variant": "#e1e2e5",
+                        "background": "#f8f9fc",
+                        "on-background": "#191c1e",
+                        "outline-variant": "#c2c6d5",
+                        "secondary-fixed": "#dae2fc",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "table-y": "0.625rem",
+                        "table-x": "0.875rem",
+                        "gutter": "1rem",
+                        "section-md": "2rem",
+                        "touch-min": "44px",
+                        "unit": "4px",
+                        "margin-desktop": "2.25rem"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fc;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 65, 145, 0.08);
+        }
+        .login-btn-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #001a42 100%);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .login-btn-gradient:active {
+            transform: scale(0.96);
+        }
+        .input-focus-ring:focus-within {
+            box-shadow: 0 0 0 2px rgba(0, 65, 145, 0.2);
+            border-color: #004191;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+<!-- Top AppBar (Simplified for Auth) -->
+<header class="w-full top-0 sticky z-50 bg-background/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop w-full max-w-6xl mx-auto h-14">
+<div class="font-headline-md text-headline-md font-bold text-primary">FinKlik</div>
+<button class="material-symbols-outlined text-secondary hover:opacity-80 transition-opacity" data-icon="close">close</button>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center px-margin-mobile py-section-md relative overflow-hidden">
+<!-- Atmospheric Background Element -->
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="absolute bottom-[-5%] left-[-5%] w-[400px] h-[400px] bg-tertiary-fixed/10 rounded-full blur-[80px] pointer-events-none"></div>
+<div class="w-full max-w-md z-10">
+<!-- Login Card -->
+<div class="glass-panel p-8 md:p-10 rounded-[24px] space-y-8">
+<div class="text-center md:text-left">
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">С возвращением!</h1>
+<p class="font-body-base text-body-base text-secondary">Пожалуйста, войдите в свой аккаунт</p>
+</div>
+<form class="space-y-5" onsubmit="event.preventDefault()">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-secondary uppercase block ml-1">Email</label>
+<div class="relative flex items-center input-focus-ring border border-outline-variant bg-surface-container-low rounded-xl transition-all h-11">
+<span class="material-symbols-outlined absolute left-3 text-secondary" data-icon="mail">mail</span>
+<input class="w-full bg-transparent border-none focus:ring-0 pl-10 pr-4 font-body-base text-on-surface placeholder:text-outline-variant" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="font-label-caps text-label-caps text-secondary uppercase block">Пароль</label>
+<a class="font-label-caps text-label-caps text-primary hover:underline transition-all" href="#">Забыли?</a>
+</div>
+<div class="relative flex items-center input-focus-ring border border-outline-variant bg-surface-container-low rounded-xl transition-all h-11">
+<span class="material-symbols-outlined absolute left-3 text-secondary" data-icon="lock">lock</span>
+<input class="w-full bg-transparent border-none focus:ring-0 pl-10 pr-12 font-body-base text-on-surface placeholder:text-outline-variant" placeholder="••••••••" type="password"/>
+<button class="material-symbols-outlined absolute right-3 text-secondary hover:text-primary transition-colors" data-icon="visibility" type="button">visibility</button>
+</div>
+</div>
+<!-- Action Buttons Row -->
+<div class="flex gap-3 pt-2">
+<button class="flex-grow login-btn-gradient text-white font-headline-sm text-headline-sm py-3 rounded-full shadow-lg shadow-primary/20 flex justify-center items-center gap-2 group">
+                            Войти
+                            <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="w-[52px] h-[52px] flex items-center justify-center border border-outline-variant rounded-full text-primary hover:bg-primary-fixed transition-all active:scale-90" title="Biometric Login">
+<span class="material-symbols-outlined text-[32px]" data-icon="fingerprint">fingerprint</span>
+</button>
+</div>
+</form>
+<div class="relative py-4 flex items-center">
+<div class="flex-grow border-t border-outline-variant"></div>
+<span class="flex-shrink mx-4 font-label-caps text-label-caps text-outline uppercase">или войти через</span>
+<div class="flex-grow border-t border-outline-variant"></div>
+</div>
+<!-- Social Login -->
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-3 h-11 border border-outline-variant rounded-full hover:bg-surface-container-high transition-all active:scale-95 font-body-base text-on-surface">
+<img alt="Google Logo" class="w-5 h-5 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoK4EX7nTeK-XzE4bUID8lZMH7R0Q_L4le2JhOOyfQXrj65YivIlJVWhMAlVPrdKrKxadscIegy0pZBlbBokZbMsahsgAQfticCdaUBskSZpl4VNG1MovmS_WuO5z_VxpJqgDLfdqbDeGTbfypkb-1XOtg5DyR_qHGCuZc9BLqAJUuCSjW4femcK_41EFqGTWlzuUTjaaMgqRHyFvJMcP-feiuBys3S9L13vQhPXfKwhpKSUtzNP6eWosbZqgMeKNIRv69Wd5rPk0"/>
+                        Google
+                    </button>
+<button class="flex items-center justify-center gap-3 h-11 border border-outline-variant rounded-full hover:bg-surface-container-high transition-all active:scale-95 font-body-base text-on-surface">
+<span class="material-symbols-outlined text-[22px]" data-icon="apple" data-weight="fill">apps</span>
+                        Apple
+                    </button>
+</div>
+<div class="text-center pt-2">
+<p class="font-body-base text-body-base text-secondary">
+                        Нет аккаунта? 
+                        <a class="text-primary font-bold hover:underline" href="#">Зарегистрироваться</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Simple Auth Footer -->
+<footer class="w-full py-6 px-margin-mobile">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 border-t border-outline-variant/20 pt-6">
+<div class="flex gap-6">
+<a class="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors uppercase" href="#">Безопасность</a>
+<a class="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors uppercase" href="#">Поддержка</a>
+<a class="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors uppercase" href="#">Условия</a>
+</div>
+<div class="font-label-caps text-label-caps text-outline uppercase tracking-widest">
+                © 2024 Finklik Global Solutions
+            </div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and focus states
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('border-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('border-primary');
+            });
+        });
+
+        // Visibility toggle
+        const toggleBtn = document.querySelector('[data-icon="visibility"]');
+        const passInput = document.querySelector('input[type="password"]');
+        if (toggleBtn && passInput) {
+            toggleBtn.addEventListener('click', () => {
+                const isPass = passInput.type === 'password';
+                passInput.type = isPass ? 'text' : 'password';
+                toggleBtn.textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        }
+    </script>
+</body></html>

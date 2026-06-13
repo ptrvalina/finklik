@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed": "#dae2fc",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed": "#84f9c3",
+                        "surface-variant": "#e1e2e5",
+                        "on-primary-container": "#c4d5ff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "error-container": "#ffdad6",
+                        "outline": "#727784",
+                        "primary-container": "#0058be",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#006a48",
+                        "surface-container": "#eceef0",
+                        "on-secondary": "#ffffff",
+                        "primary": "#004191",
+                        "on-primary-fixed": "#001a42",
+                        "on-tertiary-container": "#77ebb6",
+                        "secondary-container": "#d8dff9",
+                        "secondary": "#565e74",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#085ac0",
+                        "on-secondary-container": "#5a6278",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#adc6ff",
+                        "tertiary": "#004f35",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-secondary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-container-high": "#e7e8eb",
+                        "primary-fixed": "#d8e2ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "outline-variant": "#c2c6d5",
+                        "on-surface-variant": "#424753",
+                        "surface-dim": "#d8dadd",
+                        "surface": "#f8f9fc",
+                        "on-surface": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "2.25rem",
+                        "unit": "4px",
+                        "gutter": "1rem",
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "table-x": "0.875rem",
+                        "touch-min": "44px",
+                        "table-y": "0.625rem",
+                        "section-md": "2rem"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 65, 145, 0.1);
+        }
+        .dark .glass-card {
+            background: rgba(46, 49, 51, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .button-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #002114 100%);
+        }
+        .radial-glow {
+            background: radial-gradient(circle at top right, rgba(132, 249, 195, 0.15), transparent 60%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased min-h-screen">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface font-body-base text-body-base h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline flex flex-col h-full py-6 z-50">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed leading-none">FinHR Pro</h1>
+<p class="text-[10px] font-label-caps text-on-surface-variant tracking-widest mt-1">ENTERPRISE SUITE</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200 group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-medium">Employees</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-medium">Scanner</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">task_alt</span>
+<span class="font-medium">Tasks</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-medium">Accounting</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-medium">Bank</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary bg-primary/5" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">handshake</span>
+<span>Counteragents</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-on-surface-variant/10 transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-3 px-4 py-2 bg-surface-container rounded-xl">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">
+                    JD
+                </div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">John Doe</p>
+<p class="text-[10px] text-on-surface-variant">Admin Privileges</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="bg-surface/90 dark:bg-inverse-surface/90 backdrop-blur-md text-primary dark:text-primary-fixed-dim font-body-base text-body-base fixed top-0 right-0 w-[calc(100%-16rem)] h-16 border-b border-outline-variant dark:border-outline shadow-sm flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 text-sm transition-all" placeholder="Search records, invoices, or agents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2 cursor-pointer group">
+<span class="text-sm font-semibold group-hover:text-primary transition-colors">Global Ops</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 min-h-screen relative overflow-hidden flex items-center justify-center">
+<!-- Atmospheric Background Elements -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 left-1/4 w-64 h-64 bg-tertiary-fixed-dim/10 rounded-full blur-[100px]"></div>
+</div>
+<div class="max-w-[1152px] w-full px-margin-desktop py-12 relative z-10">
+<div class="flex flex-col items-center text-center">
+<!-- Illustration Section -->
+<div class="relative mb-12 group">
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-[64px] scale-125 group-hover:bg-primary/20 transition-all duration-700"></div>
+<div class="glass-card p-10 rounded-[48px] relative overflow-hidden">
+<!-- Simulated 404/Empty State Visual -->
+<div class="w-64 h-64 flex items-center justify-center relative">
+<div class="absolute inset-0 flex items-center justify-center opacity-10">
+<span class="text-[120px] font-mono-data font-black">404</span>
+</div>
+<!-- Dynamic "Searching" Illustration -->
+<div class="relative">
+<img class="w-48 h-48 object-cover rounded-3xl shadow-2xl transform group-hover:rotate-6 transition-transform duration-500 border-2 border-white/20" data-alt="A highly detailed and minimalist digital art rendering of a translucent floating glass cube with deep blue and emerald green liquid centers. The background is a clean white studio setting with soft volumetric lighting and subtle caustic reflections on the floor. The composition is centered, clean, and evokes a high-end fintech aesthetic with professional luxury digital craftsmanship." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUS1ctYI1f2wbBQDqEJ_RIbcUrjDQWF1sPNQaURl0NBd7pqwk_Qhh68M7G39ic28XSMCn4WG-MR89RZ_pMe50xIExj5jcv_YljG-0h15vth3aT6ulSmFWPAWlrwk2cRBzdNvf7De7jLbU_eeCEvrhuHViNWTQmEn0TtkK5nyslRxsIU01rPos_8YFgxLP19LwAEQp8Fc1_B0vcDBBmGP--zYuOk1MAH8jCdYq3WtrDj9Dkm8DmFCHK9j9tziluuv9-v6gDUKcE5kY"/>
+<div class="absolute -bottom-4 -right-4 bg-error text-on-error w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-3xl">sentiment_dissatisfied</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="max-w-xl space-y-6">
+<div class="space-y-2">
+<span class="font-label-caps text-primary tracking-[0.2em] uppercase">Status: Not Found</span>
+<h2 class="font-display-lg text-display-lg text-on-surface">Data Horizon Reached</h2>
+<p class="font-body-base text-body-base text-on-surface-variant px-8">
+                            We couldn't find the records or counteragents you were looking for. It's possible the URL is incorrect or the entry has been securely archived by the system administrator.
+                        </p>
+</div>
+<!-- CTA Actions -->
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+<a class="button-gradient px-8 h-touch-min flex items-center gap-2 rounded-full text-on-primary font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all group" href="#">
+<span class="material-symbols-outlined text-sm">dashboard</span>
+                            Return to Dashboard
+                        </a>
+<button class="px-8 h-touch-min flex items-center gap-2 rounded-full border border-outline-variant font-semibold hover:bg-surface-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                            Retry Search
+                        </button>
+</div>
+<!-- Additional Context -->
+<div class="pt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-6 glass-card rounded-2xl text-left hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-primary mb-3">verified_user</span>
+<h4 class="font-headline-sm text-sm font-bold mb-1">Secure Check</h4>
+<p class="text-xs text-on-surface-variant">Verify you have the necessary permissions for this segment.</p>
+</div>
+<div class="p-6 glass-card rounded-2xl text-left hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-primary mb-3">history</span>
+<h4 class="font-headline-sm text-sm font-bold mb-1">Archived Data</h4>
+<p class="text-xs text-on-surface-variant">Historical counteragent data may reside in the Vault sub-section.</p>
+</div>
+<div class="p-6 glass-card rounded-2xl text-left hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-primary mb-3">support_agent</span>
+<h4 class="font-headline-sm text-sm font-bold mb-1">Technical Sync</h4>
+<p class="text-xs text-on-surface-variant">Contact our Tier-1 support for database integrity queries.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- System Sparkline Watermark -->
+<div class="absolute bottom-10 right-10 opacity-10 pointer-events-none select-none">
+<p class="font-mono-data text-[120px] font-black leading-none">500:0</p>
+</div>
+</main>
+<script>
+        // Micro-interaction for hover effects on glass cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

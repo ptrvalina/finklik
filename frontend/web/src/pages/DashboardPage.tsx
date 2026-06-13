@@ -97,14 +97,22 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="fc-owner-dashboard fc-bcc fc-scroll-region pb-20 lg:pb-6">
+    <div className="fc-owner-dashboard fc-bcc fc-scroll-region space-y-gutter pb-20 lg:pb-6">
       <BusinessHero cashOnHand={cashOnHand} />
 
-      <div className="fc-bcc-grid">
-        <DashboardObligationsCard />
-        <DashboardCalendarCard />
-        <DashboardActivityCard />
-        <DashboardAttentionCard />
+      <div className="fc-bcc-grid grid grid-cols-12 gap-gutter">
+        <div className="col-span-12 lg:col-span-6">
+          <DashboardObligationsCard />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
+          <DashboardCalendarCard />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
+          <DashboardActivityCard />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
+          <DashboardAttentionCard />
+        </div>
       </div>
 
       {profileIncomplete && (

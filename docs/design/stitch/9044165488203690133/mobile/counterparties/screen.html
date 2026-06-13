@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: #004191;
+            box-shadow: 0 10px 30px -10px rgba(0, 65, 145, 0.15);
+        }
+        .abyssal-gradient {
+            background: linear-gradient(135deg, #001a42 0%, #004191 100%);
+        }
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 25%,
+                rgba(255, 255, 255, 0.05) 50%,
+                transparent 75%
+            );
+            animation: shimmer 4s infinite linear;
+            pointer-events: none;
+        }
+        @keyframes shimmer {
+            0% { transform: translate(-10%, -10%) rotate(0deg); }
+            100% { transform: translate(10%, 10%) rotate(360deg); }
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-container": "#77ebb6",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary": "#565e74",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-primary-container": "#c4d5ff",
+                    "on-tertiary-fixed": "#002114",
+                    "on-secondary-fixed": "#131b2e",
+                    "tertiary-fixed": "#84f9c3",
+                    "primary-container": "#0058be",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#085ac0",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c2c6d5",
+                    "on-background": "#191c1e",
+                    "inverse-primary": "#adc6ff",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e1e2e5",
+                    "surface-bright": "#f8f9fc",
+                    "outline": "#727784",
+                    "on-primary-fixed-variant": "#004395",
+                    "background": "#f8f9fc",
+                    "primary": "#004191",
+                    "on-surface-variant": "#424753",
+                    "surface-dim": "#d8dadd",
+                    "secondary-container": "#d8dff9",
+                    "on-secondary-container": "#5a6278",
+                    "secondary-fixed": "#dae2fc",
+                    "on-error": "#ffffff",
+                    "surface": "#f8f9fc",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#adc6ff",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "on-primary-fixed": "#001a42",
+                    "inverse-surface": "#2e3133",
+                    "tertiary-container": "#006a48",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e1e2e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "table-y": "0.625rem",
+                    "section-sm": "1.5rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "gutter": "1rem",
+                    "table-x": "0.875rem",
+                    "margin-desktop": "2.25rem",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-base text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<span class="font-headline-md text-headline-md font-bold text-primary-container">Финклик</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity">notifications</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a young financial executive with a modern aesthetic. The lighting is soft and directional, highlighting the contours of the face against a clean, minimal white background. The style is pristine and high-end, reflecting a luxury fintech brand identity with soft shadows and high-key brightness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSQui9b9YC0h3YIO1TsJPvbipVsIUkYcUSRVzcZgYD1_CyfFG_-P2OxUx9cOJXNd-KR-7eQjAHHCgWef1tj9KbLNy1Jdnq8_vNUPmwrZy5tBFuHh6thyF0jL9BdmLmgehVXrhPQy_4UeUGsd3Yed2rkkuP3S5sZvBfe4X56DdYtOPxnTCp-O02ksKrUV-1rk_dnTfUqdAbvwPpCJDy8vPS2XtHPAlcKFTomhPY6WLnOHjxfFU9tSr7WcVwzhwl6j1aT-ek1UMNYEk"/>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-32 px-margin-mobile max-w-6xl mx-auto min-h-screen">
+<!-- Search & Header Section -->
+<section class="mb-section-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-section-sm">
+<h1 class="font-headline-md text-headline-md text-on-surface">Контрагенты</h1>
+<button class="abyssal-gradient text-on-primary px-6 py-2.5 rounded-full flex items-center gap-2 font-headline-sm text-headline-sm shadow-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+                    Добавить нового
+                </button>
+</div>
+<!-- Search Bar -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">search</span>
+</div>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary/20 text-body-base placeholder:text-outline transition-all" placeholder="Поиск по названию или УНП..." type="text"/>
+</div>
+</section>
+<!-- Bento Grid Layout for Counterparties -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Filter Action Card (Asymmetric element) -->
+<div class="lg:col-span-1 glass-card p-6 rounded-3xl flex flex-col justify-between border-primary/20 bg-primary/5">
+<div>
+<span class="font-label-caps text-label-caps text-primary block mb-2 uppercase">Статистика</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">42 Активных партнера</h3>
+<p class="text-on-surface-variant text-sm mb-6">Ваш оборот с ключевыми контрагентами вырос на 12% в этом квартале.</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold">VIP: 8</span>
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-[10px] font-bold">НОВЫЕ: 3</span>
+</div>
+</div>
+<!-- Counterparty Cards (Abyssal Precision Style) -->
+<!-- Item 1 -->
+<div class="glass-card p-6 rounded-3xl flex flex-col group cursor-pointer relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">ООО «ТехноПром»</h4>
+<p class="font-mono-data text-mono-data text-outline mt-1">УНП 192384756</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant/20">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ОБОРОТ</span>
+<p class="font-mono-data text-headline-sm text-primary mt-1">452,000.00 BYN</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant">БАЛАНС</span>
+<p class="font-mono-data text-body-base text-tertiary-container mt-1">+12,400</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="glass-card p-6 rounded-3xl flex flex-col group cursor-pointer relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">ИП Васильев А.В.</h4>
+<p class="font-mono-data text-mono-data text-outline mt-1">УНП 482930412</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant/20">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ОБОРОТ</span>
+<p class="font-mono-data text-headline-sm text-primary mt-1">89,230.50 BYN</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant">БАЛАНС</span>
+<p class="font-mono-data text-body-base text-error mt-1">-1,200</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 3 - Featured / Large Turnover (Glassmorphism highlight) -->
+<div class="glass-card p-6 rounded-3xl flex flex-col group cursor-pointer relative overflow-hidden bg-primary/5 border-primary/30">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">ОАО «БелЭкспорт»</h4>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<p class="font-mono-data text-mono-data text-outline">УНП 100495832</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant/40">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ОБОРОТ</span>
+<p class="font-mono-data text-headline-sm text-primary mt-1">1,245,000.00 BYN</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant">БАЛАНС</span>
+<p class="font-mono-data text-body-base text-tertiary-container mt-1">+230,000</p>
+</div>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-7xl">trending_up</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="glass-card p-6 rounded-3xl flex flex-col group cursor-pointer relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">ЗАО «ГлобалСервис»</h4>
+<p class="font-mono-data text-mono-data text-outline mt-1">УНП 190442311</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant/20">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ОБОРОТ</span>
+<p class="font-mono-data text-headline-sm text-primary mt-1">312,450.00 BYN</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant">БАЛАНС</span>
+<p class="font-mono-data text-body-base text-on-surface-variant mt-1">0.00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="glass-card p-6 rounded-3xl flex flex-col group cursor-pointer relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">ООО «СтройМонтаж»</h4>
+<p class="font-mono-data text-mono-data text-outline mt-1">УНП 772456109</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">more_vert</span>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant/20">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ОБОРОТ</span>
+<p class="font-mono-data text-headline-sm text-primary mt-1">56,400.00 BYN</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant">БАЛАНС</span>
+<p class="font-mono-data text-body-base text-error mt-1">-42,100</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty Action Card -->
+<div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-center border-dashed border-2 border-outline-variant group hover:border-primary transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container group-hover:text-on-primary transition-all mb-4">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<p class="text-on-surface-variant font-headline-sm">Новый контрагент</p>
+<p class="text-outline text-xs mt-1">Добавьте данные вручную</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 rounded-t-xl shadow-lg">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 transition-all rounded-full">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Главная</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps">Сотрудники</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 transition-all rounded-full">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps">Сканер</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 px-4 py-1 transition-all rounded-full">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps">Задачи</span>
+</div>
+</nav>
+<!-- Background Decoration -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+<div class="absolute -top-[10%] -right-[5%] w-[400px] h-[400px] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="absolute top-[40%] -left-[10%] w-[300px] h-[300px] bg-tertiary-container/5 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Micro-interactions for cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Search highlight effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-[1.01]');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-[1.01]');
+        });
+    </script>
+</body></html>

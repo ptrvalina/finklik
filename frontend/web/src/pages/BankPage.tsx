@@ -9,14 +9,15 @@ import { calmError } from '../i18n/messages.ru'
 import { PARTNER_BANK } from '../lib/partnerBank'
 import MoneyAmount from '../components/ui/MoneyAmount'
 import { CurrencyFieldLabel } from '../components/ui/CurrencyFieldLabel'
-
-function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return (
-    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-      {name}
-    </span>
-  )
-}
+import {
+  GlassCard,
+  HeroGradient,
+  PageHeader,
+  StatusChip,
+  StitchIcon,
+  StitchTable,
+  StitchTableShell,
+} from '../components/stitch'
 
 type BankAccount = {
   id: string
@@ -309,48 +310,59 @@ export default function BankPage() {
       )
     }
     return (
-      <div className="divide-y divide-outline-variant/10">
-        {rows.map((tx) => (
-          <div key={tx.id} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                  tx.type === 'credit' ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'
-                }`}
-              >
-                <Icon name={tx.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} filled className="text-base" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-on-surface">{tx.description}</p>
-                <p className="truncate text-[11px] text-on-surface-variant">
-                  {tx.counterparty} · {tx.date}
-                </p>
-              </div>
-            </div>
-            <MoneyAmount
-              value={tx.type === 'credit' ? tx.amount : -tx.amount}
-              signed
-              className={`shrink-0 text-sm font-bold ${tx.type === 'credit' ? 'text-secondary' : 'text-on-surface'}`}
-            />
-          </div>
-        ))}
-      </div>
+      <StitchTable>
+        <thead>
+          <tr>
+            <th>Операция</th>
+            <th>Контрагент</th>
+            <th>Дата</th>
+            <th className="text-right">Сумма</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((tx) => (
+            <tr key={tx.id}>
+              <td>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      tx.type === 'credit' ? 'bg-tertiary-fixed/30 text-tertiary' : 'bg-error/10 text-error'
+                    }`}
+                  >
+                    <StitchIcon name={tx.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} filled className="text-xl" />
+                  </div>
+                  <span className="truncate text-sm font-semibold text-on-surface">{tx.description}</span>
+                </div>
+              </td>
+              <td className="text-sm text-secondary">{tx.counterparty}</td>
+              <td className="text-sm text-secondary">{tx.date}</td>
+              <td className="text-right">
+                <MoneyAmount
+                  value={tx.type === 'credit' ? tx.amount : -tx.amount}
+                  signed
+                  className={`font-mono text-sm font-bold ${tx.type === 'credit' ? 'text-tertiary' : 'text-on-surface'}`}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </StitchTable>
     )
   }
 
   return (
     <>
       <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
-        <div className="mb-4">
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full" style={{ background: PARTNER_BANK.color }} />
-            <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{PARTNER_BANK.name}</p>
-          </div>
-          <h1 className="page-heading mt-1">Банк</h1>
-          <p className="mt-1 max-w-xl text-sm text-on-surface-variant">
-            Счёт, выписка и платежи — движение денег на расчётном счёте. Проводки и отчётность — в журнале.
-          </p>
-        </div>
+        <PageHeader
+          title="Банк"
+          subtitle="Счёт, выписка и платежи — движение денег на расчётном счёте. Проводки и отчётность — в журнале."
+          badge={
+            <span className="inline-flex items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-low px-3 py-1">
+              <span className="h-2 w-2 rounded-full" style={{ background: PARTNER_BANK.color }} />
+              <span className="font-label text-label-caps uppercase text-secondary">{PARTNER_BANK.name}</span>
+            </span>
+          }
+        />
 
         {message && (
           <div
@@ -360,97 +372,147 @@ export default function BankPage() {
                 : 'border-error/20 bg-error/10 text-error'
             }`}
           >
-            <Icon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" />
+            <StitchIcon name={message.type === 'success' ? 'check_circle' : 'error'} filled className="text-lg" />
             {message.text}
           </div>
         )}
 
         <div className="-mx-1 overflow-x-auto pb-1 sm:mx-0">
-          <div className="flex min-w-max gap-1 rounded-xl border border-outline/75 bg-surface-container-high p-1 shadow-soft sm:inline-flex">
+          <div className="flex min-w-max gap-1 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-1 sm:inline-flex">
             {tabItems.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-all sm:px-4 ${
+                className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition-all sm:px-4 ${
                   tab === t.key ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <Icon name={t.icon} className="text-base" /> {t.label}
+                <StitchIcon name={t.icon} className="text-base" /> {t.label}
               </button>
             ))}
           </div>
         </div>
 
         {tab === 'overview' && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-6">
             {!primaryAccount ? (
-              <div className="glass-card rounded-2xl border border-dashed border-outline/50 p-6 text-center">
-                <Icon name="account_balance" className="text-4xl text-primary" />
-                <h2 className="mt-3 font-headline text-lg font-bold text-on-surface">Подключите расчётный счёт</h2>
+              <GlassCard className="border-2 border-dashed border-outline-variant/50 bg-transparent p-8 text-center">
+                <StitchIcon name="account_balance" className="text-4xl text-primary" />
+                <h2 className="mt-3 font-headline text-headline-sm text-on-surface">Подключите расчётный счёт</h2>
                 <p className="mx-auto mt-2 max-w-md text-sm text-on-surface-variant">
                   Укажите IBAN счёта в {PARTNER_BANK.name} — после этого доступны баланс, выписка и платежи.
                 </p>
                 <button type="button" className="btn-primary mt-4 text-sm" onClick={() => setShowConnect(true)}>
                   Подключить счёт
                 </button>
-              </div>
+              </GlassCard>
             ) : (
-              <>
-                <div className="glass-card rounded-2xl border-l-4 p-5" style={{ borderLeftColor: PARTNER_BANK.color }}>
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Доступно</p>
-                      <MoneyAmount value={balanceData?.balance} emptyAsZero className="mt-1 font-headline text-3xl font-extrabold text-primary" />
-                      <p className="mt-3 text-sm font-bold text-on-surface">{primaryAccount.bank_name}</p>
-                      <p className="mt-1 font-mono text-xs text-on-surface-variant">{primaryAccount.account_number}</p>
-                      <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                        BIC {PARTNER_BANK.bic} · {primaryAccount.currency}
-                      </p>
-                      <span className="mt-2 inline-flex rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-bold text-secondary">
-                        Счёт подключён
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)}>
-                        <Icon name="edit_document" className="text-lg" /> Платёж
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-secondary text-sm"
-                        disabled={statementRequestMutation.isPending}
-                        onClick={() => {
-                          applyStatementFilters()
-                          setTab('statement')
-                          statementRequestMutation.mutate()
-                        }}
-                      >
-                        <Icon name="cloud_download" className="text-lg" /> Выписка
-                      </button>
+              <HeroGradient>
+                <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-tertiary/20 blur-[100px]" />
+                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-label text-label-caps uppercase text-primary-fixed/80">Доступно на счёте</p>
+                    <MoneyAmount
+                      value={balanceData?.balance}
+                      emptyAsZero
+                      className="mt-2 font-headline text-display-lg font-bold text-on-primary"
+                    />
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <StatusChip variant="ready">Счёт подключён</StatusChip>
+                      <span className="font-mono text-xs text-primary-fixed/70">{primaryAccount.account_number}</span>
                     </div>
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)}>
+                      <StitchIcon name="edit_document" className="text-lg" /> Платёж
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary text-sm"
+                      disabled={statementRequestMutation.isPending}
+                      onClick={() => {
+                        applyStatementFilters()
+                        setTab('statement')
+                        statementRequestMutation.mutate()
+                      }}
+                    >
+                      <StitchIcon name="cloud_download" className="text-lg" /> Выписка
+                    </button>
+                  </div>
                 </div>
-              </>
+              </HeroGradient>
             )}
 
             {primaryAccount && (
-              <div className="glass-card overflow-hidden rounded-2xl">
-                <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3 sm:px-6">
-                  <h2 className="font-headline text-base font-bold text-on-surface">Последние операции</h2>
-                  <button type="button" className="btn-ghost !text-xs" onClick={() => setTab('statement')}>
-                    Вся выписка
-                  </button>
-                </div>
-                <StatementTable rows={statements} loading={statementsLoading} />
-              </div>
+              <>
+                <section>
+                  <div className="mb-4 flex items-end justify-between">
+                    <h2 className="font-headline text-headline-sm text-on-surface">Расчётные счета</h2>
+                    <button type="button" className="text-sm font-semibold text-primary hover:underline" onClick={() => setShowConnect(true)}>
+                      Управление
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {accounts.map((acc) => (
+                      <GlassCard key={acc.id} className="p-5 sm:p-6">
+                        <div className="mb-8 flex items-start justify-between">
+                          <div
+                            className="flex h-12 w-12 items-center justify-center rounded-2xl border border-outline-variant/30 bg-surface-container text-primary"
+                            style={{ borderLeftColor: acc.color || PARTNER_BANK.color }}
+                          >
+                            <StitchIcon name="account_balance" filled className="text-3xl" />
+                          </div>
+                          <StatusChip variant={acc.is_active ? 'ready' : 'neutral'}>
+                            {acc.is_primary ? 'Основной' : acc.is_active ? 'Активен' : 'Неактивен'}
+                          </StatusChip>
+                        </div>
+                        <p className="text-sm text-secondary">{acc.bank_name}</p>
+                        {acc.id === primaryAccount.id ? (
+                          <MoneyAmount
+                            value={balanceData?.balance}
+                            emptyAsZero
+                            className="mt-1 font-headline text-headline-md text-on-surface"
+                          />
+                        ) : (
+                          <p className="mt-1 font-headline text-headline-md text-on-surface">—</p>
+                        )}
+                        <p className="mt-3 truncate font-mono text-sm text-secondary">
+                          {acc.account_number.replace(/(.{4})/g, '$1 ').trim()}
+                        </p>
+                      </GlassCard>
+                    ))}
+                    <button type="button" className="w-full text-left" onClick={() => setShowConnect(true)}>
+                      <GlassCard hover className="border-2 border-dashed border-outline-variant/50 bg-transparent p-5 sm:p-6">
+                        <div className="flex h-full flex-col items-center justify-center py-6 text-secondary">
+                          <StitchIcon name="add_circle" className="mb-2 text-5xl text-secondary-fixed-dim" />
+                          <p className="text-sm font-semibold text-on-surface-variant">Подключить счёт</p>
+                          <p className="mt-1 text-xs text-on-surface-variant/70">IBAN в {PARTNER_BANK.name}</p>
+                        </div>
+                      </GlassCard>
+                    </button>
+                  </div>
+                </section>
+
+                <StitchTableShell
+                  title="Последние операции"
+                  toolbar={
+                    <button type="button" className="btn-ghost !text-xs" onClick={() => setTab('statement')}>
+                      Вся выписка
+                    </button>
+                  }
+                >
+                  <StatementTable rows={statements} loading={statementsLoading} />
+                </StitchTableShell>
+              </>
             )}
           </div>
         )}
 
         {tab === 'statement' && (
           <div className="mt-4 space-y-4">
-            <div className="glass-card rounded-2xl p-4 sm:p-6">
-              <h2 className="font-headline text-base font-bold text-on-surface">Выписка по счёту</h2>
+            <GlassCard className="p-4 sm:p-6">
+              <h2 className="font-headline text-headline-sm text-on-surface">Выписка по счёту</h2>
               <p className="mt-1 text-xs text-on-surface-variant">
                 Загрузите операции из банка, отфильтруйте и выгрузите CSV. Для проводок откройте журнал.
               </p>
@@ -470,7 +532,7 @@ export default function BankPage() {
                     statementRequestMutation.mutate()
                   }}
                 >
-                  <Icon name="cloud_download" className="text-lg" />
+                  <StitchIcon name="cloud_download" className="text-lg" />
                   {statementRequestMutation.isPending ? 'Загрузка…' : 'Загрузить из банка'}
                 </button>
                 <button
@@ -479,41 +541,40 @@ export default function BankPage() {
                   disabled={statements.length === 0}
                   onClick={() => downloadCsv(`vypiska-${stmtApplied.dateFrom}_${stmtApplied.dateTo}.csv`, statements)}
                 >
-                  <Icon name="download" className="text-lg" /> CSV
+                  <StitchIcon name="download" className="text-lg" /> CSV
                 </button>
                 <Link to="/accounting/journal" className="btn-secondary text-sm">
-                  <Icon name="menu_book" className="text-lg" /> Журнал
+                  <StitchIcon name="menu_book" className="text-lg" /> Журнал
                 </Link>
               </div>
-            </div>
+            </GlassCard>
 
-            <div className="glass-card overflow-hidden rounded-2xl">
-              <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3 sm:px-6">
-                <h2 className="font-headline text-base font-bold text-on-surface">Операции</h2>
-                <span className="text-xs text-on-surface-variant">{statementsData?.total ?? 0} записей</span>
-              </div>
+            <StitchTableShell
+              title="Операции"
+              toolbar={<span className="text-xs text-on-surface-variant">{statementsData?.total ?? 0} записей</span>}
+            >
               <StatementTable rows={statements} loading={statementsLoading} />
-            </div>
+            </StitchTableShell>
           </div>
         )}
 
         {tab === 'payments' && (
           <div className="mt-4 space-y-4">
-            <div className="glass-card rounded-2xl p-4 sm:p-6">
-              <h2 className="font-headline text-base font-bold text-on-surface">Платёжное поручение</h2>
+            <GlassCard className="p-4 sm:p-6">
+              <h2 className="font-headline text-headline-sm text-on-surface">Платёжное поручение</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
                 Сформируйте поручение, скачайте файл и проведите оплату в интернет-банке {PARTNER_BANK.name}.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)} disabled={!primaryAccount}>
-                  <Icon name="add" className="text-lg" /> Новое поручение
+                  <StitchIcon name="add" className="text-lg" /> Новое поручение
                 </button>
                 <Link to="/counterparties" className="btn-secondary text-sm">
-                  <Icon name="handshake" className="text-lg" /> Контрагенты
+                  <StitchIcon name="handshake" className="text-lg" /> Контрагенты
                 </Link>
               </div>
               {lastPaymentOrder ? (
-                <div className="mt-4 rounded-xl border border-outline/40 bg-surface-container-low p-4">
+                <div className="mt-4 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
                   <p className="text-xs font-semibold text-on-surface">Последнее поручение</p>
                   <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-on-surface-variant">
                     {lastPaymentOrder.text}
@@ -527,15 +588,14 @@ export default function BankPage() {
                   </button>
                 </div>
               ) : null}
-            </div>
+            </GlassCard>
 
-            <div className="glass-card overflow-hidden rounded-2xl">
-              <div className="border-b border-outline/20 px-4 py-3 sm:px-6">
-                <h2 className="font-headline text-base font-bold text-on-surface">Исходящие платежи</h2>
-                <p className="mt-0.5 text-xs text-on-surface-variant">Списания по выписке за выбранный период</p>
-              </div>
+            <StitchTableShell
+              title="Исходящие платежи"
+              toolbar={<span className="text-xs text-on-surface-variant">Списания по выписке за выбранный период</span>}
+            >
               <StatementTable rows={paymentRows} loading={statementsLoading} />
-            </div>
+            </StitchTableShell>
           </div>
         )}
       </div>
@@ -562,7 +622,7 @@ export default function BankPage() {
         >
           <div className="mb-4 flex items-center gap-3 rounded-xl border border-outline/40 bg-surface-container-low p-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${PARTNER_BANK.color}22` }}>
-              <Icon name="account_balance" className="text-xl text-primary" />
+              <StitchIcon name="account_balance" className="text-xl text-primary" />
             </div>
             <div>
               <p className="text-sm font-bold text-on-surface">{PARTNER_BANK.name}</p>

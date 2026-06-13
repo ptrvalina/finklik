@@ -22,6 +22,13 @@ import { useOperational } from '../context/OperationalContext'
 import { useAuthStore } from '../store/authStore'
 import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
 import { useMinWidthLg } from '../lib/useMinWidthLg'
+import {
+  GlassCard,
+  PageHeader,
+  StatCard,
+  StatusChip,
+  StitchIcon,
+} from '../components/stitch'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -74,12 +81,21 @@ const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> 
   unknown: { label: 'Другое', icon: 'description', color: 'text-on-surface-variant' },
 }
 
-function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return (
-    <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-      {name}
-    </span>
-  )
+function scanStatusVariant(status: string): 'ready' | 'pending' | 'error' | 'neutral' {
+  const s = status.toLowerCase()
+  if (s === 'success' || s === 'confirmed' || s === 'done') return 'ready'
+  if (s === 'processing' || s === 'pending' || s === 'review') return 'pending'
+  if (s === 'error' || s === 'failed') return 'error'
+  return 'neutral'
+}
+
+function scanStatusLabel(status: string): string {
+  const s = status.toLowerCase()
+  if (s === 'success' || s === 'confirmed' || s === 'done') return 'Готово'
+  if (s === 'processing' || s === 'pending') return 'Обработка'
+  if (s === 'review') return 'Проверка'
+  if (s === 'error' || s === 'failed') return 'Ошибка'
+  return status
 }
 
 export default function ScannerPage() {
@@ -435,20 +451,28 @@ export default function ScannerPage() {
       )}
 
     <div className="fc-page-shell fc-page-shell-asymmetric scanner-page pb-20 lg:pb-8">
-      <p className="mb-4 text-sm text-on-surface-variant">
-        {reviewCount > 0
-          ? `Проверить документов: ${reviewCount}`
-          : 'Загрузите первичку или выберите файл из истории'}
-        {history.length > 0 ? ` · В истории: ${history.length}` : ''}
-      </p>
+      <PageHeader
+        title="Сканер документов"
+        subtitle={
+          reviewCount > 0
+            ? `Проверить документов: ${reviewCount}${history.length > 0 ? ` · В истории: ${history.length}` : ''}`
+            : `Загрузите первичку или выберите файл из истории${history.length > 0 ? ` · В истории: ${history.length}` : ''}`
+        }
+        actions={
+          <>
+            <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
+              <StitchIcon name="cloud_upload" className="text-lg" /> Загрузить
+            </button>
+            <Link to="/accounting/journal" className="btn-secondary text-sm">
+              <StitchIcon name="receipt_long" className="text-lg" /> Журнал
+            </Link>
+          </>
+        }
+      />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
-          <Icon name="cloud_upload" className="text-lg" /> Загрузить
-        </button>
-        <Link to="/accounting/journal" className="btn-secondary text-sm">
-          <Icon name="receipt_long" className="text-lg" /> Журнал
-        </Link>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:max-w-lg">
+        <StatCard icon="document_scanner" label="В истории" value={history.length} />
+        <StatCard icon="pending_actions" iconTint="tertiary" label="Ждут проверки" value={reviewQueueData?.items?.length ?? 0} />
       </div>
 
       {batchSummary && batchSummary.total > 1 && (
@@ -506,52 +530,31 @@ export default function ScannerPage() {
         {/* Left: batch + history */}
         <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
           {(reviewQueueData?.items?.length ?? 0) > 0 && (
-            <div className="glass-card rounded-2xl p-4">
-              <h4 className="text-sm font-bold text-on-surface">Очередь проверки</h4>
+            <GlassCard className="p-4">
+              <h4 className="font-headline text-headline-sm text-on-surface">Очередь проверки</h4>
               <ul className="mt-3 space-y-2">
                 {reviewQueueData!.items.slice(0, 5).map((item: { id: string; filename: string; confidence: number }) => (
                   <li key={item.id}>
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-xl border border-outline/35 px-3 py-2 text-left text-xs hover:border-primary/35"
+                      className="flex w-full items-center justify-between rounded-xl border border-outline-variant/35 px-3 py-2 text-left text-xs transition hover:border-primary/35"
                       disabled={loadDocMutation.isPending}
                       onClick={() => loadDocMutation.mutate(item.id)}
                     >
                       <span className="truncate font-medium">{item.filename}</span>
-                      <span className="ml-2 shrink-0 text-amber-700">{item.confidence}%</span>
+                      <StatusChip variant="pending">{item.confidence}%</StatusChip>
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-          {history.length > 0 && (
-            <div className="glass-card rounded-2xl p-4">
-              <h4 className="font-bold font-headline text-on-surface">Недавние сканы</h4>
-              <div className="mt-3 space-y-2">
-                {history.slice(0, 5).map((item) => {
-                  const t = DOC_ICONS[item.doc_type] || DOC_ICONS.unknown
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-surface-container-high"
-                      onClick={() => loadDocMutation.mutate(item.id)}
-                    >
-                      <Icon name={t.icon} className={`text-lg ${t.color}`} />
-                      <span className="min-w-0 flex-1 truncate text-xs font-medium">{item.filename}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            </GlassCard>
           )}
         </div>
 
         {/* Center: upload / preview */}
         <div className="col-span-12 lg:col-span-6">
           <div className="-mx-1 mb-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-            <div className="flex min-w-max gap-1 rounded-xl border border-outline/75 bg-surface-container-high p-1 shadow-soft sm:inline-flex sm:min-w-0">
+            <div className="flex min-w-max gap-1 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-1 shadow-soft sm:inline-flex sm:min-w-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('upload')}
@@ -559,7 +562,7 @@ export default function ScannerPage() {
                   activeTab === 'upload' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <Icon name="cloud_upload" className="text-sm" /> Файл
+                <StitchIcon name="cloud_upload" className="text-sm" /> Файл
               </button>
               <button
                 type="button"
@@ -568,7 +571,7 @@ export default function ScannerPage() {
                   activeTab === 'text' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <Icon name="edit_note" className="text-sm" /> Текст
+                <StitchIcon name="edit_note" className="text-sm" /> Текст
               </button>
             </div>
           </div>
@@ -592,9 +595,12 @@ export default function ScannerPage() {
                 className="hidden"
                 onChange={onFileInput}
               />
-              <div className={`fc-premium-surface flex h-[min(420px,55vh)] w-full min-h-[min(280px,52dvh)] flex-col items-center justify-center border-2 border-dashed transition-colors duration-300 max-lg:min-h-[min(360px,58dvh)] sm:h-[420px] ${
-                dragOver ? 'border-emerald-400/60 bg-emerald-500/[0.08]' : 'border-primary/35 bg-[rgb(var(--color-surface)/0.35)] hover:border-primary/50 hover:bg-emerald-500/[0.06]'
-              }`}>
+              <GlassCard
+                hover={false}
+                className={`flex h-[min(420px,55vh)] w-full min-h-[min(280px,52dvh)] cursor-pointer flex-col items-center justify-center border-2 border-dashed p-8 text-center transition-colors duration-300 max-lg:min-h-[min(360px,58dvh)] sm:h-[420px] ${
+                  dragOver ? 'border-primary bg-primary-fixed/20' : 'border-outline-variant/50 hover:border-primary/50'
+                }`}
+              >
                 {uploadMutation.isPending || batchProgress ? (
                   <div className="space-y-6 px-6 text-center">
                     <div className="relative mx-auto h-16 w-16">
@@ -628,22 +634,32 @@ export default function ScannerPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                      <Icon name="cloud_upload" className="text-primary text-4xl" />
+                    <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary-fixed shadow-md">
+                      <StitchIcon name="cloud_upload" className="text-4xl text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold font-headline text-on-surface mb-2">Перетащите файл или нажмите</h3>
-                    <p className="text-on-surface-variant text-sm mb-8">PDF, PNG, JPG · до {MAX_BATCH_FILES} файлов · 25 МБ каждый</p>
-                    <button type="button" className="btn-primary min-h-12 px-4" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>
-                      <Icon name="add" className="text-xl" /> Выбрать документ
+                    <h3 className="mb-2 font-headline text-headline-sm text-on-surface">Перетащите файл или нажмите</h3>
+                    <p className="mb-8 text-sm text-on-surface-variant">PDF, PNG, JPG · до {MAX_BATCH_FILES} файлов · 25 МБ каждый</p>
+                    <button type="button" className="btn-primary min-h-12 px-8" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>
+                      <StitchIcon name="add" className="text-xl" /> Выбрать документ
                     </button>
+                    <div className="mt-8 flex flex-wrap justify-center gap-6 text-xs font-medium text-secondary">
+                      <div className="flex items-center gap-2">
+                        <StitchIcon name="verified_user" className="text-sm" />
+                        Защищённая передача
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StitchIcon name="auto_awesome" className="text-sm" />
+                        Авто-OCR
+                      </div>
+                    </div>
                   </>
                 )}
-              </div>
+              </GlassCard>
             </motion.div>
           ) : (
-            <div className="rounded-3xl border border-outline/75 bg-surface-container-low p-4 shadow-soft sm:p-6">
+            <GlassCard className="p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Icon name="auto_awesome" filled className="text-primary" />
+                <StitchIcon name="auto_awesome" filled className="text-primary" />
                 <div>
                   <h3 className="font-bold text-on-surface">AI-парсер текста</h3>
                   <p className="text-xs text-on-surface-variant">Вставьте текст ТТН, чека или накладной — AI извлечёт данные</p>
@@ -671,16 +687,16 @@ export default function ScannerPage() {
                   disabled={textInput.trim().length < 10 || parseTextMutation.isPending}
                   onClick={() => parseTextMutation.mutate()}
                 >
-                  <Icon name="auto_awesome" className="text-lg" />
+                  <StitchIcon name="auto_awesome" className="text-lg" />
                   {parseTextMutation.isPending ? 'Анализируем...' : 'Распознать текст'}
                 </button>
               </div>
               {parseTextMutation.isError && (
-                <div className="mt-3 bg-error/10 border border-error/20 text-error px-4 py-2 rounded-lg text-sm">
+                <div className="mt-3 rounded-lg border border-error/20 bg-error/10 px-4 py-2 text-sm text-error">
                   {calmActionError('ocr', formatApiDetail((parseTextMutation.error as any)?.response?.data?.detail))}
                 </div>
               )}
-            </div>
+            </GlassCard>
           )}
 
           {(uploadMutation.isError || batchError) && (
@@ -695,16 +711,11 @@ export default function ScannerPage() {
             const displayDoc = editDraft?.docType || scanResult.doc_type
             const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
             return (
-            <motion.div
-              id="scanner-result"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-              className={`fc-premium-surface mt-6 overflow-hidden shadow-soft ${mobileReview ? 'hidden lg:block' : ''}`}
-            >
+            <div id="scanner-result">
+            <GlassCard hover={false} className={`mt-6 overflow-hidden p-0 ${mobileReview ? 'hidden lg:block' : ''}`}>
               <div className="flex flex-col gap-3 border-b border-outline-variant/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="flex items-center gap-3">
-                  <Icon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
+                  <StitchIcon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
                   <div>
                     <h3 className="font-bold text-on-surface">{dmeta.label} распознан</h3>
                     <p className="text-xs text-on-surface-variant">{scanResult.filename}</p>
@@ -712,9 +723,7 @@ export default function ScannerPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   {(scanResult.requires_review || scanResult.confidence < 75) && (
-                    <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
-                      Нужна проверка
-                    </span>
+                    <StatusChip variant="pending">Нужна проверка</StatusChip>
                   )}
                   <span className={`text-sm font-bold ${scanResult.confidence >= 90 ? 'text-secondary' : scanResult.confidence >= 75 ? 'text-tertiary' : 'text-error'}`}>
                     {scanResult.confidence}%
@@ -731,7 +740,7 @@ export default function ScannerPage() {
                     <img src={preview} alt="Preview" className="w-full rounded-lg object-contain max-h-[min(520px,60vh)] bg-surface" />
                   ) : (
                     <div className="flex h-60 items-center justify-center rounded-lg bg-surface lg:h-80">
-                      <Icon name="description" className="text-5xl text-on-surface-variant/20" />
+                      <StitchIcon name="description" className="text-5xl text-on-surface-variant/20" />
                     </div>
                   )}
                   {scanResult.ocr_text && (
@@ -741,15 +750,56 @@ export default function ScannerPage() {
                     </details>
                   )}
               </div>
-            </motion.div>
+            </GlassCard>
+            </div>
             )
           })()}
+
+          {history.length > 0 && (
+            <section className="mt-8">
+              <div className="mb-4 flex items-end justify-between">
+                <h3 className="font-headline text-headline-sm text-on-surface">Недавние сканы</h3>
+                <button type="button" className="text-sm font-bold text-primary hover:underline" onClick={() => history[0] && loadDocMutation.mutate(history[0].id)}>
+                  Открыть последний
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {history.slice(0, 6).map((item) => {
+                  const t = DOC_ICONS[item.doc_type] || DOC_ICONS.unknown
+                  return (
+                    <GlassCard key={item.id} className="flex items-center gap-4 p-4">
+                      <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
+                        <StitchIcon name={t.icon} className={`text-2xl ${t.color}`} />
+                      </div>
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        disabled={loadDocMutation.isPending}
+                        onClick={() => loadDocMutation.mutate(item.id)}
+                      >
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <h4 className="truncate font-bold text-on-surface">{item.filename}</h4>
+                          <StatusChip variant={scanStatusVariant(item.status)}>{scanStatusLabel(item.status)}</StatusChip>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-mono text-xs text-secondary">{t.label} · {item.confidence}%</p>
+                          {item.parsed?.amount != null ? (
+                            <p className="text-xs font-bold text-on-surface">{item.parsed.amount.toLocaleString('ru-RU')} BYN</p>
+                          ) : null}
+                        </div>
+                      </button>
+                    </GlassCard>
+                  )
+                })}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Right: OCR results */}
         <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
           {scanResult && editDraft && (
-            <div className="glass-card space-y-4 rounded-2xl p-4">
+            <GlassCard className="space-y-4 p-4">
               <OcrReviewBanner
                 confidence={scanResult.confidence}
                 fieldConfidence={scanResult.field_confidence}
@@ -780,42 +830,33 @@ export default function ScannerPage() {
                   Подтвердить в журнале
                 </Link>
               )}
-            </div>
+            </GlassCard>
           )}
         </div>
       </div>
 
       {(reviewQueueData?.items?.length ?? 0) > 0 && (
         <section id="scanner-review-queue" className="mt-8 lg:hidden">
-          <h2 className="fc-section-label mb-3">Очередь проверки</h2>
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <h2 className="mb-3 font-label text-label-caps uppercase text-on-surface-variant">Очередь проверки</h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
             {reviewQueueData!.items.map((item: { id: string; filename: string; confidence: number; doc_type: string }) => (
               <li key={item.id}>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-2xl border border-outline/35 bg-surface/90 px-4 py-3 text-left hover:border-primary/35"
-                  disabled={loadDocMutation.isPending}
-                  onClick={() => loadDocMutation.mutate(item.id)}
-                >
-                  <span className="min-w-0 truncate text-sm font-medium text-on-surface">{item.filename}</span>
-                  <span className="ml-2 shrink-0 text-xs text-amber-700 dark:text-amber-200">{item.confidence}%</span>
-                </button>
+                <GlassCard className="p-0">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                    disabled={loadDocMutation.isPending}
+                    onClick={() => loadDocMutation.mutate(item.id)}
+                  >
+                    <span className="min-w-0 truncate text-sm font-medium text-on-surface">{item.filename}</span>
+                    <StatusChip variant="pending">{item.confidence}%</StatusChip>
+                  </button>
+                </GlassCard>
               </li>
             ))}
           </ul>
         </section>
       )}
-
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:max-w-md">
-        <div className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-4 py-3">
-          <p className="font-headline text-xl font-bold tabular-nums text-on-surface">{history.length}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Сканов в истории</p>
-        </div>
-        <div className="fc-stat-tile rounded-2xl border border-outline/40 bg-surface/80 px-4 py-3">
-          <p className="font-headline text-xl font-bold tabular-nums text-on-surface">{reviewQueueData?.items?.length ?? 0}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Ждут проверки</p>
-        </div>
-      </div>
     </div>
     </>
   )

@@ -9,10 +9,19 @@ import { useThemeStore } from '../store/themeStore'
 import AppModal from '../components/ui/AppModal'
 import MoneyAmount from '../components/ui/MoneyAmount'
 import { CardSkeleton, TableSkeleton } from '../components/premium'
+import { GlassCard, PageHeader, StitchIcon } from '../components/stitch'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
-  return <span className={`material-symbols-outlined ${className}`} style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}>{name}</span>
+  return <StitchIcon name={name} filled={filled} className={className} />
 }
+
+const SETTINGS_TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: 'profile', label: 'Профиль', icon: 'person' },
+  { key: 'integrations', label: 'Интеграции', icon: 'hub' },
+  { key: 'billing', label: 'Тариф', icon: 'payments' },
+  { key: 'team', label: 'Команда', icon: 'group' },
+  { key: 'regulatory', label: 'Законодательство', icon: 'gavel' },
+]
 
 type Tab = 'profile' | 'billing' | 'team' | 'regulatory' | 'integrations'
 
@@ -181,13 +190,14 @@ export default function SettingsPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Настройки</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Профиль организации, команда и подключения.</p>
-      </div>
+      <PageHeader
+        title="Настройки"
+        subtitle="Профиль организации, команда, тариф и подключения."
+        className="mb-8"
+      />
 
-      <div className="page-section p-4 dark:border-outline/45 sm:p-5">
-        <h2 className="mb-3 text-sm font-bold text-on-surface">Тема оформления</h2>
+      <GlassCard hover={false} className="mb-8 p-4 sm:p-5">
+        <h2 className="mb-3 font-headline text-headline-sm text-on-surface">Тема оформления</h2>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -195,10 +205,10 @@ export default function SettingsPage() {
             className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
               theme === 'light'
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-outline/75 bg-surface text-on-surface-variant hover:border-primary/35 dark:border-outline/45'
+                : 'border-outline-variant/40 bg-surface text-on-surface-variant hover:border-primary/35'
             }`}
           >
-            <Icon name="light_mode" className="text-lg" />
+            <StitchIcon name="light_mode" className="text-lg" />
             Светлая
           </button>
           <button
@@ -207,38 +217,32 @@ export default function SettingsPage() {
             className={`tap-highlight-none flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial ${
               theme === 'dark'
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-outline/75 bg-surface text-on-surface-variant hover:border-primary/35 dark:border-outline/45'
+                : 'border-outline-variant/40 bg-surface text-on-surface-variant hover:border-primary/35'
             }`}
           >
-            <Icon name="dark_mode" className="text-lg" />
+            <StitchIcon name="dark_mode" className="text-lg" />
             Тёмная
           </button>
         </div>
         <p className="mt-2 text-xs text-on-surface-variant">Сохраняется только в этом браузере.</p>
-      </div>
+      </GlassCard>
 
-      <div className="-mx-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:overflow-visible sm:pb-0">
-        <div className="flex min-w-max gap-1 rounded-xl bg-surface-container-high p-1 border border-outline/75 shadow-soft sm:inline-flex sm:min-w-0">
-          {([
-            { key: 'profile' as Tab, label: 'Профиль', icon: 'business' },
-            { key: 'integrations' as Tab, label: 'Интеграции', icon: 'integration_instructions' },
-            { key: 'billing' as Tab, label: 'Тариф', icon: 'payments' },
-            { key: 'team' as Tab, label: 'Команда', icon: 'group' },
-            { key: 'regulatory' as Tab, label: 'Законодательство', icon: 'gavel' },
-          ]).map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={`tap-highlight-none flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:py-1.5 ${
-                tab === t.key ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <Icon name={t.icon} className="text-sm" /> {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <nav className="-mx-1 mb-8 flex gap-6 overflow-x-auto border-b border-outline-variant text-sm font-semibold [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:gap-8 [&::-webkit-scrollbar]:hidden">
+        {SETTINGS_TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`tap-highlight-none relative flex shrink-0 items-center gap-2 whitespace-nowrap pb-4 transition-colors ${
+              tab === t.key ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <StitchIcon name={t.icon} className="text-[18px]" />
+            {t.label}
+            {tab === t.key ? <span className="absolute bottom-0 left-0 h-0.5 w-full bg-primary" aria-hidden /> : null}
+          </button>
+        ))}
+      </nav>
 
       {tab === 'profile' && <ProfileSection />}
       {tab === 'integrations' && <IntegrationsSection isOwner={user?.role === 'owner'} />}

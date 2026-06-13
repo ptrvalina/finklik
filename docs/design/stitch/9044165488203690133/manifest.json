@@ -1,0 +1,450 @@
+﻿{
+    "fetchedAt":  "2026-06-13T00:12:55.6482421+03:00",
+    "screens":  [
+                    {
+                        "width":  "2560",
+                        "slug":  "web/employees",
+                        "screenId":  "33bb3ae51425477d9c5812e9a6d658ab",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Сотрудники - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/home",
+                        "screenId":  "fa2fb5f0b1cd4b35b41db94a89dc439b",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2160",
+                        "ok":  true,
+                        "title":  "Главная - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/login",
+                        "screenId":  "55007f045ab8432f8897648c07808efe",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Вход - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/operation-details",
+                        "screenId":  "50e16161edfb4eb0832efbfc9119b7e1",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Детали операции - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/accounting",
+                        "screenId":  "006684adeb434ab6ad90e7dadc782c79",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2400",
+                        "ok":  true,
+                        "title":  "Учёт - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/register",
+                        "screenId":  "e1f92c1e19874f8fa849903340d0dea9",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Регистрация - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/payroll",
+                        "screenId":  "a955a2440b17460b93c6bdfebda94ff7",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2390",
+                        "ok":  true,
+                        "title":  "Расчёт зарплаты - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/employee-card",
+                        "screenId":  "284491824c414b459013f89e82ef9ac9",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2330",
+                        "ok":  true,
+                        "title":  "Карточка сотрудника - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/new-counterparty",
+                        "screenId":  "702f6a00b5df4141995eb26f2ea76663",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2176",
+                        "ok":  true,
+                        "title":  "Новый контрагент - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/bank",
+                        "screenId":  "67bb26b0c694472c82dc341052b548b0",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2310",
+                        "ok":  true,
+                        "title":  "Банк - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/scanner",
+                        "screenId":  "7f097783aa344dd18fb07e4d1914573a",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Сканер документов - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/error",
+                        "screenId":  "eafe5d7021534656aaa1a725e16ce9a2",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Ошибка - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/tasks",
+                        "screenId":  "0d5d8c4b0ac94d7882bc6798bca14cae",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Задачи - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/success",
+                        "screenId":  "d77f342e1c8c412da659e4383bfc8d50",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Успешно - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/add-employee",
+                        "screenId":  "86e9971517ca4494b04131a39189391c",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2724",
+                        "ok":  true,
+                        "title":  "Добавление сотрудника - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/fszn-reports",
+                        "screenId":  "2c18ba4681a34f4a80d83563db8236b2",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2518",
+                        "ok":  true,
+                        "title":  "Отчёты ФСЗН - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/settings",
+                        "screenId":  "87c22b2afda24d74b68544885a9f7ab4",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2902",
+                        "ok":  true,
+                        "title":  "Настройки - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/notes",
+                        "screenId":  "ee277a3b6d47426491a659f48ff26f18",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2906",
+                        "ok":  true,
+                        "title":  "Заметки и ссылки - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/taxes-accounting",
+                        "screenId":  "f38a6fcc58c34e6eaa59706a2b75c310",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "3060",
+                        "ok":  true,
+                        "title":  "Налоги и учёт - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "3072",
+                        "slug":  "web/counterparties",
+                        "screenId":  "4f651944d06845ec8c0c51ef2d222b5d",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2176",
+                        "ok":  true,
+                        "title":  "Контрагенты - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/password-reset",
+                        "screenId":  "2a463146c8cb43c4a049409c10bf2a05",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2048",
+                        "ok":  true,
+                        "title":  "Восстановление пароля - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/fszn-report-details",
+                        "screenId":  "4d1045ff15e74068ba18d5bd4aa9d7f0",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "3796",
+                        "ok":  true,
+                        "title":  "Детали отчёта ФСЗН - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "2560",
+                        "slug":  "web/operations-history",
+                        "screenId":  "4ffa265298344ef2828299f69bb70ef0",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "DESKTOP",
+                        "height":  "2272",
+                        "ok":  true,
+                        "title":  "История операций - ФинКлик (Web)"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/scanner-documents",
+                        "screenId":  "bbcbeda7cf41412fb5db08d98e7566e3",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "1864",
+                        "ok":  true,
+                        "title":  "Сканер документов - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/employees",
+                        "screenId":  "8c7a41eab9d842c0872d88dcf8b2e5d0",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3150",
+                        "ok":  true,
+                        "title":  "Сотрудники - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/home",
+                        "screenId":  "43b6578310524b5e8c99296dc6779152",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3530",
+                        "ok":  true,
+                        "title":  "Главная - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/scanner",
+                        "screenId":  "50c34155741445039b62ce97630b78d1",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3286",
+                        "ok":  true,
+                        "title":  "Сканер - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/tasks",
+                        "screenId":  "8576ff37a7e4405bb64043b00b5e0c3a",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3902",
+                        "ok":  true,
+                        "title":  "Задачи - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/success",
+                        "screenId":  "a0d7cd37c186443b9153e8fd7b8afe44",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "1768",
+                        "ok":  true,
+                        "title":  "Успешно - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/accounting",
+                        "screenId":  "3a7e67ca894e40e2b4b85a34930f4ea9",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3712",
+                        "ok":  true,
+                        "title":  "Учёт - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/counterparties",
+                        "screenId":  "fd480e6618434bd59d48810a1f661032",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3606",
+                        "ok":  true,
+                        "title":  "Контрагенты - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/bank",
+                        "screenId":  "b89fc65c993345debb0c99386a8435b8",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3530",
+                        "ok":  true,
+                        "title":  "Банк - ФинКлик"
+                    },
+                    {
+                        "width":  "828",
+                        "slug":  "mobile/settings",
+                        "screenId":  "6ef12d00a7fc46a9a4f5528ffc37d651",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2180",
+                        "ok":  true,
+                        "title":  "Настройки - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/login-confirm",
+                        "screenId":  "fc61008ca6a048398079df9e3ae66cf6",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "1768",
+                        "ok":  true,
+                        "title":  "Подтверждение входа - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/employee-card",
+                        "screenId":  "93439d6c7bb94ba9ae267325da28db56",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3664",
+                        "ok":  true,
+                        "title":  "Карточка сотрудника - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/operation-details",
+                        "screenId":  "5a4a999297bc484a8f1426fb7c039433",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "3850",
+                        "ok":  true,
+                        "title":  "Детали операции - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/new-counterparty",
+                        "screenId":  "4340de21f92b49cc85955174d8165cfa",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2516",
+                        "ok":  true,
+                        "title":  "Новый контрагент - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/payroll",
+                        "screenId":  "c67567a8c59647649a6c15072fe2b862",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2414",
+                        "ok":  true,
+                        "title":  "Расчёт зарплаты - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/notes",
+                        "screenId":  "6103454e7a8a4c60b8cc76d35629c543",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2220",
+                        "ok":  true,
+                        "title":  "Заметки и ссылки - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/password-reset",
+                        "screenId":  "269fe4c60faf4106a9127ca0efb75df7",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "1768",
+                        "ok":  true,
+                        "title":  "Восстановление пароля - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/login",
+                        "screenId":  "072c83b3538d4f7182c0b3d2618f819e",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "1768",
+                        "ok":  true,
+                        "title":  "Вход - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/fszn-reports",
+                        "screenId":  "1d0fddc5b30a414f9ce7085d30da80f9",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "4072",
+                        "ok":  true,
+                        "title":  "Отчёты ФСЗН - ФинКлик"
+                    },
+                    {
+                        "width":  "858",
+                        "slug":  "mobile/register",
+                        "screenId":  "4fcd77bc538e43768bc5269d627c4886",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2882",
+                        "ok":  true,
+                        "title":  "Регистрация - ФинКлик"
+                    },
+                    {
+                        "width":  "780",
+                        "slug":  "mobile/welcome",
+                        "screenId":  "3635d3d483ec4accaf73b09b515be8fe",
+                        "projectId":  "9044165488203690133",
+                        "deviceType":  "MOBILE",
+                        "height":  "2642",
+                        "ok":  true,
+                        "title":  "Приветствие - ФинКлик"
+                    }
+                ],
+    "failed":  0,
+    "ok":  44,
+    "total":  44,
+    "projectId":  "9044165488203690133",
+    "projectTitle":  "Finklik UX Redesign"
+}

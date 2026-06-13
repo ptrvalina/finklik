@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinKlik - Восстановление пароля</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #001a42 100%);
+            box-shadow: 0 4px 14px 0 rgba(0, 65, 145, 0.39);
+        }
+        .btn-gradient:active {
+            transform: scale(0.96);
+        }
+        .input-focus-glow:focus {
+            box-shadow: 0 0 0 4px rgba(0, 88, 190, 0.15);
+        }
+        .status-pill {
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e7e8eb",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-bright": "#f8f9fc",
+                        "on-tertiary-container": "#77ebb6",
+                        "surface-tint": "#085ac0",
+                        "on-secondary-fixed": "#131b2e",
+                        "inverse-surface": "#2e3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d8dadd",
+                        "on-tertiary-fixed": "#002114",
+                        "on-surface-variant": "#424753",
+                        "secondary-container": "#d8dff9",
+                        "inverse-primary": "#adc6ff",
+                        "on-primary-fixed": "#001a42",
+                        "tertiary-container": "#006a48",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e2e5",
+                        "outline": "#727784",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#565e74",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-primary-container": "#c4d5ff",
+                        "tertiary": "#004f35",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "tertiary-fixed": "#84f9c3",
+                        "primary-container": "#0058be",
+                        "primary": "#004191",
+                        "on-secondary-container": "#5a6278",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "surface-container": "#eceef0",
+                        "surface-variant": "#e1e2e5",
+                        "background": "#f8f9fc",
+                        "on-background": "#191c1e",
+                        "outline-variant": "#c2c6d5",
+                        "secondary-fixed": "#dae2fc",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "table-y": "0.625rem",
+                        "table-x": "0.875rem",
+                        "gutter": "1rem",
+                        "section-md": "2rem",
+                        "touch-min": "44px",
+                        "unit": "4px",
+                        "margin-desktop": "2.25rem"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700" }],
+                        "body-base": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["26px", { "lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "mono-data": ["14px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500" }],
+                        "display-lg": ["30px", { "lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-base text-body-base overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-50 bg-background">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop w-full max-w-6xl mx-auto h-14">
+<div class="flex items-center gap-4">
+<button class="text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200" onclick="window.history.back()">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">FinKlik</h1>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<span class="text-secondary font-label-caps text-label-caps">Secure</span>
+<span class="text-secondary font-label-caps text-label-caps">Professional</span>
+<span class="text-secondary font-label-caps text-label-caps">Global</span>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center px-margin-mobile relative py-12">
+<!-- Background Atmospheric Element -->
+<div class="absolute inset-0 overflow-hidden pointer-events-none">
+<div class="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-tertiary-fixed/10 rounded-full blur-[120px]"></div>
+</div>
+<div class="w-full max-w-md z-10">
+<!-- Glass Form Container -->
+<div class="glass-panel p-8 md:p-10 rounded-[24px] shadow-xl border border-outline-variant/30 transition-all duration-500 transform translate-y-0 opacity-100" id="recovery-form-container">
+<div class="mb-8 text-center md:text-left">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-fixed mb-6">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="shield_lock">shield_lock</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-3">Восстановление пароля</h2>
+<p class="text-on-surface-variant font-body-base text-body-base leading-relaxed">
+                        Введите почту, указанную при регистрации, чтобы получить ссылку для сброса.
+                    </p>
+</div>
+<form class="space-y-6" id="recovery-form" onsubmit="handleSubmit(event)">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant block ml-1" for="email">Email</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="mail">mail</span>
+</div>
+<input class="w-full h-touch-min pl-11 pr-4 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none input-focus-glow" id="email" placeholder="name@company.com" required="" type="email"/>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full h-touch-min btn-gradient text-white font-headline-sm text-headline-sm rounded-full flex items-center justify-center gap-2 transition-all duration-300 group" id="submit-btn" type="submit">
+<span>Отправить ссылку</span>
+<span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform" data-icon="send">send</span>
+</button>
+</div>
+</form>
+<div class="mt-8 pt-8 border-t border-outline-variant/30 text-center">
+<button class="inline-flex items-center gap-2 text-primary font-headline-sm text-headline-sm hover:opacity-70 transition-opacity active:scale-95" onclick="window.history.back()">
+<span class="material-symbols-outlined text-[20px]" data-icon="keyboard_backspace">keyboard_backspace</span>
+                        Вернуться к входу
+                    </button>
+</div>
+</div>
+<!-- Success State (Hidden by default) -->
+<div class="hidden glass-panel p-10 rounded-[24px] shadow-xl border border-emerald-500/20 text-center transition-all duration-500 transform translate-y-4 opacity-0" id="success-message">
+<div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-tertiary-fixed/20 mb-8">
+<span class="material-symbols-outlined text-tertiary text-[40px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Письмо отправлено</h2>
+<p class="text-on-surface-variant font-body-base text-body-base leading-relaxed mb-8">
+                    Проверьте вашу электронную почту <span class="font-semibold text-on-surface" id="display-email"></span>. Мы отправили вам инструкции по восстановлению доступа.
+                </p>
+<div class="space-y-4">
+<button class="w-full h-touch-min bg-surface-container-highest text-on-surface font-headline-sm text-headline-sm rounded-full hover:bg-surface-container-high transition-colors" onclick="window.location.reload()">
+                        Отправить повторно
+                    </button>
+<button class="w-full h-touch-min text-primary font-headline-sm text-headline-sm rounded-full border border-primary/20 hover:bg-primary/5 transition-all" onclick="window.history.back()">
+                        Вернуться на главную
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<footer class="py-8 px-margin-mobile text-center">
+<p class="text-outline font-label-caps text-label-caps">© 2024 FinKlik Solutions. Все права защищены.</p>
+</footer>
+<script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            const emailInput = document.getElementById('email');
+            const submitBtn = document.getElementById('submit-btn');
+            const formContainer = document.getElementById('recovery-form-container');
+            const successMessage = document.getElementById('success-message');
+            const displayEmail = document.getElementById('display-email');
+
+            // Loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="progress_activity">progress_activity</span>';
+
+            // Simulate API call
+            setTimeout(() => {
+                displayEmail.textContent = emailInput.value;
+                
+                // Animate transition
+                formContainer.classList.add('opacity-0', 'translate-y-4', 'scale-95');
+                
+                setTimeout(() => {
+                    formContainer.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                    // Force reflow
+                    successMessage.offsetHeight;
+                    successMessage.classList.remove('opacity-0', 'translate-y-4');
+                    successMessage.classList.add('opacity-100', 'translate-y-0');
+                }, 400);
+            }, 1200);
+        }
+
+        // Add visual flair for inputs
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('.material-symbols-outlined').style.color = '#004191';
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('.material-symbols-outlined').style.color = '';
+            });
+        });
+    </script>
+</body></html>

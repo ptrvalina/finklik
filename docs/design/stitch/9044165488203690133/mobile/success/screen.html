@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик | Успешно</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#727784",
+                        "inverse-surface": "#2e3133",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#424753",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#085ac0",
+                        "secondary": "#565e74",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface-dim": "#d8dadd",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "surface-bright": "#f8f9fc",
+                        "secondary-fixed": "#dae2fc",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "inverse-primary": "#adc6ff",
+                        "tertiary": "#004f35",
+                        "outline-variant": "#c2c6d5",
+                        "on-primary-container": "#c4d5ff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-container": "#d8dff9",
+                        "primary": "#004191",
+                        "surface-variant": "#e1e2e5",
+                        "surface-container-low": "#f2f4f6",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "primary-container": "#0058be",
+                        "surface-container": "#eceef0",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#001a42",
+                        "on-secondary-fixed": "#131b2e",
+                        "on-surface": "#191c1e",
+                        "tertiary-container": "#006a48",
+                        "error-container": "#ffdad6",
+                        "surface": "#f8f9fc",
+                        "on-primary-fixed-variant": "#004395",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-fixed": "#84f9c3",
+                        "background": "#f8f9fc",
+                        "surface-container-highest": "#e1e2e5",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-background": "#191c1e",
+                        "surface-container-high": "#e7e8eb",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#5a6278",
+                        "on-tertiary-container": "#77ebb6",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "2.25rem",
+                        "gutter": "1rem",
+                        "section-md": "2rem",
+                        "table-x": "0.875rem",
+                        "unit": "4px",
+                        "touch-min": "44px",
+                        "section-sm": "1.5rem",
+                        "margin-mobile": "1.25rem",
+                        "table-y": "0.625rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-base": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .emerald-glow {
+            box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.3);
+        }
+        .checkmark-draw {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: draw 0.8s ease-out forwards 0.5s;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+        .success-bg-aura {
+            background: radial-gradient(circle at center, rgba(132, 249, 195, 0.15) 0%, transparent 70%);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #002114 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-base min-h-screen flex items-center justify-center p-margin-mobile md:p-margin-desktop overflow-hidden">
+<!-- Atmospheric Background Effects -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] success-bg-aura rounded-full blur-[100px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30vw] h-[30vw] bg-primary/5 rounded-full blur-[80px]"></div>
+</div>
+<!-- Main Success Canvas -->
+<main class="relative z-10 w-full max-w-lg">
+<div class="glass-card rounded-[24px] p-8 md:p-12 flex flex-col items-center text-center shadow-2xl emerald-glow animate-in fade-in zoom-in duration-700">
+<!-- Success Icon Animation Container -->
+<div class="relative w-24 h-24 mb-8">
+<!-- Outer Pulse Rings -->
+<div class="absolute inset-0 bg-tertiary-fixed/30 rounded-full animate-ping opacity-20"></div>
+<div class="absolute inset-2 bg-tertiary-fixed/50 rounded-full animate-pulse opacity-40"></div>
+<!-- Main Circle -->
+<div class="absolute inset-0 bg-tertiary text-on-tertiary-container rounded-full flex items-center justify-center shadow-lg">
+<svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<path class="checkmark-draw" d="M20 6L9 17L4 12"></path>
+</svg>
+</div>
+</div>
+<!-- Content -->
+<div class="space-y-4 mb-10">
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">
+                    Successfully Sent
+                </h1>
+<p class="text-on-surface-variant font-body-base max-w-xs mx-auto">
+                    Your quarterly report to FSZN has been processed and successfully validated. A copy has been sent to your registered email.
+                </p>
+</div>
+<!-- Summary Card (Bento Style) -->
+<div class="w-full bg-surface-container-low rounded-xl p-6 mb-10 text-left border border-outline-variant/30 space-y-4">
+<div class="flex justify-between items-center border-b border-outline-variant/20 pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Transaction ID</span>
+<span class="font-mono-data text-mono-data text-primary">#FIN-9920-XQ</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/20 pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Recipient</span>
+<span class="font-body-base font-semibold text-on-surface">FSZN Department</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Status</span>
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-tertiary-fixed rounded-full text-on-tertiary-fixed">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-bold">Confirmed</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full flex flex-col gap-3">
+<button class="primary-gradient w-full h-touch-min rounded-full text-on-primary font-headline-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90 active:scale-95 transition-all duration-200" onclick="handleDashboardRedirect()">
+<span>Return to Dashboard</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full h-touch-min rounded-full text-primary font-body-base font-semibold hover:bg-primary/5 transition-colors duration-200">
+                    Download Receipt (PDF)
+                </button>
+</div>
+</div>
+<!-- Secondary Decoration (Confetti Hint) -->
+<div class="absolute inset-0 pointer-events-none" id="confetti-container"></div>
+</main>
+<!-- Success Feedback Overlay -->
+<div class="fixed top-margin-mobile right-margin-mobile flex flex-col gap-2 z-50">
+<div class="bg-surface-container-highest/80 backdrop-blur-md px-4 py-3 rounded-xl border border-outline-variant/30 flex items-center gap-3 animate-in slide-in-from-right duration-500 shadow-xl">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_rgba(103,220,168,0.8)]"></div>
+<span class="font-body-base text-sm font-medium">Digital Signature Verified</span>
+</div>
+</div>
+<script>
+        function handleDashboardRedirect() {
+            // Animation before navigation
+            const card = document.querySelector('.glass-card');
+            card.style.transform = 'scale(0.98)';
+            card.style.opacity = '0';
+            card.style.transition = 'all 0.4s ease-in-out';
+            
+            setTimeout(() => {
+                console.log("Navigating to dashboard...");
+            }, 400);
+        }
+
+        // Lightweight atmospheric confetti micro-interaction
+        function spawnConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#84f9c3', '#0058be', '#adc6ff'];
+            
+            for(let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = Math.random() * 8 + 4 + 'px';
+                confetti.style.height = Math.random() * 8 + 4 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.top = '50%';
+                confetti.style.left = '50%';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.opacity = '0';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 200 + 100;
+                const x = Math.cos(angle) * velocity;
+                const y = Math.sin(angle) * velocity;
+                
+                container.appendChild(confetti);
+                
+                confetti.animate([
+                    { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 1000 + 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    delay: Math.random() * 200
+                }).onfinish = () => confetti.remove();
+            }
+        }
+
+        // Trigger confetti on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(spawnConfetti, 600);
+        });
+    </script>
+</body></html>

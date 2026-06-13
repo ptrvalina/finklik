@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarApi, plannerApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import { CardSkeleton } from '../components/premium'
+import { GlassCard, HeroGradient, PageHeader, StatusChip, StitchIcon } from '../components/stitch'
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
@@ -357,35 +358,72 @@ export default function Planner() {
   }
 
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })
+  const monthCaps = new Date(viewYear, viewMonth - 1, 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' }).toUpperCase()
+  const openTasks = (allTasksQuery.data ?? []).filter((t) => t.status !== 'closed')
+  const pendingCount = openTasks.length
+  const criticalCount = openTasks.filter((t) => {
+    if (!t.due_date) return false
+    const days = Math.ceil((new Date(t.due_date.slice(0, 10)).getTime() - Date.now()) / 86400000)
+    return days <= 3
+  }).length
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="page-heading">Задачи команды</h1>
-          <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-            {screenTab === 'tasks'
-              ? 'Поручения сотрудникам с доступом в систему: бухгалтеру, менеджеру или администратору.'
-              : 'Сроки поручений и рабочие события. Налоговые дедлайны — в календаре учёта.'}
-          </p>
+      <PageHeader
+        title="Задачи команды"
+        subtitle={
+          screenTab === 'tasks'
+            ? 'Поручения сотрудникам с доступом в систему: бухгалтеру, менеджеру или администратору.'
+            : 'Сроки поручений и рабочие события. Налоговые дедлайны — в календаре учёта.'
+        }
+        actions={
+          <>
+            <Link to="/calendar" className="btn-secondary shrink-0 rounded-full text-sm">
+              Календарь учёта
+            </Link>
+            <Link to="/employees/list" className="btn-secondary shrink-0 rounded-full text-sm">
+              Сотрудники
+            </Link>
+          </>
+        }
+      />
+
+      <HeroGradient className="relative mb-section-sm min-h-[180px] overflow-hidden shadow-lg">
+        <div className="absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-tertiary-fixed-dim/10 blur-[80px]" aria-hidden />
+        <div className="relative z-10 flex w-full flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <StatusChip variant="neutral" className="bg-on-primary-container/20 text-primary-fixed normal-case tracking-normal">
+                {monthCaps}
+              </StatusChip>
+              <span className="text-sm font-medium text-white/80">| Поручения и события</span>
+            </div>
+            <h1 className="font-display-lg text-display-lg text-white">Расписание команды</h1>
+            <p className="mt-2 max-w-lg text-primary-fixed">
+              Управляйте поручениями, сроками и рабочими событиями в одном месте. Налоговые дедлайны — в календаре учёта.
+            </p>
+          </div>
+          <div className="flex h-fit items-center gap-8 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-md">
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-white">{pendingCount}</div>
+              <div className="font-label text-[9px] uppercase text-white/60">В работе</div>
+            </div>
+            <div className="h-8 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="font-mono-data text-headline-sm text-tertiary-fixed">{criticalCount}</div>
+              <div className="font-label text-[9px] uppercase text-white/60">Срочные</div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/calendar" className="btn-secondary shrink-0 text-sm">
-            Календарь учёта
-          </Link>
-          <Link to="/employees/list" className="btn-secondary shrink-0 text-sm">
-            Сотрудники
-          </Link>
-        </div>
-      </div>
+      </HeroGradient>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
+        <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
           <button
             type="button"
             onClick={() => setScreenTab('tasks')}
-            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
-              screenTab === 'tasks' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+            className={`min-h-10 rounded-lg px-4 text-sm font-bold transition ${
+              screenTab === 'tasks' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-primary'
             }`}
           >
             Поручения
@@ -393,30 +431,32 @@ export default function Planner() {
           <button
             type="button"
             onClick={() => setScreenTab('calendar')}
-            className={`min-h-10 rounded-xl px-4 text-sm font-bold ${
-              screenTab === 'calendar' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+            className={`min-h-10 rounded-lg px-4 text-sm font-bold transition ${
+              screenTab === 'calendar' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-primary'
             }`}
           >
             На календаре
           </button>
         </div>
         {screenTab === 'calendar' ? (
-          <button type="button" className="btn-primary fc-btn-thumb shrink-0 w-full sm:w-auto" onClick={() => openCreate()}>
-            + Событие
+          <button type="button" className="btn-primary fc-btn-thumb inline-flex shrink-0 items-center gap-2 rounded-full sm:w-auto" onClick={() => openCreate()}>
+            <StitchIcon name="add" className="text-lg" />
+            Событие
           </button>
         ) : (
           <button
             type="button"
-            className="btn-primary fc-btn-thumb shrink-0 w-full sm:w-auto"
+            className="btn-primary fc-btn-thumb inline-flex shrink-0 items-center gap-2 rounded-full sm:w-auto"
             onClick={() => document.getElementById('planner-new-task')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           >
-            + Поручение
+            <StitchIcon name="add" className="text-lg" />
+            Поручение
           </button>
         )}
       </div>
 
       {screenTab === 'calendar' && (
-      <div className="card-elevated space-y-4 p-5">
+      <GlassCard hover={false} className="space-y-4 p-5">
         <p className="text-xs text-on-surface-variant">
           Полоски с заливкой — события; пунктир — поручения с дедлайном. Налоги и отчёты смотрите в{' '}
           <Link to="/calendar" className="font-semibold text-primary underline">
@@ -561,7 +601,7 @@ export default function Planner() {
             ))}
           </div>
         )}
-      </div>
+      </GlassCard>
       )}
 
       {modalOpen ? (
@@ -662,7 +702,7 @@ export default function Planner() {
 
       {screenTab === 'tasks' && (
       <>
-      <form id="planner-new-task" onSubmit={onCreateTask} className="card-elevated grid gap-3 p-6 md:grid-cols-2 scroll-mt-24">
+      <form id="planner-new-task" onSubmit={onCreateTask} className="stitch-glass-card grid gap-3 scroll-mt-24 rounded-2xl p-6 md:grid-cols-2">
         <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-semibold">Новое поручение</h2>
@@ -725,7 +765,7 @@ export default function Planner() {
         </button>
       </form>
 
-      <div className="card-elevated p-3">
+      <GlassCard hover={false} className="p-3">
         <div className="inline-flex rounded-xl border border-outline/70 p-1">
           <button
             type="button"
@@ -742,7 +782,7 @@ export default function Planner() {
             Мне поручено
           </button>
         </div>
-      </div>
+      </GlassCard>
 
       <div className="grid gap-4">
         <TaskList
@@ -798,7 +838,7 @@ function TaskList(props: {
     onComment,
   } = props
   return (
-    <div className="card-elevated p-5">
+    <GlassCard hover={false} className="p-5">
       <h3 className="mb-3 text-lg font-semibold">{title}</h3>
       {loading ? (
         <div className="space-y-3" aria-busy="true" aria-label="Загрузка задач">
@@ -837,7 +877,7 @@ function TaskList(props: {
           ))}
         </div>
       )}
-    </div>
+    </GlassCard>
   )
 }
 

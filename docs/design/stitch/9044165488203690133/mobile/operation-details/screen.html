@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик - Детали транзакции</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#727784",
+                    "surface-variant": "#e1e2e5",
+                    "surface-bright": "#f8f9fc",
+                    "primary": "#004191",
+                    "on-surface-variant": "#424753",
+                    "on-primary-fixed-variant": "#004395",
+                    "background": "#f8f9fc",
+                    "on-secondary-container": "#5a6278",
+                    "surface-dim": "#d8dadd",
+                    "secondary-container": "#d8dff9",
+                    "surface": "#f8f9fc",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dae2fc",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#adc6ff",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2e3133",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container-highest": "#e1e2e5",
+                    "tertiary-container": "#006a48",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "surface-container-high": "#e7e8eb",
+                    "secondary": "#565e74",
+                    "on-tertiary-container": "#77ebb6",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-tertiary-fixed": "#002114",
+                    "on-primary-container": "#c4d5ff",
+                    "tertiary-fixed": "#84f9c3",
+                    "surface-tint": "#085ac0",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#0058be",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "tertiary": "#004f35",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "on-background": "#191c1e",
+                    "outline-variant": "#c2c6d5",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#adc6ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-sm": "1.5rem",
+                    "table-y": "0.625rem",
+                    "section-md": "2rem",
+                    "margin-mobile": "1.25rem",
+                    "touch-min": "44px",
+                    "gutter": "1rem",
+                    "table-x": "0.875rem",
+                    "unit": "4px",
+                    "margin-desktop": "2.25rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fc;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .brand-gradient-button {
+            background: linear-gradient(135deg, #004191 0%, #0058be 50%, #002114 100%);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-base text-on-surface">
+<!-- Top Navigation (Shell Supressed for focused task as per mandate) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary">Детали транзакции</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">share</span>
+</button>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</div>
+</header>
+<main class="max-w-[1152px] mx-auto pt-20 pb-24 px-margin-mobile md:px-margin-desktop">
+<!-- Transaction Summary Header -->
+<div class="mb-section-md">
+<div class="glass-card rounded-[24px] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-[32px]">campaign</span>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">МАРКЕТИНГОВОЕ АГЕНТСТВО</p>
+<h2 class="font-headline-md text-headline-md text-on-surface">Creative Flow Studio</h2>
+<p class="font-mono-data text-mono-data text-on-surface-variant mt-1">ID: TRN-99283-X1</p>
+</div>
+</div>
+<div class="text-left md:text-right">
+<div class="font-display-lg text-display-lg text-primary mb-1">
+                        - 45,200.00 ₽
+                    </div>
+<div class="inline-flex items-center px-3 py-1 bg-[#10b9811a] text-[#059669] rounded-full text-label-caps font-label-caps uppercase">
+<span class="w-2 h-2 rounded-full bg-[#059669] mr-2"></span>
+                        Исполнено
+                    </div>
+</div>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Information Column -->
+<div class="lg:col-span-2 space-y-gutter">
+<div class="glass-card rounded-[24px] overflow-hidden">
+<div class="p-6 border-b border-outline-variant/20">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Основная информация</h3>
+</div>
+<div class="p-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Дата операции</p>
+<p class="font-body-base text-on-surface">14 Октября 2023, 14:22</p>
+</div>
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Тип платежа</p>
+<p class="font-body-base text-on-surface">Безналичный расчет</p>
+</div>
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Счет списания</p>
+<p class="font-body-base text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary">account_balance_wallet</span>
+                                    Основной счет (**4492)
+                                </p>
+</div>
+<div class="space-y-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Категория</p>
+<div class="inline-flex items-center px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg font-mono-data text-sm mt-1">
+                                    Marketing &amp; PR
+                                </div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/20">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Назначение платежа</p>
+<p class="font-body-base text-on-surface leading-relaxed">
+                                Оплата по счету №459 от 12.10.2023 за услуги по продвижению бренда в социальных сетях (SMM) и настройку таргетированной рекламы за октябрь 2023 года. Включая НДС (20%) — 7,533.33 ₽.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Audit Log / Activity -->
+<div class="glass-card rounded-[24px] p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">История изменений</h3>
+<div class="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/20">
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-tertiary-fixed flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-fixed-variant" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="font-body-base font-semibold text-on-surface">Транзакция подтверждена банком</p>
+<span class="font-mono-data text-[12px] text-on-surface-variant">14.10.2023 16:45</span>
+</div>
+<p class="text-sm text-on-surface-variant">Автоматическое подтверждение шлюза</p>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[14px] text-on-secondary-fixed-variant" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="font-body-base font-semibold text-on-surface">Счет прикреплен пользователем</p>
+<span class="font-mono-data text-[12px] text-on-surface-variant">14.10.2023 14:30</span>
+</div>
+<p class="text-sm text-on-surface-variant">Александр В. (Главный бухгалтер)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar / Documents -->
+<div class="space-y-gutter">
+<div class="glass-card rounded-[24px] overflow-hidden">
+<div class="p-5 border-b border-outline-variant/20 flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Документы</h3>
+<span class="font-mono-data text-xs bg-surface-container px-2 py-1 rounded">1 файл</span>
+</div>
+<div class="p-5 space-y-4">
+<div class="group relative rounded-xl border border-outline-variant/30 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors">
+<img alt="Preview of invoice" class="w-full h-40 object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A high-resolution macro photograph of a professional business invoice document lying on a clean white desk surface. The document features sharp black typography, organized tables of financial data, and a official corporate seal. The lighting is soft and natural, coming from a side window, creating a crisp, airy, and trustworthy high-end fintech aesthetic with deep blue shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxX-rOmg1iflc0cpoSgwdxXRup0cFUXPLnrSPVJ4N0roujyaYRFw4Pfsqq0Vto3GXK7d3duy-0mAcTQylbUC8jh4TgnLu2BIZPektn2UrwvnEZcUvlmnneDXvCl0BWAoJ0rwsAaRUUA00iecZWmwXxgyWlqBSkfiKheXw4jzxsCP6MKvpgVix4wo11AJz64rStZj8HeSqL5mdJIH9M3TwEOgtIGopst394LtHj-x6hI0pf7J3cbkVTOAbjMmsuhShKLW5JZsNZeZA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/60 to-transparent flex items-end p-3">
+<div class="text-white">
+<p class="text-xs font-semibold truncate">Invoice_Flow_459.pdf</p>
+<p class="text-[10px] opacity-80">1.2 MB • PDF Document</p>
+</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-primary/20 backdrop-blur-[2px]">
+<span class="material-symbols-outlined text-white text-3xl">visibility</span>
+</div>
+</div>
+<button class="w-full h-touch-min flex items-center justify-center gap-2 border-2 border-dashed border-outline-variant/40 rounded-xl text-on-surface-variant hover:bg-surface-container-low active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-body-base font-medium">Добавить файл</span>
+</button>
+</div>
+</div>
+<div class="glass-card rounded-[24px] p-5">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Теги</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-xs font-medium hover:bg-surface-container-high cursor-default">#Q4_Marketing</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-xs font-medium hover:bg-surface-container-high cursor-default">#Creative_Studio</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-xs font-medium hover:bg-surface-container-high cursor-default">#Invoice_Paid</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+</div>
+<!-- Action Button -->
+<button class="brand-gradient-button w-full h-14 rounded-full text-white font-headline-sm flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">print</span>
+                    Печать выписки
+                </button>
+</div>
+</div>
+</main>
+<!-- Interactive script for some lightweight atmosphere -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Micro-interaction for hover states
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0px)';
+                });
+            });
+        });
+    </script>
+</body></html>

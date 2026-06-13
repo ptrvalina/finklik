@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Abyssal Precision | New Counteragent</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#f8f9fc",
+                    "on-surface": "#191c1e",
+                    "surface-dim": "#d8dadd",
+                    "outline-variant": "#c2c6d5",
+                    "on-surface-variant": "#424753",
+                    "primary-fixed": "#d8e2ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "primary-fixed-dim": "#adc6ff",
+                    "surface-container-high": "#e7e8eb",
+                    "on-tertiary-fixed": "#002114",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-secondary-fixed-variant": "#3f465b",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#004f35",
+                    "surface-container-highest": "#e1e2e5",
+                    "inverse-primary": "#adc6ff",
+                    "on-secondary-container": "#5a6278",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#085ac0",
+                    "tertiary-fixed-dim": "#67dca8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary": "#565e74",
+                    "on-tertiary-container": "#77ebb6",
+                    "secondary-container": "#d8dff9",
+                    "primary": "#004191",
+                    "on-primary-fixed": "#001a42",
+                    "tertiary-container": "#006a48",
+                    "surface-container": "#eceef0",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#0058be",
+                    "error": "#ba1a1a",
+                    "surface-bright": "#f8f9fc",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed-variant": "#005237",
+                    "error-container": "#ffdad6",
+                    "outline": "#727784",
+                    "tertiary-fixed": "#84f9c3",
+                    "surface-variant": "#e1e2e5",
+                    "on-primary-container": "#c4d5ff",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed": "#dae2fc",
+                    "on-background": "#191c1e",
+                    "background": "#f8f9fc",
+                    "inverse-surface": "#2e3133"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "1.25rem",
+                    "table-x": "0.875rem",
+                    "touch-min": "44px",
+                    "table-y": "0.625rem",
+                    "section-md": "2rem",
+                    "margin-desktop": "2.25rem",
+                    "unit": "4px",
+                    "gutter": "1rem",
+                    "section-sm": "1.5rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-base": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                    "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #131b2e 100%);
+        }
+        .glow-emerald {
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -4px rgba(16, 185, 129, 0.1);
+        }
+        .input-focus-ring:focus-within {
+            box-shadow: 0 0 0 4px rgba(0, 65, 145, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-base text-on-surface antialiased overflow-x-hidden">
+<!-- SIDE NAVIGATION SHELL -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-on-surface-variant flex flex-col py-section-sm bg-surface dark:bg-on-surface z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">Abyssal Precision</h1>
+<p class="font-label-caps text-[10px] text-on-surface-variant mt-1">Enterprise Suite</p>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container dark:hover:bg-on-secondary-fixed-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-base">Dashboard</span>
+</a>
+<!-- Active State: Counteragents (Contextually determined as main destination) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed bg-secondary-container/50 dark:bg-secondary-container/10 font-bold border-r-4 border-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-body-base">Counteragents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container dark:hover:bg-on-secondary-fixed-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-base">Financials</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container dark:hover:bg-on-secondary-fixed-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-body-base">Payroll</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container dark:hover:bg-on-secondary-fixed-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-base">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container dark:hover:bg-on-secondary-fixed-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-base">Settings</span>
+</a>
+</nav>
+<div class="px-3 mt-auto space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-base">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-base">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- TOP BAR -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 bg-surface/90 backdrop-blur-md flex justify-between items-center px-margin-desktop border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-10 pl-10 pr-4 bg-surface-container rounded-full text-on-surface text-body-base border-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50" placeholder="Search systems..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">apps</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="font-label-caps text-[11px] text-on-surface">Alex Mercer</p>
+<p class="text-[10px] text-on-surface-variant leading-none">Senior Analyst</p>
+</div>
+<img alt="User Account" class="w-8 h-8 rounded-full border border-outline-variant group-hover:border-primary transition-colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZdQl9JcJ0h4fcRd1qo6NK9UmDSgNbOFNfY6fKazK8DpNJMFLKe6azviP7k0_0kJVKiyfRRynUCfxAe_5bRt5x9gPVrlHf58fX8TTPdivBflBkk6kOD4E5yG40ORlJJltoTAAH56CTJ4ATEW87-bJL884c57p-eDASeIcZnR0QMgSwXwk0xSTvNjBYpd3hiWr5h7zCE7tLrh7gtHfONs4cnKjHuUtUYO0cgNHQeatfFTu2ccGaa3YaypO0MEJZkcWmahRXRgUEojo"/>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT CANVAS -->
+<main class="ml-64 pt-16 min-h-screen">
+<div class="max-w-6xl mx-auto px-margin-desktop py-section-md">
+<!-- Breadcrumbs & Header -->
+<nav class="mb-8 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 text-on-surface-variant mb-2">
+<span class="font-label-caps hover:text-primary cursor-pointer">Counteragents</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-label-caps text-primary">New Registration</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-surface">Add Counteragent</h2>
+</div>
+<div class="flex gap-4">
+<button class="px-6 h-11 flex items-center gap-2 font-headline-sm text-sm border border-outline-variant rounded-lg hover:bg-surface-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">close</span>
+                        Discard
+                    </button>
+<button class="px-8 h-11 flex items-center gap-2 font-headline-sm text-sm text-white gradient-button rounded-lg glow-emerald hover:shadow-lg transition-all active:scale-95" id="saveAction">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                        Validate &amp; Save
+                    </button>
+</div>
+</nav>
+<!-- Creation Engine Bento Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Section 1: Basic Identity (Form) -->
+<div class="col-span-8 flex flex-col gap-gutter">
+<section class="p-8 rounded-3xl bg-surface-container-lowest border border-outline-variant/50 custom-glass shadow-sm">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">business</span>
+</div>
+<h3 class="font-headline-md text-headline-md">Corporate Identity</h3>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2 group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">Legal Entity Name</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<input class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 text-body-base" placeholder="e.g. Abyssal Precision Solutions LTD" type="text"/>
+</div>
+</div>
+<div class="group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">Tax ID (UNP/VAT)</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<input class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 font-mono-data" placeholder="9-digit identifier" type="text"/>
+</div>
+</div>
+<div class="group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">Business Type</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<select class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 text-body-base appearance-none cursor-pointer">
+<option>Technology &amp; SaaS</option>
+<option>Financial Services</option>
+<option>Manufacturing</option>
+<option>Logistics</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div class="col-span-2 group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">Registered Address</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<textarea class="w-full p-4 border-none bg-transparent focus:ring-0 text-body-base resize-none" placeholder="Street, Building, Office, City, Postal Code" rows="3"></textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Bank Details -->
+<section class="p-8 rounded-3xl bg-surface-container-lowest border border-outline-variant/50 custom-glass shadow-sm">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<h3 class="font-headline-md text-headline-md">Financial Settlement</h3>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">Bank Name</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<input class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 text-body-base" placeholder="Global Trust Bank" type="text"/>
+</div>
+</div>
+<div class="group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">SWIFT / BIC</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<input class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 font-mono-data" placeholder="GTBKBPMX" type="text"/>
+</div>
+</div>
+<div class="col-span-2 group">
+<label class="block font-label-caps text-[11px] text-on-surface-variant mb-2 group-focus-within:text-primary transition-colors">IBAN / Account Number</label>
+<div class="relative input-focus-ring rounded-xl overflow-hidden border border-outline-variant bg-surface transition-all">
+<input class="w-full h-11 px-4 border-none bg-transparent focus:ring-0 font-mono-data" placeholder="International Bank Account Format" type="text"/>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Section 3: Contacts & Summary Sidebar -->
+<div class="col-span-4 flex flex-col gap-gutter">
+<!-- Contact Person Card -->
+<section class="p-6 rounded-3xl bg-surface-container border border-outline-variant/30">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-sm text-sm">Primary Contact</h3>
+<span class="material-symbols-outlined text-primary">person_add</span>
+</div>
+<div class="space-y-4">
+<div class="group">
+<input class="w-full h-11 px-4 rounded-xl border-outline-variant bg-surface border focus:ring-primary/20 text-body-base" placeholder="Full Name" type="text"/>
+</div>
+<div class="group">
+<input class="w-full h-11 px-4 rounded-xl border-outline-variant bg-surface border focus:ring-primary/20 text-body-base" placeholder="Email Address" type="email"/>
+</div>
+<div class="group">
+<input class="w-full h-11 px-4 rounded-xl border-outline-variant bg-surface border focus:ring-primary/20 text-body-base" placeholder="Direct Phone" type="tel"/>
+</div>
+</div>
+<div class="mt-6 p-4 rounded-xl bg-primary-fixed/30 border border-primary/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<p class="text-[12px] text-on-primary-fixed-variant leading-tight">Identity will be verified via LexisNexis compliance bridge.</p>
+</div>
+</div>
+</section>
+<!-- Profile Preview Placeholder -->
+<div class="flex-1 rounded-3xl bg-on-surface relative overflow-hidden flex flex-col justify-end p-8">
+<!-- Abstract Background Decoration -->
+<div class="absolute inset-0 opacity-20">
+
+</div>
+<div class="relative z-10">
+<div class="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-3xl text-on-surface-variant">domain</span>
+</div>
+<h4 class="text-white font-headline-md mb-2">Verification Ready</h4>
+<p class="text-secondary-fixed-dim text-body-base opacity-70">New counteragents are processed within 2-4 business hours for treasury operations.</p>
+</div>
+</div>
+<!-- KYC Status Chip -->
+<div class="p-6 rounded-3xl bg-white border border-outline-variant flex items-center justify-between">
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant">KYC Status</p>
+<p class="font-headline-sm text-sm text-tertiary">PENDING DATA</p>
+</div>
+<div class="w-12 h-12 rounded-full border-4 border-surface-container-high border-t-tertiary animate-spin"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Toast (Hidden by default) -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 transform translate-y-24 opacity-0 transition-all duration-500 z-50" id="saveToast">
+<div class="px-8 py-4 bg-on-surface text-white rounded-full shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-lg">
+<div class="w-8 h-8 rounded-full bg-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">done</span>
+</div>
+<p class="font-headline-sm text-sm">Counteragent Record Created Successfully</p>
+</div>
+</div>
+<script>
+        // Micro-interactions
+        const saveBtn = document.getElementById('saveAction');
+        const toast = document.getElementById('saveToast');
+
+        saveBtn.addEventListener('click', () => {
+            // Visual feedback on click
+            saveBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+            
+            setTimeout(() => {
+                // Show success toast
+                toast.classList.remove('translate-y-24', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+                
+                // Reset button
+                saveBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-[20px]">save</span>
+                    Validate & Save
+                `;
+
+                // Hide toast after delay
+                setTimeout(() => {
+                    toast.classList.add('translate-y-24', 'opacity-0');
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                }, 3000);
+            }, 1200);
+        });
+
+        // Add subtle focus glow to inputs
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.closest('.relative')?.classList.add('border-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.closest('.relative')?.classList.remove('border-primary');
+            });
+        });
+    </script>
+</body></html>

@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { operationsApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
-import { GlassCard } from '../components/premium/GlassCard'
 import { CardSkeleton, PremiumEmptyState } from '../components/premium'
+import { FilterBar, GlassCard, PageHeader, StatusChip, StitchIcon } from '../components/stitch'
 import GroupedExecutionFeed from '../components/operations/GroupedExecutionFeed'
 import OperationsProgressStrip from '../components/operations/OperationsProgressStrip'
 import { WorkPackCard } from '../components/operations/WorkPackCard'
@@ -291,27 +291,36 @@ export default function OperationsPage() {
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric mx-auto max-w-3xl pb-28 sm:pb-10">
-      <div className="mb-4">
-        <h1 className="page-heading">Все задачи</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Полная лента. Главный шаг — на главной.</p>
-      </div>
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        {mode !== 'advanced' && (
-          <button
-            type="button"
-            className="btn-ghost min-h-10 text-xs font-semibold text-primary"
-            onClick={() => setDiagnosticsOpen((v) => !v)}
-          >
-            {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
-          </button>
-        )}
-        <Link to="/inbox" className="btn-secondary text-sm">
-          Очередь
-        </Link>
-      </div>
+      <PageHeader
+        title="Все задачи"
+        subtitle="Полная лента операций. Главный шаг — на главной."
+        badge={
+          workPackCount > 0 ? (
+            <StatusChip variant="pending">{workPackCount} пакет{workPackCount === 1 ? '' : workPackCount < 5 ? 'а' : 'ов'}</StatusChip>
+          ) : undefined
+        }
+        actions={
+          <>
+            {mode !== 'advanced' && (
+              <button
+                type="button"
+                className="btn-secondary rounded-full text-sm"
+                onClick={() => setDiagnosticsOpen((v) => !v)}
+              >
+                <StitchIcon name="monitoring" className="text-base" />
+                {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
+              </button>
+            )}
+            <Link to="/inbox" className="btn-primary rounded-full text-sm">
+              <StitchIcon name="inbox" className="text-base" />
+              Очередь
+            </Link>
+          </>
+        }
+      />
 
       {!isLoading && !isError && trustData && showDiagnostics && (
-        <details className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/40 px-4 py-3 text-sm dark:bg-white/[0.03]">
+        <details className="stitch-glass-card mb-6 rounded-2xl px-4 py-3 text-sm">
           <summary className="cursor-pointer font-medium text-on-surface/90">
             Диагностика и фоновые процессы
           </summary>
@@ -366,9 +375,11 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && pe?.primary_focus_hint && !top && (
-        <GlassCard variant="subtle" className="mb-6 border-primary/25 p-5 ring-1 ring-primary/15" hoverLift={false}>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Главный фокус</p>
-          <p className="mt-2 text-base font-medium leading-snug text-on-surface">{pe.primary_focus_hint}</p>
+        <GlassCard hover={false} className="mb-6 border-primary/25 p-5 ring-1 ring-primary/15">
+          <StatusChip variant="ready" className="mb-2">
+            Главный фокус
+          </StatusChip>
+          <p className="text-base font-medium leading-snug text-on-surface">{pe.primary_focus_hint}</p>
         </GlassCard>
       )}
 
@@ -385,10 +396,10 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && simplified && (mode === 'solo' || mode === 'operator' || mode === 'accountant') && (
-        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+        <GlassCard hover={false} className="mb-6 p-5">
+          <StatusChip variant="neutral" className="mb-2">
             Как выглядит ситуация
-          </p>
+          </StatusChip>
           <p className="mt-3 text-base font-medium leading-relaxed text-on-surface">{simplified.headline}</p>
           {simplified.supporting_line && (
             <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{simplified.supporting_line}</p>
@@ -400,12 +411,12 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && showDiagnostics && data?.operational_health && (
-        <div className="glass-card mb-6 rounded-2xl p-5">
+        <GlassCard hover={false} className="mb-6 p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+              <StatusChip variant="neutral" className="mb-2">
                 {terminology.execution.processSummary}
-              </p>
+              </StatusChip>
               <p className="mt-2 text-sm leading-relaxed text-on-surface">{data.operational_health.summary_plain}</p>
             </div>
             <div className="rounded-2xl bg-primary/15 px-3 py-2 text-center ring-1 ring-primary/25">
@@ -423,14 +434,14 @@ export default function OperationsPage() {
             <HealthMeter label="Управляемость нагрузки" value={data.operational_health.operational_load} />
             <HealthMeter label="Надёжность автоматизации" value={data.operational_health.automation_stability} />
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {!isLoading && !isError && showDiagnostics && data?.trusted_automation && (
-        <div className="glass-card mb-6 rounded-2xl p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+        <GlassCard hover={false} className="mb-6 p-5">
+          <StatusChip variant="neutral" className="mb-2">
             Доверие к автоматизации
-          </p>
+          </StatusChip>
           <p className="mt-3 text-sm text-on-surface">
             Уровень:{' '}
             <strong>{trustLevelLabel(data.trusted_automation.trust_level)}</strong>
@@ -456,17 +467,17 @@ export default function OperationsPage() {
               ))}
             </ul>
           </details>
-        </div>
+        </GlassCard>
       )}
 
       {!isLoading && !isError && showDiagnostics && (data?.workflow_maintenance?.length ?? 0) > 0 && (
         <section className="mb-6">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+          <StatusChip variant="neutral" className="mb-3">
             Самообслуживание процессов
-          </p>
+          </StatusChip>
           <div className="grid gap-3">
             {(data.workflow_maintenance ?? []).map((w) => (
-              <GlassCard key={w.id} variant="subtle" className="p-4" hoverLift={false}>
+              <GlassCard key={w.id} hover={false} className="p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">{w.kind}</p>
                 <p className="mt-1 font-medium text-on-surface">{w.title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">{w.detail}</p>
@@ -477,14 +488,16 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && showDiagnostics && (data?.operational_memory_hints?.length ?? 0) > 0 && (
-        <div className="mb-6 rounded-3xl border border-outline/30 bg-surface-container-low/50 px-4 py-3 text-xs leading-relaxed text-on-surface-variant dark:bg-white/[0.03]">
-          <p className="font-bold uppercase tracking-wide text-primary">Операционная память</p>
+        <GlassCard hover={false} className="mb-6 px-4 py-3 text-xs leading-relaxed text-on-surface-variant">
+          <StatusChip variant="ready" className="mb-2">
+            Операционная память
+          </StatusChip>
           <ul className="mt-2 space-y-2">
             {(data.operational_memory_hints ?? []).map((h) => (
               <li key={h}>{h}</li>
             ))}
           </ul>
-        </div>
+        </GlassCard>
       )}
 
       {!isLoading && !isError && showDiagnostics && data?.calm_ui_budget && mode === 'solo' && (
@@ -495,14 +508,12 @@ export default function OperationsPage() {
       )}
 
       {!isLoading && !isError && showDiagnostics && (
-        <GlassCard variant="subtle" className="mb-6 p-5" hoverLift={false}>
+        <GlassCard hover={false} className="mb-6 p-5">
           <p className="text-sm text-on-surface-variant">
             Расширенные снимки состояния, аудит и прогнозы — в ops-контуре для администратора.
           </p>
-          <Link
-            to="/admin/ops"
-            className="btn-secondary fc-btn-thumb mt-3 inline-flex text-sm"
-          >
+          <Link to="/admin/ops" className="btn-secondary mt-3 inline-flex rounded-full text-sm">
+            <StitchIcon name="analytics" className="text-base" />
             Открыть диагностику
           </Link>
         </GlassCard>
@@ -510,7 +521,10 @@ export default function OperationsPage() {
 
       {!isLoading && !isError && (data?.work_packs?.length ?? 0) > 0 && (
         <section className="mb-8 fc-section-stack-sm">
-          <p className="fc-section-label">Пакеты задач</p>
+          <FilterBar className="mb-3">
+            <StatusChip variant="pending">Пакеты задач</StatusChip>
+            <span className="text-xs text-on-surface-variant">{workPackCount} активных</span>
+          </FilterBar>
           {(data?.work_packs ?? []).map((pack) => (
             <WorkPackCard
               key={pack.id}
@@ -532,9 +546,9 @@ export default function OperationsPage() {
       )}
 
       {data?.ai_summary && showDiagnostics && (
-        <p className="mb-8 rounded-2xl border border-outline/35 bg-surface-container-low/70 px-4 py-3 text-sm leading-relaxed text-on-surface-variant">
+        <GlassCard hover={false} className="mb-8 px-4 py-3 text-sm leading-relaxed text-on-surface-variant">
           {data.ai_summary}
-        </p>
+        </GlassCard>
       )}
 
       {isLoading && (
@@ -591,13 +605,15 @@ export default function OperationsPage() {
           <button
             type="button"
             onClick={() => next.action_path && openPath(next.action_path)}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/35 bg-[rgb(var(--color-surface)/0.92)] px-4 py-3 text-left shadow-float backdrop-blur-xl dark:bg-[rgb(var(--color-surface)/0.88)]"
+            className="stitch-glass-card flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/35 px-4 py-3 text-left shadow-float"
           >
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Следующее</p>
+              <StatusChip variant="ready" className="mb-1">
+                Следующее
+              </StatusChip>
               <p className="truncate text-sm font-semibold text-on-surface">{next.title}</p>
             </div>
-            <span className="material-symbols-outlined shrink-0 text-primary">arrow_forward</span>
+            <StitchIcon name="arrow_forward" className="shrink-0 text-primary" />
           </button>
         </div>
       )}
@@ -610,7 +626,7 @@ export default function OperationsPage() {
           aria-label="Закрыть панель"
           onClick={() => setPanelItem(null)}
         >
-          <span className="absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 block max-h-[55vh] overflow-y-auto rounded-3xl border border-outline/40 bg-surface p-5 text-left shadow-float dark:bg-[rgb(var(--color-surface)/0.96)]">
+          <span className="stitch-glass-card absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 block max-h-[55vh] overflow-y-auto rounded-3xl p-5 text-left shadow-float">
             <span
               role="presentation"
               className="block"

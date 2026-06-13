@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Финклик — Панель управления</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#002114",
+                        "surface-container": "#eceef0",
+                        "background": "#f8f9fc",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#0058be",
+                        "secondary-container": "#d8dff9",
+                        "surface": "#f8f9fc",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-tertiary-fixed-variant": "#005237",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#001a42",
+                        "outline": "#727784",
+                        "tertiary-fixed-dim": "#67dca8",
+                        "surface-bright": "#f8f9fc",
+                        "secondary-fixed": "#dae2fc",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-container-high": "#e7e8eb",
+                        "on-primary-container": "#c4d5ff",
+                        "surface-dim": "#d8dadd",
+                        "secondary": "#565e74",
+                        "tertiary": "#004f35",
+                        "surface-container-highest": "#e1e2e5",
+                        "inverse-primary": "#adc6ff",
+                        "inverse-surface": "#2e3133",
+                        "on-secondary-fixed-variant": "#3f465b",
+                        "outline-variant": "#c2c6d5",
+                        "tertiary-container": "#006a48",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#77ebb6",
+                        "surface-tint": "#085ac0",
+                        "on-background": "#191c1e",
+                        "on-secondary-container": "#5a6278",
+                        "surface-variant": "#e1e2e5",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#424753",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary": "#004191",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#84f9c3",
+                        "on-surface": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "section-md": "2rem",
+                        "margin-mobile": "1.25rem",
+                        "unit": "4px",
+                        "table-x": "0.875rem",
+                        "touch-min": "44px",
+                        "section-sm": "1.5rem",
+                        "table-y": "0.625rem",
+                        "margin-desktop": "2.25rem"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "body-base": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "body-base": ["15px", {"lineHeight": "24px", "letterSpacing": "-0.011em", "fontWeight": "400"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "34px", "letterSpacing": "-0.038em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.032em", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(114, 119, 132, 0.1);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #0058be 0%, #004191 50%, #002114 100%);
+        }
+        .emerald-glow {
+            box-shadow: 0 10px 40px -10px rgba(103, 220, 168, 0.3);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fc;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 md:pt-16">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-touch-min bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-secondary-container flex items-center justify-center">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A professional studio headshot of a young financial executive with a clean, modern aesthetic. The lighting is soft and directional, creating a high-end corporate feel. The background is a soft-focus office environment with glass partitions and cool blue and white tones, matching a premium fintech UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXGohKPgKVuCP-adnZsq_ktAbP69J8WdgBKPQiP76bi3fh5Y6dlrjwnst0Thl3vlvGJaqHtPHPL2i0C2GtpRzUgt7pTnqaUc6GiHoe_envXGaRpoBz9Jgztocwd50wFNyDLxEu8OL46BZM36e-bmVG2rqdoRVgfJxBnu1mWgMeGT0LxgUg-0s2KAylSvf0s2VJBndP1t70vkODQswYvA83RKRZup6ZsKN1EeF2t2a-VV-pBCEfnyHjxlVfEMKIv0NHSUp14KZTpDA"/>
+</div>
+<span class="font-headline-md text-headline-md font-bold text-primary-container">Финклик</span>
+</div>
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 duration-200">notifications</button>
+</header>
+<!-- Sidebar (Desktop) -->
+<aside class="hidden md:flex fixed left-0 top-16 bottom-0 w-64 bg-surface-container-low flex-col p-6 gap-8 border-r border-outline-variant/20">
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-body-base text-body-base font-semibold">Главная</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-base text-body-base">Сотрудники</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-body-base text-body-base">Сканер</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-body-base text-body-base">Задачи</span>
+</a>
+</nav>
+</aside>
+<main class="max-w-[1152px] mx-auto px-margin-mobile md:px-margin-desktop py-8 md:ml-64">
+<!-- Hero Section: Total Balance -->
+<section class="relative mb-8 overflow-hidden rounded-[24px] primary-gradient p-8 text-on-primary emerald-glow">
+<div class="relative z-10">
+<p class="font-label-caps text-label-caps opacity-80 mb-2 uppercase tracking-widest">Общий баланс</p>
+<div class="flex items-baseline gap-3 mb-6">
+<h1 class="font-display-lg text-display-lg text-white">2,485,000.00</h1>
+<span class="font-headline-sm text-headline-sm text-primary-fixed-dim">RUB</span>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
+<span class="material-symbols-outlined text-tertiary-fixed text-[18px]">trending_up</span>
+<span class="font-mono-data text-mono-data">+12.5%</span>
+</div>
+<div class="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
+<span class="material-symbols-outlined text-error-container text-[18px]">trending_down</span>
+<span class="font-mono-data text-mono-data">-3.2%</span>
+</div>
+</div>
+</div>
+<div class="absolute top-0 right-0 w-64 h-64 bg-tertiary/20 blur-[100px] rounded-full -mr-20 -mt-20"></div>
+<!-- Sparkline placeholder representation -->
+<div class="absolute bottom-0 right-0 w-full h-32 opacity-20 pointer-events-none">
+<svg class="w-full h-full preserve-3d" viewbox="0 0 400 100">
+<path d="M0 80 Q 50 20, 100 70 T 200 40 T 300 80 T 400 30" fill="none" stroke="white" stroke-width="2"></path>
+</svg>
+</div>
+</section>
+<!-- Quick Actions Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+<button class="group flex flex-col items-center justify-center p-6 glass-card rounded-[24px] border-outline-variant/30 hover:border-primary transition-all duration-300 active:scale-95">
+<div class="w-12 h-12 rounded-full bg-primary-container text-white flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">document_scanner</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-background">Сканировать</span>
+<p class="font-body-base text-body-base text-on-surface-variant text-center mt-1">Чек или документ</p>
+</button>
+<button class="group flex flex-col items-center justify-center p-6 glass-card rounded-[24px] border-outline-variant/30 hover:border-primary transition-all duration-300 active:scale-95">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">add_card</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-background">Транзакция</span>
+<p class="font-body-base text-body-base text-on-surface-variant text-center mt-1">Добавить расход</p>
+</button>
+<button class="group flex flex-col items-center justify-center p-6 glass-card rounded-[24px] border-outline-variant/30 hover:border-primary transition-all duration-300 active:scale-95">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-background">Отчет</span>
+<p class="font-body-base text-body-base text-on-surface-variant text-center mt-1">Новый финансовый отчет</p>
+</button>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Recent Transactions (Bento Style) -->
+<div class="lg:col-span-2 space-y-4">
+<div class="flex justify-between items-center px-2">
+<h2 class="font-headline-md text-headline-md text-on-background">Последние транзакции</h2>
+<button class="text-primary font-body-base text-body-base font-semibold hover:underline">Все</button>
+</div>
+<div class="glass-card rounded-[24px] overflow-hidden">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-outline-variant/20 bg-surface-container-low/50">
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant uppercase">Категория</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant uppercase">Получатель</th>
+<th class="px-table-x py-table-y font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Сумма</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">shopping_bag</span>
+</div>
+<span class="font-body-base text-body-base font-medium">Маркетинг</span>
+</div>
+</td>
+<td class="px-table-x py-4 font-body-base text-body-base text-on-surface-variant">Google Ads</td>
+<td class="px-table-x py-4 text-right font-mono-data text-mono-data text-error">-45,200.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">payments</span>
+</div>
+<span class="font-body-base text-body-base font-medium">Зачисление</span>
+</div>
+</td>
+<td class="px-table-x py-4 font-body-base text-body-base text-on-surface-variant">Клиент: ООО Альянс</td>
+<td class="px-table-x py-4 text-right font-mono-data text-mono-data text-tertiary">+1,200,000.00</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-table-x py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">door_front</span>
+</div>
+<span class="font-body-base text-body-base font-medium">Аренда</span>
+</div>
+</td>
+<td class="px-table-x py-4 font-body-base text-body-base text-on-surface-variant">Бизнес-центр "Вершина"</td>
+<td class="px-table-x py-4 text-right font-mono-data text-mono-data text-error">-180,000.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Side Widgets -->
+<div class="space-y-6">
+<!-- Tax Deadline Widget -->
+<div class="glass-card rounded-[24px] p-6 border-l-4 border-error">
+<div class="flex items-start justify-between mb-4">
+<div>
+<span class="font-label-caps text-label-caps text-error bg-error-container px-2 py-0.5 rounded-full">Срочно</span>
+<h3 class="font-headline-sm text-headline-sm mt-2">Налоговый дедлайн</h3>
+</div>
+<span class="material-symbols-outlined text-error">priority_high</span>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant mb-4">Срок подачи декларации по НДС за 1 квартал истекает через 3 дня.</p>
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">calendar_today</span>
+<span class="font-mono-data text-mono-data">25 Апреля, 2024</span>
+</div>
+<button class="w-full py-3 bg-primary text-white rounded-xl font-body-base text-body-base font-semibold active:scale-95 transition-transform">Подготовить отчет</button>
+</div>
+<!-- Analysis/Insights -->
+<div class="glass-card rounded-[24px] p-6 relative overflow-hidden bg-on-tertiary-fixed">
+<div class="relative z-10 text-white">
+<h3 class="font-headline-sm text-headline-sm mb-2">Анализ расходов</h3>
+<p class="font-body-base text-body-base opacity-70 mb-6">Вы сэкономили 15% на облачных сервисах в этом месяце.</p>
+<div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-tertiary-fixed shadow-[0_0_10px_#67dca8]"></div>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-tertiary-container/30 blur-2xl rounded-full"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/20 rounded-t-xl shadow-lg">
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps mt-0.5">Главная</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps mt-0.5">Команда</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-label-caps text-label-caps mt-0.5">Сканер</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high/50 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="font-label-caps text-label-caps mt-0.5">Задачи</span>
+</button>
+</nav>
+<!-- Floating Action Button Contextual (FAB) -->
+<button class="fixed bottom-24 right-6 md:bottom-12 md:right-12 w-14 h-14 primary-gradient text-white rounded-[16px] shadow-2xl flex items-center justify-center hover:scale-105 active:scale-90 transition-all duration-200 z-40">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<script>
+        // Simple micro-interaction for balance hover
+        const hero = document.querySelector('section.primary-gradient');
+        hero.addEventListener('mousemove', (e) => {
+            const { left, top, width, height } = hero.getBoundingClientRect();
+            const x = (e.clientX - left) / width;
+            const y = (e.clientY - top) / height;
+            hero.style.background = `linear-gradient(${135 + (x * 10)}deg, #0058be 0%, #004191 50%, #002114 100%)`;
+        });
+
+        // Initialize Material Symbols weights
+        document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+            if (icon.hasAttribute('data-weight') && icon.getAttribute('data-weight') === 'fill') {
+                icon.style.fontVariationSettings = "'FILL' 1";
+            }
+        });
+    </script>
+</body></html>
