@@ -39,8 +39,13 @@ export default function OperationsProgressStrip({
           />
         </div>
         <p className="mt-2 text-xs text-on-surface-variant">
-          Готовность к отчётности: <strong className="text-on-surface">{score}%</strong>
-          {pending > 0 && <> · в работе: {pending}</>}
+          {blocked > 0
+            ? `Блокеров: ${blocked}`
+            : pending > 0
+              ? `В работе: ${pending}`
+              : score >= 80
+                ? 'Можно переходить к отчётности'
+                : 'Дозаполните журнал и документы'}
         </p>
       </div>
       {onRefresh && (

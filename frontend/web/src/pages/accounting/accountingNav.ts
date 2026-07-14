@@ -11,11 +11,10 @@ export type AccountingNavItem = {
 }
 
 export const ACCOUNTING_NAV: AccountingNavItem[] = [
-  { to: '/accounting', label: 'Обзор', icon: 'dashboard', end: true, description: 'С чего начать и что требует внимания' },
-  { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', description: 'Доходы и расходы из банка, скана и ручного ввода' },
+  { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', end: true, description: 'Доходы и расходы из банка, скана и ручного ввода' },
   { to: '/accounting/kudir', label: 'КУДиР', icon: 'menu_book', description: 'Книга учёта доходов и расходов за год' },
   { to: '/accounting/taxes', label: 'Налоги', icon: 'calculate', description: 'УСН, ФСЗН и сроки уплаты' },
-  { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', description: 'Подача в ИМНС, ФСЗН и другие органы' },
+  { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', description: 'Подготовка и подача (workflow)' },
 ]
 
 export function getAccountingNav(contour?: ProductContour | null): AccountingNavItem[] {

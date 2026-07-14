@@ -19,7 +19,6 @@ import EmployeesStaffing from './pages/employees/Staffing'
 import EmployeesListPage from './pages/EmployeesPage'
 import EmployeeDossierPage from './pages/employees/EmployeeDossierPage'
 import Accounting from './pages/Accounting'
-import AccountingHub from './pages/accounting/Hub'
 import KudirPage from './pages/accounting/KudirPage'
 import TaxesPage from './pages/TaxesPage'
 import Counterparties from './pages/Counterparties'
@@ -82,17 +81,10 @@ function LegacyReportingRedirect() {
   return <Navigate to={`/reports/${authority}`} replace />
 }
 
-/** Точка входа в учёт: хаб или редирект в журнал при query (контрагент, пресеты). */
+/** Точка входа в учёт: журнал (хаб убран из pilot IA). */
 function AccountingEntry() {
   const location = useLocation()
-  if (location.search || location.hash) {
-    return <Navigate to={`/accounting/journal${location.search}${location.hash}`} replace />
-  }
-  return (
-    <RoleRoute allow={['admin', 'accountant']}>
-      <AccountingHub />
-    </RoleRoute>
-  )
+  return <Navigate to={`/accounting/journal${location.search}${location.hash}`} replace />
 }
 
 export default function App() {

@@ -14,7 +14,7 @@ export type ZoneMeta = {
 export const ZONES: ZoneMeta[] = [
   { id: 'today', label: 'Главная', icon: 'dashboard', defaultTo: '/' },
   { id: 'money', label: 'Банк', icon: 'account_balance', defaultTo: '/bank' },
-  { id: 'reporting', label: 'Учёт', icon: 'account_balance_wallet', defaultTo: '/accounting' },
+  { id: 'reporting', label: 'Учёт', icon: 'account_balance_wallet', defaultTo: '/accounting/journal' },
   { id: 'calendar', label: 'Календарь', icon: 'calendar_month', defaultTo: '/calendar' },
   { id: 'team', label: 'Сотрудники', icon: 'groups', defaultTo: '/employees' },
   { id: 'clients', label: 'Контрагенты', icon: 'handshake', defaultTo: '/counterparties' },
@@ -58,11 +58,10 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'reporting',
     label: 'Учёт',
     items: [
-      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true, description: 'Обзор, журнал, КУДиР и налоги' },
-      { to: '/accounting/journal', label: 'Журнал', icon: 'receipt_long', end: true, description: 'Доходы и расходы' },
+      { to: '/accounting/journal', label: 'Журнал', icon: 'menu_book', end: true, description: 'Доходы и расходы' },
       { to: '/accounting/kudir', label: 'КУДиР', icon: 'book', end: true, description: 'Книга доходов и расходов' },
       { to: '/accounting/taxes', label: 'Налоги', icon: 'calculate', end: true, description: 'УСН, ФСЗН и сроки' },
-      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Подача в ИМНС и ФСЗН' },
+      { to: '/reports', label: 'Отчёты', icon: 'assignment_turned_in', end: true, description: 'Подготовка и подача' },
     ],
   },
   {
@@ -170,7 +169,7 @@ export function flattenNavForSheetWithAssistant(items: NavItem[]) {
 export const MOBILE_BAR_ITEMS = [
   { to: '/', label: 'Главная', icon: 'hub', end: true },
   { to: '/bank', label: 'Банк', icon: 'account_balance' },
-  { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true },
+  { to: '/accounting/journal', label: 'Учёт', icon: 'menu_book', end: true },
   { to: '/counterparties', label: 'Контрагенты', icon: 'handshake', end: true },
 ]
 
@@ -181,7 +180,7 @@ export function getMobileBarItemsForRole(role?: string | null, contour?: Product
     items = [
       { to: '/', label: 'Главная', icon: 'hub', end: true },
       { to: '/workspace/queues', label: 'Очереди', icon: 'all_inbox', end: true },
-      { to: '/accounting', label: 'Учёт', icon: 'menu_book', end: true },
+      { to: '/accounting/journal', label: 'Учёт', icon: 'menu_book', end: true },
       { to: '/calendar', label: 'Календарь', icon: 'event', end: true },
     ]
   } else if (r === 'manager') {

@@ -5,7 +5,7 @@ import { reportingCalmApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
 import ReportSubmissionsView, { type ReportingAuthority } from './ReportSubmissionsView'
 import ReportingGuidedFlow from './ReportingGuidedFlow'
-import { buildReportingPeriodNarrative } from './reportingFlowModel'
+import { buildReportingPeriodNarrative, buildHomeReportingChecklist } from './reportingFlowModel'
 import AccountingNavTabs from '../../components/accounting/AccountingNavTabs'
 import { GlassCard, HeroGradient, StatusChip } from '../../components/stitch'
 
@@ -46,8 +46,9 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
   })
 
   const periodNarrative = useMemo(() => buildReportingPeriodNarrative(calmOverview), [calmOverview])
+  const checklist = useMemo(() => buildHomeReportingChecklist(calmOverview), [calmOverview])
   const blockerCount = calmOverview?.readiness?.blockers?.length ?? 0
-  const readinessScore = calmOverview?.readiness?.score ?? null
+  const readyForSubmit = checklist.every((item) => item.done)
 
   if (authority !== undefined && !isReportingAuthority(authority)) {
     return <Navigate to={base} replace />
@@ -114,22 +115,20 @@ export default function ReportingPage({ basePath = '/reports' }: ReportingPagePr
             </div>
           </div>
           <GlassCard hover={false} className="mt-4 w-full border-white/10 bg-white/5 p-6 backdrop-blur-xl md:mt-0 md:w-80">
-            <p className="mb-4 font-label text-label-caps uppercase tracking-widest text-primary-fixed/70">Готовность пакета</p>
-            <div className="flex h-20 items-end gap-1">
-              {[40, 65, 45, 90, 70, 85, Math.min(readinessScore ?? 60, 100)].map((h, i) => (
-                <div
-                  key={i}
-                  className={`w-full rounded-t-sm ${i === 6 ? 'bg-tertiary-fixed-dim' : 'bg-primary-fixed-dim'}`}
-                  style={{ height: `${h}%` }}
-                />
+            <p className="mb-3 font-label text-label-caps uppercase tracking-widest text-primary-fixed/70">Перед подачей</p>
+            <ul className="space-y-2">
+              {checklist.map((item) => (
+                <li key={item.label} className="flex items-center gap-2 text-sm text-white/90">
+                  <span className="material-symbols-outlined text-base" aria-hidden>
+                    {item.done ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <span className={item.done ? 'text-white/60 line-through' : 'font-medium'}>{item.label}</span>
+                </li>
               ))}
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="font-mono-data text-display-lg text-white">{readinessScore != null ? `${readinessScore}%` : '—'}</span>
-              <span className="text-xs font-bold text-tertiary-fixed">
-                {blockerCount === 0 ? 'Готово к подаче' : `${blockerCount} замеч.`}
-              </span>
-            </div>
+            </ul>
+            <p className="mt-4 text-xs font-semibold text-tertiary-fixed">
+              {readyForSubmit ? 'Можно подавать отчётность' : `Осталось шагов: ${checklist.filter((c) => !c.done).length}`}
+            </p>
           </GlassCard>
         </div>
       </HeroGradient>

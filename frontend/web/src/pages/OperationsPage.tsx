@@ -383,7 +383,7 @@ export default function OperationsPage() {
         </GlassCard>
       )}
 
-      {!isLoading && !isError && data?.readiness_score != null && (
+      {!isLoading && !isError && data?.readiness_score != null && data.blocked_count > 0 && (
         <div className="mb-6">
           <OperationsProgressStrip
             readinessScore={data.readiness_score}

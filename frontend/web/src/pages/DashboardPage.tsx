@@ -1,9 +1,12 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { bankApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
 import BusinessHero from '../components/dashboard/BusinessHero'
+import WorkNowCard from '../components/dashboard/WorkNowCard'
+import ReportingReadinessHero from '../features/reporting/ReportingReadinessHero'
 import DashboardCalendarCard from '../components/dashboard/DashboardCalendarCard'
 import DashboardAttentionCard from '../components/dashboard/DashboardAttentionCard'
 import DashboardObligationsCard from '../components/dashboard/DashboardObligationsCard'
@@ -14,7 +17,15 @@ import { orgQueryKey } from '../lib/queryKeys'
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
   const isManager = (user?.role || '').toLowerCase() === 'manager'
+  const isAccountant = (user?.role || '').toLowerCase() === 'accountant'
+
+  useEffect(() => {
+    if (isAccountant) navigate('/workspace/queues', { replace: true })
+  }, [isAccountant, navigate])
+
+  if (isAccountant) return null
 
   const { data: bankData, isLoading: bankAccountsLoading, isError, refetch } = useQuery({
     queryKey: orgQueryKey('bank-accounts-dashboard'),
@@ -99,6 +110,11 @@ export default function DashboardPage() {
   return (
     <div className="fc-owner-dashboard fc-bcc fc-scroll-region space-y-gutter pb-20 lg:pb-6">
       <BusinessHero cashOnHand={cashOnHand} />
+
+      <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
+        <WorkNowCard />
+        <ReportingReadinessHero />
+      </div>
 
       <div className="fc-bcc-grid grid grid-cols-12 gap-gutter">
         <div className="col-span-12 lg:col-span-6">

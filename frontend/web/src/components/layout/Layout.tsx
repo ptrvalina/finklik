@@ -23,6 +23,7 @@ import BusinessProfileBanner from '../onboarding/BusinessProfileBanner'
 import NetworkStatusBanner from './NetworkStatusBanner'
 import { useOperational } from '../../context/OperationalContext'
 import OperationalContinuityPanel from '../operations/OperationalContinuityPanel'
+import WorkflowContinuityBar from '../workflow/WorkflowContinuityBar'
 import { useProductContour } from '../../hooks/useProductContour'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
@@ -414,6 +415,7 @@ export default function Layout() {
             <div className="relative z-[1] w-full px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-7 sm:pb-28 lg:px-6 lg:py-8 lg:pb-10">
               <NetworkStatusBanner />
               <BusinessProfileBanner />
+              {onWorkflowRoute && !isManager && <WorkflowContinuityBar />}
               <Outlet />
             </div>
           </main>

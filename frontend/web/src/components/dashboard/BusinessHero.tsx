@@ -1,10 +1,25 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
-import { reportsApi } from '../../api/client'
+import { operationsApi, reportsApi } from '../../api/client'
 import { orgQueryKey } from '../../lib/queryKeys'
 import MoneyAmount from '../ui/MoneyAmount'
 import { buildSparkline, computeMonthOverMonth } from '../../lib/dashboardOwnerMetrics'
+import { terminology } from '../../i18n/terminology.ru'
+
+function riskStatusLabel(level: string | undefined | null): { text: string; className: string } {
+  const l = (level || '').toLowerCase()
+  if (l === 'critical' || l === 'high') {
+    return { text: terminology.globalStatus.critical, className: 'bg-red-500/20 text-red-100' }
+  }
+  if (l === 'medium' || l === 'attention' || l === 'warn') {
+    return { text: terminology.globalStatus.risk, className: 'bg-amber-500/20 text-amber-100' }
+  }
+  if (l === 'low' || l === 'ok' || l === 'normal') {
+    return { text: 'Всё под контролем', className: 'bg-emerald-500/20 text-emerald-100' }
+  }
+  return { text: terminology.globalStatus.attention, className: 'bg-white/10 text-white/80' }
+}
 
 function DeltaLine({ label, value, pct }: { label: string; value: number | null; pct?: number | null }) {
   if (value == null || !Number.isFinite(value)) {
@@ -36,6 +51,15 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
     staleTime: 120_000,
   })
 
+  const { data: fs } = useQuery({
+    queryKey: orgQueryKey('financial-state-hero'),
+    queryFn: () => operationsApi.financialState().then((r) => r.data),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const risk = riskStatusLabel(fs?.risk_level as string | undefined)
+
   const sparkData = useMemo(() => buildSparkline(summary?.months), [summary])
   const mom = useMemo(() => computeMonthOverMonth(summary?.months), [summary])
 
@@ -51,7 +75,12 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
       <div className="fc-business-hero-glow" aria-hidden />
       <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="font-label text-label-caps uppercase text-primary-fixed/80">Сводный остаток</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-label text-label-caps uppercase text-primary-fixed/80">Сводный остаток</p>
+            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${risk.className}`}>
+              {risk.text}
+            </span>
+          </div>
           <p className="mt-0.5 text-xs text-white/60">Деньги на счетах</p>
           <MoneyAmount
             value={cashOnHand ?? 0}

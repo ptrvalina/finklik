@@ -21,7 +21,6 @@ from app.schemas.employee import (
     SalaryCalculateRequest,
     SalaryResponse,
 )
-from app.services.hr_order_docx import build_hire_order_mapping, render_hire_order_docx
 from app.services.tax_calculator import calculate_salary
 from app.services.workforce_automation import (
     create_workforce_calendar_event,
@@ -219,6 +218,8 @@ async def download_hire_order_document(
     db: AsyncSession = Depends(get_db),
 ):
     """DOCX приказ о приёме по шаблону `resources/hr_templates/order_hire.docx`."""
+    from app.services.hr_order_docx import build_hire_order_mapping, render_hire_order_docx
+
     enc = get_encryptor()
     er = await db.execute(
         select(Employee).where(

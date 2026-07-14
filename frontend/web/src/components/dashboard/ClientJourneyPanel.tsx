@@ -57,7 +57,7 @@ function buildJourney(metrics: MetricsLike | undefined, transactions: TxLike[]):
       id: 'drafts',
       title: 'Есть черновики операций',
       description: 'Проведите черновики, чтобы отчёты и налоги считались из актуальных данных.',
-      to: '/accounting',
+      to: '/accounting/journal',
       cta: 'Проверить операции',
       priority: 'medium',
       icon: 'edit_note',

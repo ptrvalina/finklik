@@ -5,7 +5,7 @@ import { hiddenRoutesForContour } from '../../lib/productContour'
 /** Редирект, если маршрут недоступен для текущего контура продукта. */
 export default function ContourRoute({
   path,
-  fallback = '/accounting',
+  fallback = '/accounting/journal',
   children,
 }: {
   path: string

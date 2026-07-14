@@ -32,7 +32,7 @@ function buildRecs(metrics: HealthMetrics | undefined, transactions: TxLike[]): 
     out.push({
       id: 'drafts',
       text: `${drafts} операций в черновиках могут исказить отчётность`,
-      to: '/accounting',
+      to: '/accounting/journal',
       hint: 'Провести в журнале',
     })
   }

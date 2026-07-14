@@ -161,7 +161,7 @@ export function buildReportingPeriodNarrative(
       break
     case 'ready_for_draft':
       headline = `${periodLabel}: данные сходятся — можно к контролю и черновику`
-      supporting = `Готовность ${score}% — запустите проверку AI и откройте черновик в нужном органе.`
+      supporting = 'Данные сходятся — можно к контролю и черновику в нужном органе.'
       break
     case 'monitoring':
       headline = `${periodLabel}: часть отчётов уже отправлена`
@@ -173,8 +173,8 @@ export function buildReportingPeriodNarrative(
           ? `${periodLabel}: закрытие периода — ${blockers} блокер(ов) готовности`
           : `${periodLabel}: идёт закрытие месяца`
       supporting =
-        score != null
-          ? `Готовность ${score}% · цель ≥ ${READINESS_THRESHOLD}% перед проверкой. Исправьте журнал и OCR, затем контроль AI.`
+        score != null && score < READINESS_THRESHOLD
+          ? 'Исправьте журнал и OCR, затем контроль AI.'
           : 'Дозаполните журнал и первичку — система пересчитает готовность.'
       break
     default:
@@ -324,7 +324,7 @@ export function buildHomeReportingChecklist(data: CalmOverviewLike | undefined) 
 export function readinessBlockedReason(data: CalmOverviewLike | undefined): string | null {
   const score = data?.readiness?.score
   if (score === null || score === undefined) return 'Ждём расчёт готовности…'
-  if (score < READINESS_THRESHOLD) return `Готовность ${score}% — нужно ≥ ${READINESS_THRESHOLD}% для следующего шага`
+  if (score < READINESS_THRESHOLD) return 'Завершите шаги в чеклисте отчётности'
   return null
 }
 

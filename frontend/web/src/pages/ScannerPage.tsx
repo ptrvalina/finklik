@@ -221,7 +221,7 @@ export default function ScannerPage() {
           queryFn: () => reportingCalmApi.overview().then((r) => r.data),
         })
         const score = (ov as { readiness?: { score?: number } })?.readiness?.score
-        if (score != null) setReadinessNotice(`Готовность отчётности обновлена: ${score}%`)
+        if (score != null) setReadinessNotice('Данные учёта обновлены — проверьте чеклист в отчётности')
       } catch {
         setReadinessNotice('Данные учёта обновлены — проверьте готовность в отчётности')
       }

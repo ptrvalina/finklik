@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web test-autopilot-regression check-deploy-status
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke pilot-check smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web test-autopilot-regression check-deploy-status
 
 # Windows Store / Git Bash: часто есть только `python`; CI/Linux обычно — `python3`.
 ifeq ($(OS),Windows_NT)
@@ -76,6 +76,9 @@ test-autopilot-regression: ## Регрессия автопилота: ключ�
 
 demo-smoke: ## Быстрый pre-demo smoke (backend+frontend)
 	@$(PYTHON) scripts/pre_demo_smoke.py
+
+pilot-check: ## Pilot readiness scorecard → artifacts/pilot-readiness-scorecard.md
+	@$(PYTHON) scripts/pilot_check.py
 
 smoke-stage8: ## Smoke stage8 (RBAC manager + planner/KUDiR/OAuth + frontend build)
 	@$(PYTHON) scripts/smoke_stage8.py
