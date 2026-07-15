@@ -105,4 +105,11 @@ def preprocess_for_ocr(img: "Image.Image", *, doc_hint: str = "") -> "Image.Imag
 def load_image_from_bytes(file_bytes: bytes) -> "Image.Image":
     if Image is None:
         raise RuntimeError("Pillow not available")
+    if len(file_bytes) >= 12 and file_bytes[4:8] == b"ftyp":
+        try:
+            from pillow_heif import register_heif_opener
+
+            register_heif_opener()
+        except Exception:
+            pass
     return Image.open(io.BytesIO(file_bytes))

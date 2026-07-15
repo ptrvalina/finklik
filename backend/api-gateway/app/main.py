@@ -57,6 +57,7 @@ from app.api.v1.endpoints.accounting_reports import router as accounting_reports
 from app.api.v1.endpoints.ops_diagnostics import router as ops_diagnostics_router
 from app.api.v1.endpoints.pilot import router as pilot_router
 from app.services.production_workers import amortization_scheduler_forever, integrity_verification_forever
+from app.services.db_schema_repair import repair_known_schema_gaps
 from app.services.startup_checks import run_startup_checks
 from app.websocket.router import router as ws_router
 from app.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, JwtQueryParamBlockMiddleware
@@ -140,6 +141,12 @@ async def lifespan(application: FastAPI):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+            try:
+                repaired = await repair_known_schema_gaps(engine)
+                if any(repaired.values()):
+                    log.info("db_schema_repair_applied", repaired=repaired)
+            except Exception as repair_exc:
+                log.warning("db_schema_repair_failed", error=str(repair_exc))
             log.info("db_startup_ready", attempt=attempt)
             checks = await run_startup_checks(engine)
             log.info("startup_checks", ok=checks.get("ok"), overall=checks.get("checks", {}).get("overall"))

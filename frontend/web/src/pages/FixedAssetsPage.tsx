@@ -85,8 +85,8 @@ export default function FixedAssetsPage() {
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric pb-24 lg:pb-10">
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link to="/accounting/chart" className="btn-secondary !min-h-10 text-xs">
-          План счетов
+        <Link to="/settings" className="btn-secondary !min-h-10 text-xs">
+          Настройки учёта
         </Link>
         <Link to="/accounting/journal" className="btn-primary !min-h-10 text-xs">
           Журнал

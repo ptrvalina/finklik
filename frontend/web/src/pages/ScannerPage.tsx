@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reportingCalmApi, scannerApi } from '../api/client'
@@ -9,6 +9,11 @@ import OcrReviewBanner from '../components/scanner/OcrReviewBanner'
 import OcrCorrectionPanel from '../components/scanner/OcrCorrectionPanel'
 import OcrPreviewOverlay from '../components/scanner/OcrPreviewOverlay'
 import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace'
+import ScannerWorkflowStepper from '../components/scanner/ScannerWorkflowStepper'
+import ScannerQueuePanel from '../components/scanner/ScannerQueuePanel'
+import ScannerExecutionHint from '../components/scanner/ScannerExecutionHint'
+import { DOC_TYPE_META } from '../components/scanner/scannerMeta'
+import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
 import { useOcrAutosave } from '../hooks/useOcrAutosave'
 import {
@@ -21,14 +26,14 @@ import type { FieldRegion } from '../components/scanner/OcrPreviewOverlay'
 import { useOperational } from '../context/OperationalContext'
 import { useAuthStore } from '../store/authStore'
 import { loadScannerUiSession, saveScannerUiSession } from '../lib/scannerUiSession'
-import { useMinWidthLg } from '../lib/useMinWidthLg'
 import {
-  GlassCard,
-  PageHeader,
-  StatCard,
-  StatusChip,
-  StitchIcon,
-} from '../components/stitch'
+  countLowConfidenceFields,
+  queuePosition,
+  resolveScannerFocus,
+  resolveWorkflowPhase,
+} from '../lib/scannerWorkflow'
+import { useMinWidthLg } from '../lib/useMinWidthLg'
+import { GlassCard, StatCard, StatusChip, StitchIcon } from '../components/stitch'
 
 function clientErrorText(err: unknown): string {
   const e = err as { response?: { data?: { detail?: unknown }; status?: number }; message?: string }
@@ -72,32 +77,6 @@ type HistoryItem = {
 
 const MAX_BATCH_FILES = 20
 
-const DOC_ICONS: Record<string, { label: string; icon: string; color: string }> = {
-  receipt: { label: 'Чек', icon: 'receipt', color: 'text-secondary' },
-  ttn: { label: 'ТТН', icon: 'local_shipping', color: 'text-primary' },
-  act: { label: 'Акт', icon: 'task', color: 'text-tertiary' },
-  invoice: { label: 'Счёт', icon: 'request_quote', color: 'text-error' },
-  payment_order: { label: 'Платёжное поручение', icon: 'payments', color: 'text-primary' },
-  unknown: { label: 'Другое', icon: 'description', color: 'text-on-surface-variant' },
-}
-
-function scanStatusVariant(status: string): 'ready' | 'pending' | 'error' | 'neutral' {
-  const s = status.toLowerCase()
-  if (s === 'success' || s === 'confirmed' || s === 'done') return 'ready'
-  if (s === 'processing' || s === 'pending' || s === 'review') return 'pending'
-  if (s === 'error' || s === 'failed') return 'error'
-  return 'neutral'
-}
-
-function scanStatusLabel(status: string): string {
-  const s = status.toLowerCase()
-  if (s === 'success' || s === 'confirmed' || s === 'done') return 'Готово'
-  if (s === 'processing' || s === 'pending') return 'Обработка'
-  if (s === 'review') return 'Проверка'
-  if (s === 'error' || s === 'failed') return 'Ошибка'
-  return status
-}
-
 export default function ScannerPage() {
   const qc = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -122,6 +101,7 @@ export default function ScannerPage() {
   const [batchSummary, setBatchSummary] = useState<{ total: number; ok: number; failures: number } | null>(null)
   const [activeOcrField, setActiveOcrField] = useState<OcrFieldKey | null>(null)
   const [readinessNotice, setReadinessNotice] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
   const isLg = useMinWidthLg()
 
   useEffect(() => {
@@ -197,6 +177,7 @@ export default function ScannerPage() {
     onSuccess: async (data: { transaction_id?: string }) => {
       setTxSaved(true)
       setAmountError(null)
+      setConfirmError(null)
       setCreatedTxId(data.transaction_id ?? null)
       setReadinessNotice(null)
       if (scanResult?.id) {
@@ -244,6 +225,14 @@ export default function ScannerPage() {
       if (autoAdvanceQueue) {
         window.setTimeout(() => openNextInReviewQueue(docId), 400)
       }
+    },
+    onError: (err) => {
+      setConfirmError(
+        calmActionError(
+          'ocr',
+          clientErrorText(err) || formatApiDetail((err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail),
+        ),
+      )
     },
   })
 
@@ -395,6 +384,7 @@ export default function ScannerPage() {
       return
     }
     setAmountError(null)
+    setConfirmError(null)
     const payload = draftToCorrectionPayload(editDraft, [...correctedFields], {
       category: scanResult.execution_suggestions?.suggested_category as string | undefined,
       debit_account: scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined,
@@ -402,6 +392,17 @@ export default function ScannerPage() {
     })
     confirmMutation.mutate({ id: scanResult.id, payload })
   }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && scanResult && editDraft && !txSaved && !confirmMutation.isPending) {
+        e.preventDefault()
+        submitTxFromDraft()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [scanResult, editDraft, txSaved, confirmMutation.isPending])
 
   function markCorrected(fcKey: string) {
     setCorrectedFields((prev) => new Set(prev).add(fcKey))
@@ -414,6 +415,49 @@ export default function ScannerPage() {
 
   const reviewCount = reviewQueueData?.items?.length ?? 0
   const mobileReview = !isLg && !!scanResult && !!editDraft
+  const isProcessing = uploadMutation.isPending || parseTextMutation.isPending || Boolean(batchProgress)
+  const reviewItems = reviewQueueData?.items ?? []
+
+  const workflowPhase = useMemo(
+    () =>
+      resolveWorkflowPhase({
+        isProcessing,
+        hasScan: Boolean(scanResult),
+        txSaved,
+        linkedTransactionId: scanResult?.linked_transaction_id,
+        requiresReview: scanResult?.requires_review,
+        confidence: scanResult?.confidence,
+        fieldConfidence: scanResult?.field_confidence,
+      }),
+    [isProcessing, scanResult, txSaved],
+  )
+
+  const queuePos = useMemo(
+    () => queuePosition(scanResult?.id, reviewItems),
+    [scanResult?.id, reviewItems],
+  )
+
+  const lowFieldCount = useMemo(
+    () => countLowConfidenceFields(scanResult?.field_confidence),
+    [scanResult?.field_confidence],
+  )
+
+  const focusAction = useMemo(
+    () =>
+      resolveScannerFocus({
+        phase: workflowPhase,
+        reviewCount,
+        queuePos,
+        lowFields: lowFieldCount,
+        createdTxId,
+      }),
+    [workflowPhase, reviewCount, queuePos, lowFieldCount, createdTxId],
+  )
+
+  const openFirstInQueue = useCallback(() => {
+    const first = reviewItems[0]
+    if (first) loadDocMutation.mutate(first.id)
+  }, [reviewItems, loadDocMutation])
 
   function dismissScan() {
     setScanResult(null)
@@ -430,11 +474,11 @@ export default function ScannerPage() {
       {mobileReview && scanResult && editDraft && (
         <ScannerMobileWorkspace
           scan={scanResult}
-          docLabel={(DOC_ICONS[editDraft.docType || scanResult.doc_type] || DOC_ICONS.unknown).label}
+          docLabel={(DOC_TYPE_META[editDraft.docType || scanResult.doc_type] || DOC_TYPE_META.unknown).label}
           preview={preview}
           editDraft={editDraft}
           activeOcrField={activeOcrField}
-          amountError={amountError}
+          amountError={amountError || confirmError}
           autosaving={autosaving}
           txSaved={txSaved}
           createdTxId={createdTxId}
@@ -450,29 +494,53 @@ export default function ScannerPage() {
         />
       )}
 
-    <div className="fc-page-shell fc-page-shell-asymmetric scanner-page pb-20 lg:pb-8">
-      <PageHeader
-        title="Сканер документов"
-        subtitle={
-          reviewCount > 0
-            ? `Проверить документов: ${reviewCount}${history.length > 0 ? ` · В истории: ${history.length}` : ''}`
-            : `Загрузите первичку или выберите файл из истории${history.length > 0 ? ` · В истории: ${history.length}` : ''}`
-        }
-        actions={
-          <>
-            <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
-              <StitchIcon name="cloud_upload" className="text-lg" /> Загрузить
-            </button>
-            <Link to="/accounting/journal" className="btn-secondary text-sm">
-              <StitchIcon name="receipt_long" className="text-lg" /> Журнал
-            </Link>
-          </>
-        }
-      />
+    <OperationalPage
+      eyebrow="Первичные документы"
+      title="Сканер"
+      description={
+        reviewCount > 0
+          ? `${reviewCount} в очереди на проверку · ${history.length} в истории`
+          : 'Чек или накладная → распознавание → проверка → операция в журнале'
+      }
+      primaryAction={
+        <button type="button" className="btn-primary text-sm" onClick={() => fileRef.current?.click()}>
+          <StitchIcon name="cloud_upload" className="text-lg" /> Загрузить
+        </button>
+      }
+      secondaryActions={
+        <Link to="/accounting/journal" className="btn-secondary text-sm">
+          <StitchIcon name="receipt_long" className="text-lg" /> Журнал
+        </Link>
+      }
+      focusStrip={
+        focusAction && workflowPhase !== 'processing' ? (
+          <FocusStrip
+            headline={focusAction.headline}
+            supporting={focusAction.supporting}
+            ctaLabel={focusAction.ctaLabel}
+            ctaTo={focusAction.ctaTo}
+            tone={focusAction.tone}
+            onCta={
+              focusAction.ctaTo
+                ? undefined
+                : workflowPhase === 'idle' && reviewCount > 0
+                  ? openFirstInQueue
+                  : workflowPhase === 'idle'
+                    ? () => fileRef.current?.click()
+                    : workflowPhase === 'review'
+                      ? submitTxFromDraft
+                      : undefined
+            }
+          />
+        ) : undefined
+      }
+      className="scanner-page"
+    >
+      <ScannerWorkflowStepper phase={workflowPhase} />
 
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:max-w-lg">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:max-w-xl lg:max-w-2xl">
         <StatCard icon="document_scanner" label="В истории" value={history.length} />
-        <StatCard icon="pending_actions" iconTint="tertiary" label="Ждут проверки" value={reviewQueueData?.items?.length ?? 0} />
+        <StatCard icon="pending_actions" iconTint="tertiary" label="Ждут проверки" value={reviewCount} />
       </div>
 
       {batchSummary && batchSummary.total > 1 && (
@@ -528,27 +596,15 @@ export default function ScannerPage() {
       )}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
         {/* Left: batch + history */}
-        <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
-          {(reviewQueueData?.items?.length ?? 0) > 0 && (
-            <GlassCard className="p-4">
-              <h4 className="font-headline text-headline-sm text-on-surface">Очередь проверки</h4>
-              <ul className="mt-3 space-y-2">
-                {reviewQueueData!.items.slice(0, 5).map((item: { id: string; filename: string; confidence: number }) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-xl border border-outline-variant/35 px-3 py-2 text-left text-xs transition hover:border-primary/35"
-                      disabled={loadDocMutation.isPending}
-                      onClick={() => loadDocMutation.mutate(item.id)}
-                    >
-                      <span className="truncate font-medium">{item.filename}</span>
-                      <StatusChip variant="pending">{item.confidence}%</StatusChip>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </GlassCard>
-          )}
+        <div className="col-span-12 hidden lg:col-span-3 lg:block">
+          <ScannerQueuePanel
+            reviewItems={reviewItems}
+            historyItems={history}
+            activeDocId={scanResult?.id}
+            loading={loadDocMutation.isPending}
+            onSelect={(id) => loadDocMutation.mutate(id)}
+            onUpload={() => fileRef.current?.click()}
+          />
         </div>
 
         {/* Center: upload / preview */}
@@ -709,7 +765,7 @@ export default function ScannerPage() {
           {/* Scan result */}
           {scanResult && (() => {
             const displayDoc = editDraft?.docType || scanResult.doc_type
-            const dmeta = DOC_ICONS[displayDoc] || DOC_ICONS.unknown
+            const dmeta = DOC_TYPE_META[displayDoc] || DOC_TYPE_META.unknown
             return (
             <div id="scanner-result">
             <GlassCard hover={false} className={`mt-6 overflow-hidden p-0 ${mobileReview ? 'hidden lg:block' : ''}`}>
@@ -717,93 +773,71 @@ export default function ScannerPage() {
                 <div className="flex items-center gap-3">
                   <StitchIcon name={dmeta.icon} filled className={`text-2xl ${dmeta.color}`} />
                   <div>
-                    <h3 className="font-bold text-on-surface">{dmeta.label} распознан</h3>
+                    <h3 className="font-bold text-on-surface">{dmeta.label} · распознан</h3>
                     <p className="text-xs text-on-surface-variant">{scanResult.filename}</p>
+                    {queuePos && (
+                      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                        Документ {queuePos.index} из {queuePos.total} в очереди
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {(scanResult.requires_review || scanResult.confidence < 75) && (
+                  {txSaved ? (
+                    <StatusChip variant="ready">В журнале</StatusChip>
+                  ) : (scanResult.requires_review || scanResult.confidence < 75) ? (
                     <StatusChip variant="pending">Нужна проверка</StatusChip>
-                  )}
-                  <span className={`text-sm font-bold ${scanResult.confidence >= 90 ? 'text-secondary' : scanResult.confidence >= 75 ? 'text-tertiary' : 'text-error'}`}>
+                  ) : null}
+                  <span className={`text-sm font-bold tabular-nums ${scanResult.confidence >= 90 ? 'text-secondary' : scanResult.confidence >= 75 ? 'text-tertiary' : 'text-error'}`}>
                     {scanResult.confidence}%
                   </span>
-                  <div className="w-20 h-2 bg-surface-container-highest rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${scanResult.confidence >= 90 ? 'bg-secondary' : scanResult.confidence >= 75 ? 'bg-tertiary' : 'bg-error'}`}
-                      style={{ width: `${scanResult.confidence}%` }} />
-                  </div>
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6 lg:max-w-none">
-                  {preview ? (
-                    <img src={preview} alt="Preview" className="w-full rounded-lg object-contain max-h-[min(520px,60vh)] bg-surface" />
-                  ) : (
-                    <div className="flex h-60 items-center justify-center rounded-lg bg-surface lg:h-80">
-                      <StitchIcon name="description" className="text-5xl text-on-surface-variant/20" />
-                    </div>
-                  )}
-                  {scanResult.ocr_text && (
-                    <details className="mt-4">
-                      <summary className="cursor-pointer text-xs text-on-surface-variant hover:text-on-surface">Текст распознавания</summary>
-                      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs text-on-surface-variant">{scanResult.ocr_text}</pre>
-                    </details>
-                  )}
+              <div className="space-y-4 p-4 sm:p-6">
+                <ScannerExecutionHint
+                  message={scanResult.execution_suggestions?.message}
+                  category={scanResult.execution_suggestions?.suggested_category}
+                  debit={scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined}
+                  credit={scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined}
+                  warnings={scanResult.warnings}
+                />
+                {preview ? (
+                  <OcrPreviewOverlay
+                    previewUrl={preview}
+                    fieldRegions={scanResult.field_regions}
+                    activeField={activeOcrField}
+                    onFieldClick={setActiveOcrField}
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center rounded-lg bg-surface lg:h-80">
+                    <StitchIcon name="description" className="text-5xl text-on-surface-variant/20" />
+                  </div>
+                )}
+                {scanResult.ocr_text && (
+                  <details className="rounded-xl border border-outline-variant/25 bg-surface-container-lowest px-3 py-2">
+                    <summary className="cursor-pointer text-xs font-medium text-on-surface-variant hover:text-on-surface">
+                      Текст распознавания (OCR)
+                    </summary>
+                    <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs text-on-surface-variant">{scanResult.ocr_text}</pre>
+                  </details>
+                )}
               </div>
             </GlassCard>
             </div>
             )
           })()}
-
-          {history.length > 0 && (
-            <section className="mt-8">
-              <div className="mb-4 flex items-end justify-between">
-                <h3 className="font-headline text-headline-sm text-on-surface">Недавние сканы</h3>
-                <button type="button" className="text-sm font-bold text-primary hover:underline" onClick={() => history[0] && loadDocMutation.mutate(history[0].id)}>
-                  Открыть последний
-                </button>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {history.slice(0, 6).map((item) => {
-                  const t = DOC_ICONS[item.doc_type] || DOC_ICONS.unknown
-                  return (
-                    <GlassCard key={item.id} className="flex items-center gap-4 p-4">
-                      <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
-                        <StitchIcon name={t.icon} className={`text-2xl ${t.color}`} />
-                      </div>
-                      <button
-                        type="button"
-                        className="min-w-0 flex-1 text-left"
-                        disabled={loadDocMutation.isPending}
-                        onClick={() => loadDocMutation.mutate(item.id)}
-                      >
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <h4 className="truncate font-bold text-on-surface">{item.filename}</h4>
-                          <StatusChip variant={scanStatusVariant(item.status)}>{scanStatusLabel(item.status)}</StatusChip>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-mono text-xs text-secondary">{t.label} · {item.confidence}%</p>
-                          {item.parsed?.amount != null ? (
-                            <p className="text-xs font-bold text-on-surface">{item.parsed.amount.toLocaleString('ru-RU')} BYN</p>
-                          ) : null}
-                        </div>
-                      </button>
-                    </GlassCard>
-                  )
-                })}
-              </div>
-            </section>
-          )}
         </div>
 
         {/* Right: OCR results */}
-        <div className="col-span-12 hidden space-y-4 lg:col-span-3 lg:block">
+        <div className={`col-span-12 space-y-4 lg:col-span-3 ${mobileReview ? 'hidden lg:block' : ''}`}>
           {scanResult && editDraft && (
-            <GlassCard className="space-y-4 p-4">
+            <GlassCard className="space-y-4 p-4 lg:sticky lg:top-4">
               <OcrReviewBanner
                 confidence={scanResult.confidence}
                 fieldConfidence={scanResult.field_confidence}
                 requiresReview={scanResult.requires_review}
+                confirmed={txSaved}
               />
               <OcrCorrectionPanel
                 draft={editDraft}
@@ -813,7 +847,7 @@ export default function ScannerPage() {
                 vendorHints={scanResult.vendor_hints}
                 suggestedDebit={scanResult.execution_suggestions?.suggested_transaction?.debit_account as string | undefined}
                 suggestedCredit={scanResult.execution_suggestions?.suggested_transaction?.credit_account as string | undefined}
-                amountError={amountError}
+                amountError={amountError || confirmError}
                 autosaving={autosaving}
                 onChange={handleDraftChange}
                 onMarkCorrected={markCorrected}
@@ -827,37 +861,45 @@ export default function ScannerPage() {
                   to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
                   className="btn-primary flex min-h-10 w-full justify-center text-sm"
                 >
-                  Подтвердить в журнале
+                  Проверить в журнале
                 </Link>
               )}
+              {!txSaved && scanResult.linked_transaction_id && (
+                <Link
+                  to={`/accounting/journal?tx_id=${encodeURIComponent(scanResult.linked_transaction_id)}`}
+                  className="btn-secondary flex min-h-10 w-full justify-center text-sm"
+                >
+                  Открыть связанную операцию
+                </Link>
+              )}
+            </GlassCard>
+          )}
+          {!scanResult && (
+            <GlassCard className="hidden p-4 lg:block">
+              <h4 className="font-headline text-sm font-semibold text-on-surface">Как это работает</h4>
+              <ol className="mt-3 space-y-2 text-xs text-on-surface-variant">
+                <li className="flex gap-2"><span className="font-bold text-primary">1.</span> Загрузите PDF, фото или вставьте текст</li>
+                <li className="flex gap-2"><span className="font-bold text-primary">2.</span> Проверьте сумму, дату и контрагента</li>
+                <li className="flex gap-2"><span className="font-bold text-primary">3.</span> Подтвердите — операция попадёт в журнал</li>
+              </ol>
             </GlassCard>
           )}
         </div>
       </div>
 
-      {(reviewQueueData?.items?.length ?? 0) > 0 && (
+      {(reviewCount > 0 || history.length > 0) && !mobileReview && (
         <section id="scanner-review-queue" className="mt-8 lg:hidden">
-          <h2 className="mb-3 font-label text-label-caps uppercase text-on-surface-variant">Очередь проверки</h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {reviewQueueData!.items.map((item: { id: string; filename: string; confidence: number; doc_type: string }) => (
-              <li key={item.id}>
-                <GlassCard className="p-0">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-4 py-3 text-left"
-                    disabled={loadDocMutation.isPending}
-                    onClick={() => loadDocMutation.mutate(item.id)}
-                  >
-                    <span className="min-w-0 truncate text-sm font-medium text-on-surface">{item.filename}</span>
-                    <StatusChip variant="pending">{item.confidence}%</StatusChip>
-                  </button>
-                </GlassCard>
-              </li>
-            ))}
-          </ul>
+          <ScannerQueuePanel
+            reviewItems={reviewItems}
+            historyItems={history}
+            activeDocId={scanResult?.id}
+            loading={loadDocMutation.isPending}
+            onSelect={(id) => loadDocMutation.mutate(id)}
+            onUpload={() => fileRef.current?.click()}
+          />
         </section>
       )}
-    </div>
+    </OperationalPage>
     </>
   )
 }

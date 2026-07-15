@@ -131,10 +131,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="mt-3">
+        <OnboardingChecklist />
+      </div>
       {profileIncomplete && (
-        <div className="mt-3">
-          <OnboardingChecklist />
-        </div>
+        <p className="text-center text-xs text-on-surface-variant">
+          Профиль бизнеса ещё не завершён —{' '}
+          <Link to="/onboarding/business-profile" className="font-semibold text-primary hover:underline">
+            продолжить настройку
+          </Link>
+        </p>
       )}
     </div>
   )

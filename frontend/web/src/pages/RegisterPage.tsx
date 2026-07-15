@@ -142,55 +142,56 @@ export default function RegisterPage() {
               </p>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label className="label">Ваше имя</label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="label" htmlFor="reg-name">Ваше имя</label>
                 <input
+                  id="reg-name"
                   className="input min-h-touch-min"
                   placeholder="Иванов Иван Иванович"
                   value={form.full_name}
                   onChange={set('full_name')}
                   required
+                  autoComplete="name"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="label">Эл. почта</label>
-                <div className="relative">
-                  <StitchIcon name="alternate_email" className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                  <input
-                    type="email"
-                    className="input min-h-touch-min pl-11"
-                    placeholder="ivan@company.by"
-                    value={form.email}
-                    onChange={set('email')}
-                    required
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="label" htmlFor="reg-email">Эл. почта</label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  className="input min-h-touch-min"
+                  placeholder="ivan@company.by"
+                  value={form.email}
+                  onChange={set('email')}
+                  required
+                  autoComplete="email"
+                />
               </div>
-              <div className="space-y-2">
-                <label className="label">Пароль</label>
-                <div className="relative">
-                  <StitchIcon name="lock" className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                  <input
-                    type="password"
-                    className="input min-h-touch-min pl-11"
-                    placeholder="Мин. 8 символов + заглавная + цифра"
-                    value={form.password}
-                    onChange={set('password')}
-                    required
-                    minLength={8}
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="label" htmlFor="reg-password">Пароль</label>
+                <input
+                  id="reg-password"
+                  type="password"
+                  className="input min-h-touch-min"
+                  placeholder="Мин. 8 символов + заглавная + цифра"
+                  value={form.password}
+                  onChange={set('password')}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
               </div>
 
               <div className="space-y-3 border-t border-outline-variant/30 pt-4">
                 <p className="font-label text-label-caps uppercase tracking-widest text-outline">
                   {form.legal_form === 'ip' ? 'ИП' : 'ООО'}
                 </p>
-                <div className="space-y-3.5">
-                  <div className="space-y-2">
-                    <label className="label">Режим налогообложения</label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="label" htmlFor="reg-tax">Режим налогообложения</label>
                     <select
+                      id="reg-tax"
                       className="input min-h-touch-min"
                       value={form.tax_regime}
                       onChange={(e) => setForm((f) => ({ ...f, tax_regime: e.target.value }))}
@@ -202,26 +203,29 @@ export default function RegisterPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="label">Название</label>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="label" htmlFor="reg-org">Название</label>
                     <input
+                      id="reg-org"
                       className="input min-h-touch-min"
-                      placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО "Ромашка"'}
+                      placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО «Ромашка»'}
                       value={form.org_name}
                       onChange={set('org_name')}
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="label">УНП (9 цифр)</label>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="label" htmlFor="reg-unp">УНП (9 цифр)</label>
                     <input
-                      className="input min-h-touch-min font-mono-data"
+                      id="reg-unp"
+                      className="input min-h-touch-min font-mono-data tracking-wider"
                       placeholder="691234567"
                       value={form.org_unp}
                       onChange={set('org_unp')}
                       required
                       maxLength={9}
                       pattern="\d{9}"
+                      inputMode="numeric"
                     />
                   </div>
                 </div>

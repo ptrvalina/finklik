@@ -88,7 +88,7 @@ export default function LoginPage() {
               <input
                 id="login-email"
                 type="email"
-                className="input pl-11"
+                className="input min-h-touch-min pl-11"
                 placeholder="ivan@company.by"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -111,7 +111,7 @@ export default function LoginPage() {
               <input
                 id="login-password"
                 type="password"
-                className="input pl-11"
+                className="input min-h-touch-min pl-11"
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}

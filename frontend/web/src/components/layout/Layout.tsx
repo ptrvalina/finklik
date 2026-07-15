@@ -210,8 +210,8 @@ export default function Layout() {
             to="/scan"
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md transition hover:bg-primary-dim active:scale-[0.98]"
           >
-            <Icon name="add_circle" className="text-lg" />
-            Новая запись
+            <Icon name="document_scanner" className="text-lg" />
+            Сканер документов
           </NavLink>
           {!isManager && (
             <NavLink
@@ -223,13 +223,13 @@ export default function Layout() {
             </NavLink>
           )}
           {!isManager && (
-            <Link
+            <NavLink
               to="/settings"
               className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
             >
-              <Icon name="help" className="text-[20px]" />
-              Поддержка
-            </Link>
+              <Icon name="settings" className="text-[20px]" />
+              Настройки
+            </NavLink>
           )}
           <div className="flex items-center gap-3 rounded-xl px-2 py-2">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dim text-sm font-bold text-white">
@@ -260,7 +260,7 @@ export default function Layout() {
             aria-label="Поиск"
           >
             <Icon name="search" className="text-lg text-outline" />
-            <span className="truncate">Поиск по операциям…</span>
+            <span className="truncate">Разделы: сканер, журнал, банк…</span>
             <span className="ml-auto rounded-md bg-surface-container-high px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant/70">⌘K</span>
           </button>
 
@@ -367,21 +367,30 @@ export default function Layout() {
         </header>
 
         {searchOpen && (
-          <div className="border-b border-outline/75 bg-surface-container-low/95 px-4 py-3 dark:border-outline/35/80">
-            <div className="relative">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-              <input
-                autoFocus
-                type="search"
-                placeholder="Найти… Enter — операции"
-                className="input h-11 w-full rounded-xl pl-10"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearchOpen(false)
-                    navigate('/accounting/journal')
-                  }
-                }}
-              />
+          <div className="border-b border-outline/75 bg-surface-container-low/95 px-4 py-3 dark:border-outline/35">
+            <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
+              <p className="shrink-0 text-xs font-semibold text-on-surface-variant">Быстрый переход:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { to: '/scan', label: 'Сканер' },
+                  { to: '/accounting/journal', label: 'Журнал' },
+                  { to: '/bank', label: 'Банк' },
+                  { to: '/reports', label: 'Отчёты' },
+                  { to: '/settings', label: 'Настройки' },
+                ].map((item) => (
+                  <button
+                    key={item.to}
+                    type="button"
+                    className="rounded-full border border-outline-variant/50 bg-surface px-3 py-1.5 text-xs font-semibold text-on-surface transition hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => {
+                      setSearchOpen(false)
+                      navigate(item.to)
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

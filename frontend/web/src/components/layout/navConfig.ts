@@ -92,7 +92,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Настройки',
     items: [
       { to: '/settings', label: 'Профиль', icon: 'settings', end: true, description: 'Организация и команда' },
-      { to: '/accounting/chart', label: 'План счетов', icon: 'table_chart', end: true },
       { to: '/analytics', label: 'Аналитика', icon: 'insights', end: true },
       { to: '/assistant', label: 'Консультант', icon: 'smart_toy', end: true },
     ],
@@ -260,8 +259,8 @@ export function getActiveZoneGroup(
   return getNavGroupsForRole(role, contour).find((g) => g.id === getActiveZone(pathname))
 }
 
-/** Зоны, где подменю в сайдбаре не показываем — достаточно клика по разделу. */
-const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'money', 'reporting', 'calendar', 'team', 'clients'])
+/** В сайдбаре подменю скрыто только у одностраничных зон; Банк/Учёт показывают Сканер и Отчёты. */
+const ZONES_WITHOUT_SIDEBAR_SUBNAV: Set<ZoneId> = new Set(['today', 'calendar', 'team', 'clients'])
 
 export function shouldShowZoneSubnav(zoneId: ZoneId): boolean {
   return !ZONES_WITHOUT_SIDEBAR_SUBNAV.has(zoneId)

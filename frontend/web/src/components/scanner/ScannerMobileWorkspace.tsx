@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import OcrReviewBanner from './OcrReviewBanner'
 import OcrCorrectionPanel from './OcrCorrectionPanel'
 import OcrPreviewOverlay from './OcrPreviewOverlay'
-import OcrReviewBanner from './OcrReviewBanner'
+import ScannerWorkflowStepper from './ScannerWorkflowStepper'
+import ScannerExecutionHint from './ScannerExecutionHint'
 import type { OcrEditDraft, OcrFieldKey } from '../../lib/ocrCorrectionFields'
 import type { FieldRegion } from './OcrPreviewOverlay'
 
@@ -10,6 +12,7 @@ type ScanSlice = {
   filename: string
   doc_type: string
   confidence: number
+  linked_transaction_id?: string | null
   requires_review?: boolean
   ocr_text?: string
   field_confidence?: Record<string, number>
@@ -69,6 +72,8 @@ export default function ScannerMobileWorkspace({
   onNextInQueue: () => void
   nextPending?: boolean
 }) {
+  const phase = txSaved ? 'confirmed' : scan.linked_transaction_id ? 'linked' : 'review'
+
   return (
     <div
       className="fc-scanner-mobile fixed inset-0 z-[90] flex flex-col bg-canvas lg:hidden"
@@ -103,6 +108,9 @@ export default function ScannerMobileWorkspace({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="border-b border-outline/30 px-3 py-2">
+          <ScannerWorkflowStepper phase={phase} />
+        </div>
         {preview ? (
           <div className="border-b border-outline/30 bg-surface-container-low/80 p-3">
             <OcrPreviewOverlay
@@ -123,12 +131,15 @@ export default function ScannerMobileWorkspace({
             confidence={scan.confidence}
             fieldConfidence={scan.field_confidence}
             requiresReview={scan.requires_review}
+            confirmed={txSaved}
           />
-          {scan.execution_suggestions?.message && (
-            <p className="rounded-xl border border-primary/25 bg-primary/[0.06] px-3 py-2 text-xs text-on-surface">
-              {scan.execution_suggestions.message}
-            </p>
-          )}
+          <ScannerExecutionHint
+            message={scan.execution_suggestions?.message}
+            category={scan.execution_suggestions?.suggested_category}
+            debit={scan.execution_suggestions?.suggested_transaction?.debit_account}
+            credit={scan.execution_suggestions?.suggested_transaction?.credit_account}
+            warnings={scan.warnings}
+          />
           <div>
             <h4 className="label">Поля документа</h4>
             <p className="mt-1 text-xs text-on-surface-variant">Свайп вниз — все поля. Подтверждение — внизу экрана.</p>

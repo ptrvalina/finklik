@@ -34,7 +34,7 @@ export default function OcrPreviewOverlay({
 
   return (
     <div className="relative w-full overflow-hidden rounded-lg bg-surface">
-      <img src={previewUrl} alt="Документ" className="w-full rounded-lg object-contain max-h-80 bg-surface" />
+      <img src={previewUrl} alt="Документ" className="w-full rounded-lg object-contain max-h-[min(520px,60vh)] bg-surface" />
       {highlights.map(({ key, box, active }) => (
         <button
           key={key}

@@ -23,34 +23,34 @@ export default function OnboardingChecklist() {
   }, [])
 
   const { data: txData } = useQuery({
-    queryKey: ['onboarding-tx-count'],
+    queryKey: orgQueryKey('onboarding-tx-count'),
     queryFn: () => dashboardApi.getTransactions({ per_page: 1, page: 1 }).then((r) => r.data),
     staleTime: 60_000,
   })
 
   const { data: txSample } = useQuery({
-    queryKey: ['onboarding-tx-categories'],
+    queryKey: orgQueryKey('onboarding-tx-categories'),
     queryFn: () => dashboardApi.getTransactions({ per_page: 80, page: 1 }).then((r) => r.data),
     staleTime: 60_000,
     enabled: Number(txData?.total ?? 0) > 0,
   })
 
   const { data: scanList } = useQuery({
-    queryKey: ['onboarding-scan-docs'],
+    queryKey: orgQueryKey('onboarding-scan-docs'),
     queryFn: () => scannerApi.list({ limit: 1, offset: 0 }).then((r) => r.data as unknown[]),
     staleTime: 60_000,
     retry: false,
   })
 
   const { data: businessState, isFetched: stateFetched, isError: stateError } = useQuery({
-    queryKey: ['onboarding-business-state'],
+    queryKey: orgQueryKey('onboarding-business-state'),
     queryFn: () => businessOsApi.getState().then((r) => r.data),
     staleTime: 120_000,
     retry: false,
   })
 
   const { data: calmOverview, isFetched: calmFetched } = useQuery({
-    queryKey: ['onboarding-calm-overview'],
+    queryKey: orgQueryKey('onboarding-calm-overview'),
     queryFn: () => reportingCalmApi.overview().then((r) => r.data),
     staleTime: 120_000,
     retry: false,

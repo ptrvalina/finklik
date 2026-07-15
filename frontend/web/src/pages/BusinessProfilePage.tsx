@@ -154,7 +154,7 @@ export default function BusinessProfilePage() {
       title={stepTitle}
       subtitle={
         step === 0
-          ? 'Это влияет на подсказки, режим учёта и сценарии работы в FinClick.'
+          ? 'Это влияет на подсказки, режим учёта и сценарии работы в ФинКлик.'
           : step === 1
             ? 'Основной ОКЭД обязателен. Дополнительные — по желанию.'
             : 'Укажите налоговый режим и численность — можно изменить позже в настройках.'
@@ -206,13 +206,15 @@ export default function BusinessProfilePage() {
       {step === 0 && (
         <section className="fc-onboarding-card space-y-4">
           <p className="label">Форма собственности</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {LEGAL_FORMS.map((f) => (
               <button
                 key={f.id}
                 type="button"
-                className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
-                  legalForm === f.id ? 'bg-emerald-600 text-white' : 'bg-surface-container-high text-on-surface'
+                className={`min-h-11 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                  legalForm === f.id
+                    ? 'border-primary bg-primary text-on-primary shadow-sm'
+                    : 'border-outline-variant/50 bg-surface-container-high text-on-surface hover:border-primary/40'
                 }`}
                 onClick={() => {
                   const g = guidanceForLegalForm(f.id)

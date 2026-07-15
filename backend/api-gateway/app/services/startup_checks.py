@@ -54,6 +54,15 @@ async def run_startup_checks(engine: AsyncEngine) -> dict:
                 results["db_schema"] = f"WARN: missing tables {sorted(missing)}"
             else:
                 results["db_schema"] = "OK"
+            if "scanned_documents" in tables:
+                cols = {c["name"] for c in insp.get_columns("scanned_documents")}
+                scanner_cols = {"requires_review", "field_confidence_json", "lifecycle_status"}
+                missing_scanner = scanner_cols - cols
+                if missing_scanner:
+                    results["scanner_schema"] = f"FAIL: missing columns {sorted(missing_scanner)}"
+                    ok = False
+                else:
+                    results["scanner_schema"] = "OK"
     except Exception as exc:
         results["db_schema"] = f"FAIL: {exc}"
         ok = False

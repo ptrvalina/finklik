@@ -22,64 +22,58 @@ export default function PasswordResetPage() {
         <div className="mb-8">
           <h2 className="font-headline text-display-lg text-on-surface">Восстановление пароля</h2>
           <p className="mt-1 text-body-base text-on-surface-variant">
-            Укажите эл. почту — мы отправим ссылку для сброса пароля.
+            Самостоятельный сброс по письму пока готовится. Оставьте почту — мы подскажем, как вернуть доступ.
           </p>
         </div>
 
         {sent ? (
-          <div className="rounded-xl border border-tertiary-fixed/30 bg-tertiary-fixed/10 p-4 text-sm text-tertiary">
+          <div className="space-y-4 rounded-xl border border-primary/25 bg-primary/5 p-4 text-sm text-on-surface">
             <div className="flex items-start gap-2">
-              <StitchIcon name="mark_email_read" className="text-xl" />
-              <p>
-                Если аккаунт с адресом <span className="font-semibold">{email}</span> существует, письмо уже отправлено.
-                Проверьте входящие и папку «Спам».
-              </p>
+              <StitchIcon name="support_agent" className="mt-0.5 text-xl text-primary" />
+              <div>
+                <p className="font-semibold">Заявка принята</p>
+                <p className="mt-1 text-on-surface-variant">
+                  Для <span className="font-semibold text-on-surface">{email}</span> доступ восстановит поддержка ФинКлик
+                  в пилоте (чат или ответ на приглашение). Обычно в течение рабочего дня.
+                </p>
+              </div>
             </div>
+            <Link to="/login" className="btn-primary inline-flex min-h-11 w-full items-center justify-center">
+              Вернуться ко входу
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="label" htmlFor="reset-email">
-                Эл. почта
+                Эл. почта аккаунта
               </label>
-              <div className="relative">
-                <StitchIcon name="alternate_email" className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                <input
-                  id="reset-email"
-                  type="email"
-                  className="input pl-11"
-                  placeholder="ivan@company.by"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoFocus
-                />
-              </div>
+              <input
+                id="reset-email"
+                type="email"
+                className="input min-h-touch-min"
+                placeholder="ivan@company.by"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
             </div>
             <button type="submit" className="btn-primary min-h-touch-min w-full">
-              Отправить ссылку
+              Оставить заявку
             </button>
           </form>
         )}
 
-        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-on-surface-variant">
-          <StitchIcon name="arrow_back" className="text-base" />
-          <Link to="/login" className="font-semibold text-primary hover:underline">
-            Вернуться ко входу
-          </Link>
-        </div>
+        {!sent && (
+          <div className="mt-8 flex items-center justify-center gap-2 text-sm text-on-surface-variant">
+            <StitchIcon name="arrow_back" className="text-base" />
+            <Link to="/login" className="font-semibold text-primary hover:underline">
+              Вернуться ко входу
+            </Link>
+          </div>
+        )}
       </AuthGlassCard>
-
-      <div className="mt-8 flex items-center justify-center gap-6 text-on-surface-variant/70">
-        <div className="flex items-center gap-1.5 text-xs">
-          <StitchIcon name="verified_user" className="text-sm text-tertiary" />
-          Защищённое соединение
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <StitchIcon name="lock" className="text-sm text-tertiary" />
-          Шифрование данных
-        </div>
-      </div>
     </AuthLayout>
   )
 }

@@ -39,7 +39,14 @@ const SEVERITY_ICONS: Record<string, { icon: string; color: string }> = {
   info: { icon: 'info', color: 'text-primary' },
 }
 
-const LEGAL_FORM_LABELS: Record<string, string> = { ip: 'ИП', ooo: 'ООО' }
+const LEGAL_FORM_LABELS: Record<string, string> = {
+  ip: 'ИП',
+  ooo: 'ООО',
+  chup: 'ЧУП',
+  kfh: 'КФХ',
+  odo: 'ОДО',
+  self_employed: 'Самозанятый',
+}
 const TAX_REGIME_LABELS: Record<string, string> = {
   usn_no_vat: 'УСН без НДС',
   usn_vat: 'УСН с НДС',
@@ -411,9 +418,9 @@ function AccountingModeCard() {
         </div>
       )}
       {mode === 'advanced' && (
-        <Link to="/accounting/chart" className="mt-3 inline-flex text-xs font-bold text-primary hover:underline">
-          Открыть план счетов →
-        </Link>
+        <p className="mt-3 text-xs text-on-surface-variant">
+          Расширенный режим хранит настройки организации. План счетов откроется в следующих релизах контура.
+        </p>
       )}
       {msg && (
         <p className={`mt-3 text-xs ${msg.type === 'success' ? 'text-emerald-600' : 'text-error'}`}>{msg.text}</p>
@@ -493,25 +500,25 @@ function OrgRequisitesCard() {
         <p className="text-xs text-on-surface-variant">Загрузка…</p>
       ) : (
         <>
-          <label className="block">
-            <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Юридический адрес</span>
+          <label className="block max-w-xl">
+            <span className="label">Юридический адрес</span>
             <textarea
-              className="mt-1 w-full max-w-xl rounded-lg border border-outline bg-surface px-3 py-2 text-sm text-on-surface"
+              className="input mt-1 min-h-[72px] w-full"
               rows={2}
               value={legalAddress}
               onChange={(e) => setLegalAddress(e.target.value)}
             />
           </label>
-          <label className="mt-3 block">
-            <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">
+          <label className="mt-3 block max-w-xl">
+            <span className="label">
               Руководитель (ФИО){' '}
               {reqQuery.data?.director_fallback && (
-                <span className="font-normal text-on-surface-variant">подсказка: {reqQuery.data.director_fallback}</span>
+                <span className="font-normal text-on-surface-variant">· подсказка: {reqQuery.data.director_fallback}</span>
               )}
             </span>
             <input
               type="text"
-              className="mt-1 w-full max-w-xl rounded-lg border border-outline bg-surface px-3 py-2 text-sm text-on-surface"
+              className="input mt-1 min-h-touch-min w-full"
               value={ceoName}
               onChange={(e) => setCeoName(e.target.value)}
               placeholder="Как в ЕГР"
@@ -520,13 +527,13 @@ function OrgRequisitesCard() {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              className="btn-secondary text-xs"
+              className="btn-secondary min-h-10 text-sm"
               disabled={saveOrgMutation.isPending}
               onClick={() => saveOrgMutation.mutate()}
             >
               {saveOrgMutation.isPending ? 'Сохранение…' : 'Сохранить реквизиты'}
             </button>
-            <button type="button" className="btn-primary text-xs" onClick={() => downloadExport()}>
+            <button type="button" className="btn-primary min-h-10 text-sm" onClick={() => downloadExport()}>
               Скачать текстовый файл
             </button>
           </div>

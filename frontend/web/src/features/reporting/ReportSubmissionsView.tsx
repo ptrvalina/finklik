@@ -456,7 +456,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                             className="btn-ghost !px-2 !py-1 !text-[10px] text-secondary"
                             disabled={submitMutation.isPending}
                           >
-                            accept
+                            Принять (мок)
                           </button>
                           <button
                             type="button"
@@ -465,7 +465,7 @@ export default function ReportSubmissionsView({ authorityFilter }: { authorityFi
                             className="btn-ghost !px-2 !py-1 !text-[10px] text-error"
                             disabled={submitMutation.isPending}
                           >
-                            reject
+                            Отклонить (мок)
                           </button>
                         </div>
                       )}
