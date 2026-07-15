@@ -19,12 +19,21 @@ build/
 # Node
 node_modules/
 frontend/web/dist/
+
+# Playwright
+frontend/web/test-results/
+frontend/web/playwright-report/
 .npm
 
 # Env / секреты
 .env
 .env.*
 !.env.example
+!backend/api-gateway/.env.pilot.example
+backend/api-gateway/.env.pilot.local
+
+# E2E sqlite
+backend/api-gateway/e2e_pilot.db
 
 # БД и артефакты dev
 *.db

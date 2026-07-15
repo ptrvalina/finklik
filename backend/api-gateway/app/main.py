@@ -28,7 +28,7 @@ from app.api.v1.endpoints.onec_contour import router as onec_contour_router
 from app.api.v1.endpoints.reports import router as reports_router
 from app.api.v1.endpoints.import_data import router as import_router
 from app.api.v1.endpoints.demo import router as demo_router
-from app.api.v1.endpoints.team import router as team_router
+from app.api.v1.endpoints.team import router as team_router, public_router as team_public_router
 from app.api.v1.endpoints.regulatory import router as regulatory_router
 from app.api.v1.endpoints.report_submission import router as submission_router
 from app.api.v1.endpoints.assistant import router as assistant_router
@@ -304,6 +304,7 @@ app.include_router(onec_contour_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(import_router, prefix="/api/v1")
 app.include_router(demo_router, prefix="/api/v1")
+app.include_router(team_public_router, prefix="/api/v1")
 app.include_router(team_router, prefix="/api/v1")
 app.include_router(regulatory_router, prefix="/api/v1")
 app.include_router(submission_router, prefix="/api/v1")

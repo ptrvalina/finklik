@@ -359,6 +359,18 @@ def check_pilot_seed(sc: Scorecard, backend: Path) -> None:
         sc.add("Pilot seed", Status.FAIL, "pilot seed module missing")
 
 
+def check_playwright_e2e(sc: Scorecard, root: Path) -> None:
+    spec = root / "frontend" / "web" / "e2e" / "pilot-smoke.spec.ts"
+    if not spec.is_file():
+        sc.add("Playwright E2E", Status.WARN, "e2e/pilot-smoke.spec.ts missing")
+        return
+    code, out = _run([sys.executable, str(root / "scripts" / "pilot_e2e.py")], root, timeout=900)
+    if code == 0:
+        sc.add("Playwright E2E", Status.PASS, "pilot-smoke.spec.ts")
+    else:
+        sc.add("Playwright E2E", Status.FAIL, out[-300:])
+
+
 def check_limitations(sc: Scorecard, root: Path) -> None:
     scope = root / "docs" / "pilot" / "PILOT_SCOPE.md"
     if not scope.is_file():
@@ -421,8 +433,16 @@ def main() -> int:
     api_url = os.environ.get("PILOT_API_URL", "http://localhost:8000")
     target = os.environ.get("PILOT_TARGET", "local").lower()
     skip_build = os.environ.get("PILOT_SKIP_BUILD", "").strip() in ("1", "true", "yes")
+    run_e2e = os.environ.get("PILOT_RUN_E2E", "").strip() in ("1", "true", "yes")
 
-    file_env = _load_env_file(backend / ".env")
+    env_file_path = os.environ.get("PILOT_ENV_FILE", "").strip()
+    if env_file_path:
+        file_env = _load_env_file(Path(env_file_path))
+    else:
+        file_env = _load_env_file(backend / ".env")
+        pilot_local = backend / ".env.pilot.local"
+        if pilot_local.is_file():
+            file_env.update(_load_env_file(pilot_local))
     py = _find_gateway_python()
     db_url = _env("DATABASE_URL", file_env, "sqlite+aiosqlite:///./finklik.db")
 
@@ -441,6 +461,8 @@ def main() -> int:
     check_demo_smoke(sc, py, backend, root, skip_build)
     check_pilot_seed(sc, backend)
     check_limitations(sc, root)
+    if run_e2e:
+        check_playwright_e2e(sc, root)
 
     verdict = sc.verdict(target)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

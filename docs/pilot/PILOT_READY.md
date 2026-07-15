@@ -18,7 +18,9 @@
 | Accountant entry → `/workspace/queues` | ✅ |
 | WS `report_status` → toast + refresh reporting | ✅ |
 | Dead accounting Hub removed | ✅ |
-| `make pilot-check` (local 🟡 / prod 🟢) | ✅ после `make dev` + prod env |
+| `make pilot-check` (local 🟡 / prod 🟢) | ✅ |
+| `make pilot-prod-gate` (Docker PG + prod secrets) | ✅ |
+| `make pilot-e2e` / CI `pilot-e2e` | ✅ |
 | `make demo-smoke` | ✅ |
 | `npm run build` | ✅ |
 
@@ -27,13 +29,20 @@
 ## Перед подключением клиента
 
 ```bash
-make dev                          # API + mock bank
+make dev                          # local dev
 make pilot-check                  # local → 🟡
-make demo-smoke                   # CI parity
 
-# Production
+# Production-like (Docker, 🟢)
+make pilot-prod-gate
+
+# Playwright smoke
+make pilot-e2e
+
+# Реальный хостинг — см. PRODUCTION_GATE.md
 PILOT_API_URL=https://... PILOT_TARGET=production PILOT_LIMITATIONS_ACK=1 make pilot-check
 ```
+
+Подробно: [PRODUCTION_GATE.md](./PRODUCTION_GATE.md)
 
 1. Отправить [PILOT_SCOPE.md](./PILOT_SCOPE.md)
 2. Пройти [PILOT_READINESS_CHECKLIST.md](./PILOT_READINESS_CHECKLIST.md)

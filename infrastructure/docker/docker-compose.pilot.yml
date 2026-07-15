@@ -1,0 +1,81 @@
+# Production-like pilot stack (PostgreSQL + prod env flags).
+# Usage: see docs/pilot/PRODUCTION_GATE.md or `make pilot-prod-gate`
+
+name: finklik-pilot
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finklik-pilot-postgres
+    environment:
+      POSTGRES_DB: finklik_pilot
+      POSTGRES_USER: finklik
+      POSTGRES_PASSWORD: ${PILOT_DB_PASSWORD:-finklik_pilot_dev}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pilot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finklik -d finklik_pilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    container_name: finklik-pilot-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  mock-bank:
+    build:
+      context: ../../backend/mock-bank
+      dockerfile: Dockerfile.mock
+    container_name: finklik-pilot-mock-bank
+    ports:
+      - "8011:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  backend:
+    build:
+      context: ../../backend/api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: finklik-pilot-backend
+    ports:
+      - "8010:8000"
+    env_file:
+      - ../../backend/api-gateway/.env.pilot.local
+    environment:
+      DATABASE_URL: postgresql+asyncpg://finklik:${PILOT_DB_PASSWORD:-finklik_pilot_dev}@postgres:5432/finklik_pilot
+      REDIS_URL: redis://redis:6379/0
+      MOCK_BANK_URL: http://mock-bank:8001
+      DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-bank:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+
+volumes:
+  pilot_postgres_data:
+
+networks:
+  default:
+    name: finklik-pilot-network

@@ -1,4 +1,4 @@
-.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke pilot-check smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web test-autopilot-regression check-deploy-status
+.PHONY: dev stop migrate test lint security clean logs help bootstrap demo-smoke pilot-check pilot-prod-gate pilot-e2e smoke-stage8 alembic-heads verify-pre-release verify-like-ci verify-like-ci-script typecheck-web test-autopilot-regression check-deploy-status
 
 # Windows Store / Git Bash: часто есть только `python`; CI/Linux обычно — `python3`.
 ifeq ($(OS),Windows_NT)
@@ -79,6 +79,15 @@ demo-smoke: ## Быстрый pre-demo smoke (backend+frontend)
 
 pilot-check: ## Pilot readiness scorecard → artifacts/pilot-readiness-scorecard.md
 	@$(PYTHON) scripts/pilot_check.py
+
+pilot-prod-gate: ## Production-like gate (Docker PG + 🟢 pilot-check)
+	@$(PYTHON) scripts/pilot_prod_gate.py
+
+pilot-prod-gate-e2e: ## Production gate + Playwright smoke
+	@$(PYTHON) scripts/pilot_prod_gate.py --with-e2e
+
+pilot-e2e: ## Playwright pilot smoke (local API + preview)
+	@$(PYTHON) scripts/pilot_e2e.py
 
 smoke-stage8: ## Smoke stage8 (RBAC manager + planner/KUDiR/OAuth + frontend build)
 	@$(PYTHON) scripts/smoke_stage8.py

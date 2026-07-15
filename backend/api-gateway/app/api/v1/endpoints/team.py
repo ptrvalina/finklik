@@ -3,6 +3,8 @@ import json
 import secrets
 from datetime import datetime, timedelta, timezone
 
+from app.core.datetime_utils import utc_now_naive
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, EmailStr, Field
@@ -35,6 +37,9 @@ router = APIRouter(
     tags=["team"],
     dependencies=[Depends(require_roles("admin", "accountant"))],
 )
+
+# Публичные team-эндпоинты (без JWT) — отдельный router без role-guard.
+public_router = APIRouter(prefix="/team", tags=["team"])
 
 
 class InviteRequest(BaseModel):
@@ -363,7 +368,7 @@ async def invite_user(
     }
 
 
-@router.post("/accept-invite")
+@public_router.post("/accept-invite")
 async def accept_invitation(
     body: InviteAcceptRequest,
     db: AsyncSession = Depends(get_db),
@@ -379,7 +384,10 @@ async def accept_invitation(
     if not invitation:
         raise HTTPException(404, "Приглашение не найдено или истекло")
 
-    if invitation.expires_at < datetime.now(timezone.utc):
+    expires_at = invitation.expires_at
+    if expires_at.tzinfo is not None:
+        expires_at = expires_at.replace(tzinfo=None)
+    if expires_at < utc_now_naive():
         invitation.status = "expired"
         await db.flush()
         raise HTTPException(400, "Срок приглашения истёк")
