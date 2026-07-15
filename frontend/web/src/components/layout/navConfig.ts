@@ -130,7 +130,7 @@ function applyContourToNavGroups(groups: NavGroup[], contour?: ProductContour | 
 export function getNavGroupsForRole(role?: string | null, contour?: ProductContour | null): NavGroup[] {
   const r = (role || '').toLowerCase()
   if (r === 'manager') return filterNavGroups(NAV_GROUPS, MANAGER_ALLOWED)
-  let groups = r === 'accountant' || r === 'owner' ? augmentClientsNav(NAV_GROUPS) : NAV_GROUPS
+  let groups = r === 'accountant' ? augmentClientsNav(NAV_GROUPS) : NAV_GROUPS
   if (r === 'viewer') {
     groups = groups
       .map((g) => ({ ...g, items: g.items.filter((i) => i.to !== '/operations') }))

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ACTIVE_ORG_STORAGE_KEY, authApi, teamApi } from '../api/client'
-import { resolveAppPath } from '../appBase'
+import { useAuthStore } from '../store/authStore'
 import AuthLayout, { AuthBrandMark } from '../components/layout/AuthLayout'
 import { calmActionError } from '../i18n/messages.ru'
 import { formatApiDetail } from '../utils/apiError'
@@ -11,6 +11,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 }
 
 export default function AcceptInvitePage() {
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const [form, setForm] = useState({
     invite_code: params.get('code') || '',
@@ -28,16 +29,27 @@ export default function AcceptInvitePage() {
     try {
       const { data } = await teamApi.acceptInvite(form)
       localStorage.setItem('access_token', data.access_token)
+      const { data: user } = await authApi.me()
       try {
-        const { data: user } = await authApi.me()
         if (user.organization_id) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, user.organization_id)
       } catch {
-        /* me optional */
+        /* storage */
       }
+      useAuthStore.setState({ user, isAuthenticated: true, isLoading: false, error: null })
       setSuccess(true)
-      setTimeout(() => {
-        window.location.href = resolveAppPath('/')
-      }, 1500)
+      const role = (user.role || '').toLowerCase()
+      let target = role === 'accountant' ? '/workspace/queues' : '/'
+      try {
+        const { data: profile } = await teamApi.getBusinessProfile()
+        if (!profile?.business_profile_completed && role !== 'accountant') {
+          target = '/onboarding/business-profile'
+        }
+      } catch {
+        /* профиль опционален */
+      }
+      window.setTimeout(() => {
+        navigate(target, { replace: true })
+      }, 1200)
     } catch (err: any) {
       setError(calmActionError('inviteAccept', formatApiDetail(err.response?.data?.detail)))
     } finally {
@@ -116,9 +128,9 @@ export default function AcceptInvitePage() {
 
             <p className="text-center text-xs text-on-surface-variant">
               Уже есть аккаунт?{' '}
-              <a href="/login" className="font-bold text-primary hover:underline">
+              <Link to="/login" className="font-bold text-primary hover:underline">
                 Войти
-              </a>
+              </Link>
             </p>
           </form>
         )}

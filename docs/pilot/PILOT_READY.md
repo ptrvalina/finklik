@@ -18,6 +18,9 @@
 | Accountant entry → `/workspace/queues` | ✅ |
 | WS `report_status` → toast + refresh reporting | ✅ |
 | Dead accounting Hub removed | ✅ |
+| Accept-invite → полная сессия (auth store) | ✅ |
+| Invite: копирование ссылки в UI | ✅ |
+| Owner без «Очередей клиентов» в nav | ✅ |
 | `make pilot-check` (local 🟡 / prod 🟢) | ✅ |
 | `make pilot-prod-gate` (Docker PG + prod secrets) | ✅ |
 | `make pilot-e2e` / CI `pilot-e2e` | ✅ |

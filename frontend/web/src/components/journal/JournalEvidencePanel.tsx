@@ -15,9 +15,9 @@ export function JournalEvidencePanel({
     <div className="flex h-full flex-col bg-surface-container-low/40">
       <div className="flex shrink-0 items-center justify-between border-b border-outline/35 px-4 py-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">OCR Evidence</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Первичный документ</p>
           <p className="text-xs font-semibold text-on-surface">
-            {verified ? 'Verified match' : 'Без первички'}
+            {verified ? 'Скан проверен' : 'Без первички'}
           </p>
         </div>
         {onClose && (
@@ -54,15 +54,9 @@ export function JournalEvidencePanel({
           {confidence != null && Number.isFinite(confidence) && (
             <div className="glass-card rounded-xl p-3">
               <p className="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Уверенность ИИ</p>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-high">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${Math.min(100, Math.round(confidence * 100))}%` }}
-                  />
-                </div>
-                <span className="text-xs font-bold tabular-nums text-primary">{Math.round(confidence * 100)}%</span>
-              </div>
+              <p className="mt-1 text-sm font-semibold text-on-surface">
+                {confidence >= 0.85 ? 'Высокая' : confidence >= 0.6 ? 'Средняя' : 'Нужна проверка'}
+              </p>
             </div>
           )}
 

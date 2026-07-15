@@ -88,7 +88,7 @@ services:
     volumes:
       - ../../frontend/web:/app
     environment:
-      VITE_API_URL: https://desperate-source-convenient-sql.trycloudflare.com
+      VITE_API_URL: http://localhost:8000
 
 volumes:
   postgres_data:

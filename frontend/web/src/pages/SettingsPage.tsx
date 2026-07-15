@@ -10,6 +10,7 @@ import AppModal from '../components/ui/AppModal'
 import MoneyAmount from '../components/ui/MoneyAmount'
 import { CardSkeleton, TableSkeleton } from '../components/premium'
 import { GlassCard, PageHeader, StitchIcon } from '../components/stitch'
+import { buildInviteAcceptUrl, copyInviteAcceptUrl } from '../lib/inviteLinks'
 
 function Icon({ name, filled, className = '' }: { name: string; filled?: boolean; className?: string }) {
   return <StitchIcon name={name} filled={filled} className={className} />
@@ -1049,9 +1050,18 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
     mutationFn: () => teamApi.invite(inviteForm),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['team-invitations'] })
+      const invitedEmail = inviteForm.email
       setShowInvite(false)
       setInviteForm({ email: '', role: 'accountant' })
-      setMessage({ type: 'success', text: `Приглашение создано. Код: ${res.data.invite_code}` })
+      const code = res.data.invite_code as string
+      const url = buildInviteAcceptUrl(code)
+      const emailed = res.data.email_sent
+      setMessage({
+        type: 'success',
+        text: emailed
+          ? `Приглашение отправлено на ${invitedEmail}. Ссылка: ${url}`
+          : `Email не отправлен — передайте ссылку вручную: ${url}`,
+      })
     },
     onError: (e: any) => setMessage({ type: 'error', text: calmActionError('settingsSave', formatApiDetail(e.response?.data?.detail)) }),
   })
@@ -1157,13 +1167,28 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
           <h3 className="text-sm font-bold text-on-surface">Ожидающие приглашения</h3>
           {invitations.map((inv: any) => (
             <div key={inv.id} className="flex flex-col gap-2 rounded-lg bg-surface-container-high p-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-on-surface">{inv.email}</p>
-                <p className="text-xs text-on-surface-variant">Роль: {inv.role === 'accountant' ? 'Бухгалтер' : 'Наблюдатель'} · Код: <code className="rounded bg-surface-variant px-1 text-[10px]">{inv.invite_code}</code></p>
+                <p className="text-xs text-on-surface-variant">
+                  Роль: {inv.role === 'accountant' ? 'Бухгалтер' : inv.role === 'manager' ? 'Менеджер' : 'Наблюдатель'}
+                </p>
+                <p className="mt-1 break-all font-mono text-[10px] text-on-surface-variant">{buildInviteAcceptUrl(inv.invite_code)}</p>
               </div>
-              <button type="button" onClick={() => cancelInvMutation.mutate(inv.id)} className="btn-ghost !text-xs text-error hover:text-error sm:self-start">
-                <Icon name="close" className="text-sm" /> Отменить
-              </button>
+              <div className="flex shrink-0 gap-2 sm:flex-col">
+                <button
+                  type="button"
+                  className="btn-secondary !text-xs"
+                  onClick={async () => {
+                    const ok = await copyInviteAcceptUrl(inv.invite_code)
+                    setMessage({ type: 'success', text: ok ? 'Ссылка скопирована' : 'Не удалось скопировать — выделите ссылку вручную' })
+                  }}
+                >
+                  <Icon name="link" className="text-sm" /> Ссылка
+                </button>
+                <button type="button" onClick={() => cancelInvMutation.mutate(inv.id)} className="btn-ghost !text-xs text-error hover:text-error">
+                  <Icon name="close" className="text-sm" /> Отменить
+                </button>
+              </div>
             </div>
           ))}
         </div>
