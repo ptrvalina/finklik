@@ -7,8 +7,8 @@ export type PartnerBank = {
 }
 
 export const PARTNER_BANK: PartnerBank = {
-  name: import.meta.env.VITE_PARTNER_BANK_NAME || 'Банк ВТБ (ПАО)',
-  bic: import.meta.env.VITE_PARTNER_BANK_BIC || 'SLANBY22',
-  color: import.meta.env.VITE_PARTNER_BANK_COLOR || '#0066B3',
-  tagline: 'Сервис для клиентов банка',
+  name: import.meta.env.VITE_PARTNER_BANK_NAME || 'Расчётный счёт РБ',
+  bic: import.meta.env.VITE_PARTNER_BANK_BIC || 'NBRBBY2X',
+  color: import.meta.env.VITE_PARTNER_BANK_COLOR || '#0058be',
+  tagline: 'Импорт выписки · пилот FinKlik',
 }

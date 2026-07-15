@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reportingCalmApi, scannerApi } from '../api/client'
 import { formatApiDetail } from '../utils/apiError'
@@ -12,6 +12,8 @@ import ScannerMobileWorkspace from '../components/scanner/ScannerMobileWorkspace
 import ScannerWorkflowStepper from '../components/scanner/ScannerWorkflowStepper'
 import ScannerQueuePanel from '../components/scanner/ScannerQueuePanel'
 import ScannerExecutionHint from '../components/scanner/ScannerExecutionHint'
+import ScannerSuccessBurst from '../components/scanner/ScannerSuccessBurst'
+import { formatMoneyAmount } from '../lib/formatMoney'
 import { DOC_TYPE_META } from '../components/scanner/scannerMeta'
 import OperationalPage, { FocusStrip } from '../components/shell/OperationalPage'
 import { orgQueryKey } from '../lib/queryKeys'
@@ -82,7 +84,7 @@ export default function ScannerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const orgId = useAuthStore((s) => s.user?.organization_id ?? '')
   const { recordOcrDoc, recordTransaction, setNextStep } = useOperational()
-  const [autoAdvanceQueue, setAutoAdvanceQueue] = useState(true)
+  const [autoAdvanceQueue, setAutoAdvanceQueue] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -107,7 +109,7 @@ export default function ScannerPage() {
   useEffect(() => {
     if (!orgId) return
     const snap = loadScannerUiSession(orgId)
-    setAutoAdvanceQueue(snap?.autoAdvanceQueue ?? true)
+    setAutoAdvanceQueue(snap?.autoAdvanceQueue ?? false)
   }, [orgId])
 
   const applyScanPayload = useCallback(
@@ -538,6 +540,32 @@ export default function ScannerPage() {
     >
       <ScannerWorkflowStepper phase={workflowPhase} />
 
+      <AnimatePresence>
+        {txSaved && createdTxId && (
+          <motion.div
+            key="scanner-success"
+            className="mb-6"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            <ScannerSuccessBurst
+              amountLabel={
+                editDraft?.amount
+                  ? `${formatMoneyAmount(editDraft.amount)} BYN`
+                  : scanResult?.parsed?.amount != null
+                    ? `${formatMoneyAmount(scanResult.parsed.amount)} BYN`
+                    : undefined
+              }
+              counterparty={editDraft?.counterparty || scanResult?.parsed?.counterparty_name}
+              journalTo={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
+              onScanAnother={dismissScan}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="mb-6 grid grid-cols-2 gap-4 sm:max-w-xl lg:max-w-2xl">
         <StatCard icon="document_scanner" label="В истории" value={history.length} />
         <StatCard icon="pending_actions" iconTint="tertiary" label="Ждут проверки" value={reviewCount} />
@@ -856,14 +884,11 @@ export default function ScannerPage() {
                 confirmed={txSaved}
                 onFieldFocus={setActiveOcrField}
               />
-              {txSaved && createdTxId && (
-                <Link
-                  to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
-                  className="btn-primary flex min-h-10 w-full justify-center text-sm"
-                >
-                  Проверить в журнале
-                </Link>
-              )}
+              {txSaved && createdTxId ? (
+                <p className="text-center text-xs text-on-surface-variant">
+                  Операция в журнале — используйте блок «В учёте» выше.
+                </p>
+              ) : null}
               {!txSaved && scanResult.linked_transaction_id && (
                 <Link
                   to={`/accounting/journal?tx_id=${encodeURIComponent(scanResult.linked_transaction_id)}`}

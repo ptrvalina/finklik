@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
 import { operationsApi, reportsApi } from '../../api/client'
@@ -6,17 +8,18 @@ import { orgQueryKey } from '../../lib/queryKeys'
 import MoneyAmount from '../ui/MoneyAmount'
 import { buildSparkline, computeMonthOverMonth } from '../../lib/dashboardOwnerMetrics'
 import { terminology } from '../../i18n/terminology.ru'
+import { useCountUp } from '../../hooks/useCountUp'
 
 function riskStatusLabel(level: string | undefined | null): { text: string; className: string } {
   const l = (level || '').toLowerCase()
   if (l === 'critical' || l === 'high') {
-    return { text: terminology.globalStatus.critical, className: 'bg-red-500/20 text-red-100' }
+    return { text: terminology.globalStatus.critical, className: 'bg-red-500/20 text-red-100 ring-1 ring-red-400/30' }
   }
   if (l === 'medium' || l === 'attention' || l === 'warn') {
-    return { text: terminology.globalStatus.risk, className: 'bg-amber-500/20 text-amber-100' }
+    return { text: terminology.globalStatus.risk, className: 'bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/30' }
   }
   if (l === 'low' || l === 'ok' || l === 'normal') {
-    return { text: 'Всё под контролем', className: 'bg-emerald-500/20 text-emerald-100' }
+    return { text: 'Всё под контролем', className: 'bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/30' }
   }
   return { text: terminology.globalStatus.attention, className: 'bg-white/10 text-white/80' }
 }
@@ -44,6 +47,7 @@ function DeltaLine({ label, value, pct }: { label: string; value: number | null;
 
 export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null }) {
   const year = new Date().getFullYear()
+  const animatedCash = useCountUp(cashOnHand, 1100)
 
   const { data: summary } = useQuery({
     queryKey: orgQueryKey(['monthly-summary-dashboard', year]),
@@ -59,7 +63,6 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
   })
 
   const risk = riskStatusLabel(fs?.risk_level as string | undefined)
-
   const sparkData = useMemo(() => buildSparkline(summary?.months), [summary])
   const mom = useMemo(() => computeMonthOverMonth(summary?.months), [summary])
 
@@ -69,25 +72,62 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
   }, [summary])
 
   const hasChart = sparkData.length >= 2
+  const greeting = useMemo(() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Доброе утро'
+    if (h < 18) return 'Добрый день'
+    return 'Добрый вечер'
+  }, [])
 
   return (
-    <section className="fc-business-hero" aria-label="Финансовое состояние бизнеса">
+    <motion.section
+      className="fc-business-hero"
+      aria-label="Финансовое состояние бизнеса"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="fc-business-hero-glow" aria-hidden />
+      <div className="fc-business-hero-glow fc-business-hero-glow--left" aria-hidden />
       <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
+          <motion.p
+            className="text-xs font-medium text-white/55"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+          >
+            {greeting} · ФинКлик
+          </motion.p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <p className="font-label text-label-caps uppercase text-primary-fixed/80">Сводный остаток</p>
-            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${risk.className}`}>
+            <motion.span
+              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${risk.className}`}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 22 }}
+            >
               {risk.text}
-            </span>
+            </motion.span>
           </div>
           <p className="mt-0.5 text-xs text-white/60">Деньги на счетах</p>
-          <MoneyAmount
-            value={cashOnHand ?? 0}
-            emptyAsZero
-            className="mt-1 font-headline text-display-lg text-white"
-            symbolClassName="h-[0.55em] w-[0.48em] text-white"
-          />
+          {cashOnHand == null ? (
+            <div className="mt-2">
+              <p className="font-headline text-display-lg text-white/55">—</p>
+              <Link
+                to="/bank"
+                className="mt-2 inline-flex min-h-9 items-center rounded-full bg-white/15 px-4 text-sm font-semibold text-white transition hover:bg-white/25 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]"
+              >
+                Подключить расчётный счёт
+              </Link>
+            </div>
+          ) : (
+            <MoneyAmount
+              value={animatedCash ?? cashOnHand}
+              className="mt-1 font-headline text-display-lg text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.25)]"
+              symbolClassName="h-[0.55em] w-[0.48em] text-white"
+            />
+          )}
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wide text-white/55">Поступления</p>
@@ -119,11 +159,7 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
             </div>
           </div>
           <div className="mt-2 space-y-0.5">
-            <DeltaLine
-              label="К прошлому месяцу"
-              value={mom?.delta ?? null}
-              pct={mom?.pct ?? null}
-            />
+            <DeltaLine label="К прошлому месяцу" value={mom?.delta ?? null} pct={mom?.pct ?? null} />
           </div>
         </div>
 
@@ -133,7 +169,7 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
               <AreaChart data={sparkData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="heroNetFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
                     <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
                   </linearGradient>
                 </defs>
@@ -141,11 +177,13 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
                 <Area
                   type="monotone"
                   dataKey="net"
-                  stroke="rgba(255,255,255,0.9)"
-                  strokeWidth={2}
+                  stroke="rgba(255,255,255,0.95)"
+                  strokeWidth={2.25}
                   fill="url(#heroNetFill)"
                   dot={false}
-                  isAnimationActive={false}
+                  isAnimationActive
+                  animationDuration={900}
+                  animationEasing="ease-out"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -154,11 +192,11 @@ export default function BusinessHero({ cashOnHand }: { cashOnHand: number | null
               <span className="material-symbols-outlined text-2xl text-white/40" aria-hidden>
                 show_chart
               </span>
-              <p className="mt-1 text-xs font-medium text-white/55">Нет данных для графика</p>
+              <p className="mt-1 text-xs font-medium text-white/55">График появится после операций</p>
             </div>
           )}
         </div>
       </div>
-    </section>
+    </motion.section>
   )
 }

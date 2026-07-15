@@ -8,6 +8,7 @@ import { JournalCommandPalette } from '../components/journal/JournalCommandPalet
 import { JournalMobileVirtualList } from '../components/journal/JournalMobileVirtualList'
 import { JournalQuickStrip } from '../components/journal/JournalQuickStrip'
 import { PremiumEmptyState, TableSkeleton } from '../components/premium'
+import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { WorkflowSidePanel, WorkflowCompletionBanner } from '../components/workflow'
 import { JournalSplitLayout } from '../components/journal/JournalSplitLayout'
 import { JournalEvidencePanel } from '../components/journal/JournalEvidencePanel'
@@ -638,6 +639,8 @@ export default function Accounting() {
   ])
 
   const isLoading = txQuery.isLoading
+  const hasActiveFilters = Boolean(filterSearch.trim() || filterType || attentionFilter !== 'all')
+  const totalRaw = (txQuery.data as { total?: number } | undefined)?.total ?? filteredItems.length
 
   return (
     <div className="fc-page-shell fc-page-shell-asymmetric accounting-journal pb-24 lg:pb-8">
@@ -927,7 +930,7 @@ export default function Accounting() {
                 disabled={selection.selectedCount === 0 || bulkAiCategoriesMutation.isPending}
                 onClick={() => bulkAiCategoriesMutation.mutate()}
               >
-                {bulkAiCategoriesMutation.isPending ? 'ИИ…' : 'ИИ: категории'}
+                {bulkAiCategoriesMutation.isPending ? 'Категории…' : 'Авто-категории'}
               </button>
               <button
                 type="button"
@@ -947,16 +950,33 @@ export default function Accounting() {
         >
           {isLoading ? (
             <TableSkeleton rows={10} cols={5} />
+          ) : txQuery.isError ? (
+            <div className="p-6">
+              <CalmErrorState
+                title="Журнал недоступен"
+                fallbackMessage="Не удалось загрузить операции. Проверьте подключение и повторите."
+                onRetry={() => void txQuery.refetch()}
+              />
+            </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-6">
               <PremiumEmptyState
                 icon="receipt_long"
-                title="Нет записей по фильтрам"
-                description="Смените период или добавьте операцию сверху."
+                title={hasActiveFilters || totalRaw > 0 ? 'Нет записей по фильтрам' : 'Пока нет операций'}
+                description={
+                  hasActiveFilters || totalRaw > 0
+                    ? 'Смените период или сбросьте фильтры.'
+                    : 'Добавьте первую операцию или загрузите документ в сканере.'
+                }
                 actions={
-                  <button type="button" className="btn-primary mt-4 min-h-11 px-4" onClick={() => focusCaptureForm()}>
-                    Добавить операцию
-                  </button>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    <button type="button" className="btn-primary min-h-11 px-4" onClick={() => focusCaptureForm()}>
+                      Добавить операцию
+                    </button>
+                    <Link to="/scan" className="btn-secondary min-h-11 px-4">
+                      Сканер
+                    </Link>
+                  </div>
                 }
               />
             </div>

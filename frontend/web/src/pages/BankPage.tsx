@@ -102,9 +102,11 @@ export default function BankPage() {
   const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('overview')
   const [showConnect, setShowConnect] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [accountNumber, setAccountNumber] = useState('')
+  const [importJson, setImportJson] = useState('')
   const [paymentForm, setPaymentForm] = useState<PaymentForm>({
     amount: '',
     recipient_name: '',
@@ -201,6 +203,26 @@ export default function BankPage() {
     onError: () => flash('error', calmError('bankPay')),
   })
 
+  const statementImportMutation = useMutation({
+    mutationFn: (lines: { transaction_date: string; amount: number; direction: 'credit' | 'debit'; description: string }[]) =>
+      bankApi.importStatement(lines),
+    onSuccess: (res) => {
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-balance') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('bank-statements') })
+      void qc.invalidateQueries({ queryKey: orgQueryKey(['transactions', 'accounting']) })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('dashboard') })
+      setShowImport(false)
+      setImportJson('')
+      flash('success', `Выписка импортирована: ${res.data?.created ?? 0} новых операций`)
+      void refetchStatements()
+      setTab('statement')
+    },
+    onError: (e: unknown) => {
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      flash('error', typeof detail === 'string' ? detail : calmError('bankImport'))
+    },
+  })
+
   const statementRequestMutation = useMutation({
     mutationFn: () => {
       const primary = accounts.find((a) => a.is_primary) ?? accounts[0]
@@ -219,8 +241,34 @@ export default function BankPage() {
       flash('success', `Выписка загружена: ${res.data?.import_result?.created ?? 0} новых операций`)
       void refetchStatements()
     },
-    onError: () => flash('error', calmError('bankImport')),
+    onError: () => {
+      flash('error', 'Онлайн-загрузка недоступна в пилоте. Импортируйте выписку вручную.')
+      setShowImport(true)
+    },
   })
+
+  function buildDemoStatementLines() {
+    const d = todayStr()
+    return [
+      { transaction_date: d, amount: 1250.5, direction: 'credit' as const, description: 'Поступление от клиента (демо)' },
+      { transaction_date: d, amount: 89.9, direction: 'debit' as const, description: 'Оплата услуг связи (демо)' },
+      { transaction_date: d, amount: 320, direction: 'debit' as const, description: 'Закупка материалов (демо)' },
+    ]
+  }
+
+  function submitImportJson() {
+    try {
+      const parsed = JSON.parse(importJson.trim())
+      const lines = Array.isArray(parsed) ? parsed : parsed?.lines
+      if (!Array.isArray(lines) || lines.length === 0) {
+        flash('error', 'Нужен JSON-массив lines или массив операций')
+        return
+      }
+      statementImportMutation.mutate(lines)
+    } catch {
+      flash('error', 'Некорректный JSON')
+    }
+  }
 
   function flash(type: 'success' | 'error', text: string) {
     setMessage({ type, text })
@@ -289,16 +337,15 @@ export default function BankPage() {
           variant="compact"
           icon="receipt_long"
           title="Операций не найдено"
-          description="Измените фильтры или загрузите выписку из банка за нужный период."
+          description="Импортируйте выписку вручную (пилот) или измените фильтры периода."
           actions={
             primaryAccount ? (
               <button
                 type="button"
                 className="btn-primary min-h-11 px-5 text-sm"
-                disabled={statementRequestMutation.isPending}
-                onClick={() => statementRequestMutation.mutate()}
+                onClick={() => setShowImport(true)}
               >
-                Загрузить из банка
+                Импорт выписки
               </button>
             ) : (
               <button type="button" className="btn-primary min-h-11 px-5 text-sm" onClick={() => setShowConnect(true)}>
@@ -355,7 +402,7 @@ export default function BankPage() {
       <div className="fc-page-shell fc-page-shell-asymmetric pb-20 lg:pb-8">
         <PageHeader
           title="Банк"
-          subtitle="Счёт, выписка и платежи — движение денег на расчётном счёте. Проводки и отчётность — в журнале."
+          subtitle="Счёт, выписка и платежи. В пилоте основной путь — импорт выписки; онлайн-синхронизация с банком подключается отдельно."
           badge={
             <span className="inline-flex items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-low px-3 py-1">
               <span className="h-2 w-2 rounded-full" style={{ background: PARTNER_BANK.color }} />
@@ -427,17 +474,8 @@ export default function BankPage() {
                     <button type="button" className="btn-primary text-sm" onClick={() => setShowPayment(true)}>
                       <StitchIcon name="edit_document" className="text-lg" /> Платёж
                     </button>
-                    <button
-                      type="button"
-                      className="btn-secondary text-sm"
-                      disabled={statementRequestMutation.isPending}
-                      onClick={() => {
-                        applyStatementFilters()
-                        setTab('statement')
-                        statementRequestMutation.mutate()
-                      }}
-                    >
-                      <StitchIcon name="cloud_download" className="text-lg" /> Выписка
+                    <button type="button" className="btn-secondary text-sm" onClick={() => setShowImport(true)}>
+                      <StitchIcon name="upload_file" className="text-lg" /> Импорт выписки
                     </button>
                   </div>
                 </div>
@@ -514,7 +552,7 @@ export default function BankPage() {
             <GlassCard className="p-4 sm:p-6">
               <h2 className="font-headline text-headline-sm text-on-surface">Выписка по счёту</h2>
               <p className="mt-1 text-xs text-on-surface-variant">
-                Загрузите операции из банка, отфильтруйте и выгрузите CSV. Для проводок откройте журнал.
+                В пилоте загрузите операции через импорт выписки, отфильтруйте и выгрузите CSV. Для проводок — журнал.
               </p>
               <div className="mt-4">
                 <StatementFilters compact />
@@ -526,14 +564,24 @@ export default function BankPage() {
                 <button
                   type="button"
                   className="btn-secondary text-sm"
+                  disabled={!primaryAccount}
+                  onClick={() => setShowImport(true)}
+                >
+                  <StitchIcon name="upload_file" className="text-lg" />
+                  Импорт выписки
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost text-sm"
                   disabled={!primaryAccount || statementRequestMutation.isPending}
                   onClick={() => {
                     applyStatementFilters()
                     statementRequestMutation.mutate()
                   }}
+                  title="Требует OAuth-подключения банка"
                 >
                   <StitchIcon name="cloud_download" className="text-lg" />
-                  {statementRequestMutation.isPending ? 'Загрузка…' : 'Загрузить из банка'}
+                  {statementRequestMutation.isPending ? 'Загрузка…' : 'Онлайн (если подключено)'}
                 </button>
                 <button
                   type="button"
@@ -635,6 +683,53 @@ export default function BankPage() {
             placeholder="BY__ ____ ____ ____ ____ ____"
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value.toUpperCase())}
+          />
+        </AppModal>
+      )}
+
+      {showImport && (
+        <AppModal
+          title="Импорт выписки"
+          onClose={() => setShowImport(false)}
+          footer={
+            <div className="app-form-actions flex flex-wrap gap-2">
+              <button type="button" className="btn-secondary flex-1" onClick={() => setShowImport(false)}>
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                disabled={statementImportMutation.isPending}
+                onClick={() => statementImportMutation.mutate(buildDemoStatementLines())}
+              >
+                {statementImportMutation.isPending ? 'Импорт…' : 'Демо-выписка'}
+              </button>
+              <button
+                type="button"
+                className="btn-primary flex-1"
+                disabled={statementImportMutation.isPending || !importJson.trim()}
+                onClick={submitImportJson}
+              >
+                Импортировать JSON
+              </button>
+            </div>
+          }
+        >
+          <p className="mb-3 text-sm text-on-surface-variant">
+            В пилоте основной путь — ручной импорт. Вставьте JSON с массивом операций или загрузите демо-выписку для показа.
+          </p>
+          <pre className="mb-3 overflow-auto rounded-xl bg-surface-container-low p-3 font-mono text-[10px] text-on-surface-variant">
+{`[
+  {"transaction_date":"2026-07-15","amount":100.5,"direction":"credit","description":"Оплата"},
+  {"transaction_date":"2026-07-15","amount":40,"direction":"debit","description":"Расход"}
+]`}
+          </pre>
+          <label className="label">JSON операций</label>
+          <textarea
+            className="input min-h-[140px] w-full font-mono text-xs"
+            placeholder="Вставьте массив lines…"
+            value={importJson}
+            onChange={(e) => setImportJson(e.target.value)}
           />
         </AppModal>
       )}

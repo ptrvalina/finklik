@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { bankApi, teamApi } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import OnboardingChecklist from '../components/dashboard/OnboardingChecklist'
@@ -14,6 +15,19 @@ import DashboardActivityCard from '../components/dashboard/DashboardActivityCard
 import { CardSkeleton } from '../components/premium'
 import { CalmErrorState } from '../components/errors/CalmErrorState'
 import { orgQueryKey } from '../lib/queryKeys'
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+}
+
+const staggerFast = {
+  animate: { transition: { staggerChildren: 0.08, delayChildren: 0.12 } },
+}
+
+const staggerSlow = {
+  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.22 } },
+}
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
@@ -111,29 +125,43 @@ export default function DashboardPage() {
     <div className="fc-owner-dashboard fc-bcc fc-scroll-region space-y-gutter pb-20 lg:pb-6">
       <BusinessHero cashOnHand={cashOnHand} />
 
-      <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
-        <WorkNowCard />
-        <ReportingReadinessHero />
-      </div>
+      <motion.div
+        className="grid grid-cols-1 gap-gutter lg:grid-cols-2"
+        variants={staggerFast}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div variants={fadeUp}>
+          <WorkNowCard />
+        </motion.div>
+        <motion.div variants={fadeUp}>
+          <ReportingReadinessHero />
+        </motion.div>
+      </motion.div>
 
-      <div className="fc-bcc-grid grid grid-cols-12 gap-gutter">
-        <div className="col-span-12 lg:col-span-6">
+      <motion.div
+        className="fc-bcc-grid grid grid-cols-12 gap-gutter"
+        variants={staggerSlow}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div className="col-span-12 lg:col-span-6" variants={fadeUp}>
           <DashboardObligationsCard />
-        </div>
-        <div className="col-span-12 lg:col-span-6">
+        </motion.div>
+        <motion.div className="col-span-12 lg:col-span-6" variants={fadeUp}>
           <DashboardCalendarCard />
-        </div>
-        <div className="col-span-12 lg:col-span-6">
+        </motion.div>
+        <motion.div className="col-span-12 lg:col-span-6" variants={fadeUp}>
           <DashboardActivityCard />
-        </div>
-        <div className="col-span-12 lg:col-span-6">
+        </motion.div>
+        <motion.div className="col-span-12 lg:col-span-6" variants={fadeUp}>
           <DashboardAttentionCard />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <div className="mt-3">
+      <motion.div className="mt-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>
         <OnboardingChecklist />
-      </div>
+      </motion.div>
       {profileIncomplete && (
         <p className="text-center text-xs text-on-surface-variant">
           Профиль бизнеса ещё не завершён —{' '}

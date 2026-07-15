@@ -8,6 +8,8 @@ import { AuthGlassCard, StitchIcon } from '../components/stitch'
 const LEGAL_FORMS = [
   { id: 'ip', label: 'ИП', hint: 'Индивидуальный предприниматель', icon: 'person' },
   { id: 'ooo', label: 'ООО', hint: 'Общество с ограниченной ответственностью', icon: 'corporate_fare' },
+  { id: 'chup', label: 'ЧУП', hint: 'Частное унитарное предприятие', icon: 'storefront' },
+  { id: 'self_employed', label: 'Самозанятый', hint: 'Упрощённый контур без штата', icon: 'handshake' },
 ] as const
 
 export default function RegisterPage() {
@@ -185,7 +187,7 @@ export default function RegisterPage() {
 
               <div className="space-y-3 border-t border-outline-variant/30 pt-4">
                 <p className="font-label text-label-caps uppercase tracking-widest text-outline">
-                  {form.legal_form === 'ip' ? 'ИП' : 'ООО'}
+                  {LEGAL_FORMS.find((f) => f.id === form.legal_form)?.label || 'Организация'}
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5 sm:col-span-2">
@@ -208,7 +210,13 @@ export default function RegisterPage() {
                     <input
                       id="reg-org"
                       className="input min-h-touch-min"
-                      placeholder={form.legal_form === 'ip' ? 'ИП Иванов И.И.' : 'ООО «Ромашка»'}
+                      placeholder={
+                        form.legal_form === 'ip'
+                          ? 'ИП Иванов И.И.'
+                          : form.legal_form === 'self_employed'
+                            ? 'Иванов И.И.'
+                            : 'ООО «Ромашка»'
+                      }
                       value={form.org_name}
                       onChange={set('org_name')}
                       required

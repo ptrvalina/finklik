@@ -109,7 +109,7 @@ export default function OnboardingChecklist() {
       {
         id: 'scan',
         label: 'Загрузите первый документ (скан или фото)',
-        hint: 'OCR подставит сумму и дату',
+        hint: 'Распознавание подставит сумму и дату',
         done: hasScan,
         to: '/scan',
         icon: 'document_scanner',

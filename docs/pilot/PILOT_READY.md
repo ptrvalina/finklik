@@ -17,10 +17,14 @@
 | Inbox + approvals unified | ✅ |
 | Accountant entry → `/workspace/queues` | ✅ |
 | WS `report_status` → toast + refresh reporting | ✅ |
-| Dead accounting Hub removed | ✅ |
+| Dead Accounting Hub removed | ✅ |
 | Accept-invite → полная сессия (auth store) | ✅ |
 | Invite: копирование ссылки в UI | ✅ |
 | Owner без «Очередей клиентов» в nav | ✅ |
+| Scanner schema repair + enterprise workflow UI | ✅ |
+| Bank: ручной импорт выписки (пилот-путь) | ✅ |
+| Dashboard: остаток без фейкового «0» | ✅ |
+| Reports: репетиция подачи (не legal submit) | ✅ |
 | `make pilot-check` (local 🟡 / prod 🟢) | ✅ |
 | `make pilot-prod-gate` (Docker PG + prod secrets) | ✅ |
 | `make pilot-e2e` / CI `pilot-e2e` | ✅ |
@@ -67,13 +71,22 @@ PILOT_API_URL=https://... PILOT_TARGET=production PILOT_LIMITATIONS_ACK=1 make p
 
 | Вопрос | Где |
 |--------|-----|
-| Сколько денег? | `/` BusinessHero |
+| Сколько денег? | `/` BusinessHero (или CTA «Подключить счёт») |
 | Есть проблема? | Pill риска + «Требует внимания» |
 | Что делать? | WorkNowCard (1 CTA) |
 | Можно сдавать отчёт? | ReportingReadiness checklist |
 
 ---
 
+## Демо-путь покупателя (~30 мин)
+
+```
+/register → /onboarding/business-profile → /
+→ /scan → /accounting/journal → /bank (импорт) → /reports → /settings
+```
+
+---
+
 ## После волны 1
 
-См. [PILOT_BACKLOG.md](./PILOT_BACKLOG.md) — Playwright E2E в CI (опционально).
+См. [PILOT_BACKLOG.md](./PILOT_BACKLOG.md)

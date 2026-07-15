@@ -41,7 +41,7 @@ export const FLOW_STEP_META: {
   },
   {
     id: 'validate',
-    title: 'Контроль AI',
+    title: 'Контроль данных',
     shortLabel: 'Контроль',
     subtitle: 'Пересчёт согласованности перед черновиком',
   },
@@ -53,9 +53,9 @@ export const FLOW_STEP_META: {
   },
   {
     id: 'submit',
-    title: 'Подача',
+    title: 'Репетиция подачи',
     shortLabel: 'Подача',
-    subtitle: 'Подтверждение и отправка в контур',
+    subtitle: 'Подготовка пакета (не юридическая подача в портал)',
   },
 ]
 
@@ -304,20 +304,23 @@ export function deriveOwnerReportingStatus(
 export function buildHomeReportingChecklist(data: CalmOverviewLike | undefined) {
   const blockers = data?.readiness?.blockers ?? []
   const score = data?.readiness?.score ?? 0
+  const hasOverview = data?.readiness != null
   const hasCode = (fragments: string[]) =>
     blockers.some((b) => {
       const hay = `${b.code ?? ''} ${b.label}`.toLowerCase()
       return fragments.some((f) => hay.includes(f))
     })
   const rs = data?.financial_state?.reporting_status?.status ?? ''
-  const checksOk = (data?.consistency_issues?.length ?? 0) === 0 && score >= READINESS_THRESHOLD
+  const checksOk = hasOverview && (data?.consistency_issues?.length ?? 0) === 0 && score >= READINESS_THRESHOLD
+  // Не помечаем шаги «готово», пока нет снимка готовности или счёт нулевой без данных.
+  const hasEvidence = hasOverview && (score > 0 || blockers.length > 0 || Boolean(rs))
 
   return [
-    { label: 'Документы', done: !hasCode(['doc', 'ocr', 'первич', 'document', 'скан']) },
-    { label: 'Журнал', done: !hasCode(['journal', 'журнал', 'операц', 'transaction']) },
+    { label: 'Документы', done: hasEvidence && !hasCode(['doc', 'ocr', 'первич', 'document', 'скан']) },
+    { label: 'Журнал', done: hasEvidence && !hasCode(['journal', 'журнал', 'операц', 'transaction']) },
     { label: 'Проверки', done: checksOk },
-    { label: 'Подписать', done: ['ready_to_submit', 'submitted', 'signed'].includes(rs) },
-    { label: 'Отправить', done: rs === 'submitted' },
+    { label: 'Подготовить', done: ['ready_to_submit', 'submitted', 'signed'].includes(rs) },
+    { label: 'Репетиция подачи', done: rs === 'submitted' },
   ]
 }
 

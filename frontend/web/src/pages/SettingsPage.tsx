@@ -1055,7 +1055,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
 
   const inviteMutation = useMutation({
     mutationFn: () => teamApi.invite(inviteForm),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       qc.invalidateQueries({ queryKey: ['team-invitations'] })
       const invitedEmail = inviteForm.email
       setShowInvite(false)
@@ -1063,11 +1063,12 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
       const code = res.data.invite_code as string
       const url = buildInviteAcceptUrl(code)
       const emailed = res.data.email_sent
+      const copied = await copyInviteAcceptUrl(code)
       setMessage({
         type: 'success',
         text: emailed
-          ? `Приглашение отправлено на ${invitedEmail}. Ссылка: ${url}`
-          : `Email не отправлен — передайте ссылку вручную: ${url}`,
+          ? `Приглашение отправлено на ${invitedEmail}.${copied ? ' Ссылка скопирована.' : ` Ссылка: ${url}`}`
+          : `Email не отправлен — ${copied ? 'ссылка скопирована в буфер' : `передайте ссылку: ${url}`}`,
       })
     },
     onError: (e: any) => setMessage({ type: 'error', text: calmActionError('settingsSave', formatApiDetail(e.response?.data?.detail)) }),
@@ -1242,6 +1243,7 @@ function TeamSection({ isOwner }: { isOwner: boolean }) {
                 onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
               >
                 <option value="accountant">Бухгалтер</option>
+                <option value="manager">Менеджер</option>
                 <option value="viewer">Наблюдатель</option>
               </select>
             </div>

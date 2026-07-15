@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
 import OcrReviewBanner from './OcrReviewBanner'
 import OcrCorrectionPanel from './OcrCorrectionPanel'
 import OcrPreviewOverlay from './OcrPreviewOverlay'
 import ScannerWorkflowStepper from './ScannerWorkflowStepper'
 import ScannerExecutionHint from './ScannerExecutionHint'
+import ScannerSuccessBurst from './ScannerSuccessBurst'
+import { formatMoneyAmount } from '../../lib/formatMoney'
 import type { OcrEditDraft, OcrFieldKey } from '../../lib/ocrCorrectionFields'
 import type { FieldRegion } from './OcrPreviewOverlay'
 
@@ -127,6 +128,18 @@ export default function ScannerMobileWorkspace({
         )}
 
         <div className="space-y-4 p-4">
+          {txSaved && createdTxId ? (
+            <ScannerSuccessBurst
+              amountLabel={
+                editDraft.amount != null && editDraft.amount !== ''
+                  ? `${formatMoneyAmount(editDraft.amount)} BYN`
+                  : undefined
+              }
+              counterparty={editDraft.counterparty || undefined}
+              journalTo={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
+              onScanAnother={onClose}
+            />
+          ) : null}
           <OcrReviewBanner
             confidence={scan.confidence}
             fieldConfidence={scan.field_confidence}
@@ -162,14 +175,6 @@ export default function ScannerMobileWorkspace({
             onFieldFocus={onFieldFocus}
             hidePrimaryButton
           />
-          {txSaved && createdTxId && (
-            <Link
-              to={`/accounting/journal?tx_id=${encodeURIComponent(createdTxId)}`}
-              className="btn-secondary flex min-h-11 w-full justify-center text-sm"
-            >
-              Открыть в журнале
-            </Link>
-          )}
         </div>
       </div>
 
@@ -177,7 +182,7 @@ export default function ScannerMobileWorkspace({
         {!txSaved ? (
           <button
             type="button"
-            className="btn-primary min-h-12 w-full text-sm font-bold"
+            className="btn-primary min-h-12 w-full text-sm font-bold shadow-[0_10px_28px_-12px_rgba(0,88,190,0.55)]"
             disabled={confirmPending}
             onClick={onConfirm}
           >
@@ -185,9 +190,6 @@ export default function ScannerMobileWorkspace({
           </button>
         ) : (
           <div className="flex flex-col gap-2">
-            <p className="text-center text-xs font-semibold text-emerald-800 dark:text-emerald-200">
-              Операция создана
-            </p>
             {reviewQueueCount > 1 && (
               <button
                 type="button"
