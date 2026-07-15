@@ -106,7 +106,7 @@ export default function WorkspaceCommandPage() {
     : topClient?.next_deadline
       ? `Срок: ${topClient.organization_name} — ${topClient.next_deadline.title}`
       : topClient
-        ? `Сначала: ${topClient.organization_name} — готовность ${topClient.readiness_score ?? '—'}%`
+        ? `Сначала: ${topClient.organization_name} — ${readinessLabel(topClient.readiness_score).text}`
         : undefined
 
   return (
@@ -356,7 +356,6 @@ function OrgQueueCard({
           }`}
         >
           {readiness.text}
-          {row.readiness_score != null ? ` · ${row.readiness_score}%` : ''}
         </span>
         {wl > 0 && (
           <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-on-surface-variant">

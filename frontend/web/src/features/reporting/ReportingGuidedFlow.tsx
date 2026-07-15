@@ -17,6 +17,7 @@ import {
   type FlowStepId,
   READINESS_THRESHOLD,
   buildFlowSteps,
+  buildHomeReportingChecklist,
   buildReportingPeriodNarrative,
   canLeaveFixStep,
   deriveIssuesForStep,
@@ -166,7 +167,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
       const label =
         blockers.length > 0
           ? `Отчётность: ${blockers[0].label}`
-          : `Готовность ${overview?.readiness?.score ?? '—'}%`
+          : 'Можно продолжить к черновику'
       recordReportingBlocker(label, base)
       setNextStep({
         verb: 'send',
@@ -190,8 +191,8 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
     if (orgId) saveReportingFlowValidated(orgId, validationPassed)
   }, [orgId, validationPassed])
 
-  const score = data?.readiness?.score ?? null
   const conf = data?.readiness?.confidence ?? 'medium'
+  const homeChecklist = useMemo(() => buildHomeReportingChecklist(data), [data])
 
   const goToStep = useCallback((i: number) => {
     setStepIndex(Math.min(4, Math.max(0, i)))
@@ -232,7 +233,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
         }
       case 'fix':
         return {
-          primary: canLeaveFixStep(data) ? 'Готово к проверке AI' : `Исправьте данные (≥${READINESS_THRESHOLD}%)`,
+          primary: canLeaveFixStep(data) ? 'Готово к проверке AI' : 'Исправьте замечания в учёте',
           secondary: 'Открыть учёт',
           primaryDisabled: !canLeaveFixStep(data),
         }
@@ -309,7 +310,7 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
           </h2>
         </div>
         <p className="max-w-md text-xs text-on-surface-variant sm:text-right">
-          Свайп влево / «Дальше» — следующий шаг. Порог готовности {READINESS_THRESHOLD}% перед контролем AI.
+          Свайп влево / «Дальше» — следующий шаг. Сначала закройте чеклист, затем контроль AI.
         </p>
       </div>
 
@@ -327,7 +328,14 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
             {' · '}
             Комплаенс: <strong>{snapshotLevelRu(data.financial_state.compliance_state?.level)}</strong>
             {' · '}
-            Первичка: <strong>{data.financial_state.document_completeness?.score}%</strong>
+            Первичка:{' '}
+            <strong>
+              {(() => {
+                const docScore = data.financial_state.document_completeness?.score
+                if (docScore == null) return 'уточняется'
+                return docScore >= READINESS_THRESHOLD ? 'в порядке' : 'требует проверки'
+              })()}
+            </strong>
             {' · '}
             Касса: <strong>{snapshotLevelRu(data.financial_state.cashflow_state?.level)}</strong>
           </p>
@@ -387,26 +395,24 @@ export default function ReportingGuidedFlow({ basePath = '/reports' }: Props) {
         <div className="mt-6 space-y-6">
           {activeId === 'review' && (
             <>
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                <div
-                  className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-emerald-400/25 shadow-inner"
-                  style={{
-                    background:
-                      score !== null
-                        ? `conic-gradient(rgb(16 185 129 / 0.85) ${score * 3.6}deg, rgb(var(--color-surface-variant) / 0.35) 0deg)`
-                        : undefined,
-                  }}
-                >
-                  <div className="flex h-[5rem] w-[5rem] flex-col items-center justify-center rounded-full bg-[rgb(var(--color-surface)/0.94)] dark:bg-[rgb(var(--color-surface)/0.88)]">
-                    {score !== null ? (
-                      <>
-                        <span className="font-headline text-xl font-extrabold">{score}</span>
-                        <span className="text-[9px] font-bold uppercase text-on-surface-variant">готовность</span>
-                      </>
-                    ) : (
-                      <span className="text-xs text-on-surface-variant">…</span>
-                    )}
-                  </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="w-full shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-low/50 p-4 sm:max-w-xs">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Чеклист периода</p>
+                  <ul className="mt-2 space-y-1.5">
+                    {homeChecklist.map((item) => (
+                      <li key={item.label} className="flex items-center gap-2 text-sm">
+                        <span
+                          className={`material-symbols-outlined text-base ${item.done ? 'text-emerald-600 dark:text-emerald-400' : 'text-on-surface-variant/50'}`}
+                          aria-hidden
+                        >
+                          {item.done ? 'check_circle' : 'radio_button_unchecked'}
+                        </span>
+                        <span className={item.done ? 'text-on-surface-variant line-through decoration-outline/40' : 'font-medium text-on-surface'}>
+                          {item.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm leading-relaxed text-on-surface-variant">

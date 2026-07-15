@@ -1,6 +1,7 @@
 # Pilot Backlog — P0 / P1
 
-**Статус P0:** ✅ закрыто (2026-07-14) — см. [PILOT_READY.md](./PILOT_READY.md)
+**Статус:** ✅ Pilot-ready (код) — 2026-07-15  
+См. [PILOT_READY.md](./PILOT_READY.md)
 
 ---
 
@@ -15,26 +16,34 @@
 | P0-5 | MANUAL_INVITE_RUNBOOK | ✅ |
 | P0-6 | Copy без jargon, checklist вместо % | ✅ |
 
-**Дополнительно закрыто для pilot:**
+**Дополнительно:**
 
 - WorkflowContinuityBar на scan/journal/reports
 - Accountant → `/workspace/queues`
-- Lazy import docx (demo-smoke без полного HR stack)
+- Lazy import docx (demo-smoke)
 - Inbox + approvals unified (`InboxQueuesPage`)
 
 ---
 
-## P1 — после волны 1
+## P1 — закрыто (код)
 
-| # | Задача | WHY | IMPACT |
-|---|--------|-----|--------|
-| P1-1 | ~~Inbox + approvals merge~~ | — | ✅ |
-| P1-2 | ~~Accountant home queues~~ | — | ✅ redirect |
-| P1-3 | ~~WorkflowContinuityBar~~ | — | ✅ Layout |
-| P1-4 | Reporting % cleanup (остаток guided flow) | % в guided flow | Plain language |
-| P1-5 | Taxes route | ✅ `/accounting/taxes` | — |
-| P1-6 | WS `report_status` polish | Reload | Calmer UX |
-| P1-7 | Playwright E2E | Regression | CI |
+| # | Задача | Статус |
+|---|--------|--------|
+| P1-1 | Inbox + approvals merge | ✅ |
+| P1-2 | Accountant home → queues | ✅ |
+| P1-3 | WorkflowContinuityBar | ✅ |
+| P1-4 | Reporting % cleanup (guided flow + workspace) | ✅ checklist |
+| P1-5 | Taxes route `/accounting/taxes` | ✅ |
+| P1-6 | WS `report_status` → toast + invalidate reporting | ✅ |
+| P1-7 | Hub orphan removed | ✅ deleted `Hub.tsx` |
+
+---
+
+## P1 — отложено (не блокер пилота)
+
+| # | Задача | WHY |
+|---|--------|-----|
+| P1-E2E | Playwright smoke в CI | Регрессия; нужен auth fixture + `make dev` в CI |
 
 ---
 

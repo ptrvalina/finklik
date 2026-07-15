@@ -6,6 +6,7 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToastStack } from '../../hooks/useToastStack'
 import { formatReportStatusToast } from '../../utils/formatReportStatusToast'
 import { notificationEventLabel } from '../../lib/notificationEventLabel'
+import { orgQueryKey } from '../../lib/queryKeys'
 import ToastStack from '../ui/ToastStack'
 import { notificationsApi } from '../../api/client'
 import {
@@ -111,6 +112,7 @@ export default function Layout() {
         variant: formatted.variant,
       })
       void qc.invalidateQueries({ queryKey: ['submissions'] })
+      void qc.invalidateQueries({ queryKey: orgQueryKey('reporting-calm-overview') })
     }
   }, [notifications, addToast, qc])
 

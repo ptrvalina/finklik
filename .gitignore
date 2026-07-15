@@ -45,6 +45,17 @@ htmlcov/
 .pytest_cache/
 artifacts/
 
+# TypeScript / Vite cache (local)
+*.tsbuildinfo
+frontend/web/vite.config.js
+frontend/web/vite.config.d.ts
+
+# Stitch probe scripts (local)
+stitch_*.txt
+stitch_*.json
+scripts/stitch-*.ps1
+scripts/stitch-*.json
+
 # Docker / локальные volume-данные (если монтируются в репо)
 postgres_data/
 

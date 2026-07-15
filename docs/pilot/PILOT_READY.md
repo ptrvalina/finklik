@@ -1,21 +1,23 @@
 # FinKlik — Pilot Ready Status
 
-**Обновлено:** 2026-07-14  
+**Обновлено:** 2026-07-15  
 **Цель:** первая волна 5–15 организаций
 
 ---
 
-## Критерии готовности
+## Критерии готовности (код)
 
 | Критерий | Статус |
 |----------|--------|
 | P0 product logic (главная 4 вопроса) | ✅ |
 | P0 nav (journal default, control redirect) | ✅ |
 | P0 scope + manual invite runbook | ✅ |
-| P0 copy (без jargon, checklist не %) | ✅ |
+| P0/P1 copy (checklist, без % в owner UI) | ✅ |
 | Workflow bar (scan → journal → reports) | ✅ |
 | Inbox + approvals unified | ✅ |
 | Accountant entry → `/workspace/queues` | ✅ |
+| WS `report_status` → toast + refresh reporting | ✅ |
+| Dead accounting Hub removed | ✅ |
 | `make pilot-check` (local 🟡 / prod 🟢) | ✅ после `make dev` + prod env |
 | `make demo-smoke` | ✅ |
 | `npm run build` | ✅ |
@@ -60,6 +62,6 @@ PILOT_API_URL=https://... PILOT_TARGET=production PILOT_LIMITATIONS_ACK=1 make p
 
 ---
 
-## P1 (после волны 1)
+## После волны 1
 
-См. [PILOT_BACKLOG.md](./PILOT_BACKLOG.md) — Playwright E2E, WS polish, hub cleanup.
+См. [PILOT_BACKLOG.md](./PILOT_BACKLOG.md) — Playwright E2E в CI (опционально).
